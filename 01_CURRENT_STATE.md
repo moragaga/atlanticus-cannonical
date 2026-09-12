@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@d9c5347c51e12599aeee6514214dac3d9691e83e`.
+Corte de implementación: `moragaga/atlanticus@5b383a3ff4dcbb2cc15f55df4819ebf9e61e63b4`.
 
 ## Estado implementado
 
@@ -44,9 +44,9 @@ Operational Data:
 - producers;
 - sources.
 
-### Web Source
+### Web Source y Projection Handoff
 
-Implementado en:
+Source implementado en:
 
 ```text
 web/capabilities/source/
@@ -55,24 +55,31 @@ web/capabilities/source/
 └── blob
 ```
 
+Projection Core implementado en:
+
+```text
+web/capabilities/projection/core
+```
+
 Packages:
 
 ```text
 atlanticus-web-source==0.1.0
 atlanticus-web-source-local==0.1.0
 atlanticus-web-source-blob==0.1.0
+atlanticus-web-projection==0.1.0
 ```
 
 Estado:
 
 ```text
-Source Core   VERIFIED / CURRENT
-Local Source  VERIFIED / CURRENT
-Blob Source   VERIFIED / CURRENT
-Projection    NEXT
+Source Core          VERIFIED / CURRENT
+Local Source         VERIFIED / CURRENT
+Blob Source          VERIFIED / CURRENT
+Projection Handoff   VERIFIED / CURRENT
 ```
 
-Core implementa contratos neutrales para:
+Core Source implementa contratos neutrales para:
 - releases inmutables;
 - current manifest;
 - contenido e integridad;
@@ -101,8 +108,23 @@ Blob implementa la misma semántica funcional sobre Azure Blob Storage:
 - recovery explícito ante ACK ambiguo;
 - integridad y restart verificados.
 
+Projection Core implementa el handoff exact-release:
+- target explícito `SourceKey + SourceReleaseRef`;
+- `project(target)` resuelve la release exacta con `read_release`;
+- la ejecución no vuelve a consultar Source current;
+- provenance durable con `source_release_id`;
+- retry del mismo target sin republish de Source;
+- alignment `NEVER_PROJECTED / CURRENT / OUTDATED`;
+- outcome de intento `SUCCESS / FAILED`;
+- `CURRENT / OUTDATED` se determina por identidad de release, no por content hash.
+
 Los gates Source Core + Local + Blob quedaron GREEN en el workspace real.
 El provider Blob tiene pruebas deterministas y 7 pruebas de integración Azurite GREEN, incluyendo carreras de first publish/update, ETag real, corrupción y recovery de ACK ambiguo.
+
+Projection Handoff quedó GREEN en el workspace real:
+- 15 tests de Projection;
+- suite Web global: 327 passed, 7 skipped;
+- Ruff/format de `capabilities/projection/core` GREEN.
 
 ### ADA
 
@@ -150,26 +172,28 @@ Qualification R3.5 final: CLOSED PASS/GREEN.
 - Python 3.14.7.
 - `python:3.14.7-slim-trixie`.
 
-El repo actual aún conserva 3.14.2 en varios proyectos, incluido Web Source.
+El repo actual aún conserva 3.14.2 en varios proyectos, incluido Web Source y Projection Core.
 
 Estado:
 `DECIDED / NOT YET IMPLEMENTED GLOBALLY`.
 
-La migración 3.14.2 → 3.14.7 es un incremento transversal separado y no se mezcla con Source.
+La migración 3.14.2 → 3.14.7 es un incremento transversal separado y no se mezcla con Source/Projection.
 
 ### Configuration Source
 
 Dirección aprobada:
 - Productivo: Azure Blob Storage.
 - Local: provider equivalente.
-- Projection: Cosmos DB / Local.
+- Projection: Cosmos DB / Local por dominio cuando corresponda.
 
 Estado actual:
 - Source Core: `IMPLEMENTED + VALIDATED`;
 - Local provider: `IMPLEMENTED + VALIDATED`;
 - Blob provider: `IMPLEMENTED + VALIDATED`;
-- `source_release_id` en Projection: `PLANNED / NEXT`;
-- Manager history/compare/conflict: `PLANNED`.
+- Projection exact-release Core: `IMPLEMENTED + VALIDATED`;
+- `source_release_id` en Projection Core: `IMPLEMENTED + VALIDATED`;
+- Projection Local/Cosmos concreto por dominio: `PLANNED`;
+- Manager BASE/SOURCE/WORKSPACE/PROJECTION + history/compare/conflict: `PLANNED`.
 
 Blob parity y recovery ya están validados.
 
@@ -335,10 +359,12 @@ Operaciones Integradas
 
 El foco está en productización vertical, no en expansión arquitectónica general.
 
-## Checkpoint Source
+## Checkpoint Source / Projection
 
 ```text
-SOURCE-1A.1  CORE + LOCAL  CLOSED / VERIFIED
-SOURCE-1A.2  BLOB          CLOSED / VERIFIED
-PROJECTION                 NEXT
+SOURCE-1A.1       CORE + LOCAL          CLOSED / VERIFIED
+SOURCE-1A.2       BLOB                  CLOSED / VERIFIED
+PROJECTION        EXACT-RELEASE CORE    CLOSED / VERIFIED
+MANAGER           BASE/SOURCE/
+                  WORKSPACE/PROJECTION  NEXT
 ```

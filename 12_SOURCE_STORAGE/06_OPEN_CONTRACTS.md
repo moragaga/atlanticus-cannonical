@@ -1,6 +1,6 @@
 # Source Storage — Open Contracts
 
-Estado: **IN PROGRESS — POST-BLOB**
+Estado: **IN PROGRESS — POST-PROJECTION-HANDOFF**
 
 ## Cerrado en SOURCE-1A.1
 
@@ -70,15 +70,42 @@ Evidencia:
 - stale conditional update real observado como 412;
 - recovery de ACK ambiguo validado después de writes reales.
 
-## Abierto después de Blob
+## Cerrado en Projection Handoff
 
-### Projection
+Quedan congelados:
 
-Pendiente:
-- `source_release_id` durable;
-- proyección de una release exacta;
-- retry de Projection sin republish;
-- estados `NEVER_PROJECTED / CURRENT / OUTDATED / FAILED`.
+1. Projection target ejecutable: `SourceKey + SourceReleaseRef`.
+2. `SourceReleaseId` mantiene identidad de publicación.
+3. Projection durable identifica explícitamente `source_release_id`.
+4. Provenance durable conserva `source_key` y `source_published_at_utc`.
+5. Selección del target puede observar Source current.
+6. `project(target)` no consulta Source current.
+7. Ejecución resuelve exactamente `SourceStore.read_release(target.source_key, target.source_release)`.
+8. Source puede avanzar sin invalidar una Projection exacta ya iniciada.
+9. Una Projection exitosa de una release anterior queda `OUTDATED` si Source current avanzó.
+10. Retry reutiliza el mismo target y no requiere republish.
+11. Projection failure no revierte Source.
+12. `CURRENT / OUTDATED` compara identidad de release, no content hash.
+13. Alignment durable:
+    - `NEVER_PROJECTED`;
+    - `CURRENT`;
+    - `OUTDATED`.
+14. Attempt outcome:
+    - `SUCCESS`;
+    - `FAILED`.
+15. `FAILED` no reemplaza el alignment durable.
+16. Projection Core expone `get_active` y `replace_active`.
+17. Payload/domain serialization pertenece al dominio consumidor.
+18. Projection Core no conoce detalles físicos del provider Source.
+
+Evidencia:
+- `atlanticus-web-projection==0.1.0`;
+- 15 tests Projection GREEN;
+- suite Web global 327 passed, 7 skipped;
+- Ruff/format Projection GREEN;
+- baseline `moragaga/atlanticus@5b383a3ff4dcbb2cc15f55df4819ebf9e61e63b4`.
+
+## Abierto después de Projection Handoff
 
 ### Manager
 
@@ -90,6 +117,17 @@ Pendiente:
 
 Compare no se añade automáticamente a `SourceStore`; pertenece a la capa que interprete contenido/dominio salvo que aparezca una necesidad genérica demostrada.
 
+### Projection providers y orchestration
+
+Pendiente:
+- adaptar/implementar Projection Local/Cosmos según ownership de cada dominio;
+- validar atomicidad/durabilidad de `replace_active` en cada provider concreto;
+- congelar idempotencia provider/domain-level para reprojection del mismo release;
+- projection planner/orchestration multi-capability;
+- derived resolutions cuando existan dependencias reales.
+
+El cierre del exact-release Core no implica que estas capas estén implementadas.
+
 ### Migración legacy
 
 Pendiente:
@@ -97,3 +135,12 @@ Pendiente:
 - identificar rutas exactas a reemplazar/eliminar;
 - conservar Projection local/Cosmos según ownership;
 - retirar SharePoint/Power Automate Source sólo dentro del incremento de migración correspondiente; el gate de paridad/recovery ya está satisfecho.
+
+### Operación
+
+Pendiente:
+- retention;
+- GC/orphan cleanup;
+- valores productivos concretos de deployment.
+
+Estas políticas permanecen fuera de `SourceStore` y de Projection Core.

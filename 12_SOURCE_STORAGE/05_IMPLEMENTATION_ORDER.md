@@ -5,9 +5,11 @@ Estado: **CURRENT PLAN**
 ## Checkpoint
 
 ```text
-SOURCE-1A.1  Core + Local  CLOSED / VERIFIED
-SOURCE-1A.2  Blob          CLOSED / VERIFIED
-Projection                 NEXT
+SOURCE-1A.1  Core + Local            CLOSED / VERIFIED
+SOURCE-1A.2  Blob                    CLOSED / VERIFIED
+Projection   Exact-release Core      CLOSED / VERIFIED
+Manager      BASE/SOURCE/WORKSPACE/
+             PROJECTION              NEXT
 ```
 
 ## Orden y estado
@@ -61,9 +63,20 @@ Projection                 NEXT
    - regresión Web GREEN.
    - 7 pruebas Azurite GREEN: restart/read/verify, stale token, first-publish race, update race con ETag real, orphan fuera de History, corrupción y ACK recovery.
 
-9. **NEXT** — Añadir `source_release_id` a Projection y proyectar release exacta.
+9. **CLOSED / VERIFIED** — Añadir `source_release_id` a Projection y proyectar release exacta.
+   - Projection Core implementado en `web/capabilities/projection/core`.
+   - package `atlanticus-web-projection==0.1.0`.
+   - target exacto `SourceKey + SourceReleaseRef`.
+   - `project(target)` no consulta Source current.
+   - provenance durable con `source_release_id`.
+   - retry del mismo target sin republish.
+   - alignment `NEVER_PROJECTED / CURRENT / OUTDATED`.
+   - attempt outcome `SUCCESS / FAILED`.
+   - 15 tests Projection GREEN.
+   - regresión Web: 327 passed, 7 skipped.
+   - Ruff/format Projection GREEN.
 
-10. **PLANNED** — Integrar Manager BASE/SOURCE/WORKSPACE/PROJECTION, history/compare/conflict.
+10. **NEXT** — Integrar Manager BASE/SOURCE/WORKSPACE/PROJECTION, history/compare/conflict.
 
 11. **PLANNED** — Migrar dominios/consumidores progresivamente.
 

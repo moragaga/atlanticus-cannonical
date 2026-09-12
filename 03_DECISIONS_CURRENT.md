@@ -14,6 +14,7 @@ Estado: **CURRENT**
 | ADA Generic usa shell/header operacional ADA | CURRENT |
 | Manager ≠ ADA operational shell | CURRENT |
 | Source genérico pertenece a `web/capabilities/source` | CURRENT |
+| Projection exact-release genérica pertenece a `web/capabilities/projection/core` | CURRENT / IMPLEMENTED + VALIDATED |
 | Blob es Source durable productivo disponible para dominios migrados | CURRENT / IMPLEMENTED + VALIDATED |
 | Local y Blob deben compartir semántica Source | FROZEN |
 | Releases Source son publicaciones completas e inmutables | FROZEN |
@@ -30,8 +31,13 @@ Estado: **CURRENT**
 | History funcional sigue sólo la cadena de publicaciones alcanzable desde current | FROZEN |
 | Un candidato que pierde CAS es orphan y no History | FROZEN |
 | SourceStore publica cuando se le ordena; el no-op por mismo hash pertenece al consumidor | FROZEN |
-| Projection identifica `source_release_id` concreto | DECIDED / NOT YET IMPLEMENTED |
+| Projection identifica `source_release_id` concreto | FROZEN / IMPLEMENTED + VALIDATED |
+| Projection target ejecutable = `SourceKey + SourceReleaseRef` | FROZEN / IMPLEMENTED + VALIDATED |
+| `project(target)` resuelve la release exacta y no consulta Source current | FROZEN / IMPLEMENTED + VALIDATED |
+| Projection alignment y attempt outcome son dimensiones separadas | FROZEN / IMPLEMENTED + VALIDATED |
+| `CURRENT / OUTDATED` compara `SourceReleaseId`, no `content_hash` | FROZEN / IMPLEMENTED + VALIDATED |
 | Projection failure no revierte Source | FROZEN |
+| Retry de Projection conserva el mismo target sin republish de Source | FROZEN / IMPLEMENTED + VALIDATED |
 | Cosmos nunca determina Source current | FROZEN |
 | Tool Configuration determina existencia estructural | FROZEN |
 | Data determina estado | FROZEN |
@@ -49,12 +55,14 @@ Estado: **CURRENT**
 | Alarm B.2 I2 `LATEST SAVED = LATEST VALID` | DECISION RECORDED |
 | R3.5 Alarm final qualification | CLOSED PASS/GREEN |
 
-## Source checkpoint
+## Source / Projection checkpoint
 
 ```text
-SOURCE-1A.1  Core + Local  CLOSED / VERIFIED
-SOURCE-1A.2  Blob          CLOSED / VERIFIED
-Projection                 NEXT
+SOURCE-1A.1  Core + Local            CLOSED / VERIFIED
+SOURCE-1A.2  Blob                    CLOSED / VERIFIED
+Projection   Exact-release Core      CLOSED / VERIFIED
+Manager      BASE/SOURCE/WORKSPACE/
+             PROJECTION              NEXT
 ```
 
 Implementación actual:
@@ -63,10 +71,25 @@ Implementación actual:
 web/capabilities/source/core
 web/capabilities/source/local
 web/capabilities/source/blob
+web/capabilities/projection/core
 ```
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
+
+Projection Core:
+- recibe targets exactos como `SourceKey + SourceReleaseRef`;
+- persiste provenance con `source_release_id`;
+- no revalida contra un `latest` mutable durante `project(target)`;
+- permite retry del mismo target sin republish;
+- separa alignment durable (`NEVER_PROJECTED / CURRENT / OUTDATED`) del outcome del intento (`SUCCESS / FAILED`).
+
+No se consideran cerrados por este hito:
+- providers Projection Local/Cosmos concretos por dominio;
+- orchestration multi-capability;
+- derived resolutions;
+- idempotencia provider/domain-level de reprojection;
+- migración de consumidores.
 
 ## SharePoint
 

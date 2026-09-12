@@ -16,7 +16,7 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `09_OPEN_QUESTIONS.md` | Open items no bloqueantes. | CURRENT |
 | `10_MANAGER/` | Manager, login/bootstrap y metadata ADA. | CURRENT DIRECTION |
 | `11_ADA_GENERIC/` | ADA Generic y orden de Tools. | CURRENT DIRECTION |
-| `12_SOURCE_STORAGE/` | Source Core/Local/Blob implementados; Projection siguiente. | IN PROGRESS |
+| `12_SOURCE_STORAGE/` | Source Core/Local/Blob + Projection Handoff implementados; Manager/migración siguientes. | IN PROGRESS |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
 | `14_ADA_COMMAND_CENTER/` | Command Center y Alarm ownership. | CURRENT DIRECTION |
 | `15_WEB_PLATFORM/` | Web platform, Activity, startup y projections. | CURRENT |
