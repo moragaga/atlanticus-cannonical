@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@de7c75eba057628258439f4da7ac621e37903bbe`.
+Corte de implementación: `moragaga/atlanticus@d9c5347c51e12599aeee6514214dac3d9691e83e`.
 
 ## Estado implementado
 
@@ -51,7 +51,8 @@ Implementado en:
 ```text
 web/capabilities/source/
 ├── core
-└── local
+├── local
+└── blob
 ```
 
 Packages:
@@ -59,6 +60,7 @@ Packages:
 ```text
 atlanticus-web-source==0.1.0
 atlanticus-web-source-local==0.1.0
+atlanticus-web-source-blob==0.1.0
 ```
 
 Estado:
@@ -66,8 +68,8 @@ Estado:
 ```text
 Source Core   VERIFIED / CURRENT
 Local Source  VERIFIED / CURRENT
-Blob Source   NEXT
-Projection    PLANNED
+Blob Source   VERIFIED / CURRENT
+Projection    NEXT
 ```
 
 Core implementa contratos neutrales para:
@@ -88,7 +90,19 @@ Local implementa semántica durable equivalente:
 - recovery por reinicio;
 - integridad verificable.
 
-Los gates del incremento Source Core + Local quedaron GREEN en el workspace real.
+Blob implementa la misma semántica funcional sobre Azure Blob Storage:
+- `StorageClient` inyectado; Source no usa Azure SDK directamente;
+- manifest como único commit point;
+- create-only para first publish;
+- conditional write por ETag para promociones posteriores;
+- `ConcurrencyToken` público derivado del manifest e independiente del ETag;
+- releases inmutables y orphans fuera de History;
+- History sólo por predecessor chain;
+- recovery explícito ante ACK ambiguo;
+- integridad y restart verificados.
+
+Los gates Source Core + Local + Blob quedaron GREEN en el workspace real.
+El provider Blob tiene pruebas deterministas y 7 pruebas de integración Azurite GREEN, incluyendo carreras de first publish/update, ETag real, corrupción y recovery de ACK ambiguo.
 
 ### ADA
 
@@ -153,13 +167,15 @@ Dirección aprobada:
 Estado actual:
 - Source Core: `IMPLEMENTED + VALIDATED`;
 - Local provider: `IMPLEMENTED + VALIDATED`;
-- Blob provider: `PLANNED / NEXT`;
-- `source_release_id` en Projection: `PLANNED`;
+- Blob provider: `IMPLEMENTED + VALIDATED`;
+- `source_release_id` en Projection: `PLANNED / NEXT`;
 - Manager history/compare/conflict: `PLANNED`.
 
-SharePoint + Power Automate quedan destinados a salir del pipeline Source migrado sólo después de paridad y recovery validados.
+Blob parity y recovery ya están validados.
 
-No borrar aún los adapters Source legacy de Navigation Configuration.
+SharePoint + Power Automate siguen destinados a salir del pipeline Source migrado, pero el retiro pertenece al incremento de migración de consumidores.
+
+No borrar aún los adapters Source legacy de Navigation Configuration sin enumerar las rutas exactas y validar que sus consumidores ya migraron.
 
 ### Collector
 
@@ -323,5 +339,6 @@ El foco está en productización vertical, no en expansión arquitectónica gene
 
 ```text
 SOURCE-1A.1  CORE + LOCAL  CLOSED / VERIFIED
-SOURCE-1A.2  BLOB          NEXT
+SOURCE-1A.2  BLOB          CLOSED / VERIFIED
+PROJECTION                 NEXT
 ```

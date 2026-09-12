@@ -1,6 +1,6 @@
 # Source Storage — Open Contracts
 
-Estado: **IN PROGRESS**
+Estado: **IN PROGRESS — POST-BLOB**
 
 ## Cerrado en SOURCE-1A.1
 
@@ -27,29 +27,48 @@ Quedan congelados para Core + Local:
 19. Orphans fuera de History.
 20. Same-content republish permitido como nueva release.
 
-## Abierto para SOURCE-1A.2 — Blob
+## Cerrado en SOURCE-1A.2 — Blob
 
-Antes de cerrar Blob deben resolverse con evidencia:
+Resuelto con implementación y evidencia:
 
-1. Qué API exacta de `connectivity/storage` reutiliza Source Blob.
-2. Si `connectivity/storage` ya permite:
-   - lectura de bytes/metadata necesaria;
-   - create-if-absent;
-   - conditional write con versión observada;
-   - error classification suficiente.
-3. Mapping interno ETag → `ConcurrencyToken`.
-4. Semántica exacta de create-only para first publish.
-5. Recovery ante timeout/ACK ambiguo.
-6. Physical layout Blob compatible con `SourceReleaseRef`.
-7. Container/root configuration.
-8. Storage connection naming:
-   - conexión existente;
-   - o conexión nombrada `configuration_source`.
-9. Requisito o no de HNS.
-10. Lifecycle/cleanup de orphans.
-11. Retention.
+1. Source Blob reutiliza `StorageClient`.
+2. APIs técnicas usadas:
+   - `get_properties` para ETag;
+   - `download` para bytes;
+   - `upload(overwrite=False)` para create-only;
+   - `upload_if_match` para conditional write.
+3. ETag no se mapea a `ConcurrencyToken`:
+   - ETag permanece privado y protege el write remoto;
+   - `ConcurrencyToken` se deriva de los bytes exactos del manifest y sigue siendo provider-neutral.
+4. First publish promueve `manifest.json` con create-only.
+5. ACK ambiguo se recupera releyendo current:
+   - candidate current → success;
+   - expected current unchanged → not promoted / unavailable;
+   - different current → concurrency conflict;
+   - no blind republish.
+6. Layout Blob conserva la semántica Local:
+   - `sources/{encoded_source}/manifest.json`;
+   - `history/year=YYYY/month=MM/day=DD/{encoded_release}/release.json`;
+   - `resources/{logical_path}`.
+7. `BlobSourceSettings` usa:
+   - `container_name` requerido;
+   - `root_prefix` opcional;
+   - el container es preprovisionado;
+   - valores productivos concretos siguen siendo deployment-specific.
+8. Source recibe un `StorageClient` ya compuesto:
+   - no inventa connection name;
+   - named connections pertenecen a composition/configuration.
+9. HNS no es requisito del provider.
+10. Cleanup de orphans queda fuera de `SourceStore`.
+11. Retention queda fuera de `SourceStore` y permanece como política posterior.
 
-No inferir estos detalles desde Azure ni desde SharePoint legacy.
+Evidencia:
+- tests deterministas Blob GREEN;
+- regresión Web GREEN;
+- 7 pruebas Azurite GREEN;
+- first-publish conflict real observado como 409;
+- stale conditional update real observado como 412;
+- recovery de ACK ambiguo validado después de writes reales.
 
 ## Abierto después de Blob
 
@@ -77,4 +96,4 @@ Pendiente:
 - migrar Navigation/Tool Configuration a Source;
 - identificar rutas exactas a reemplazar/eliminar;
 - conservar Projection local/Cosmos según ownership;
-- retirar SharePoint/Power Automate Source sólo después de paridad/recovery.
+- retirar SharePoint/Power Automate Source sólo dentro del incremento de migración correspondiente; el gate de paridad/recovery ya está satisfecho.

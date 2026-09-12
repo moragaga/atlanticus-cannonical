@@ -14,7 +14,7 @@ Estado: **CURRENT**
 | ADA Generic usa shell/header operacional ADA | CURRENT |
 | Manager ≠ ADA operational shell | CURRENT |
 | Source genérico pertenece a `web/capabilities/source` | CURRENT |
-| Blob será Source durable productivo en dominios migrados | DECIDED / NEXT |
+| Blob es Source durable productivo disponible para dominios migrados | CURRENT / IMPLEMENTED + VALIDATED |
 | Local y Blob deben compartir semántica Source | FROZEN |
 | Releases Source son publicaciones completas e inmutables | FROZEN |
 | `release_id` identifica publicación y no equivale a `content_hash` | FROZEN |
@@ -52,9 +52,9 @@ Estado: **CURRENT**
 ## Source checkpoint
 
 ```text
-SOURCE-1A.1
-Core + Local
-CLOSED / VERIFIED
+SOURCE-1A.1  Core + Local  CLOSED / VERIFIED
+SOURCE-1A.2  Blob          CLOSED / VERIFIED
+Projection                 NEXT
 ```
 
 Implementación actual:
@@ -62,22 +62,22 @@ Implementación actual:
 ```text
 web/capabilities/source/core
 web/capabilities/source/local
+web/capabilities/source/blob
 ```
 
-Blob es el siguiente provider.
-
-No modificar `connectivity/storage` salvo que el provider Blob demuestre una carencia técnica real del contrato de conectividad.
+Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
+El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
 
 ## SharePoint
 
 SharePoint aparece en contratos históricos de Manager/Alarm y en adapters Source legacy.
 
-No retirar todavía esos adapters.
+Blob parity/recovery ya no bloquea el retiro, pero los adapters no se eliminan automáticamente.
 
 Clasificar:
 - semántica reusable → conservar;
-- storage binding SharePoint → candidato a `SUPERSEDED` tras Blob parity;
-- Power Automate Source pipeline → objetivo de retiro posterior a validación.
+- storage binding SharePoint → candidato a `SUPERSEDED` durante la migración del consumidor;
+- Power Automate Source pipeline → objetivo de retiro durante la migración correspondiente.
 
 Cuando una migración autorice retiro, el incremento debe enumerar rutas exactas a borrar y validar gates después de la eliminación.
 

@@ -6,7 +6,8 @@ Estado: **CURRENT PLAN**
 
 ```text
 SOURCE-1A.1  Core + Local  CLOSED / VERIFIED
-SOURCE-1A.2  Blob          NEXT
+SOURCE-1A.2  Blob          CLOSED / VERIFIED
+Projection                 NEXT
 ```
 
 ## Orden y estado
@@ -47,18 +48,26 @@ SOURCE-1A.2  Blob          NEXT
    - regresión Web completa;
    - Ruff/format verdes en integración real.
 
-8. **NEXT — SOURCE-1A.2** — Implementar Blob como segundo provider.
-   - Auditar primero `connectivity/storage`.
-   - No modificar Connectivity salvo capability técnica faltante demostrada.
-   - Mantener el mismo contrato público.
+8. **CLOSED / VERIFIED — SOURCE-1A.2** — Implementar Blob como segundo provider.
+   - `connectivity/storage` auditado.
+   - `upload_if_match` agregado como única capability técnica faltante demostrada.
+   - Mismo contrato público que Local.
+   - ETag privado al provider; `ConcurrencyToken` público derivado del manifest.
+   - first publish create-only y updates por If-Match.
+   - immutable candidates + manifest único.
+   - History por predecessor chain; orphans fuera de History.
+   - integrity/restart/recovery validados.
+   - tests deterministas Blob GREEN.
+   - regresión Web GREEN.
+   - 7 pruebas Azurite GREEN: restart/read/verify, stale token, first-publish race, update race con ETag real, orphan fuera de History, corrupción y ACK recovery.
 
-9. **PLANNED** — Añadir `source_release_id` a Projection y proyectar release exacta.
+9. **NEXT** — Añadir `source_release_id` a Projection y proyectar release exacta.
 
 10. **PLANNED** — Integrar Manager BASE/SOURCE/WORKSPACE/PROJECTION, history/compare/conflict.
 
 11. **PLANNED** — Migrar dominios/consumidores progresivamente.
 
-12. **BLOCKED UNTIL PARITY** — Retirar bindings Source legacy de SharePoint/Power Automate sólo con Blob parity y recovery validados.
+12. **PLANNED** — Retirar bindings Source legacy de SharePoint/Power Automate durante la migración de consumidores. El gate Blob parity/recovery ya está CLOSED / VERIFIED.
 
 ## Regla de reemplazo
 

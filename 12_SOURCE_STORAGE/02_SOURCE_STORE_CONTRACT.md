@@ -1,6 +1,6 @@
 # Source Storage — SourceStore Contract
 
-Estado: **CURRENT / FROZEN FOR 1A.1**
+Estado: **CURRENT / FROZEN FOR 1A.2**
 
 ## Ownership
 
@@ -19,6 +19,7 @@ Connectivity Storage es una dependencia técnica posible de Blob y no debe absor
 ```text
 atlanticus-web-source==0.1.0
 atlanticus-web-source-local==0.1.0
+atlanticus-web-source-blob==0.1.0
 ```
 
 ## Objetivo
@@ -114,13 +115,25 @@ Implementa:
 
 ## Azure Blob provider
 
-Estado: **NEXT**
+Estado: **IMPLEMENTED + VALIDATED**
 
-Debe implementar exactamente este contrato.
+Implementa el mismo `SourceStore` público que Local.
 
-Blob puede utilizar ETag internamente como mecanismo de conditional write.
+Características verificadas:
+- `StorageClient` inyectado;
+- ETag sólo como mecanismo técnico interno;
+- `ConcurrencyToken` público independiente del ETag;
+- first publish create-only;
+- promociones posteriores por conditional write;
+- manifest como único commit point;
+- releases inmutables;
+- History por predecessor chain, sin listing como autoridad;
+- integrity verification;
+- restart/recovery;
+- ACK ambiguo resuelto por reread;
+- candidates perdedores como orphans fuera de History.
 
-ETag no forma parte del contrato público.
+La paridad fue validada con tests deterministas y con Azurite.
 
 ## Storage connectivity
 
@@ -128,11 +141,17 @@ Atlanticus dispone de `connectivity/storage`.
 
 Es conectividad técnica reutilizable.
 
-El incremento Blob debe auditarla primero y modificarla sólo si se demuestra una capability técnica faltante real.
+La auditoría de 1A.2 confirmó la reutilización de:
+- `get_properties`;
+- `download`;
+- `upload(overwrite=False)` para create-only;
+- `upload_if_match` para conditional write.
 
-No duplicar en Source funciones genéricas que pertenezcan al contrato Storage.
+`upload_if_match` fue la única capability técnica faltante demostrada y quedó incorporada/validada en Storage antes del provider Blob.
 
-## Fuera del core 1A.1
+Source no usa Azure SDK directamente ni duplica funciones genéricas de Storage.
+
+## Fuera de SourceStore
 
 No forman parte de `SourceStore`:
 - Projection;

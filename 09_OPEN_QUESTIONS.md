@@ -19,12 +19,15 @@ Estos puntos no bloquean el cierre del bootstrap. Se resuelven durante ejecució
 
 ## Source / Blob
 
-8. Release identity;
-9. Release granularity;
-10. functional manifest;
-11. SourceStore final API;
-12. concurrency/current;
-13. retention.
+Cerrados por `SOURCE-1A.1` / `SOURCE-1A.2`:
+- release identity;
+- release granularity;
+- functional manifest;
+- SourceStore API;
+- concurrency/current;
+- Blob provider parity/recovery.
+
+13. retention/cleanup policy permanece abierta fuera de `SourceStore`.
 
 ## Backend generation
 

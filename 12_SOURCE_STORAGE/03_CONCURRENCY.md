@@ -1,6 +1,6 @@
 # Source Storage — Concurrency
 
-Estado: **CURRENT / FROZEN CORE+LOCAL**
+Estado: **CURRENT / FROZEN CORE+LOCAL+BLOB**
 
 ## Principio
 
@@ -102,11 +102,30 @@ Si un candidato se materializa pero pierde la promoción:
 
 ## Blob
 
-Blob deberá mapear internamente este contrato a conditional writes.
+Blob implementa el contrato con conditional writes sobre `connectivity/storage`.
 
-ETag es el mecanismo natural esperado, pero la decisión concreta se valida en 1A.2 contra `connectivity/storage` y Azure Blob.
+Observación de current:
 
-No filtrar ETag a Manager ni a consumidores.
+```text
+get manifest properties → capture ETag
+→ download manifest bytes
+→ derive opaque ConcurrencyToken from manifest bytes
+```
+
+ETag y `ConcurrencyToken` cumplen roles distintos y no se mapean uno a otro.
+
+Promoción:
+
+```text
+first publish → create-only manifest
+existing source → upload_if_match(observed ETag)
+```
+
+Un conflicto remoto de create-only/If-Match se traduce a `SourceConcurrencyError`.
+
+ETag nunca se filtra a Manager ni a consumidores.
+
+Las carreras de first publish y update fueron validadas con Azurite: un único winner y el loser queda orphan fuera de History.
 
 ## ACK ambiguo / recovery
 
@@ -124,6 +143,8 @@ different current
 ```
 
 No republicar automáticamente sólo porque se perdió un ACK.
+
+Este recovery quedó implementado y validado contra escrituras reales en Azurite con pérdida de ACK simulada después del write.
 
 ## Manager
 
