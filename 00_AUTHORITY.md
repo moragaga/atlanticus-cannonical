@@ -1,43 +1,73 @@
 # Atlanticus — Authority
 
-## Repositorios congelados para este bootstrap
+Estado: **CURRENT**
 
-- Implementación: `moragaga/atlanticus`
-- Rama: `main`
-- Commit auditado: `685924322c9cc0d625d112e25297a407f7a46acb`
-- Fecha del commit: `2026-09-12T00:58:54Z`
+## Autoridades activas
 
-- Decisiones: `moragaga/atlanticus-decisions`
+### Implementación
+
+- Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- Commit auditado: `ae28a733f9a973026182068af630a82ce39416bd`
-- Fecha del commit: `2026-09-10T23:39:42Z`
+- Realidad implementada: siempre `atlanticus:main`
+- Último checkpoint de implementación verificado para este cierre:
+  `de7c75eba057628258439f4da7ac621e37903bbe`
+- Fecha del checkpoint: `2026-09-12T15:30:56Z`
+
+### Canonical
+
+- Repositorio: `moragaga/atlanticus-cannonical`
+- Rama: `main`
+- Contiene el estado vigente, contratos, fronteras, roadmap y decisiones activas del Project.
+
+`atlanticus-cannonical:main` reemplaza a `atlanticus-decisions` como autoridad documental vigente.
+
+## Referencias históricas
+
+`moragaga/atlanticus-decisions` es **HISTORICAL**.
+
+Puede utilizarse para:
+- rationale histórico;
+- qualification previa;
+- rastreo de decisiones anteriores;
+- evidencia de cómo se llegó a un contrato.
+
+No puede utilizarse por sí solo para contradecir o reemplazar el estado vigente de `atlanticus-cannonical:main`.
 
 ## Jerarquía
 
-1. `atlanticus:main`: realidad implementada.
-2. Decisión explícitamente vigente/frozen en `atlanticus-decisions`: intención contractual, incluso si aún no está materializada.
-3. Qualification y tests: evidencia de propiedades ya demostradas.
-4. Decisiones recientes del Project: delta todavía no formalizado.
-5. Memoria/historial conversacional: pista de búsqueda, nunca autoridad suficiente por sí sola.
+1. `atlanticus:main`: realidad implementada actual.
+2. `atlanticus-cannonical:main`: contratos, fronteras, roadmap y estado vigente.
+3. Qualification y tests vigentes: evidencia de propiedades demostradas.
+4. Decisiones explícitas del Project todavía no formalizadas en canonical: delta temporal.
+5. Repositorios o documentos históricos indicados expresamente por el usuario: referencia.
+6. Memoria/historial conversacional: pista de búsqueda, nunca autoridad suficiente por sí sola.
 
 ## Conflictos
 
-No elegir silenciosamente entre código y decisión. Clasificar como:
+Si `atlanticus:main` y canonical se contradicen, no resolver silenciosamente.
 
-- `IMPLEMENTED + VALIDATED`
-- `DECIDED / NOT YET IMPLEMENTED`
-- `CURRENT`
-- `SUPERSEDED`
-- `HISTORICAL`
-- `DRAFT`
-- `DUPLICATE`
-- `CONFLICT`
+Clasificar explícitamente como corresponda:
+- `VERIFIED`
+- `INFERRED`
+- `ASSUMED`
+- `PROPOSED`
 - `UNVERIFIED`
+- `CURRENT`
+- `IN PROGRESS`
+- `PLANNED`
+- `SUPERSEDED`
+- `BLOCKED`
+- `CONFLICT`
+- `HISTORICAL`
 
 ## Git
 
-Git es **READ ONLY** por defecto. No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización explícita.
+Git es **READ ONLY** por defecto.
+
+No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización explícita.
 
 ## Referencias externas
 
-Otros repositorios, proyectos o implementaciones solo son referencias cuando el usuario lo indique. No transfieren autoridad, contratos, nombres, dependencias ni arquitectura a Atlanticus.
+Otros repositorios, proyectos o implementaciones sólo son referencias cuando el usuario lo indique.
+
+No transfieren automáticamente autoridad, contratos, nombres, dependencias ni arquitectura a Atlanticus.

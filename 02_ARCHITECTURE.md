@@ -1,6 +1,6 @@
 # Atlanticus — Architecture
 
-Estado: **CANDIDATE V2**
+Estado: **CURRENT**
 
 ## Regla principal
 
@@ -13,13 +13,32 @@ El núcleo genérico no depende de ADA.
 ## Planos principales
 
 ### Platform
+
 Capacidades transversales:
 - backend;
 - connectivity;
 - integrations;
-- web capabilities.
+- web.
+
+`backend/` significa backend jobs y capacidades propias de esos jobs.
+
+No significa “todo Python server-side”.
+
+`web/` es una frontera de primer nivel y contiene:
+- Flask/Dash;
+- JavaScript/CSS;
+- composición Web;
+- server-side Python cuya responsabilidad es Web;
+- capabilities Web reutilizables.
+
+`connectivity/` es dual-use:
+- puede ser consumido por Web;
+- puede ser consumido por backend/jobs;
+- expone conectividad técnica;
+- no adquiere ownership funcional del consumidor.
 
 ### Configuration / Administration
+
 Manager:
 - aplicación administrativa;
 - header/shell propio;
@@ -30,6 +49,14 @@ Manager:
 - Source publication;
 - history/conflict.
 
+Source genérico pertenece a Web:
+
+```text
+web/capabilities/source/
+```
+
+Connectivity Storage puede ser dependencia técnica de un provider Blob, pero no es owner de Source.
+
 ### Operational Data
 - sources;
 - producers;
@@ -38,6 +65,7 @@ Manager:
 - materialization.
 
 ### ADA Runtime
+
 ADA Generic:
 - compone la estructura operacional;
 - consume configuración/proyecciones;
@@ -45,6 +73,7 @@ ADA Generic:
 - integra KPI/Alarm/estado operacional.
 
 ### Alarm Engine
+
 Core + Persistence + Runtime Process.
 
 No reabrir sus invariantes cerradas para resolver problemas de integración.
@@ -85,25 +114,50 @@ Subcomponent:
 
 Source y Projection son responsabilidades independientes.
 
-Objetivo:
-- Source = Local | Blob;
-- Projection = Local | Cosmos.
+Estado objetivo:
 
-Projection siempre representa un Source release específico.
+```text
+Source     = Local | Blob
+Projection = Local | Cosmos
+```
+
+Source publica un `SourceReleaseRef` concreto.
+
+Projection representa un Source release específico y puede quedar retrasada o fallar sin revertir Source.
+
+El current de Source nunca se determina desde Cosmos.
+
+## Source ownership
+
+Source es una capability Web genérica.
+
+No pertenece a:
+- backend jobs;
+- Connectivity;
+- ADA;
+- Navigation Configuration.
+
+Navigation Configuration y otros dominios pueden consumir Source sin convertirse en owners de su persistencia/versionado.
 
 ## Principio de implementación
 
-Cerrar capacidades verticalmente:
+Definir primero el contrato en el owner correcto y después sus consumidores.
 
-backend contract
-→ authority/source
-→ materialization/projection
-→ KPI/Alarm
-→ Web
+Cerrar capacidades verticalmente sin convertir “backend first” en una regla de ubicación física incorrecta.
+
+Ejemplo para Configuration:
+
+```text
+Tool Configuration semantics
+→ Web Source
+→ Projection
+→ runtime consumers
 → E2E
+```
+
+Para contratos propios de backend jobs, backend se cierra antes de su frontend consumidor.
 
 No terminar capas horizontales aisladas y recién integrarlas al final.
-
 
 ## ADA Command Center
 

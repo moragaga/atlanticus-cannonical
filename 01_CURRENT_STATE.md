@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
-Estado: **CANDIDATE V2**
-Corte de implementación: `moragaga/atlanticus@685924322c9cc0d625d112e25297a407f7a46acb`.
+Estado: **CURRENT EXECUTION CHECKPOINT**
+Corte de implementación: `moragaga/atlanticus@de7c75eba057628258439f4da7ac621e37903bbe`.
 
 ## Estado implementado
 
@@ -18,6 +18,10 @@ Backend transversal:
 - observability-azure;
 - runtime.
 
+`backend/` representa backend jobs y capacidades asociadas a esos jobs.
+
+La lógica Python server-side de aplicaciones Web pertenece a `web/` cuando su responsabilidad es Web.
+
 Connectivity:
 - cosmos;
 - docker;
@@ -28,6 +32,10 @@ Connectivity:
 - sql;
 - storage.
 
+Connectivity es reutilizable por Web y backend/jobs.
+
+No es owner funcional de Source, Manager, Tool Configuration ni otras capacidades Web.
+
 Operational Data:
 - calendar;
 - core;
@@ -35,6 +43,52 @@ Operational Data:
 - processes;
 - producers;
 - sources.
+
+### Web Source
+
+Implementado en:
+
+```text
+web/capabilities/source/
+├── core
+└── local
+```
+
+Packages:
+
+```text
+atlanticus-web-source==0.1.0
+atlanticus-web-source-local==0.1.0
+```
+
+Estado:
+
+```text
+Source Core   VERIFIED / CURRENT
+Local Source  VERIFIED / CURRENT
+Blob Source   NEXT
+Projection    PLANNED
+```
+
+Core implementa contratos neutrales para:
+- releases inmutables;
+- current manifest;
+- contenido e integridad;
+- publicación con concurrencia optimista;
+- history;
+- lectura de releases;
+- verificación de integridad.
+
+Local implementa semántica durable equivalente:
+- manifest como único commit point;
+- releases inmutables;
+- CAS real entre procesos;
+- candidatos perdedores como orphans;
+- history sólo por cadena de publicaciones;
+- recovery por reinicio;
+- integridad verificable.
+
+Los gates del incremento Source Core + Local quedaron GREEN en el workspace real.
 
 ### ADA
 
@@ -82,23 +136,33 @@ Qualification R3.5 final: CLOSED PASS/GREEN.
 - Python 3.14.7.
 - `python:3.14.7-slim-trixie`.
 
-El repo auditado aún conserva 3.14.2 en varios proyectos.
+El repo actual aún conserva 3.14.2 en varios proyectos, incluido Web Source.
 
 Estado:
 `DECIDED / NOT YET IMPLEMENTED GLOBALLY`.
 
+La migración 3.14.2 → 3.14.7 es un incremento transversal separado y no se mezcla con Source.
+
 ### Configuration Source
+
 Dirección aprobada:
 - Productivo: Azure Blob Storage.
 - Local: provider equivalente.
 - Projection: Cosmos DB / Local.
 
-Estado:
-`DECIDED DIRECTION / CONTRACT NOT FROZEN / IMPLEMENTATION NOT STARTED`.
+Estado actual:
+- Source Core: `IMPLEMENTED + VALIDATED`;
+- Local provider: `IMPLEMENTED + VALIDATED`;
+- Blob provider: `PLANNED / NEXT`;
+- `source_release_id` en Projection: `PLANNED`;
+- Manager history/compare/conflict: `PLANNED`.
 
-SharePoint + Power Automate quedan destinados a salir del pipeline Source migrado sólo después de paridad/recovery.
+SharePoint + Power Automate quedan destinados a salir del pipeline Source migrado sólo después de paridad y recovery validados.
+
+No borrar aún los adapters Source legacy de Navigation Configuration.
 
 ### Collector
+
 La semántica de Collector está congelada:
 - 1 Collector contract por Component;
 - no por Subcomponent.
@@ -120,15 +184,14 @@ Configuration
 
 Manager participa como plano administrativo con shell propio; no como shell de la Tool operacional.
 
-
 ## ADA Command Center
 
-En `main` auditado existe sólo backend físico:
+En `main` existe sólo backend físico:
 - Alarm Core;
 - Alarm Persistence;
 - Alarms Runtime.
 
-Web propia: `DECIDED/EXPECTED, NOT PRESENT IN AUDITED MAIN`.
+Web propia: `DECIDED/EXPECTED, NOT PRESENT IN CURRENT MAIN`.
 
 Configuration propia: necesaria, sin Tool authoring duplicado.
 
@@ -150,7 +213,7 @@ La finalidad inicial es análisis histórico profundo y conclusiones trazables s
 
 ### Capability independence
 
-Los packages base de Users, Navigation y User Activity ya están separados en `main`.
+Los packages base de Users, Navigation y User Activity están separados en `main`.
 
 Existe además un precedente correcto:
 
@@ -178,7 +241,7 @@ Objetivo:
 
 ### Resource preparation
 
-Cosmos ya posee `CosmosProvisioner`.
+Cosmos dispone de `CosmosProvisioner`.
 
 Objetivo:
 Web agrega todos los requirements instalados y prepara/valida recursos antes de Backend.
@@ -217,7 +280,6 @@ Se introduce una superficie pre-Manager que no depende de Users/Profile projecti
 ## KPI Backend recovery
 
 Los cuatro procesos auditados poseen gates `current` que evitan repetir trabajo:
-
 - KPI Runtime;
 - Latest Delivery;
 - Historian;
@@ -236,7 +298,6 @@ por proceso, default false.
 El modo sólo omite el shortcut `current`.
 
 No omite:
-
 - authority ordering;
 - lease;
 - fencing;
@@ -247,13 +308,20 @@ Historian requiere full rebuild desde durable evaluation batches hasta KPI commi
 
 ## Bootstrap closure status
 
-Canonical Baseline 1.0 is sufficient to begin execution.
+Canonical Baseline 1.0 es suficiente para ejecución.
 
-First delivery order:
+Primer delivery order:
 
 ```text
 Operaciones Integradas
 → Mina
 ```
 
-The focus now moves from architecture expansion to vertical productization.
+El foco está en productización vertical, no en expansión arquitectónica general.
+
+## Checkpoint Source
+
+```text
+SOURCE-1A.1  CORE + LOCAL  CLOSED / VERIFIED
+SOURCE-1A.2  BLOB          NEXT
+```

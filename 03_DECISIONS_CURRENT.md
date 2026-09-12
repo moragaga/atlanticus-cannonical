@@ -1,23 +1,38 @@
 # Atlanticus — Current Decisions
 
-Estado: **CANDIDATE V2**
+Estado: **CURRENT**
 
 | Decisión | Estado |
 |---|---|
 | Python 3.14.7 | DECIDED / NOT YET IMPLEMENTED |
 | `python:3.14.7-slim-trixie` | DECIDED / NOT YET IMPLEMENTED |
 | `uv`, no pip normal | CURRENT |
+| `backend/` representa backend jobs; no todo Python server-side | CURRENT |
+| Server-side Python con responsabilidad Web pertenece a `web/` | CURRENT |
+| Connectivity es dual-use y no adquiere ownership funcional | CURRENT |
 | Manager posee shell/header administrativo propio | CURRENT |
 | ADA Generic usa shell/header operacional ADA | CURRENT |
 | Manager ≠ ADA operational shell | CURRENT |
-| Blob será Source durable productivo en dominios migrados | DECIDED DIRECTION |
-| Local y Blob deben compartir semántica Source | DECIDED DIRECTION |
-| Releases Source son snapshots completos/inmutables | DECIDED DIRECTION |
-| Blob Versioning no es historial funcional | DECIDED DIRECTION |
-| Draft no crea Source release | DECIDED DIRECTION |
-| Restore histórico crea release nuevo | DECIDED DIRECTION |
-| Backend conserva garantía autoritativa de concurrencia | CURRENT DIRECTION |
-| Projection identifica `source_release_id` concreto | DECIDED DIRECTION |
+| Source genérico pertenece a `web/capabilities/source` | CURRENT |
+| Blob será Source durable productivo en dominios migrados | DECIDED / NEXT |
+| Local y Blob deben compartir semántica Source | FROZEN |
+| Releases Source son publicaciones completas e inmutables | FROZEN |
+| `release_id` identifica publicación y no equivale a `content_hash` | FROZEN |
+| Dos releases pueden compartir `content_hash` | FROZEN |
+| `manifest.json` es el único commit point de publicación | FROZEN |
+| Draft no crea Source release | CURRENT |
+| Restore histórico crea release nuevo | FROZEN |
+| Restore nunca repunta current directamente a un release histórico | FROZEN |
+| `previous_published_release` y `basis_release` son conceptos distintos | FROZEN |
+| `ConcurrencyToken` es opaco para consumidores | FROZEN |
+| El provider Source aplica la precondición autoritativa de concurrencia | FROZEN |
+| No existe bypass `force=True` de concurrencia | FROZEN |
+| History funcional sigue sólo la cadena de publicaciones alcanzable desde current | FROZEN |
+| Un candidato que pierde CAS es orphan y no History | FROZEN |
+| SourceStore publica cuando se le ordena; el no-op por mismo hash pertenece al consumidor | FROZEN |
+| Projection identifica `source_release_id` concreto | DECIDED / NOT YET IMPLEMENTED |
+| Projection failure no revierte Source | FROZEN |
+| Cosmos nunca determina Source current | FROZEN |
 | Tool Configuration determina existencia estructural | FROZEN |
 | Data determina estado | FROZEN |
 | Component = Store + Collector contract + KPI destination | FROZEN |
@@ -34,23 +49,43 @@ Estado: **CANDIDATE V2**
 | Alarm B.2 I2 `LATEST SAVED = LATEST VALID` | DECISION RECORDED |
 | R3.5 Alarm final qualification | CLOSED PASS/GREEN |
 
+## Source checkpoint
+
+```text
+SOURCE-1A.1
+Core + Local
+CLOSED / VERIFIED
+```
+
+Implementación actual:
+
+```text
+web/capabilities/source/core
+web/capabilities/source/local
+```
+
+Blob es el siguiente provider.
+
+No modificar `connectivity/storage` salvo que el provider Blob demuestre una carencia técnica real del contrato de conectividad.
+
 ## SharePoint
 
-SharePoint aparece en contratos históricos de Manager/Alarm.
+SharePoint aparece en contratos históricos de Manager/Alarm y en adapters Source legacy.
 
-No borrar sus documentos.
+No retirar todavía esos adapters.
 
 Clasificar:
 - semántica reusable → conservar;
-- storage binding SharePoint → candidato a superseded al cerrar Blob parity;
+- storage binding SharePoint → candidato a `SUPERSEDED` tras Blob parity;
 - Power Automate Source pipeline → objetivo de retiro posterior a validación.
+
+Cuando una migración autorice retiro, el incremento debe enumerar rutas exactas a borrar y validar gates después de la eliminación.
 
 ## Entrega
 
-La nueva prioridad es integración vertical hacia un entregable usable.
+La prioridad es integración vertical hacia un entregable usable.
 
 No optimizar roadmap por orden histórico de incrementos si existe un camino más corto y defendible al primer producto integrado.
-
 
 ## ADA Command Center
 
