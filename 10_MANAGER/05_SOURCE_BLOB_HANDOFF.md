@@ -1,34 +1,79 @@
 # Manager — Source Blob Handoff
 
-Estado: **DECIDED DIRECTION / NOT YET IMPLEMENTED**
+Estado: **SOURCE IMPLEMENTED / CONSUMER MIGRATION IN PROGRESS**
 
-Fuente:
+Fuente histórica:
 `Atlanticus_ADA_Upgrade_Source_Blob_Trabajo_Pendiente.docx`
 (10-09-2026)
 
 ## Cambio
 
-Source productivo objetivo:
+Source productivo disponible:
 
-`SharePoint -> Azure Blob Storage`
+```text
+Azure Blob Storage
+```
 
-Local sigue siendo equivalente de desarrollo/QA.
+Local conserva semántica equivalente de desarrollo/QA.
 
-Projection sigue siendo:
+Projection genérica usa handoff exact-release y cada dominio puede implementar:
 - Cosmos DB;
 - Local.
 
-Power Automate sale del pipeline de persistencia/publicación de este Source.
+Navigation ya implementa ambos stores concretos.
+
+SharePoint y Power Automate permanecen únicamente donde todavía existen consumidores legacy.
+Su retiro se realiza durante la migración del consumidor correspondiente, no como eliminación global anticipada.
+
+## Estado Source
+
+Implementado y validado:
+
+```text
+Source Core
+Local Source
+Blob Source
+Projection exact-release Core
+```
+
+Source Core cubre:
+- release identity;
+- release granularity;
+- functional manifest;
+- `SourceStore`;
+- concurrencia/current;
+- History;
+- exact release reads;
+- integrity verification.
+
+Blob cubre:
+- manifest como commit point;
+- create-only en first publish;
+- conditional write por ETag;
+- `ConcurrencyToken` público opaco e independiente del ETag;
+- releases inmutables;
+- orphan candidates fuera de History;
+- recovery ante ACK ambiguo;
+- restart e integridad.
 
 ## Historial
 
-Cada publicación efectiva genera una versión lógica Atlanticus.
-
-Cada versión:
+Cada publicación Source es:
 - snapshot completo;
 - autocontenida;
 - inmutable;
-- no depende de delta previo.
+- independiente de deltas previos.
+
+`SourceReleaseId` identifica la publicación.
+
+No equivale a `content_hash`.
+
+Por tanto es válido:
+
+```text
+R1(content_hash = X)
+R2(content_hash = X)
+```
 
 Blob Versioning NO es historial funcional.
 
@@ -39,46 +84,99 @@ Puede existir sólo como protección de infraestructura.
 Restaurar V1 no modifica V1 ni elimina versiones posteriores.
 
 Ejemplo:
-
 - current = V2;
 - usuario toma V1 como base;
 - publica;
 - se crea V3;
 - V1/V2 permanecen intactas.
 
+Restore crea una publicación nueva.
+Nunca repunta directamente current hacia una release histórica.
+
 ## No-op publish
 
-Si workspace y current son funcionalmente equivalentes:
-- no crear nueva versión sólo por presionar guardar.
+La formulación histórica de no crear una versión cuando workspace y current son equivalentes queda refinada.
 
-La comparación puede apoyarse en content/manifest hash.
+Contrato vigente:
+
+```text
+SourceStore.publish(PublishRequest válido)
+→ crea una publicación Source nueva
+```
+
+Si un consumidor desea que una acción de UI sea no-op por equivalencia funcional, debe comparar antes de invocar `publish`.
+
+El no-op por mismo contenido no pertenece al Source provider.
 
 ## Concurrencia
 
-Frontend conserva detección y UX.
+Frontend:
+- puede detectar y explicar conflicto;
+- deja la decisión humana.
 
-Backend debe garantizar ausencia de overwrite silencioso.
+Backend:
+- aplica la precondición autoritativa mediante `ConcurrencyToken`.
 
-En Blob, ETag / conditional write es mecanismo natural candidato.
+No existe `force=True`.
+
+En un overwrite autorizado:
+- `basis_release` conserva la base original del trabajo;
+- el consumidor relee Source current;
+- usa el `ConcurrencyToken` fresco;
+- el provider Source sigue aplicando CAS.
+
+ETag es un detalle técnico interno del provider Blob y no el contrato público del consumidor.
 
 ## Source -> Projection
 
-Projection debe ejecutar un `source_release_id` concreto.
+Projection ejecuta un target exacto:
 
-Nunca depender de un `latest` mutable durante la operación.
+```text
+ProjectionTarget =
+    SourceKey
+    +
+    SourceReleaseRef
+```
 
-Projection debe poder declarar qué release representa.
+`project(target)`:
+- resuelve la release exacta mediante `read_release`;
+- no consulta Source current durante la operación;
+- persiste provenance con `source_release_id`.
 
-## Pendiente contractual antes de implementar
+Source puede avanzar mientras se proyecta una release anterior.
+La proyección seleccionada sigue siendo válida y puede quedar `OUTDATED` al comparar después.
 
-- Release identity.
-- Release granularity.
-- Functional manifest.
-- Physical layout.
-- `SourceStore` contract.
-- Backend concurrency preconditions.
-- History/compare contract.
-- Projection metadata.
-- Retention requirements.
+Un fallo de Projection:
+- no revierte Source;
+- no reemplaza el último active projection exitoso.
 
-No implementar Blob Source antes de congelar estas fronteras.
+Retry conserva el mismo target sin republicar Source.
+
+## Navigation checkpoint
+
+Navigation Configuration ya implementa:
+- Source codec/service sobre Source Core;
+- History real de Source;
+- exact release reads;
+- Projection builder;
+- ProjectionStore Local;
+- ProjectionStore Cosmos;
+- runtime consumiendo ProjectionStore canónico.
+
+Permanece bloqueado:
+- consumer administrativo Manager;
+- eliminación de Source/Projection legacy Navigation.
+
+Razón:
+el coordinator Manager y `NavigationManagerWorkflowAdapter` productivos todavía usan `source_revision: str`.
+
+No crear adaptadores string/release temporales para ocultar este bloqueo.
+
+## Pendiente
+
+Fuera del Source Core ya cerrado:
+- retention/cleanup policy;
+- migración de consumidores restantes;
+- Manager root canonical cutover;
+- retiro efectivo de SharePoint/Power Automate donde deje de existir consumidor;
+- eliminación de adapters legacy de dominio sólo después de validar consumidores.

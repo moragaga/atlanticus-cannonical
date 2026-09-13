@@ -39,6 +39,16 @@ Estado: **CURRENT**
 | Projection failure no revierte Source | FROZEN |
 | Retry de Projection conserva el mismo target sin republish de Source | FROZEN / IMPLEMENTED + VALIDATED |
 | Cosmos nunca determina Source current | FROZEN |
+| Navigation Source usa Source Core; no reimplementa history/release/CAS | CURRENT / IMPLEMENTED + VALIDATED |
+| Navigation Projection Local/Cosmos implementan `ProjectionStore[NavigationConfigurationCatalog]` | CURRENT / IMPLEMENTED + VALIDATED |
+| Navigation runtime consume `ProjectionStore[NavigationConfigurationCatalog] + SourceKey` | CURRENT / IMPLEMENTED + VALIDATED |
+| No crear shim `SourceReleaseId <-> str` para completar la migración Manager | FROZEN |
+| No crear un segundo Manager coordinator canónico paralelo | FROZEN |
+| Manager browser WORKSPACE persistirá en IndexedDB | DECIDED / NOT YET IMPLEMENTED |
+| Manager active workspace en Dash usa `dcc.Store(memory)` | DECIDED / NOT YET IMPLEMENTED |
+| IndexedDB no es Source authority | FROZEN |
+| Profiles debe funcionar sin Access | FROZEN DIRECTION |
+| ADA Access puede consumir/extender Profiles; Profiles no depende de ADA Access | FROZEN DIRECTION |
 | Tool Configuration determina existencia estructural | FROZEN |
 | Data determina estado | FROZEN |
 | Component = Store + Collector contract + KPI destination | FROZEN |
@@ -58,20 +68,27 @@ Estado: **CURRENT**
 ## Source / Projection checkpoint
 
 ```text
-SOURCE-1A.1  Core + Local            CLOSED / VERIFIED
-SOURCE-1A.2  Blob                    CLOSED / VERIFIED
-Projection   Exact-release Core      CLOSED / VERIFIED
-Manager      BASE/SOURCE/WORKSPACE/
-             PROJECTION              NEXT
+SOURCE-1A.1                 Core + Local                     CLOSED / VERIFIED
+SOURCE-1A.2                 Blob                             CLOSED / VERIFIED
+Projection                  Exact-release Core               CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-1     Source contracts                 CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-2     Local/Cosmos Projection stores   CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-A    Runtime consumer                 CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-B    Administrative consumer          BLOCKED
+Manager                     Root canonical cutover           BLOCKED / IN PROGRESS
+Next                         Users / Profiles boundary        PLANNED
 ```
 
-Implementación actual:
+Implementación actual relevante:
 
 ```text
 web/capabilities/source/core
 web/capabilities/source/local
 web/capabilities/source/blob
 web/capabilities/projection/core
+web/capabilities/navigation/configuration
+web/capabilities/manager
+scopes/ada/web/application/ada-configuration-manager
 ```
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
@@ -84,12 +101,84 @@ Projection Core:
 - permite retry del mismo target sin republish;
 - separa alignment durable (`NEVER_PROJECTED / CURRENT / OUTDATED`) del outcome del intento (`SUCCESS / FAILED`).
 
+Navigation:
+- publica recursos de configuración mediante `SourceStore`;
+- History proviene de Source y no de un contenedor histórico de dominio;
+- mismo contenido puede republicarse como una release distinta;
+- implementa Projection stores concretos Local/Cosmos;
+- runtime usa el `ProjectionStore` canónico;
+- administración sigue bloqueada por el contrato productivo legacy de Manager.
+
+Manager:
+- `workspace.py` ya modela BASE/SOURCE/WORKSPACE/PROJECTION con `SourceSnapshot`, `ConcurrencyToken`, `basis_release` y `ProjectionTarget`;
+- coordinator/workflows productivos siguen usando `source_revision: str`;
+- el cutover de raíz no debe introducir adapters temporales ni coordinators paralelos.
+
 No se consideran cerrados por este hito:
-- providers Projection Local/Cosmos concretos por dominio;
+- otros providers Projection Local/Cosmos concretos por dominio;
 - orchestration multi-capability;
 - derived resolutions;
 - idempotencia provider/domain-level de reprojection;
-- migración de consumidores.
+- Manager root productive cutover;
+- Navigation administrative consumer migration;
+- Navigation legacy deletion;
+- Users/Profiles/Access boundary audit.
+
+## Refinamiento de no-op publish
+
+La formulación histórica “workspace funcionalmente equivalente a current => no crear versión” queda refinada.
+
+Contrato vigente:
+
+```text
+SourceStore.publish(PublishRequest válido)
+→ crea una publicación Source
+
+no-op por equivalencia funcional
+→ decisión del consumidor antes de invocar publish
+```
+
+`SourceReleaseId` identifica publicación y no contenido.
+Dos publicaciones con el mismo `content_hash` siguen siendo releases distintas.
+
+## Manager browser WORKSPACE
+
+Dirección congelada:
+
+```text
+dcc.Store(memory)   = estado activo de sesión
+IndexedDB           = persistencia browser del WORKSPACE
+SourceStore / Blob  = autoridad durable publicada
+ProjectionStore     = proyección activa durable
+```
+
+IndexedDB:
+- no es autoridad;
+- no sustituye Source;
+- no requiere gzip/base64 inicialmente;
+- se integra mediante JavaScript dedicado + `clientside_callback`;
+- su pérdida sólo puede afectar trabajo no publicado.
+
+Implementación: `PLANNED`.
+
+## Users / Profiles / Access
+
+Dirección congelada para el siguiente frente:
+
+```text
+Profiles MUST NOT require Access.
+Access MAY consume/extend Profiles.
+```
+
+Profiles es capability genérica Atlanticus.
+ADA Access es una extensión/consumer específica de ADA.
+
+No incorporar permisos específicos de ADA dentro del Profile genérico.
+
+Antes de cerrar la frontera física se debe auditar:
+- implementación actual Users/Profile;
+- consumidores reales;
+- `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`.
 
 ## SharePoint
 
@@ -125,6 +214,8 @@ No optimizar roadmap por orden histórico de incrementos si existe un camino má
 ## Web Platform / Deployment
 
 - Users/Profile, Navigation y User Activity deben poder instalarse independientemente: `CURRENT DIRECTION`.
+- Profiles debe poder operar sin ADA Access: `FROZEN DIRECTION`.
+- ADA Access puede consumir/extender Profiles mediante composición ADA: `FROZEN DIRECTION`.
 - Cross-capability binding pertenece a composition/adapters: `CURRENT DIRECTION`.
 - ADA Manager Users→Navigation direct coupling debe retirarse: `IDENTIFIED GAP`.
 - User Activity debe conservar historia ordenada por página/visita: `CURRENT DIRECTION`.

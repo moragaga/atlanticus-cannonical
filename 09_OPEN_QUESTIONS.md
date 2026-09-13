@@ -77,3 +77,29 @@ Cerrados por `SOURCE-1A.1` / `SOURCE-1A.2`:
 35. implement approved ADA loader;
 36. Manager loader;
 37. Command Center loader when its Web design closes.
+
+## Navigation / Manager Source migration
+
+Cerrados:
+- Navigation canonical Source backend contracts;
+- Navigation ProjectionStore Local/Cosmos;
+- Navigation runtime consumer sobre ProjectionStore canónico.
+
+38. migrar el contrato productivo raíz de Manager desde `source_revision: str` a BASE/SOURCE/WORKSPACE/PROJECTION canónico;
+39. migrar `NavigationManagerWorkflowAdapter` y el flujo administrativo Navigation al contrato Manager canónico;
+40. después de validar todos los consumidores, eliminar Source/Projection legacy de Navigation y sus adapters históricos;
+41. implementar persistencia browser de Manager WORKSPACE con IndexedDB + `dcc.Store(memory)`;
+42. retirar SharePoint/Power Automate del pipeline Source sólo cuando las rutas consumidoras correspondientes hayan migrado.
+
+## Users / Profiles / Access
+
+Dirección ya decidida:
+
+```text
+Profiles MUST NOT require Access.
+Access MAY consume/extend Profiles.
+```
+
+43. auditar implementación actual de Users/Profile y consumidores;
+44. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
+45. congelar la frontera física Users / Profiles / ADA Access antes de iniciar la migración Source/Projection de Users.

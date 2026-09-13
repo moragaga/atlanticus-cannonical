@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@5b383a3ff4dcbb2cc15f55df4819ebf9e61e63b4`.
+Corte de implementación: `moragaga/atlanticus@19eae42574d691a1e3278e4e250849ef9452e9f5`.
 
 ## Estado implementado
 
@@ -123,8 +123,72 @@ El provider Blob tiene pruebas deterministas y 7 pruebas de integración Azurite
 
 Projection Handoff quedó GREEN en el workspace real:
 - 15 tests de Projection;
-- suite Web global: 327 passed, 7 skipped;
+- suite Web global del checkpoint Projection: 327 passed, 7 skipped;
 - Ruff/format de `capabilities/projection/core` GREEN.
+
+### Navigation Configuration — Source / Projection
+
+Package actual:
+
+```text
+atlanticus-web-navigation-configuration==0.1.8
+```
+
+Estado:
+
+```text
+NAV-SOURCE-PROJECTION-1   Canonical Source backend contracts   CLOSED / VERIFIED / CURRENT
+NAV-SOURCE-PROJECTION-2   ProjectionStore Local + Cosmos       CLOSED / VERIFIED / CURRENT
+NAV-CONSUMER-MIGRATION-A  Runtime canonical consumer           CLOSED / VERIFIED / CURRENT
+NAV-CONSUMER-MIGRATION-B  Administrative consumer              BLOCKED
+Navigation legacy delete                                      BLOCKED
+```
+
+Navigation implementa una ruta Source canónica:
+- `NavigationSourceCodec` serializa una release de configuración como recurso Source;
+- `NavigationSourceService` usa `SourceStore`;
+- publicación usa `PublishRequest`, `ConcurrencyToken` y `basis_release`;
+- History se obtiene desde `SourceStore.query_history`;
+- lectura histórica usa `SourceReleaseRef` exacto;
+- dos publicaciones pueden compartir contenido/hash y conservar identidades de release distintas;
+- `NavigationProjectionBuilder` construye el payload de dominio desde la release exacta.
+
+Navigation implementa stores concretos:
+- `LocalNavigationProjectionStore`;
+- `CosmosNavigationProjectionStore`.
+
+Ambos implementan `ProjectionStore[NavigationConfigurationCatalog]` y conservan un active projection por `SourceKey`.
+
+El runtime Navigation migrado consume directamente:
+
+```text
+ProjectionStore[NavigationConfigurationCatalog]
++ SourceKey
+```
+
+y ya no depende del `NavigationProjectionRepository` legacy.
+
+Gates del último incremento en workspace real:
+- runtime Navigation: 7/7;
+- Navigation Configuration: 49/49;
+- Ruff GREEN;
+- format GREEN;
+- `git diff --check` GREEN;
+- suite Web global GREEN con 7 skips conocidos.
+
+La administración Navigation todavía depende del contrato Manager productivo legacy basado en `source_revision: str`.
+`NavigationManagerWorkflowAdapter` consume `NavigationConfigurationServices.administration` y `.projection_workflow`.
+
+Por esta razón no se eliminan todavía:
+- `NavigationConfigurationSource`;
+- `NavigationConfigurationPublisher`;
+- `NavigationProjectionRepository`;
+- `NavigationConfigurationSourceDocument`;
+- `NavigationAdministrationService`;
+- `NavigationProjectionWorkflow`;
+- adapters Source/Projection legacy.
+
+No introducir shim `SourceReleaseId <-> str` ni un segundo coordinator Manager paralelo sólo para completar esta migración.
 
 ### ADA
 
@@ -156,6 +220,26 @@ Módulos actualmente integrados:
 Manager posee Home/navegación/header administrativo propio.
 
 No confundir con ADA operational header.
+
+Manager ya contiene contratos canónicos iniciales para BASE/SOURCE/WORKSPACE/PROJECTION en `workspace.py`:
+- `ManagerWorkspace`;
+- `ManagerSourceVerification`;
+- `ManagerPublicationContext`;
+- `SourceSnapshot`;
+- `ConcurrencyToken`;
+- `SourceReleaseRef`;
+- `ProjectionTarget`.
+
+Estado:
+
+```text
+Manager canonical workspace/source contracts   CURRENT
+Manager productive coordinator cutover         BLOCKED / IN PROGRESS
+Manager IndexedDB workspace persistence        PLANNED
+```
+
+El coordinator productivo y sus workflows continúan usando `source_revision: str`.
+El cutover de raíz debe reemplazar esa semántica cuando los consumidores necesarios estén preparados; no crear compatibilidad paralela temporal.
 
 ### Alarm Engine
 
@@ -192,14 +276,58 @@ Estado actual:
 - Blob provider: `IMPLEMENTED + VALIDATED`;
 - Projection exact-release Core: `IMPLEMENTED + VALIDATED`;
 - `source_release_id` en Projection Core: `IMPLEMENTED + VALIDATED`;
-- Projection Local/Cosmos concreto por dominio: `PLANNED`;
-- Manager BASE/SOURCE/WORKSPACE/PROJECTION + history/compare/conflict: `PLANNED`.
+- Projection Local/Cosmos concreto para Navigation: `IMPLEMENTED + VALIDATED`;
+- otros providers Projection concretos por dominio: `PLANNED`;
+- Manager BASE/SOURCE/WORKSPACE/PROJECTION contracts: `IMPLEMENTED`;
+- Manager productive workflow/callback cutover: `BLOCKED / IN PROGRESS`.
 
 Blob parity y recovery ya están validados.
 
 SharePoint + Power Automate siguen destinados a salir del pipeline Source migrado, pero el retiro pertenece al incremento de migración de consumidores.
 
-No borrar aún los adapters Source legacy de Navigation Configuration sin enumerar las rutas exactas y validar que sus consumidores ya migraron.
+No borrar aún los adapters Source legacy de Navigation Configuration: su consumidor administrativo Manager todavía no ha migrado.
+
+### Manager browser workspace
+
+Dirección decidida:
+
+```text
+dcc.Store(memory)   = estado activo de sesión
+IndexedDB           = persistencia browser del WORKSPACE
+SourceStore / Blob  = autoridad durable publicada
+ProjectionStore     = proyección activa durable
+```
+
+IndexedDB:
+- no es autoridad;
+- no sustituye Source;
+- no usa inicialmente gzip/base64;
+- debe integrarse mediante JavaScript dedicado + `clientside_callback`;
+- perder IndexedDB sólo puede perder trabajo no publicado.
+
+Estado:
+`DECIDED / NOT YET IMPLEMENTED`.
+
+### Users / Profiles / Access
+
+Dirección decidida para el siguiente frente:
+
+```text
+Profiles MUST NOT require Access.
+Access MAY consume/extend Profiles.
+```
+
+Profiles pertenece a Atlanticus y debe poder instalarse y operar sin Access.
+
+Access es específico de ADA y puede consumir/extender Profiles.
+La dependencia `Profiles -> ADA Access` está prohibida.
+
+La implementación actual y la decisión histórica
+`Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
+deben auditarse antes de congelar el contrato físico final.
+
+Estado:
+`DECIDED DIRECTION / NOT YET AUDITED`.
 
 ### Collector
 
@@ -265,6 +393,9 @@ que enlaza capabilities sin acoplar sus cores.
 
 Gap actual:
 ADA Manager obtiene Navigation profile options directamente desde Users.
+
+La frontera Users/Profiles debe preservar independencia de Access.
+ADA Access puede consumir Profiles mediante composición/extensión ADA, sin convertir Access en dependencia de Atlanticus Profiles.
 
 ### User Activity
 
@@ -362,9 +493,13 @@ El foco está en productización vertical, no en expansión arquitectónica gene
 ## Checkpoint Source / Projection
 
 ```text
-SOURCE-1A.1       CORE + LOCAL          CLOSED / VERIFIED
-SOURCE-1A.2       BLOB                  CLOSED / VERIFIED
-PROJECTION        EXACT-RELEASE CORE    CLOSED / VERIFIED
-MANAGER           BASE/SOURCE/
-                  WORKSPACE/PROJECTION  NEXT
+SOURCE-1A.1                 CORE + LOCAL                     CLOSED / VERIFIED
+SOURCE-1A.2                 BLOB                             CLOSED / VERIFIED
+PROJECTION                  EXACT-RELEASE CORE               CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-1     SOURCE CONTRACTS                 CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-2     LOCAL/COSMOS PROJECTION STORES   CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-A    RUNTIME                          CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-B    ADMIN / MANAGER                  BLOCKED
+MANAGER                     ROOT CONTRACT CUTOVER            BLOCKED / IN PROGRESS
+NEXT                         USERS-PROFILES-BOUNDARY          PLANNED
 ```
