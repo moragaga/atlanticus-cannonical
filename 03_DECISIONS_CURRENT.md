@@ -10,6 +10,20 @@ Estado: **CURRENT**
 | `backend/` representa backend jobs; no todo Python server-side | CURRENT |
 | Server-side Python con responsabilidad Web pertenece a `web/` | CURRENT |
 | Connectivity es dual-use y no adquiere ownership funcional | CURRENT |
+| Web Storage Topology pertenece a `web/capabilities/storage/topology` | CURRENT / IMPLEMENTED + VALIDATED |
+| `StorageResourceContract` es neutral: sin secretos, SDK clients ni I/O | FROZEN / IMPLEMENTED + VALIDATED |
+| V1 sólo contempla overrides genéricos `connection_ref` y `physical_name`, sujetos a autorización de la capability | FROZEN / IMPLEMENTED + VALIDATED |
+| owner/provider/topology no son overrides de composición en V1 | FROZEN / IMPLEMENTED + VALIDATED |
+| Declaraciones idénticas del mismo `logical_id` deduplican; incompatibles fallan | FROZEN / IMPLEMENTED + VALIDATED |
+| Override desconocido/prohibido y connection binding faltante fallan antes del provider | FROZEN / IMPLEMENTED + VALIDATED |
+| Dos logical resources no pueden resolver al mismo `(provider, connection_ref, physical_name)` | FROZEN / IMPLEMENTED + VALIDATED |
+| `CosmosContainerTopology` contiene partition key + TTL, no physical name | FROZEN / IMPLEMENTED + VALIDATED |
+| `CosmosContainerSpec` permanece primitive de Connectivity; Web no depende del SDK/provider físico para declarar topology | CURRENT |
+| `users.runtime` es el único recurso durable confirmado de Users | FROZEN / IMPLEMENTED + VALIDATED |
+| `users.runtime` usa Cosmos, physical name `users-runtime`, partition `/id`, TTL `None` | FROZEN / IMPLEMENTED + VALIDATED |
+| Users requiere `connection_ref` de composición y sólo permite ese override | FROZEN / IMPLEMENTED + VALIDATED |
+| Pending y Managed comparten `users.runtime`; no se separan físicamente sin requisito independiente | FROZEN / IMPLEMENTED + VALIDATED |
+| Datos durables de Users no deben expirar automáticamente por Cosmos TTL | FROZEN / IMPLEMENTED + VALIDATED |
 | Manager posee shell/header administrativo propio | CURRENT |
 | ADA Generic usa shell/header operacional ADA | CURRENT |
 | Manager ≠ ADA operational shell | CURRENT |
@@ -65,7 +79,7 @@ Estado: **CURRENT**
 | Alarm B.2 I2 `LATEST SAVED = LATEST VALID` | DECISION RECORDED |
 | R3.5 Alarm final qualification | CLOSED PASS/GREEN |
 
-## Source / Projection checkpoint
+## Source / Projection / Resource Preparation checkpoint
 
 ```text
 SOURCE-1A.1                 Core + Local                     CLOSED / VERIFIED
@@ -76,12 +90,16 @@ NAV-SOURCE-PROJECTION-2     Local/Cosmos Projection stores   CLOSED / VERIFIED
 NAV-CONSUMER-MIGRATION-A    Runtime consumer                 CLOSED / VERIFIED
 NAV-CONSUMER-MIGRATION-B    Administrative consumer          BLOCKED
 Manager                     Root canonical cutover           BLOCKED / IN PROGRESS
-Next                         Users / Profiles boundary        PLANNED
+WEB-STORAGE-TOPOLOGY        Resource contracts               CLOSED / VERIFIED
+USERS-STORAGE-TOPOLOGY      users.runtime                    CLOSED / VERIFIED
+Next                         STORAGE-PREFLIGHT-COSMOS-BRIDGE   PLANNED
 ```
 
 Implementación actual relevante:
 
 ```text
+web/capabilities/storage/topology
+web/capabilities/users/core
 web/capabilities/source/core
 web/capabilities/source/local
 web/capabilities/source/blob
@@ -90,6 +108,19 @@ web/capabilities/navigation/configuration
 web/capabilities/manager
 scopes/ada/web/application/ada-configuration-manager
 ```
+
+Storage Topology:
+- declara recursos físicos sin secretos ni clientes provider;
+- resuelve bindings y conflictos antes del provider;
+- expone `CosmosContainerTopology` sin acoplar las capabilities Web a `connectivity/cosmos`;
+- deja el bridge provider-specific como siguiente frontera independiente.
+
+Users Storage Topology:
+- declara un único `users.runtime`;
+- usa `users-runtime`, `/id`, `TTL=None`;
+- exige `connection_ref` de composición;
+- prohíbe override del nombre físico;
+- no separa Pending y Managed en containers distintos.
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
@@ -115,6 +146,9 @@ Manager:
 - el cutover de raíz no debe introducir adapters temporales ni coordinators paralelos.
 
 No se consideran cerrados por este hito:
+- `STORAGE-PREFLIGHT-COSMOS-BRIDGE`;
+- `COSMOS-USERS-RUNTIME-ADAPTER`;
+- provisioning real de `users-runtime`;
 - otros providers Projection Local/Cosmos concretos por dominio;
 - orchestration multi-capability;
 - derived resolutions;
@@ -122,7 +156,7 @@ No se consideran cerrados por este hito:
 - Manager root productive cutover;
 - Navigation administrative consumer migration;
 - Navigation legacy deletion;
-- Users/Profiles/Access boundary audit.
+- Users/Profiles/Access boundary audit completa.
 
 ## Refinamiento de no-op publish
 
@@ -163,7 +197,7 @@ Implementación: `PLANNED`.
 
 ## Users / Profiles / Access
 
-Dirección congelada para el siguiente frente:
+Dirección congelada:
 
 ```text
 Profiles MUST NOT require Access.
@@ -175,8 +209,12 @@ ADA Access es una extensión/consumer específica de ADA.
 
 No incorporar permisos específicos de ADA dentro del Profile genérico.
 
-Antes de cerrar la frontera física se debe auditar:
-- implementación actual Users/Profile;
+El sub-hito `USERS-STORAGE-TOPOLOGY` está `CLOSED / VERIFIED` y congela únicamente la persistencia lógica de `users.runtime`.
+
+No implica cierre de la frontera completa Users / Profiles / ADA Access.
+
+Antes de cerrar esa frontera completa todavía se debe auditar:
+- implementación actual Users/Profile restante;
 - consumidores reales;
 - `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`.
 

@@ -13,9 +13,30 @@ Estos puntos no bloquean el cierre del bootstrap. Se resuelven durante ejecució
 
 ## Resources
 
+Cerrados para Users:
+
+```text
+WEB-STORAGE-TOPOLOGY    CLOSED / VERIFIED
+USERS-STORAGE-TOPOLOGY  CLOSED / VERIFIED
+```
+
+`users.runtime` queda confirmado como:
+- provider Cosmos;
+- physical name `users-runtime`;
+- partition key `/id`;
+- TTL `None`;
+- connection binding provisto por composición.
+
+Continúan OPEN:
+
 5. complete resource/container inventory after tracing Operaciones Integradas;
 6. Storage provisioning parity;
-7. cloud permissions for application resource creation.
+7. cloud permissions for application resource creation;
+8. implementar y validar `STORAGE-PREFLIGHT-COSMOS-BRIDGE` entre el plan resuelto Web y `CosmosContainerSpec` / `CosmosProvisioner`;
+9. validar provisioning/validation real de `users.runtime` en los entornos que correspondan;
+10. implementar `COSMOS-USERS-RUNTIME-ADAPTER` para `UsersRuntimeStore` y `PendingUsersReader`.
+
+El cierre de `users.runtime` no congela la inventory global de recursos.
 
 ## Source / Blob
 
@@ -100,6 +121,16 @@ Profiles MUST NOT require Access.
 Access MAY consume/extend Profiles.
 ```
 
-43. auditar implementación actual de Users/Profile y consumidores;
+Cerrado dentro de esta frontera:
+- storage topology de `users.runtime`;
+- un único recurso durable para Pending + Managed;
+- partition `/id`;
+- TTL `None`;
+- connection binding por composición;
+- sin dependencia de ADA Access.
+
+Continúa OPEN la frontera completa Users / Profiles / ADA Access:
+
+43. auditar implementación actual restante de Users/Profile y consumidores, sin reabrir el contrato cerrado de `users.runtime` salvo conflicto autoritativo explícito;
 44. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
-45. congelar la frontera física Users / Profiles / ADA Access antes de iniciar la migración Source/Projection de Users.
+45. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes.

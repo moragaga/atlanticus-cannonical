@@ -14,6 +14,37 @@ No reinterpretar un `FAIL` histórico como fallo vigente sin revisar si fue:
 - problema de reloj/routing/test;
 - ejecución abortada/no adjudicada.
 
+## Web Storage Topology / Users Storage Topology
+
+Checkpoint de implementación:
+
+`moragaga/atlanticus@d7b5e53b30012b0043f17c8a1e98c0ce03325bb2`
+
+Evidencia ejecutada en el workspace Web real:
+
+- `WEB-STORAGE-TOPOLOGY`: 19 tests focalizados PASS/GREEN.
+- Storage Topology + Users Storage: 39 tests focalizados PASS/GREEN.
+- suite Web global: PASS/GREEN con 7 skips conocidos.
+- Ruff check del alcance: PASS/GREEN.
+- Ruff format check del alcance: PASS/GREEN.
+- `uv lock`: PASS/GREEN.
+- import público de Storage Topology: PASS/GREEN.
+- `git diff --check`: PASS/GREEN.
+
+Propiedades validadas:
+- resolver inmutable y determinista;
+- dedupe de declaraciones idénticas;
+- rechazo de declaraciones incompatibles;
+- rechazo de overrides desconocidos/prohibidos;
+- connection binding obligatorio antes del provider;
+- rechazo de colisión física;
+- `CosmosContainerTopology` inmutable y con validación de partition key/TTL;
+- `users.runtime` único, durable, partition `/id`, TTL `None`;
+- Users permite override de conexión y prohíbe override de physical name;
+- espejo comentado equivalente al código productivo en el nuevo alcance.
+
+El cambio accidental de formato detectado fuera del alcance en `users/store.py` fue restaurado antes del cierre y no forma parte del checkpoint.
+
 ## Alarm Engine
 
 La campaña R3.5 llegó a cierre final `PASS/GREEN`.

@@ -195,6 +195,63 @@ No introducir dependencia funcional directa sólo porque una aplicación use amb
 
 El dashboard puede agregarlas como consumidor/read model.
 
+## Web Storage Resource Topology
+
+Los requisitos de recursos físicos de una capability Web se declaran en una capa neutral bajo Web; no convierten Connectivity en owner funcional.
+
+La cadena arquitectónica vigente es:
+
+```text
+Capability resource declaration
+        ↓
+StorageResourceContract[TTopology]
+        ↓
+resolve_storage_plan(...)
+        ↓
+ResolvedStorageResource[TTopology]
+        ↓
+provider bridge
+        ↓
+Connectivity provider primitive
+        ↓
+provision / validate
+```
+
+Responsabilidades:
+- la capability declara qué recurso necesita y sus invariantes;
+- composición enlaza conexiones permitidas;
+- Storage Topology resuelve conflictos y bindings sin I/O;
+- el bridge traduce una topology resuelta al primitive técnico del provider;
+- Connectivity crea/valida el recurso físico.
+
+`StorageResourceContract` no contiene secretos, SDK clients ni I/O.
+
+V1 admite overrides genéricos únicamente para:
+- `connection_ref`;
+- `physical_name` cuando la capability lo autoriza explícitamente.
+
+Owner, provider y topology no son overrides de composición en V1.
+
+Para Cosmos, Web usa `CosmosContainerTopology` con:
+- `partition_key_path`;
+- `default_ttl_seconds`.
+
+El container name no pertenece a `CosmosContainerTopology`; permanece en el contrato genérico como `default_physical_name`.
+
+`CosmosContainerSpec` permanece en Connectivity como primitive físico del provider. El bridge entre ambos contratos es una responsabilidad separada y no introduce Azure SDK ni secretos en las capabilities Web.
+
+Users confirma el primer recurso de este modelo:
+
+```text
+users.runtime
+→ cosmos
+→ users-runtime
+→ partition /id
+→ TTL None
+```
+
+Pending y Managed comparten el mismo recurso durable.
+
 ## Web as Startup Orchestrator
 
 La Web posee el lifecycle de preparación de aplicación:

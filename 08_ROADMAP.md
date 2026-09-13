@@ -39,6 +39,17 @@ En paralelo sólo los enablers que bloquean la vertical:
 - resource readiness;
 - Manager authorization sin bypass.
 
+Resource readiness tiene el siguiente checkpoint:
+
+```text
+WEB-STORAGE-TOPOLOGY        CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY      CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE   PLANNED / NEXT
+COSMOS-USERS-RUNTIME-ADAPTER      PLANNED
+```
+
+`STORAGE-PREFLIGHT-COSMOS-BRIDGE` debe permanecer separado del adapter durable de Users: primero se cierra la traducción/preflight genérica del plan de recursos; después se implementa el store Cosmos de Users.
+
 ## Backend productization
 
 Cerrar:
@@ -82,7 +93,9 @@ History read model
 
 ## Infrastructure inventory
 
-No congelar containers hasta disponer de traza completa de recursos usados por Operaciones Integradas y las capabilities asociadas.
+No congelar la inventory global de containers hasta disponer de traza completa de recursos usados por Operaciones Integradas y las capabilities asociadas.
+
+`users.runtime` sí queda confirmado individualmente y no implica que la inventory global esté cerrada.
 
 ## University
 

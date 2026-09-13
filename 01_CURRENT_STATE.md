@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@19eae42574d691a1e3278e4e250849ef9452e9f5`.
+Corte de implementación: `moragaga/atlanticus@d7b5e53b30012b0043f17c8a1e98c0ce03325bb2`.
 
 ## Estado implementado
 
@@ -43,6 +43,88 @@ Operational Data:
 - processes;
 - producers;
 - sources.
+
+### Web Storage Topology / Users Storage Topology
+
+Storage Topology está implementado como capability Web genérica en:
+
+```text
+web/capabilities/storage/topology
+```
+
+Package:
+
+```text
+atlanticus-web-storage-topology==0.1.0
+```
+
+Estado:
+
+```text
+WEB-STORAGE-TOPOLOGY    CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY  CLOSED / VERIFIED / CURRENT
+```
+
+El contrato genérico implementa:
+- `StorageResourceContract[TTopology]`;
+- `StorageResourceOverride`;
+- `ResolvedStorageResource[TTopology]`;
+- `ResolvedStoragePlan`;
+- `StorageResourceOverrideField`;
+- `resolve_storage_plan(...)`.
+
+El resolver es puro y provider-neutral:
+- no contiene secretos;
+- no contiene clientes provider;
+- no usa Azure SDK;
+- no realiza I/O;
+- deduplica declaraciones idénticas por `logical_id`;
+- rechaza declaraciones incompatibles con el mismo `logical_id`;
+- rechaza overrides desconocidos o no permitidos;
+- falla si falta un connection binding requerido;
+- rechaza dos `logical_id` que resuelvan al mismo `(provider, connection_ref, physical_name)`;
+- produce un plan inmutable y determinista.
+
+`CosmosContainerTopology` describe únicamente:
+- `partition_key_path`;
+- `default_ttl_seconds`.
+
+El nombre físico del container permanece en `StorageResourceContract`; Connectivity conserva la responsabilidad de materializar/validar el provider físico.
+
+Users declara un único recurso durable:
+
+```text
+logical_id              users.runtime
+owner                   users
+provider                cosmos
+default_connection_ref  None
+default_physical_name   users-runtime
+partition_key_path      /id
+default_ttl_seconds     None
+```
+
+`users.runtime` requiere que composición entregue `connection_ref`.
+Users permite override de `connection_ref`, pero no de `physical_name`, owner, provider ni topology.
+
+Pending y Managed comparten este recurso. No se crean `users.pending`, `users.managed`, `users.projection` ni `profiles.runtime` por defecto.
+
+Invariante durable:
+
+```text
+Users durable data MUST NOT be automatically deleted by Cosmos TTL.
+```
+
+Gates ejecutados en el workspace real:
+- 19 tests focalizados de Web Storage Topology GREEN;
+- 39 tests focalizados Storage Topology + Users Storage GREEN;
+- suite Web global GREEN con 7 skips conocidos;
+- Ruff GREEN;
+- format GREEN;
+- `uv lock` GREEN;
+- imports públicos GREEN;
+- `git diff --check` GREEN.
+
+El intento previo de ubicar este contrato en `backend/storage-topology` fue descartado antes de integrarse y queda `SUPERSEDED`.
 
 ### Web Source y Projection Handoff
 
@@ -310,7 +392,7 @@ Estado:
 
 ### Users / Profiles / Access
 
-Dirección decidida para el siguiente frente:
+Dirección decidida:
 
 ```text
 Profiles MUST NOT require Access.
@@ -322,12 +404,20 @@ Profiles pertenece a Atlanticus y debe poder instalarse y operar sin Access.
 Access es específico de ADA y puede consumir/extender Profiles.
 La dependencia `Profiles -> ADA Access` está prohibida.
 
-La implementación actual y la decisión histórica
-`Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
-deben auditarse antes de congelar el contrato físico final.
+La topología durable de Users ya tiene un cierre parcial independiente:
 
-Estado:
-`DECIDED DIRECTION / NOT YET AUDITED`.
+```text
+USERS-STORAGE-TOPOLOGY  CLOSED / VERIFIED / CURRENT
+```
+
+Ese cierre fija únicamente `users.runtime`; no congela la frontera completa Users / Profiles / ADA Access.
+
+La implementación actual restante y la decisión histórica
+`Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
+deben auditarse antes de congelar el resto del contrato físico y de composición.
+
+Estado de la frontera completa:
+`DECIDED DIRECTION / IN PROGRESS / NOT YET FULLY AUDITED`.
 
 ### Collector
 
@@ -414,6 +504,17 @@ Objetivo:
 
 Cosmos dispone de `CosmosProvisioner`.
 
+La Web ya dispone de contratos neutrales de resource topology y de una primera declaración durable real (`users.runtime`).
+
+Estado de la cadena:
+
+```text
+Storage resource contracts        CLOSED / VERIFIED / CURRENT
+Users storage declaration         CLOSED / VERIFIED / CURRENT
+Cosmos preflight bridge           PLANNED / NEXT
+Users Cosmos runtime adapter      PLANNED
+```
+
 Objetivo:
 Web agrega todos los requirements instalados y prepara/valida recursos antes de Backend.
 
@@ -490,7 +591,7 @@ Operaciones Integradas
 
 El foco está en productización vertical, no en expansión arquitectónica general.
 
-## Checkpoint Source / Projection
+## Checkpoint Source / Projection / Resource Preparation
 
 ```text
 SOURCE-1A.1                 CORE + LOCAL                     CLOSED / VERIFIED
@@ -501,5 +602,7 @@ NAV-SOURCE-PROJECTION-2     LOCAL/COSMOS PROJECTION STORES   CLOSED / VERIFIED
 NAV-CONSUMER-MIGRATION-A    RUNTIME                          CLOSED / VERIFIED
 NAV-CONSUMER-MIGRATION-B    ADMIN / MANAGER                  BLOCKED
 MANAGER                     ROOT CONTRACT CUTOVER            BLOCKED / IN PROGRESS
-NEXT                         USERS-PROFILES-BOUNDARY          PLANNED
+WEB-STORAGE-TOPOLOGY        RESOURCE CONTRACTS               CLOSED / VERIFIED
+USERS-STORAGE-TOPOLOGY      USERS.RUNTIME                    CLOSED / VERIFIED
+NEXT                        STORAGE-PREFLIGHT-COSMOS-BRIDGE   PLANNED
 ```
