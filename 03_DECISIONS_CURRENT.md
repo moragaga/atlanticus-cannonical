@@ -34,7 +34,16 @@ Estado: **CURRENT**
 | `observe()` de Users Cosmos es create-only + conflict reread y nunca upsert | FROZEN / IMPLEMENTED + VALIDATED |
 | `list_pending()` de Users Cosmos es cross-partition y determinista | FROZEN / IMPLEMENTED + VALIDATED |
 | Users Cosmos no provisiona database/container y recibe el physical container desde composición | FROZEN / IMPLEMENTED + VALIDATED |
-| Managed writer hacia `users.runtime` no se inventa dentro de `UsersRuntimeStore`; primero se congela ownership de Projection | CURRENT / NEXT DESIGN |
+| Managed writer hacia `users.runtime` no pertenece a `UsersRuntimeStore`; usa contrato snapshot-level `UsersRuntimeProjectionWriter` | FROZEN / IMPLEMENTED + VALIDATED |
+| `UsersRuntimeMaterializingProjectionRepository` materializa runtime antes de avanzar el estado/catálogo de proyección legacy | FROZEN / IMPLEMENTED + VALIDATED |
+| `CosmosUsersRuntimeProjectionWriter` vive en package provider-specific separado y no modifica el runtime adapter | CURRENT / IMPLEMENTED + VALIDATED |
+| Writer Managed posee `resolved + is_local=false`; Local Resolved queda fuera de su ownership | FROZEN / IMPLEMENTED + VALIDATED |
+| Pending→Resolved mantiene mismo `id`/partition; usuario configurado no observado puede crearse Resolved | FROZEN / IMPLEMENTED + VALIDATED |
+| Usuario Managed removido no se borra: queda Resolved, disabled y `managed_state=retired` | FROZEN / IMPLEMENTED + VALIDATED |
+| Re-add restaura `managed_state=present` y valores actuales de configuración | FROZEN / IMPLEMENTED + VALIDATED |
+| Updates Managed usan ETag/CAS y nunca blind upsert | FROZEN / IMPLEMENTED + VALIDATED |
+| Replay de snapshot Managed converge semánticamente; fallo runtime no avanza estado global legacy | FROZEN / IMPLEMENTED + VALIDATED |
+| Managed deshabilitado se rechaza antes de requerir perfil histórico | FROZEN / IMPLEMENTED + VALIDATED |
 | Manager posee shell/header administrativo propio | CURRENT |
 | ADA Generic usa shell/header operacional ADA | CURRENT |
 | Manager ≠ ADA operational shell | CURRENT |
@@ -67,7 +76,11 @@ Estado: **CURRENT**
 | Navigation Source usa Source Core; no reimplementa history/release/CAS | CURRENT / IMPLEMENTED + VALIDATED |
 | Navigation Projection Local/Cosmos implementan `ProjectionStore[NavigationConfigurationCatalog]` | CURRENT / IMPLEMENTED + VALIDATED |
 | Navigation runtime consume `ProjectionStore[NavigationConfigurationCatalog] + SourceKey` | CURRENT / IMPLEMENTED + VALIDATED |
-| No crear shim `SourceReleaseId <-> str` para completar la migración Manager | FROZEN |
+| Users Source usa Source Core; no reimplementa history/release/CAS | CURRENT / IMPLEMENTED + VALIDATED |
+| Users Source resource canónico es `users/configuration.json.gz` con schema de dominio `1` | FROZEN / IMPLEMENTED + VALIDATED |
+| `UsersSourceService.publish_catalog` usa `ConcurrencyToken` + `basis_release`, no `expected_source_revision: str` | FROZEN / IMPLEMENTED + VALIDATED |
+| `UsersConfigurationBundle.revision` sigue siendo digest de contenido legacy y no equivale a `SourceReleaseId` | FROZEN |
+| No introducir shim `SourceReleaseId <-> str` para completar migraciones Manager | FROZEN |
 | No crear un segundo Manager coordinator canónico paralelo | FROZEN |
 | Manager browser WORKSPACE persistirá en IndexedDB | DECIDED / NOT YET IMPLEMENTED |
 | Manager active workspace en Dash usa `dcc.Store(memory)` | DECIDED / NOT YET IMPLEMENTED |
@@ -105,7 +118,9 @@ WEB-STORAGE-TOPOLOGY              Resource contracts               CLOSED / VERI
 USERS-STORAGE-TOPOLOGY            users.runtime                    CLOSED / VERIFIED
 STORAGE-PREFLIGHT-COSMOS-BRIDGE   Cosmos resource preflight        CLOSED / VERIFIED
 COSMOS-USERS-RUNTIME-ADAPTER      Runtime store/reader              CLOSED / VERIFIED
-Next                              USERS-RUNTIME-PROJECTION-BOUNDARY PLANNED
+USERS-RUNTIME-PROJECTION-BOUNDARY Managed runtime writer            CLOSED / VERIFIED
+USERS-CANONICAL-SOURCE-1          Canonical Source backend          CLOSED / VERIFIED
+Next                              USERS-CANONICAL-PROJECTION-2      PLANNED
 ```
 
 Implementación actual relevante:
@@ -116,6 +131,7 @@ web/capabilities/storage/cosmos
 web/capabilities/users/core
 web/capabilities/users/cosmos
 web/capabilities/users/configuration
+web/capabilities/users/projection-cosmos
 web/capabilities/source/core
 web/capabilities/source/local
 web/capabilities/source/blob
@@ -148,7 +164,22 @@ Users Cosmos Runtime Adapter:
 - point-read para resolve;
 - create-only + conflict reread para observe;
 - query cross-partition para Pending;
-- no posee el writer de Projection de Managed Users.
+- no posee el writer administrativo de Managed Users.
+
+Users Runtime Projection:
+- `UsersRuntimeProjectionWriter` es contrato snapshot-level provider-neutral;
+- `UsersRuntimeMaterializingProjectionRepository` materializa runtime antes del commit global legacy;
+- `CosmosUsersRuntimeProjectionWriter` posee materialización Managed provider-specific;
+- removal produce retired tombstone durable, no delete;
+- promotion/update usa CAS/ETag y no blind upsert;
+- `UsersRuntimeStore` y `PendingUsersReader` permanecen sin cambios.
+
+Users Canonical Source:
+- `UsersSourceCodec` mapea `UsersConfigurationCatalog + published_by` a `SourceResource`;
+- `UsersSourceService` usa `SourceStore` con release identity, History y CAS canónicos;
+- mismo contenido puede republicarse como otra release;
+- `UsersConfigurationBundle.revision` no se usa como identidad canónica de publicación;
+- contratos legacy siguen presentes mientras Manager continúe con `source_revision: str`.
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
@@ -175,14 +206,15 @@ Manager:
 
 No se consideran cerrados por este hito:
 - provisioning/validation real de `users.runtime` dentro del lifecycle Web;
-- `USERS-RUNTIME-PROJECTION-BOUNDARY` y writer durable de Managed Users;
+- `USERS-CANONICAL-PROJECTION-2` y provenance exact-release del runtime Managed;
 - otros providers Projection Local/Cosmos concretos por dominio;
 - orchestration multi-capability;
 - derived resolutions;
-- idempotencia provider/domain-level de reprojection;
 - Manager root productive cutover;
 - Navigation administrative consumer migration;
+- Users administrative consumer migration;
 - Navigation legacy deletion;
+- Users legacy Source/Projection deletion;
 - Users/Profiles/Access boundary audit completa.
 
 ## Refinamiento de no-op publish
@@ -201,6 +233,8 @@ no-op por equivalencia funcional
 
 `SourceReleaseId` identifica publicación y no contenido.
 Dos publicaciones con el mismo `content_hash` siguen siendo releases distintas.
+
+Users Canonical Source confirma esta semántica: un mismo `UsersConfigurationCatalog` puede volver a publicarse y producir otra `SourceReleaseId`.
 
 ## Manager browser WORKSPACE
 
@@ -236,16 +270,34 @@ ADA Access es una extensión/consumer específica de ADA.
 
 No incorporar permisos específicos de ADA dentro del Profile genérico.
 
-Los sub-hitos `USERS-STORAGE-TOPOLOGY` y `COSMOS-USERS-RUNTIME-ADAPTER` están `CLOSED / VERIFIED`.
+Los sub-hitos siguientes están `CLOSED / VERIFIED / CURRENT`:
 
-Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni del writer de Users Projection.
+```text
+USERS-STORAGE-TOPOLOGY
+COSMOS-USERS-RUNTIME-ADAPTER
+USERS-RUNTIME-PROJECTION-BOUNDARY
+USERS-CANONICAL-SOURCE-1
+```
 
-Antes de cerrar esa frontera completa todavía se debe auditar:
+Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni del cutover canónico de Projection/Manager.
+
+Contratos congelados adicionales:
+- writer Managed snapshot-level separado de runtime store/reader;
+- Pending→Resolved por mismo id/partition;
+- retirement durable sin delete;
+- re-add a present;
+- CAS/ETag sin blind upsert;
+- Managed disabled no requiere profile histórico;
+- Users canonical Source sobre Source Core;
+- legacy content revision no equivale a Source release identity.
+
+Antes de cerrar la frontera completa todavía se debe auditar:
 - implementación actual Users/Profile restante;
 - consumidores reales;
 - `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`.
 
-El siguiente foco aislado es `USERS-RUNTIME-PROJECTION-BOUNDARY`: primero contrato/ownership; después implementación.
+El siguiente foco aislado es `USERS-CANONICAL-PROJECTION-2`.
+Debe conectar exact-release Projection con el writer Managed y congelar provenance de runtime basado en identidad de Source release. No mezclar este incremento con Manager cutover, legacy deletion ni Profiles/Access.
 
 ## SharePoint
 

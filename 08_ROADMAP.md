@@ -39,19 +39,34 @@ En paralelo sólo los enablers que bloquean la vertical:
 - resource readiness;
 - Manager authorization sin bypass.
 
-Resource readiness / Users durable chain tiene el siguiente checkpoint:
+Resource readiness / Users durable + Source chain tiene el siguiente checkpoint:
 
 ```text
 WEB-STORAGE-TOPOLOGY              CLOSED / VERIFIED / CURRENT
 USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED / CURRENT
 STORAGE-PREFLIGHT-COSMOS-BRIDGE   CLOSED / VERIFIED / CURRENT
 COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY PLANNED / NEXT
+USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2      PLANNED / NEXT
 ```
 
-Bridge y adapter permanecen fronteras separadas: el bridge traduce/prepara topology provider-specific; el adapter implementa lectura/observación del runtime Users. Ninguno define por sí solo el writer administrativo de Managed Users.
+Las fronteras permanecen separadas:
+- Storage Topology declara y resuelve recursos;
+- el bridge Cosmos traduce/prepara topology provider-specific;
+- `CosmosUsersRuntimeStore` implementa lectura/observación;
+- `CosmosUsersRuntimeProjectionWriter` materializa snapshots Managed en `users.runtime`;
+- `UsersSourceService` conecta Users con Source Core sin reimplementar releases, History ni CAS.
 
-Siguiente foco aislado: auditar y congelar el contrato que materializa Users Configuration/Projection hacia `users.runtime`. No mezclarlo con el lifecycle global de resource readiness.
+Siguiente foco aislado: `USERS-CANONICAL-PROJECTION-2`.
+Debe conectar una `SourceReleaseRef` exacta con la materialización/proyección de Users y resolver provenance durable de `users.runtime` sin tratar `UsersConfigurationBundle.revision` como `SourceReleaseId` ni introducir shim `SourceReleaseId <-> str`.
+
+No mezclar este foco con:
+- Manager root productive cutover;
+- migración del `UsersManagerWorkflowAdapter`;
+- eliminación de adapters Source legacy;
+- lifecycle global de resource readiness;
+- Profiles / ADA Access.
 
 ## Backend productization
 

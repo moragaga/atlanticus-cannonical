@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@d63886d8d42688e3d03d680f0a3d7b92cd3863ed`.
+Corte de implementación: `moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
 
 ## Estado implementado
 
@@ -223,6 +223,66 @@ Qualification final en workspace real:
 - contrato público `CosmosUsersRuntimeStore -> UsersRuntimeStore + PendingUsersReader` GREEN;
 - `git diff --check` GREEN.
 
+### Users Runtime Projection Boundary
+
+Implementado en:
+
+```text
+web/capabilities/users/configuration
+web/capabilities/users/projection-cosmos
+```
+
+Packages relevantes:
+
+```text
+atlanticus-web-users-configuration==0.1.8
+atlanticus-web-users-projection-cosmos==0.1.0
+```
+
+Estado:
+
+```text
+USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
+```
+
+Contrato implementado:
+- `UsersRuntimeProjectionWriter` es un contrato snapshot-level separado de `UsersRuntimeStore` y `PendingUsersReader`;
+- `UsersRuntimeMaterializingProjectionRepository` materializa runtime antes de avanzar el catálogo/estado de proyección legacy;
+- `CosmosUsersRuntimeProjectionWriter` es provider-specific y recibe un cliente Cosmos ya construido + container name;
+- el runtime adapter de lectura/observación no adquiere responsabilidades administrativas.
+
+Semántica durable Managed:
+- writer posee `resolved + is_local=false`;
+- Pending→Resolved conserva `id == partition key == user_id`;
+- usuario configurado no observado se crea directamente Resolved;
+- usuario removido no se elimina: queda Resolved, `enabled=false`, `managed_state=retired`;
+- re-add restaura `managed_state=present` y valores actuales de Source legacy;
+- actualización existente usa ETag/CAS y no blind upsert;
+- conflicto create con observación concurrente reread/promueve sin sobrescribir silenciosamente;
+- replay del mismo snapshot converge semánticamente;
+- fallo parcial de runtime no avanza el estado global de proyección legacy;
+- Local Resolved queda fuera del ownership del writer Managed.
+
+Provenance implementado por documento:
+- `projection_source_revision`;
+- `projected_by`;
+- `projected_at_utc`.
+
+En este checkpoint `projection_source_revision` recibe `UsersConfigurationBundle.revision`, un digest de contenido legacy. No equivale a `SourceReleaseId` y no debe convertirse silenciosamente en esa identidad.
+
+Además, `UsersAccessResolver` rechaza un Managed deshabilitado antes de requerir su perfil histórico, permitiendo retirar también perfiles custom sin convertir `USER_DISABLED` en indisponibilidad.
+
+Qualification final en workspace real:
+- tests focalizados Users core + Configuration runtime projection + Projection Cosmos: 33 passed;
+- suite Web: 496 passed, 7 skipped;
+- Ruff check GREEN;
+- Ruff format GREEN;
+- `uv lock` GREEN;
+- `git diff --check` GREEN.
+
+Checkpoint de implementación:
+`moragaga/atlanticus@4758d993296bfe2a629a9aa3b8e4b486cf7b2305`.
+
 ### Web Source y Projection Handoff
 
 Source implementado en:
@@ -304,6 +364,62 @@ Projection Handoff quedó GREEN en el workspace real:
 - 15 tests de Projection;
 - suite Web global del checkpoint Projection: 327 passed, 7 skipped;
 - Ruff/format de `capabilities/projection/core` GREEN.
+
+### Users Configuration — Canonical Source
+
+Implementado en:
+
+```text
+web/capabilities/users/configuration
+```
+
+Package actual:
+
+```text
+atlanticus-web-users-configuration==0.1.8
+```
+
+Estado:
+
+```text
+USERS-CANONICAL-SOURCE-1  CLOSED / VERIFIED / CURRENT
+```
+
+Users expone ahora una ruta Source canónica:
+- `UsersSourceCodec` serializa `UsersConfigurationCatalog + published_by` como un recurso Source;
+- resource path: `users/configuration.json.gz`;
+- document type: `atlanticus_users_configuration_release`;
+- schema de dominio Source: `1`;
+- JSON compacto y gzip determinista;
+- `UsersSourceRelease` combina payload de dominio con `SourceReleaseMetadata`;
+- `UsersSourceService` usa `SourceStore`;
+- publicación usa `PublishRequest`, `ConcurrencyToken` y `basis_release`;
+- History se obtiene desde `SourceStore.query_history`;
+- `load_current()` selecciona current una vez y luego lee esa `SourceReleaseRef` exacta;
+- `load_release()` valida que Source devuelva el mismo `SourceKey` y `SourceReleaseRef` solicitado;
+- dos publicaciones pueden compartir contenido/hash y conservar identidades de release distintas.
+
+Users no reimplementa en este camino:
+- release identity;
+- History;
+- CAS/concurrency;
+- provider Local/Blob.
+
+El package depende de `atlanticus-web-source==0.1.0`.
+
+Qualification final en workspace real:
+- tests dirigidos Source Users: 7 passed;
+- Users Configuration: 54 passed;
+- suite Web global: 503 passed, 7 skipped;
+- Ruff check GREEN;
+- Ruff format GREEN;
+- `uv lock` GREEN;
+- `git diff --check` GREEN.
+
+Checkpoint de implementación:
+`moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
+
+Los contratos administrativos legacy de Users continúan presentes porque `UsersManagerWorkflowAdapter` y el Manager productivo todavía trabajan con `source_revision: str`. No se introduce equivalencia `UsersConfigurationBundle.revision <-> SourceReleaseId`.
 
 ### Navigation Configuration — Source / Projection
 
@@ -435,7 +551,7 @@ Qualification R3.5 final: CLOSED PASS/GREEN.
 - Python 3.14.7.
 - `python:3.14.7-slim-trixie`.
 
-El repo actual aún conserva 3.14.2 en varios proyectos, incluido Web Source y Projection Core.
+El repo actual aún conserva 3.14.2 en varios proyectos, incluido Web Source, Projection Core y Users Configuration.
 
 Estado:
 `DECIDED / NOT YET IMPLEMENTED GLOBALLY`.
@@ -455,7 +571,10 @@ Estado actual:
 - Blob provider: `IMPLEMENTED + VALIDATED`;
 - Projection exact-release Core: `IMPLEMENTED + VALIDATED`;
 - `source_release_id` en Projection Core: `IMPLEMENTED + VALIDATED`;
+- Navigation canonical Source: `IMPLEMENTED + VALIDATED`;
+- Users canonical Source: `IMPLEMENTED + VALIDATED`;
 - Projection Local/Cosmos concreto para Navigation: `IMPLEMENTED + VALIDATED`;
+- Users canonical exact-release Projection: `PLANNED / NEXT`;
 - otros providers Projection concretos por dominio: `PLANNED`;
 - Manager BASE/SOURCE/WORKSPACE/PROJECTION contracts: `IMPLEMENTED`;
 - Manager productive workflow/callback cutover: `BLOCKED / IN PROGRESS`.
@@ -464,7 +583,7 @@ Blob parity y recovery ya están validados.
 
 SharePoint + Power Automate siguen destinados a salir del pipeline Source migrado, pero el retiro pertenece al incremento de migración de consumidores.
 
-No borrar aún los adapters Source legacy de Navigation Configuration: su consumidor administrativo Manager todavía no ha migrado.
+No borrar aún los adapters Source legacy de Navigation ni Users Configuration: sus consumidores administrativos Manager todavía no han migrado.
 
 ### Manager browser workspace
 
@@ -504,15 +623,27 @@ La dependencia `Profiles -> ADA Access` está prohibida.
 Cierres independientes ya verificados:
 
 ```text
-USERS-STORAGE-TOPOLOGY          CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER    CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
 ```
 
-Estos cierres fijan `users.runtime` y su reader/observe durable Cosmos, pero no congelan la frontera completa Users / Profiles / ADA Access ni el writer de Managed Users.
+Estos cierres fijan:
+- `users.runtime` y su reader/observe durable Cosmos;
+- ownership y semántica del writer Managed snapshot-level;
+- transición Pending→Resolved, retirement/re-add y CAS del runtime;
+- Source canónico de Users sobre Source Core.
 
-La implementación actual restante y la decisión histórica
+No congelan todavía:
+- la integración exact-release de Users Projection con Source Core;
+- el formato final de provenance Source release en `users.runtime`;
+- la frontera completa Profiles / ADA Access;
+- el cutover administrativo Manager ni el borrado legacy.
+
+La implementación restante y la decisión histórica
 `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
-deben auditarse antes de congelar el resto del contrato físico y de composición.
+deben auditarse antes de congelar el resto del contrato físico y de composición de Profiles/Access.
 
 Estado de la frontera completa:
 `DECIDED DIRECTION / IN PROGRESS / NOT YET FULLY AUDITED`.
@@ -520,10 +651,10 @@ Estado de la frontera completa:
 Siguiente frontera aislada:
 
 ```text
-USERS-RUNTIME-PROJECTION-BOUNDARY  PLANNED / NEXT
+USERS-CANONICAL-PROJECTION-2  PLANNED / NEXT
 ```
 
-Debe determinar quién materializa `ResolvedUserRecord` desde Users Configuration/Projection hacia `users.runtime`, incluyendo transición Pending→Resolved, usuarios retirados, concurrencia, idempotencia y provenance.
+Debe proyectar desde una `SourceReleaseRef` exacta y resolver provenance durable sin equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`.
 
 ### Collector
 
@@ -619,7 +750,9 @@ Storage resource contracts        CLOSED / VERIFIED / CURRENT
 Users storage declaration         CLOSED / VERIFIED / CURRENT
 Cosmos preflight bridge           CLOSED / VERIFIED / CURRENT
 Users Cosmos runtime adapter      CLOSED / VERIFIED / CURRENT
-Users runtime projection boundary PLANNED / NEXT
+Users runtime projection boundary CLOSED / VERIFIED / CURRENT
+Users canonical Source            CLOSED / VERIFIED / CURRENT
+Users canonical Projection        PLANNED / NEXT
 Web lifecycle/resource readiness  OPEN / BLOCKED BY GLOBAL CONTRACTS
 ```
 

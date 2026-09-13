@@ -20,6 +20,7 @@ WEB-STORAGE-TOPOLOGY              CLOSED / VERIFIED
 USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED
 STORAGE-PREFLIGHT-COSMOS-BRIDGE   CLOSED / VERIFIED
 COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED
+USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED
 ```
 
 `users.runtime` queda confirmado como:
@@ -131,12 +132,33 @@ Cerrado dentro de esta frontera:
 - bridge Cosmos entre topology y Connectivity;
 - `CosmosUsersRuntimeStore` para `UsersRuntimeStore` + `PendingUsersReader`;
 - semántica create-only de `observe()`;
+- ownership del writer snapshot-level de Managed Users;
+- transición Pending→Resolved por mismo id/partition;
+- retiro durable como Resolved deshabilitado + `managed_state=retired`;
+- re-add como `managed_state=present`;
+- CAS/ETag sin blind upsert para actualización Managed;
+- resolver de Access rechaza Managed deshabilitado antes de requerir perfil histórico;
+- Source canónico de Users sobre `SourceStore` con `ConcurrencyToken`, `basis_release`, History y lectura de release exacta;
 - sin dependencia de ADA Access.
 
-Continúa OPEN la frontera completa Users / Profiles / ADA Access y el writer administrativo de Managed Users:
+Cerrados durante ejecución:
 
-43. `USERS-RUNTIME-PROJECTION-BOUNDARY`: auditar el flujo Users Configuration → `UsersProjectionRepository` → `users.runtime` y congelar ownership del write durable de `ResolvedUserRecord`;
-44. definir transición Pending→Resolved, comportamiento ante usuario retirado de configuración, concurrencia con `observe()`, idempotencia/reprojection y provenance/audit;
+43. `USERS-RUNTIME-PROJECTION-BOUNDARY`: `CLOSED / VERIFIED / CURRENT` en `moragaga/atlanticus@4758d993296bfe2a629a9aa3b8e4b486cf7b2305`.
+44. transición Pending→Resolved, retiro/re-add, concurrencia con `observe()`, convergencia/replay y provenance legacy de runtime quedaron implementados y validados en el mismo checkpoint.
+
+Además:
+
+```text
+USERS-CANONICAL-SOURCE-1  CLOSED / VERIFIED / CURRENT
+```
+
+en `moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
+
+Continúa OPEN la frontera completa Users / Profiles / ADA Access y la convergencia exact-release de Projection:
+
 45. auditar implementación actual restante de Users/Profile y consumidores, sin reabrir los contratos ya cerrados salvo conflicto autoritativo explícito;
 46. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
-47. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes.
+47. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes;
+48. `USERS-CANONICAL-PROJECTION-2`: conectar la proyección de Users a una `SourceReleaseRef` exacta y decidir el provenance durable de `users.runtime` basado en identidad de release, sin equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`;
+49. migrar `UsersManagerWorkflowAdapter` y el flujo administrativo Users sólo después del Manager root productive cutover de la pregunta 38;
+50. eliminar contratos/adapters Source legacy de Users únicamente después de validar que no quedan consumidores productivos legacy.

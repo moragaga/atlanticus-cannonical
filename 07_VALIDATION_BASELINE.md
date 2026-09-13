@@ -102,6 +102,77 @@ Propiedades demostradas:
 - no provisioning ni Azure SDK dentro del adapter;
 - mirror comentado equivalente.
 
+## Users Runtime Projection Boundary
+
+Checkpoint de implementación:
+
+`moragaga/atlanticus@4758d993296bfe2a629a9aa3b8e4b486cf7b2305`
+
+Estado:
+
+```text
+USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
+```
+
+Qualification final ejecutada en workspace Web real:
+- tests focalizados Users core + Configuration runtime projection + Projection Cosmos: 33 passed;
+- suite Web: 496 passed, 7 skipped;
+- Ruff check del delta: PASS/GREEN;
+- Ruff format check del delta: PASS/GREEN;
+- `uv lock`: PASS/GREEN;
+- `git diff --check`: PASS/GREEN.
+
+Propiedades demostradas:
+- `UsersRuntimeProjectionWriter` es contrato snapshot-level separado de `UsersRuntimeStore` y `PendingUsersReader`;
+- `UsersRuntimeMaterializingProjectionRepository` materializa `users.runtime` antes de avanzar el catálogo/estado de proyección legacy;
+- `CosmosUsersRuntimeProjectionWriter` vive en package provider-specific separado;
+- Pending→Resolved conserva `id` y partition key;
+- Managed removido se conserva como Resolved deshabilitado con `managed_state=retired`;
+- re-add restaura `managed_state=present` y valores de configuración actuales;
+- ausente pero configurado se crea directamente Resolved;
+- writes existentes usan ETag/CAS y no blind upsert;
+- conflicto concurrente con `observe()` se reconcilia sin sobrescribir silenciosamente;
+- replay del mismo snapshot converge semánticamente;
+- fallo parcial no avanza el estado global de proyección legacy;
+- `UsersAccessResolver` rechaza Managed deshabilitado antes de requerir un perfil histórico retirado;
+- mirror comentado equivalente dentro del alcance.
+
+El provenance de este checkpoint sigue basado en `UsersConfigurationBundle.revision`, que es digest de contenido. No equivale a `SourceReleaseId`; esa convergencia pertenece a `USERS-CANONICAL-PROJECTION-2`.
+
+## Users Canonical Source
+
+Checkpoint de implementación:
+
+`moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`
+
+Estado:
+
+```text
+USERS-CANONICAL-SOURCE-1  CLOSED / VERIFIED / CURRENT
+```
+
+Qualification final ejecutada en workspace Web real:
+- tests dirigidos del Source canónico de Users: 7 passed;
+- suite completa `capabilities/users/configuration/tests`: 54 passed;
+- suite Web: 503 passed, 7 skipped;
+- Ruff check del delta: PASS/GREEN;
+- Ruff format check del delta: PASS/GREEN;
+- `uv lock`: PASS/GREEN;
+- `git diff --check`: PASS/GREEN.
+
+Propiedades demostradas:
+- `UsersSourceCodec` serializa un único recurso canónico `users/configuration.json.gz`;
+- JSON compacto + gzip determinista para el recurso de dominio;
+- `UsersSourcePayload` conserva `UsersConfigurationCatalog + published_by`;
+- `UsersSourceRelease` combina payload de dominio con `SourceReleaseMetadata`;
+- `UsersSourceService` usa `SourceStore` y no reimplementa release identity, History ni CAS;
+- publicación usa `ConcurrencyToken` y `basis_release`;
+- lectura de current selecciona una release y luego hidrata esa release exacta;
+- mismo contenido puede republicarse como otra release con identidad distinta;
+- metadata devuelta con `SourceKey` o `SourceReleaseRef` inconsistente falla explícitamente;
+- `atlanticus-web-users-configuration==0.1.8` depende de `atlanticus-web-source==0.1.0`;
+- los contratos legacy administrativos permanecen disponibles porque el consumer Manager productivo aún no ha migrado.
+
 ## Alarm Engine
 
 La campaña R3.5 llegó a cierre final `PASS/GREEN`.
