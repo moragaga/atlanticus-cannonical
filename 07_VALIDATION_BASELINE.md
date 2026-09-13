@@ -137,7 +137,7 @@ Propiedades demostradas:
 - `UsersAccessResolver` rechaza Managed deshabilitado antes de requerir un perfil histórico retirado;
 - mirror comentado equivalente dentro del alcance.
 
-El provenance de este checkpoint sigue basado en `UsersConfigurationBundle.revision`, que es digest de contenido. No equivale a `SourceReleaseId`; esa convergencia pertenece a `USERS-CANONICAL-PROJECTION-2`.
+El provenance de este checkpoint sigue basado en `UsersConfigurationBundle.revision`, que es digest de contenido. No equivale a `SourceReleaseId`.
 
 ## Users Canonical Source
 
@@ -170,8 +170,63 @@ Propiedades demostradas:
 - lectura de current selecciona una release y luego hidrata esa release exacta;
 - mismo contenido puede republicarse como otra release con identidad distinta;
 - metadata devuelta con `SourceKey` o `SourceReleaseRef` inconsistente falla explícitamente;
-- `atlanticus-web-users-configuration==0.1.8` depende de `atlanticus-web-source==0.1.0`;
+- `atlanticus-web-users-configuration==0.1.8` dependía de `atlanticus-web-source==0.1.0` en ese checkpoint;
 - los contratos legacy administrativos permanecen disponibles porque el consumer Manager productivo aún no ha migrado.
+
+## Users Canonical Projection
+
+Checkpoint de implementación:
+
+`moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1`
+
+Estado:
+
+```text
+USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
+```
+
+Packages actuales:
+
+```text
+atlanticus-web-users-configuration==0.1.9
+atlanticus-web-users-projection-cosmos==0.1.1
+```
+
+Qualification final ejecutada en workspace Web real:
+- tests nuevos focalizados Source→Projection + Cosmos store: 10 passed;
+- `capabilities/users/configuration/tests` + `capabilities/users/projection-cosmos/tests`: 84 passed;
+- suite Web global: 513 passed, 7 skipped;
+- `uv lock --check`: PASS/GREEN;
+- Ruff check del alcance: PASS/GREEN;
+- `git diff --check`: PASS/GREEN.
+
+Ruff format:
+- `services.py`, modificado por el incremento, fue reformateado;
+- el check focalizado posterior no reportó ningún archivo modificado por este hito;
+- permanecieron reportados tres archivos Web preexistentes no modificados: `web/callbacks.py`, `web/ids.py`, `web/layout.py`;
+- esos archivos quedan fuera del alcance de esta qualification.
+
+Propiedades demostradas:
+- `UsersProjectionBuilder` construye `UsersConfigurationCatalog` desde recursos de una release Source exacta;
+- `SourceProjectionService` ejecuta el target exacto sin reread de current durante la proyección;
+- una release histórica seleccionada puede proyectarse y luego quedar `OUTDATED`;
+- mismo contenido en dos Source releases distintas produce dos targets distintos;
+- `CosmosUsersConfigurationProjectionStore` persiste provenance canónico exact-release;
+- first write create-only;
+- replace con ETag/CAS;
+- no blind upsert;
+- replay same-target + same payload es idempotente y preserva el active existente;
+- same release ID con metadata o payload incompatible falla como invariante;
+- conflicto concurrente same-target converge;
+- conflicto different-target produce `UsersConfigurationProjectionConflictError`;
+- target histórico explícito puede activarse secuencialmente;
+- no se infiere ordering por release ID ni timestamp.
+
+No demostrado por este hito:
+- provisioning físico del container del canonical Projection store;
+- materialización exact-release de `users.runtime`;
+- migración Manager/Users administrativa;
+- eliminación de contracts legacy.
 
 ## Alarm Engine
 
@@ -205,6 +260,8 @@ Existe evidencia de construcción/prueba con:
 `python:3.14.7-slim-trixie`
 
 pero la migración global del repo no está materializada aún.
+
+Los packages Users afectados por el último hito aún declaran `requires-python ==3.14.2`; esta discrepancia es preexistente y no se resolvió dentro de Source/Projection.
 
 ## ADA Web
 

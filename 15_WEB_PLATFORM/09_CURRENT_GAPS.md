@@ -67,21 +67,45 @@ Gap vigente:
 - política local/cloud de database creation;
 - readiness READY/DEGRADED/ERROR.
 
-## 5. Users runtime durable / Projection
+## 5. Users runtime durable / Source / Projection
 
-Existe `CosmosUsersRuntimeStore` implementando:
-- `UsersRuntimeStore`;
-- `PendingUsersReader`.
-
-Está verificado para resolve, observe y list_pending sobre el documento común de `users.runtime`.
-
-Gap vigente:
-no está cerrado quién materializa `ResolvedUserRecord` desde Users Configuration/Projection hacia `users.runtime` ni las semánticas Pending→Resolved, usuario retirado, concurrencia, reprojection y provenance.
-
-Siguiente foco:
+Cerrado y verificado:
 
 ```text
-USERS-RUNTIME-PROJECTION-BOUNDARY  PLANNED / NEXT
+COSMOS-USERS-RUNTIME-ADAPTER       CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1           CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2       CLOSED / VERIFIED / CURRENT
+```
+
+Users dispone de:
+- runtime durable común `users.runtime`;
+- `UsersRuntimeStore` + `PendingUsersReader` Cosmos;
+- writer Managed snapshot-level con Pending→Resolved, retirement/re-add y CAS;
+- Source canónico sobre Source Core;
+- Projection canónica desde `SourceReleaseRef` exacta;
+- `ProjectionRecord[UsersConfigurationCatalog]`;
+- Cosmos ProjectionStore con provenance `source_release_id`;
+- create-only + ETag/CAS;
+- retry same-target idempotente.
+
+Checkpoint de canonical Projection:
+
+```text
+moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+```
+
+Gap vigente:
+- Manager productivo aún usa `source_revision: str`;
+- `users.runtime` conserva provenance legacy `projection_source_revision`;
+- `UsersManagerWorkflowAdapter` no ha migrado;
+- no está congelado el resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
+- no se pueden eliminar todavía los contratos/adapters legacy de Users.
+
+Siguiente frontera bloqueante:
+
+```text
+MANAGER-ROOT-CANONICAL-CUTOVER
 ```
 
 ## 6. Storage provisioning

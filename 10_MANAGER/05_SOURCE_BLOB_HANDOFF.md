@@ -21,6 +21,7 @@ Projection genérica usa handoff exact-release y cada dominio puede implementar:
 - Local.
 
 Navigation ya implementa ambos stores concretos.
+Users ya implementa un ProjectionStore Cosmos canónico.
 
 SharePoint y Power Automate permanecen únicamente donde todavía existen consumidores legacy.
 Su retiro se realiza durante la migración del consumidor correspondiente, no como eliminación global anticipada.
@@ -172,11 +173,51 @@ el coordinator Manager y `NavigationManagerWorkflowAdapter` productivos todavía
 
 No crear adaptadores string/release temporales para ocultar este bloqueo.
 
+## Users checkpoint
+
+Users Configuration ya implementa:
+- Source codec/service sobre Source Core;
+- History y exact release reads;
+- `UsersProjectionBuilder`;
+- `SourceProjectionService` con target `SourceKey + SourceReleaseRef`;
+- `ProjectionStore[UsersConfigurationCatalog]` sobre Cosmos;
+- provenance canónico con `source_release_id`;
+- create-only para primer active;
+- ETag/CAS para reemplazo;
+- retry same-target idempotente;
+- conflicto concurrente different-target explícito.
+
+Estado:
+
+```text
+USERS-CANONICAL-SOURCE-1      CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
+```
+
+Checkpoint Projection:
+
+```text
+moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+```
+
+Permanece bloqueado:
+- consumer administrativo Manager de Users;
+- migración de `projection_source_revision` legacy dentro de `users.runtime`;
+- eliminación de Source/Projection legacy Users.
+
+Razón:
+el coordinator Manager y `UsersManagerWorkflowAdapter` productivos todavía usan `source_revision: str`.
+
+El cierre de canonical Projection no crea equivalencia entre `UsersConfigurationBundle.revision` y `SourceReleaseId`.
+
+No crear adaptadores string/release temporales ni un segundo coordinator Manager.
+
 ## Pendiente
 
-Fuera del Source Core ya cerrado:
+Fuera del Source/Projection Core ya cerrado:
 - retention/cleanup policy;
-- migración de consumidores restantes;
 - Manager root canonical cutover;
+- migración de consumidores administrativos Navigation y Users;
+- runtime exact-release provenance de Users después del cutover raíz;
 - retiro efectivo de SharePoint/Power Automate donde deje de existir consumidor;
 - eliminación de adapters legacy de dominio sólo después de validar consumidores.

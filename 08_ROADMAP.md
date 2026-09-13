@@ -48,25 +48,40 @@ STORAGE-PREFLIGHT-COSMOS-BRIDGE   CLOSED / VERIFIED / CURRENT
 COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
 USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2      PLANNED / NEXT
+USERS-CANONICAL-PROJECTION-2      CLOSED / VERIFIED / CURRENT
 ```
 
 Las fronteras permanecen separadas:
 - Storage Topology declara y resuelve recursos;
 - el bridge Cosmos traduce/prepara topology provider-specific;
 - `CosmosUsersRuntimeStore` implementa lectura/observación;
-- `CosmosUsersRuntimeProjectionWriter` materializa snapshots Managed en `users.runtime`;
-- `UsersSourceService` conecta Users con Source Core sin reimplementar releases, History ni CAS.
+- `CosmosUsersRuntimeProjectionWriter` materializa snapshots Managed en `users.runtime` dentro del camino legacy;
+- `UsersSourceService` conecta Users con Source Core sin reimplementar releases, History ni CAS;
+- `UsersProjectionBuilder` + `SourceProjectionService` conectan una `SourceReleaseRef` exacta con `ProjectionRecord[UsersConfigurationCatalog]`;
+- `CosmosUsersConfigurationProjectionStore` persiste la Projection canónica con create-only + ETag/CAS.
 
-Siguiente foco aislado: `USERS-CANONICAL-PROJECTION-2`.
-Debe conectar una `SourceReleaseRef` exacta con la materialización/proyección de Users y resolver provenance durable de `users.runtime` sin tratar `UsersConfigurationBundle.revision` como `SourceReleaseId` ni introducir shim `SourceReleaseId <-> str`.
+`USERS-CANONICAL-PROJECTION-2` quedó cerrado en:
+
+```text
+moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+```
+
+Este cierre no convierte `projection_source_revision` de `users.runtime` en `SourceReleaseId` y no migra el consumer administrativo de Users.
+
+Siguiente foco aislado:
+
+```text
+MANAGER-ROOT-CANONICAL-CUTOVER
+```
+
+Debe reemplazar de raíz el contrato productivo `source_revision: str` por BASE/SOURCE/WORKSPACE/PROJECTION canónico, sin introducir shim `SourceReleaseId <-> str` ni un segundo coordinator paralelo.
 
 No mezclar este foco con:
-- Manager root productive cutover;
-- migración del `UsersManagerWorkflowAdapter`;
-- eliminación de adapters Source legacy;
+- migración Python 3.14.7;
 - lifecycle global de resource readiness;
-- Profiles / ADA Access.
+- Profiles / ADA Access;
+- cleanup general de legacy;
+- projection orchestration multi-capability.
 
 ## Backend productization
 
@@ -114,6 +129,8 @@ History read model
 No congelar la inventory global de containers hasta disponer de traza completa de recursos usados por Operaciones Integradas y las capabilities asociadas.
 
 `users.runtime` sí queda confirmado individualmente y no implica que la inventory global esté cerrada.
+
+El resource físico de `CosmosUsersConfigurationProjectionStore` no queda congelado por `USERS-CANONICAL-PROJECTION-2`; el provider recibe `container_name` desde composición.
 
 ## University
 

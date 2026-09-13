@@ -171,7 +171,7 @@ Projection Core:
 
 El payload proyectado pertenece al dominio consumidor.
 
-## Evidencia de cierre
+## Evidencia de cierre Core
 
 Implementación:
 
@@ -198,16 +198,44 @@ Gates ejecutados en workspace real:
 - Ruff Projection GREEN;
 - Ruff format Projection GREEN.
 
+## Evidencia domain/provider posterior — Users Cosmos
+
+`USERS-CANONICAL-PROJECTION-2` cerró un provider concreto que satisface el contrato Core:
+
+```text
+ProjectionStore[UsersConfigurationCatalog]
+→ CosmosUsersConfigurationProjectionStore
+```
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+```
+
+Contrato verificado:
+- first active write create-only;
+- reemplazo mediante ETag/CAS;
+- nunca blind upsert;
+- same exact release + same payload = retry idempotente;
+- same `SourceReleaseId` con metadata o payload incompatible = invariant failure;
+- conflicto concurrente same-target converge;
+- conflicto concurrente different-target falla explícitamente;
+- no se infiere ordering por release ID ni `projected_at_utc`;
+- target histórico exacto puede activarse explícitamente.
+
+Esta evidencia es específica de Users/Cosmos y no congela la estrategia de providers de otros dominios.
+
 ## Fuera de este cierre
 
 Permanecen abiertos:
 
-- providers Projection Local/Cosmos concretos por dominio;
-- Manager BASE/SOURCE/WORKSPACE/PROJECTION;
-- migración de Navigation/Tool Configuration y otros consumidores;
+- providers Projection Local/Cosmos concretos de otros dominios cuando sean necesarios;
+- Manager productive BASE/SOURCE/WORKSPACE/PROJECTION cutover;
+- migración de consumidores administrativos Navigation/Users y otros;
 - Projection planner/orchestration multi-capability;
 - derived resolutions;
-- idempotencia provider/domain-level de reprojection;
+- idempotencia provider/domain-level de otros providers;
 - retention/GC operacional.
 
-El cierre de Projection Handoff no implica cerrar esas capas.
+El cierre de Projection Handoff y del provider Users/Cosmos no implica cerrar esas capas.

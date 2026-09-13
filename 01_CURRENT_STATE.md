@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
+Corte de implementación: `moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1`.
 
 ## Estado implementado
 
@@ -232,11 +232,11 @@ web/capabilities/users/configuration
 web/capabilities/users/projection-cosmos
 ```
 
-Packages relevantes:
+Packages actuales:
 
 ```text
-atlanticus-web-users-configuration==0.1.8
-atlanticus-web-users-projection-cosmos==0.1.0
+atlanticus-web-users-configuration==0.1.9
+atlanticus-web-users-projection-cosmos==0.1.1
 ```
 
 Estado:
@@ -263,16 +263,16 @@ Semántica durable Managed:
 - fallo parcial de runtime no avanza el estado global de proyección legacy;
 - Local Resolved queda fuera del ownership del writer Managed.
 
-Provenance implementado por documento:
+Provenance legacy implementado por documento:
 - `projection_source_revision`;
 - `projected_by`;
 - `projected_at_utc`.
 
-En este checkpoint `projection_source_revision` recibe `UsersConfigurationBundle.revision`, un digest de contenido legacy. No equivale a `SourceReleaseId` y no debe convertirse silenciosamente en esa identidad.
+`projection_source_revision` continúa recibiendo `UsersConfigurationBundle.revision`, un digest de contenido legacy. No equivale a `SourceReleaseId`.
 
-Además, `UsersAccessResolver` rechaza un Managed deshabilitado antes de requerir su perfil histórico, permitiendo retirar también perfiles custom sin convertir `USER_DISABLED` en indisponibilidad.
+Además, `UsersAccessResolver` rechaza un Managed deshabilitado antes de requerir su perfil histórico.
 
-Qualification final en workspace real:
+Qualification del checkpoint:
 - tests focalizados Users core + Configuration runtime projection + Projection Cosmos: 33 passed;
 - suite Web: 496 passed, 7 skipped;
 - Ruff check GREEN;
@@ -376,7 +376,7 @@ web/capabilities/users/configuration
 Package actual:
 
 ```text
-atlanticus-web-users-configuration==0.1.8
+atlanticus-web-users-configuration==0.1.9
 ```
 
 Estado:
@@ -385,7 +385,7 @@ Estado:
 USERS-CANONICAL-SOURCE-1  CLOSED / VERIFIED / CURRENT
 ```
 
-Users expone ahora una ruta Source canónica:
+Users expone una ruta Source canónica:
 - `UsersSourceCodec` serializa `UsersConfigurationCatalog + published_by` como un recurso Source;
 - resource path: `users/configuration.json.gz`;
 - document type: `atlanticus_users_configuration_release`;
@@ -399,15 +399,13 @@ Users expone ahora una ruta Source canónica:
 - `load_release()` valida que Source devuelva el mismo `SourceKey` y `SourceReleaseRef` solicitado;
 - dos publicaciones pueden compartir contenido/hash y conservar identidades de release distintas.
 
-Users no reimplementa en este camino:
+Users no reimplementa:
 - release identity;
 - History;
 - CAS/concurrency;
 - provider Local/Blob.
 
-El package depende de `atlanticus-web-source==0.1.0`.
-
-Qualification final en workspace real:
+Qualification del checkpoint Source:
 - tests dirigidos Source Users: 7 passed;
 - Users Configuration: 54 passed;
 - suite Web global: 503 passed, 7 skipped;
@@ -416,10 +414,74 @@ Qualification final en workspace real:
 - `uv lock` GREEN;
 - `git diff --check` GREEN.
 
-Checkpoint de implementación:
+Checkpoint:
 `moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
 
-Los contratos administrativos legacy de Users continúan presentes porque `UsersManagerWorkflowAdapter` y el Manager productivo todavía trabajan con `source_revision: str`. No se introduce equivalencia `UsersConfigurationBundle.revision <-> SourceReleaseId`.
+### Users Configuration — Canonical Projection
+
+Implementado en:
+
+```text
+web/capabilities/users/configuration
+web/capabilities/users/projection-cosmos
+```
+
+Packages:
+
+```text
+atlanticus-web-users-configuration==0.1.9
+atlanticus-web-users-projection-cosmos==0.1.1
+```
+
+Estado:
+
+```text
+USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
+```
+
+Contrato implementado:
+- `UsersProjectionBuilder` transforma una Source release exacta en `UsersConfigurationCatalog`;
+- `create_users_projection_service(...)` reutiliza `SourceProjectionService`;
+- target = `SourceKey + SourceReleaseRef`;
+- `project(target)` resuelve esa release exacta y no consulta Source current durante ejecución;
+- same content en releases distintas sigue siendo target distinto;
+- una release histórica exacta puede proyectarse y luego quedar `OUTDATED`;
+- `UsersConfigurationBundle.revision` no cruza la frontera canónica;
+- el actor de publicación no forma parte del payload proyectado.
+
+Provider Cosmos:
+- `CosmosUsersConfigurationProjectionStore` implementa `ProjectionStore[UsersConfigurationCatalog]`;
+- first active write create-only;
+- replace con ETag/CAS;
+- nunca blind upsert;
+- same exact release + same payload converge como retry idempotente;
+- same release ID con metadata o payload incompatible falla explícitamente;
+- conflicto concurrente same-target converge;
+- conflicto concurrente different-target produce `UsersConfigurationProjectionConflictError`;
+- el container name se recibe desde composición y no se hardcodea;
+- no se infiere ordering por release ID ni timestamps;
+- target histórico explícito permitido.
+
+Provenance canónico persistido:
+- `source_key`;
+- `source_release_id`;
+- `source_published_at_utc`;
+- `projected_at_utc`.
+
+Qualification final:
+- 10 tests nuevos focalizados GREEN;
+- Users Configuration + Projection Cosmos: 84 passed;
+- suite Web: 513 passed, 7 skipped;
+- `uv lock --check` GREEN;
+- Ruff check GREEN;
+- `git diff --check` GREEN.
+
+Checkpoint:
+`moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1`.
+
+Los contratos administrativos legacy permanecen porque `UsersManagerWorkflowAdapter` y el Manager productivo todavía trabajan con `source_revision: str`.
+
+El cierre canónico de Projection no modifica el provenance legacy de `users.runtime` ni crea equivalencia entre `UsersConfigurationBundle.revision` y `SourceReleaseId`.
 
 ### Navigation Configuration — Source / Projection
 
@@ -439,22 +501,18 @@ NAV-CONSUMER-MIGRATION-B  Administrative consumer              BLOCKED
 Navigation legacy delete                                      BLOCKED
 ```
 
-Navigation implementa una ruta Source canónica:
-- `NavigationSourceCodec` serializa una release de configuración como recurso Source;
-- `NavigationSourceService` usa `SourceStore`;
-- publicación usa `PublishRequest`, `ConcurrencyToken` y `basis_release`;
-- History se obtiene desde `SourceStore.query_history`;
-- lectura histórica usa `SourceReleaseRef` exacto;
-- dos publicaciones pueden compartir contenido/hash y conservar identidades de release distintas;
-- `NavigationProjectionBuilder` construye el payload de dominio desde la release exacta.
-
-Navigation implementa stores concretos:
+Navigation implementa:
+- `NavigationSourceCodec`;
+- `NavigationSourceService`;
+- publicación con `ConcurrencyToken` y `basis_release`;
+- History desde Source;
+- lectura histórica por `SourceReleaseRef`;
+- mismo contenido con releases distintas;
+- `NavigationProjectionBuilder`;
 - `LocalNavigationProjectionStore`;
 - `CosmosNavigationProjectionStore`.
 
-Ambos implementan `ProjectionStore[NavigationConfigurationCatalog]` y conservan un active projection por `SourceKey`.
-
-El runtime Navigation migrado consume directamente:
+El runtime Navigation consume:
 
 ```text
 ProjectionStore[NavigationConfigurationCatalog]
@@ -463,7 +521,7 @@ ProjectionStore[NavigationConfigurationCatalog]
 
 y ya no depende del `NavigationProjectionRepository` legacy.
 
-Gates del último incremento en workspace real:
+Gates del último incremento:
 - runtime Navigation: 7/7;
 - Navigation Configuration: 49/49;
 - Ruff GREEN;
@@ -471,10 +529,9 @@ Gates del último incremento en workspace real:
 - `git diff --check` GREEN;
 - suite Web global GREEN con 7 skips conocidos.
 
-La administración Navigation todavía depende del contrato Manager productivo legacy basado en `source_revision: str`.
-`NavigationManagerWorkflowAdapter` consume `NavigationConfigurationServices.administration` y `.projection_workflow`.
+La administración Navigation todavía depende del Manager legacy basado en `source_revision: str`.
 
-Por esta razón no se eliminan todavía:
+No se eliminan todavía:
 - `NavigationConfigurationSource`;
 - `NavigationConfigurationPublisher`;
 - `NavigationProjectionRepository`;
@@ -483,7 +540,7 @@ Por esta razón no se eliminan todavía:
 - `NavigationProjectionWorkflow`;
 - adapters Source/Projection legacy.
 
-No introducir shim `SourceReleaseId <-> str` ni un segundo coordinator Manager paralelo sólo para completar esta migración.
+No introducir shim `SourceReleaseId <-> str` ni un segundo coordinator Manager paralelo.
 
 ### ADA
 
@@ -534,7 +591,8 @@ Manager IndexedDB workspace persistence        PLANNED
 ```
 
 El coordinator productivo y sus workflows continúan usando `source_revision: str`.
-El cutover de raíz debe reemplazar esa semántica cuando los consumidores necesarios estén preparados; no crear compatibilidad paralela temporal.
+
+El cutover de raíz debe reemplazar esa semántica; no crear compatibilidad paralela temporal.
 
 ### Alarm Engine
 
@@ -548,10 +606,11 @@ Qualification R3.5 final: CLOSED PASS/GREEN.
 ## Estado objetivo decidido
 
 ### Python
+
 - Python 3.14.7.
 - `python:3.14.7-slim-trixie`.
 
-El repo actual aún conserva 3.14.2 en varios proyectos, incluido Web Source, Projection Core y Users Configuration.
+El repo actual aún conserva 3.14.2 en varios proyectos, incluidos los packages Users afectados por el último hito.
 
 Estado:
 `DECIDED / NOT YET IMPLEMENTED GLOBALLY`.
@@ -574,7 +633,7 @@ Estado actual:
 - Navigation canonical Source: `IMPLEMENTED + VALIDATED`;
 - Users canonical Source: `IMPLEMENTED + VALIDATED`;
 - Projection Local/Cosmos concreto para Navigation: `IMPLEMENTED + VALIDATED`;
-- Users canonical exact-release Projection: `PLANNED / NEXT`;
+- Users canonical exact-release Projection: `IMPLEMENTED + VALIDATED`;
 - otros providers Projection concretos por dominio: `PLANNED`;
 - Manager BASE/SOURCE/WORKSPACE/PROJECTION contracts: `IMPLEMENTED`;
 - Manager productive workflow/callback cutover: `BLOCKED / IN PROGRESS`.
@@ -583,7 +642,7 @@ Blob parity y recovery ya están validados.
 
 SharePoint + Power Automate siguen destinados a salir del pipeline Source migrado, pero el retiro pertenece al incremento de migración de consumidores.
 
-No borrar aún los adapters Source legacy de Navigation ni Users Configuration: sus consumidores administrativos Manager todavía no han migrado.
+No borrar aún adapters Source legacy de Navigation ni Users Configuration: sus consumidores administrativos Manager todavía no han migrado.
 
 ### Manager browser workspace
 
@@ -620,26 +679,30 @@ Profiles pertenece a Atlanticus y debe poder instalarse y operar sin Access.
 Access es específico de ADA y puede consumir/extender Profiles.
 La dependencia `Profiles -> ADA Access` está prohibida.
 
-Cierres independientes ya verificados:
+Cierres independientes verificados:
 
 ```text
 USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED / CURRENT
 COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
 USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2      CLOSED / VERIFIED / CURRENT
 ```
 
 Estos cierres fijan:
 - `users.runtime` y su reader/observe durable Cosmos;
 - ownership y semántica del writer Managed snapshot-level;
 - transición Pending→Resolved, retirement/re-add y CAS del runtime;
-- Source canónico de Users sobre Source Core.
+- Source canónico de Users;
+- Projection canónica exact-release de Users;
+- provider Cosmos de la Projection canónica con CAS e idempotencia same-target.
 
 No congelan todavía:
-- la integración exact-release de Users Projection con Source Core;
-- el formato final de provenance Source release en `users.runtime`;
+- provenance exact-release dentro de los documentos Managed de `users.runtime`;
+- resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
 - la frontera completa Profiles / ADA Access;
-- el cutover administrativo Manager ni el borrado legacy.
+- el cutover administrativo Manager;
+- el borrado legacy.
 
 La implementación restante y la decisión histórica
 `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
@@ -651,10 +714,10 @@ Estado de la frontera completa:
 Siguiente frontera aislada:
 
 ```text
-USERS-CANONICAL-PROJECTION-2  PLANNED / NEXT
+MANAGER-ROOT-CANONICAL-CUTOVER  BLOCKED / IN PROGRESS
 ```
 
-Debe proyectar desde una `SourceReleaseRef` exacta y resolver provenance durable sin equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`.
+Debe reemplazar el root productivo basado en `source_revision: str` sin shim release/string ni coordinator paralelo.
 
 ### Collector
 
@@ -752,12 +815,12 @@ Cosmos preflight bridge           CLOSED / VERIFIED / CURRENT
 Users Cosmos runtime adapter      CLOSED / VERIFIED / CURRENT
 Users runtime projection boundary CLOSED / VERIFIED / CURRENT
 Users canonical Source            CLOSED / VERIFIED / CURRENT
-Users canonical Projection        PLANNED / NEXT
+Users canonical Projection        CLOSED / VERIFIED / CURRENT
 Web lifecycle/resource readiness  OPEN / BLOCKED BY GLOBAL CONTRACTS
 ```
 
 El bridge existente no implica que Web ya ejecute resource preparation en startup.
+
 `ApplicationResourcePlan`, required/optional semantics, named connection resolution global y READY/DEGRADED/ERROR continúan abiertos.
 
-Objetivo:
-Web agrega todos los requirements instalados y prepara/valida recursos antes de Backend cuando esos contratos se congelen.
+El resource físico del canonical Users Projection store tampoco quedó congelado por este hito.

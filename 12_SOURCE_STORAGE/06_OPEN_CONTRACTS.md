@@ -105,35 +105,72 @@ Evidencia:
 - Ruff/format Projection GREEN;
 - baseline `moragaga/atlanticus@5b383a3ff4dcbb2cc15f55df4819ebf9e61e63b4`.
 
+## Cerrado para Users Configuration / Cosmos
+
+En:
+
+```text
+moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+```
+
+queda validado para `CosmosUsersConfigurationProjectionStore`:
+
+1. `ProjectionStore[UsersConfigurationCatalog]`.
+2. Builder desde Source exacta mediante `UsersSourceCodec`.
+3. First active write create-only.
+4. Replace active con ETag/CAS.
+5. No blind upsert.
+6. Same exact release + same payload = retry idempotente.
+7. Same release ID + metadata incompatible = invariant failure.
+8. Same exact release + payload incompatible = invariant failure.
+9. Conflicto concurrente same-target = éxito idempotente.
+10. Conflicto concurrente different-target = error explícito.
+11. Target histórico explícito permitido.
+12. No ordering inferido por release ID ni `projected_at_utc`.
+13. Provenance = `source_key`, `source_release_id`, `source_published_at_utc`, `projected_at_utc`.
+14. `UsersConfigurationBundle.revision` no cruza la frontera canónica.
+
+Este cierre es domain/provider-specific y no cierra los contratos equivalentes para otros dominios/providers.
+
 ## Abierto después de Projection Handoff
 
 ### Manager
 
 Pendiente:
-- BASE/SOURCE/WORKSPACE/PROJECTION;
+- cutover productivo BASE/SOURCE/WORKSPACE/PROJECTION;
 - compare;
 - conflict workflow;
-- restore orchestration.
+- restore orchestration;
+- migración de consumers administrativos Users/Navigation.
 
 Compare no se añade automáticamente a `SourceStore`; pertenece a la capa que interprete contenido/dominio salvo que aparezca una necesidad genérica demostrada.
 
 ### Projection providers y orchestration
 
 Pendiente:
-- adaptar/implementar Projection Local/Cosmos según ownership de cada dominio;
-- validar atomicidad/durabilidad de `replace_active` en cada provider concreto;
-- congelar idempotencia provider/domain-level para reprojection del mismo release;
+- implementar/adaptar providers de otros dominios según ownership real;
+- validar atomicidad/durabilidad de `replace_active` para cada provider nuevo;
+- congelar idempotencia provider/domain-level para cada provider nuevo;
 - projection planner/orchestration multi-capability;
 - derived resolutions cuando existan dependencias reales.
 
-El cierre del exact-release Core no implica que estas capas estén implementadas.
+Users/Cosmos ya satisface estos contratos para su provider concreto.
+
+### Users runtime legacy
+
+Pendiente:
+- migrar provenance Managed desde `projection_source_revision` legacy a release identity canónica;
+- integrar esa migración sólo después del Manager root canonical cutover;
+- no introducir equivalencia `UsersConfigurationBundle.revision <-> SourceReleaseId`;
+- no introducir shim `SourceReleaseId <-> str`;
+- congelar resource topology/provisioning físico del canonical Projection store si el deployment lo requiere.
 
 ### Migración legacy
 
 Pendiente:
-- migrar Navigation/Tool Configuration a Source;
+- migrar consumers administrativos restantes;
 - identificar rutas exactas a reemplazar/eliminar;
-- conservar Projection local/Cosmos según ownership;
+- conservar adapters legacy mientras exista consumer productivo;
 - retirar SharePoint/Power Automate Source sólo dentro del incremento de migración correspondiente; el gate de paridad/recovery ya está satisfecho.
 
 ### Operación

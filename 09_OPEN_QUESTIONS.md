@@ -139,6 +139,10 @@ Cerrado dentro de esta frontera:
 - CAS/ETag sin blind upsert para actualización Managed;
 - resolver de Access rechaza Managed deshabilitado antes de requerir perfil histórico;
 - Source canónico de Users sobre `SourceStore` con `ConcurrencyToken`, `basis_release`, History y lectura de release exacta;
+- Projection canónica de Users desde `SourceReleaseRef` exacta;
+- `ProjectionRecord[UsersConfigurationCatalog]`;
+- Cosmos ProjectionStore con provenance Source exact-release;
+- idempotencia same-target y conflicto CAS explícito;
 - sin dependencia de ADA Access.
 
 Cerrados durante ejecución:
@@ -149,16 +153,29 @@ Cerrados durante ejecución:
 Además:
 
 ```text
-USERS-CANONICAL-SOURCE-1  CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1      CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
 ```
 
-en `moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
+Checkpoints:
 
-Continúa OPEN la frontera completa Users / Profiles / ADA Access y la convergencia exact-release de Projection:
+```text
+USERS-CANONICAL-SOURCE-1
+moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648
+
+USERS-CANONICAL-PROJECTION-2
+moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+```
+
+Continúa OPEN la frontera completa Users / Profiles / ADA Access y el cutover administrativo/runtime legacy:
 
 45. auditar implementación actual restante de Users/Profile y consumidores, sin reabrir los contratos ya cerrados salvo conflicto autoritativo explícito;
 46. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
 47. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes;
-48. `USERS-CANONICAL-PROJECTION-2`: conectar la proyección de Users a una `SourceReleaseRef` exacta y decidir el provenance durable de `users.runtime` basado en identidad de release, sin equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`;
+48. **CLOSED / SUPERSEDED AS OPEN ITEM** — `USERS-CANONICAL-PROJECTION-2` ya conecta Source exacta con Projection canónica en `139ee93a118e51f66c3d585f00235f212a2475c1`. La formulación anterior que incluía también provenance exact-release de `users.runtime` queda refinada: esa parte no fue cerrada por este hito;
 49. migrar `UsersManagerWorkflowAdapter` y el flujo administrativo Users sólo después del Manager root productive cutover de la pregunta 38;
-50. eliminar contratos/adapters Source legacy de Users únicamente después de validar que no quedan consumidores productivos legacy.
+50. eliminar contratos/adapters Source legacy de Users únicamente después de validar que no quedan consumidores productivos legacy;
+51. migrar el runtime Managed desde provenance legacy (`projection_source_revision`) a provenance exact-release únicamente después del cutover raíz de Manager, sin shim `SourceReleaseId <-> str`;
+52. congelar y declarar, si corresponde, el resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`; el provider actual recibe `container_name`, pero `USERS-CANONICAL-PROJECTION-2` no fija physical name, TTL ni connection binding;
+53. validar el composition root productivo del canonical Users Projection store cuando corresponda al incremento de integración;
+54. mantener separados canonical Projection y runtime legacy hasta que el cutover raíz permita reemplazar limpiamente el camino anterior.

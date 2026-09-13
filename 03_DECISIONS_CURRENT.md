@@ -80,6 +80,18 @@ Estado: **CURRENT**
 | Users Source resource canónico es `users/configuration.json.gz` con schema de dominio `1` | FROZEN / IMPLEMENTED + VALIDATED |
 | `UsersSourceService.publish_catalog` usa `ConcurrencyToken` + `basis_release`, no `expected_source_revision: str` | FROZEN / IMPLEMENTED + VALIDATED |
 | `UsersConfigurationBundle.revision` sigue siendo digest de contenido legacy y no equivale a `SourceReleaseId` | FROZEN |
+| Users canonical Projection payload = `ProjectionRecord[UsersConfigurationCatalog]` | FROZEN / IMPLEMENTED + VALIDATED |
+| Users canonical Projection usa `UsersSourceCodec` + validación de catálogo | FROZEN / IMPLEMENTED + VALIDATED |
+| Users canonical Projection target = `SourceKey + SourceReleaseRef` | FROZEN / IMPLEMENTED + VALIDATED |
+| Users canonical Projection provenance = `source_key + source_release_id + source_published_at_utc + projected_at_utc` | FROZEN / IMPLEMENTED + VALIDATED |
+| Users canonical Projection no usa `UsersConfigurationBundle.revision` | FROZEN / IMPLEMENTED + VALIDATED |
+| Users Cosmos canonical Projection first write es create-only; replace usa ETag/CAS; nunca blind upsert | FROZEN / IMPLEMENTED + VALIDATED |
+| Retry same exact release + same payload es idempotente y conserva el active existente | FROZEN / IMPLEMENTED + VALIDATED |
+| Same release ID con metadata o payload incompatible falla como invariante | FROZEN / IMPLEMENTED + VALIDATED |
+| Conflicto concurrente same-target converge; different-target falla explícitamente | FROZEN / IMPLEMENTED + VALIDATED |
+| Users Cosmos Projection no infiere ordering por release ID ni timestamps | FROZEN / IMPLEMENTED + VALIDATED |
+| Users canonical Projection provider recibe `container_name` desde composición | FROZEN / IMPLEMENTED + VALIDATED |
+| Users runtime exact-release provenance permanece separado del canonical Projection | CURRENT DIRECTION / BLOCKED |
 | No introducir shim `SourceReleaseId <-> str` para completar migraciones Manager | FROZEN |
 | No crear un segundo Manager coordinator canónico paralelo | FROZEN |
 | Manager browser WORKSPACE persistirá en IndexedDB | DECIDED / NOT YET IMPLEMENTED |
@@ -106,21 +118,21 @@ Estado: **CURRENT**
 ## Source / Projection / Resource Preparation checkpoint
 
 ```text
-SOURCE-1A.1                       Core + Local                     CLOSED / VERIFIED
-SOURCE-1A.2                       Blob                             CLOSED / VERIFIED
-Projection                        Exact-release Core               CLOSED / VERIFIED
-NAV-SOURCE-PROJECTION-1           Source contracts                 CLOSED / VERIFIED
-NAV-SOURCE-PROJECTION-2           Local/Cosmos Projection stores   CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-A          Runtime consumer                 CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-B          Administrative consumer          BLOCKED
-Manager                           Root canonical cutover           BLOCKED / IN PROGRESS
-WEB-STORAGE-TOPOLOGY              Resource contracts               CLOSED / VERIFIED
-USERS-STORAGE-TOPOLOGY            users.runtime                    CLOSED / VERIFIED
-STORAGE-PREFLIGHT-COSMOS-BRIDGE   Cosmos resource preflight        CLOSED / VERIFIED
-COSMOS-USERS-RUNTIME-ADAPTER      Runtime store/reader              CLOSED / VERIFIED
-USERS-RUNTIME-PROJECTION-BOUNDARY Managed runtime writer            CLOSED / VERIFIED
-USERS-CANONICAL-SOURCE-1          Canonical Source backend          CLOSED / VERIFIED
-Next                              USERS-CANONICAL-PROJECTION-2      PLANNED
+SOURCE-1A.1                       Core + Local                       CLOSED / VERIFIED
+SOURCE-1A.2                       Blob                               CLOSED / VERIFIED
+Projection                        Exact-release Core                 CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-1           Source contracts                   CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-2           Local/Cosmos Projection stores     CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-A          Runtime consumer                   CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-B          Administrative consumer            BLOCKED
+WEB-STORAGE-TOPOLOGY              Resource contracts                 CLOSED / VERIFIED
+USERS-STORAGE-TOPOLOGY            users.runtime                      CLOSED / VERIFIED
+STORAGE-PREFLIGHT-COSMOS-BRIDGE   Cosmos resource preflight          CLOSED / VERIFIED
+COSMOS-USERS-RUNTIME-ADAPTER      Runtime store/reader               CLOSED / VERIFIED
+USERS-RUNTIME-PROJECTION-BOUNDARY Managed runtime writer             CLOSED / VERIFIED
+USERS-CANONICAL-SOURCE-1          Canonical Source backend           CLOSED / VERIFIED
+USERS-CANONICAL-PROJECTION-2      Canonical exact-release Projection CLOSED / VERIFIED
+Manager                           Root canonical cutover             BLOCKED / IN PROGRESS
 ```
 
 Implementación actual relevante:
@@ -181,6 +193,17 @@ Users Canonical Source:
 - `UsersConfigurationBundle.revision` no se usa como identidad canónica de publicación;
 - contratos legacy siguen presentes mientras Manager continúe con `source_revision: str`.
 
+Users Canonical Projection:
+- `UsersProjectionBuilder` decodifica la release exacta y produce `UsersConfigurationCatalog`;
+- `SourceProjectionService` ejecuta `ProjectionTarget(SourceKey + SourceReleaseRef)`;
+- `CosmosUsersConfigurationProjectionStore` implementa `ProjectionStore[UsersConfigurationCatalog]`;
+- provenance canónico usa release identity;
+- create-only + ETag/CAS;
+- same-target retry idempotente;
+- different-target conflict explícito;
+- no ordering inferido;
+- runtime provenance legacy no se modifica en este cierre.
+
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
 
@@ -193,7 +216,7 @@ Projection Core:
 
 Navigation:
 - publica recursos de configuración mediante `SourceStore`;
-- History proviene de Source y no de un contenedor histórico de dominio;
+- History proviene de Source;
 - mismo contenido puede republicarse como una release distinta;
 - implementa Projection stores concretos Local/Cosmos;
 - runtime usa el `ProjectionStore` canónico;
@@ -204,10 +227,11 @@ Manager:
 - coordinator/workflows productivos siguen usando `source_revision: str`;
 - el cutover de raíz no debe introducir adapters temporales ni coordinators paralelos.
 
-No se consideran cerrados por este hito:
+No se consideran cerrados por `USERS-CANONICAL-PROJECTION-2`:
 - provisioning/validation real de `users.runtime` dentro del lifecycle Web;
-- `USERS-CANONICAL-PROJECTION-2` y provenance exact-release del runtime Managed;
-- otros providers Projection Local/Cosmos concretos por dominio;
+- resource topology/provisioning físico del canonical Users Projection store;
+- provenance exact-release dentro de `users.runtime`;
+- otros providers Projection concretos por dominio;
 - orchestration multi-capability;
 - derived resolutions;
 - Manager root productive cutover;
@@ -277,9 +301,10 @@ USERS-STORAGE-TOPOLOGY
 COSMOS-USERS-RUNTIME-ADAPTER
 USERS-RUNTIME-PROJECTION-BOUNDARY
 USERS-CANONICAL-SOURCE-1
+USERS-CANONICAL-PROJECTION-2
 ```
 
-Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni del cutover canónico de Projection/Manager.
+Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni del cutover canónico de Manager/runtime.
 
 Contratos congelados adicionales:
 - writer Managed snapshot-level separado de runtime store/reader;
@@ -289,15 +314,22 @@ Contratos congelados adicionales:
 - CAS/ETag sin blind upsert;
 - Managed disabled no requiere profile histórico;
 - Users canonical Source sobre Source Core;
-- legacy content revision no equivale a Source release identity.
+- Users canonical Projection exact-release sobre Projection Core;
+- legacy content revision no equivale a Source release identity;
+- runtime exact-release provenance permanece separado hasta el root cutover.
 
 Antes de cerrar la frontera completa todavía se debe auditar:
 - implementación actual Users/Profile restante;
 - consumidores reales;
 - `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`.
 
-El siguiente foco aislado es `USERS-CANONICAL-PROJECTION-2`.
-Debe conectar exact-release Projection con el writer Managed y congelar provenance de runtime basado en identidad de Source release. No mezclar este incremento con Manager cutover, legacy deletion ni Profiles/Access.
+Siguiente foco aislado:
+
+```text
+MANAGER-ROOT-CANONICAL-CUTOVER
+```
+
+Debe reemplazar el root productivo `source_revision: str` y luego habilitar migraciones administrativas sin shims.
 
 ## SharePoint
 

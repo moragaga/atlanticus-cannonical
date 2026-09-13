@@ -32,14 +32,26 @@ Estado: **OPEN**
 17. Definir Storage provisioning parity.
 18. Integrar el bridge Cosmos ya cerrado al punto de resource preparation cuando los contratos anteriores estén congelados.
 
-## Users runtime projection
+## Users Source / Projection
 
-19. `USERS-RUNTIME-PROJECTION-BOUNDARY`: auditar `UsersProjectionRepository` y adapters actuales para definir ownership del write Managed hacia `users.runtime`.
-20. Freeze documento/operación durable para materializar `ResolvedUserRecord` sin duplicar la autoridad Source.
-21. Freeze transición Pending→Resolved y concurrencia contra `observe()` create-only.
-22. Freeze comportamiento cuando un usuario desaparece de configuración: delete, disable, preserve u otra semántica explícita.
-23. Freeze idempotencia/reprojection y provenance/audit.
-24. Determinar package/provider boundary del writer antes de implementarlo; no agregar `upsert_resolved()` al runtime store por conveniencia.
+Cerrados:
+
+```text
+USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1           CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2       CLOSED / VERIFIED / CURRENT
+```
+
+Los items históricos sobre definir ownership del writer Managed, Pending→Resolved, retirement/re-add, CAS, idempotencia y package boundary quedan `SUPERSEDED` como open items porque ya fueron implementados y validados.
+
+Permanecen OPEN/BLOCKED:
+
+19. Manager root productive cutover desde `source_revision: str`.
+20. Users administrative consumer migration posterior al root cutover.
+21. Runtime Managed exact-release provenance posterior al root cutover, sin shim `SourceReleaseId <-> str`.
+22. Freeze resource topology/provisioning del Cosmos canonical Projection store si el deployment lo requiere.
+23. Legacy Users Source/Projection deletion sólo tras consumer migration.
+24. Validar composition root productivo del canonical Projection store en su incremento de integración.
 
 ## Readiness
 
@@ -61,7 +73,7 @@ Estado: **OPEN**
 34. Freeze deterministic ordering.
 35. Definir retry/resume.
 36. Definir rollback/no-op semantics.
-37. Integrar Source Release identity.
+37. Integrar Source Release identity en los consumers pendientes; las base projections Users/Navigation ya usan identidad canónica.
 
 ## Deployment
 
