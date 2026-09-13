@@ -39,16 +39,19 @@ En paralelo sólo los enablers que bloquean la vertical:
 - resource readiness;
 - Manager authorization sin bypass.
 
-Resource readiness tiene el siguiente checkpoint:
+Resource readiness / Users durable chain tiene el siguiente checkpoint:
 
 ```text
-WEB-STORAGE-TOPOLOGY        CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY      CLOSED / VERIFIED / CURRENT
-STORAGE-PREFLIGHT-COSMOS-BRIDGE   PLANNED / NEXT
-COSMOS-USERS-RUNTIME-ADAPTER      PLANNED
+WEB-STORAGE-TOPOLOGY              CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE   CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY PLANNED / NEXT
 ```
 
-`STORAGE-PREFLIGHT-COSMOS-BRIDGE` debe permanecer separado del adapter durable de Users: primero se cierra la traducción/preflight genérica del plan de recursos; después se implementa el store Cosmos de Users.
+Bridge y adapter permanecen fronteras separadas: el bridge traduce/prepara topology provider-specific; el adapter implementa lectura/observación del runtime Users. Ninguno define por sí solo el writer administrativo de Managed Users.
+
+Siguiente foco aislado: auditar y congelar el contrato que materializa Users Configuration/Projection hacia `users.runtime`. No mezclarlo con el lifecycle global de resource readiness.
 
 ## Backend productization
 

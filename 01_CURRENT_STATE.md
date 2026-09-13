@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@d7b5e53b30012b0043f17c8a1e98c0ce03325bb2`.
+Corte de implementación: `moragaga/atlanticus@d63886d8d42688e3d03d680f0a3d7b92cd3863ed`.
 
 ## Estado implementado
 
@@ -125,6 +125,103 @@ Gates ejecutados en el workspace real:
 - `git diff --check` GREEN.
 
 El intento previo de ubicar este contrato en `backend/storage-topology` fue descartado antes de integrarse y queda `SUPERSEDED`.
+
+### Cosmos Storage Preflight Bridge
+
+Implementado en:
+
+```text
+web/capabilities/storage/cosmos
+```
+
+Package:
+
+```text
+atlanticus-web-storage-cosmos==0.1.0
+```
+
+Estado:
+
+```text
+STORAGE-PREFLIGHT-COSMOS-BRIDGE  CLOSED / VERIFIED / CURRENT
+```
+
+API pública:
+- `to_cosmos_container_spec(...)`;
+- `ensure_cosmos_storage_plan(...)`;
+- `validate_cosmos_storage_plan(...)`.
+
+Contrato vigente:
+- traduce recursos Cosmos del `ResolvedStoragePlan` a `CosmosContainerSpec`;
+- recibe `Mapping[str, CosmosProvisioner]` preconstruido por composición;
+- no recibe secretos, endpoints ni raw settings;
+- no construye `CosmosClient`;
+- no importa Azure SDK;
+- no llama `ensure_database()`;
+- resuelve topology, specs, conflictos y provisioners antes del primer provider I/O;
+- soporta múltiples conexiones nombradas por `connection_ref`;
+- ignora providers no Cosmos;
+- un plan sin recursos Cosmos es no-op;
+- mismatch físico continúa siendo responsabilidad explícita de Connectivity y nunca se corrige silenciosamente.
+
+Qualification del checkpoint del bridge:
+- 17 tests focalizados GREEN;
+- Storage Topology + bridge: 51 GREEN;
+- Storage Topology + bridge + Users core: 87 GREEN;
+- suite Web del checkpoint: 448 passed, 7 skipped;
+- Ruff, format focalizado, imports públicos, `uv lock` y `git diff --check` GREEN.
+
+### Users Cosmos Runtime Adapter
+
+Implementado en:
+
+```text
+web/capabilities/users/cosmos
+```
+
+Package:
+
+```text
+atlanticus-web-users-cosmos==0.1.0
+```
+
+Estado:
+
+```text
+COSMOS-USERS-RUNTIME-ADAPTER  CLOSED / VERIFIED / CURRENT
+```
+
+`CosmosUsersRuntimeStore` implementa simultáneamente:
+- `UsersRuntimeStore`;
+- `PendingUsersReader`.
+
+Contrato durable implementado:
+
+```text
+id == partition key == user_id
+user_id = build_user_key(issuer, subject_id)
+record_type = pending | resolved
+```
+
+Semántica:
+- `resolve()` usa point-read;
+- `observe()` usa create-only y, ante `CosmosConflictError`, vuelve a leer el estado durable vigente;
+- `observe()` no usa upsert y por tanto no puede sobrescribir una promoción concurrente;
+- `list_pending()` consulta Pending cross-partition y devuelve orden determinista por `user_id`;
+- documento corrupto o identidad incompatible falla explícitamente y nunca se degrada silenciosamente a Guest;
+- errores Cosmos se traducen a `UsersRuntimeStoreUnavailableError` conservando causa;
+- el nombre físico del container se inyecta desde composición;
+- el adapter no provisiona database ni containers;
+- Users core continúa provider-neutral.
+
+Qualification final en workspace real:
+- package Users Cosmos: 23 passed;
+- Storage Topology + Storage Cosmos + Users core + Users Cosmos: 110 passed;
+- suite Web global: 471 passed, 7 skipped;
+- Ruff check GREEN;
+- Ruff format GREEN;
+- contrato público `CosmosUsersRuntimeStore -> UsersRuntimeStore + PendingUsersReader` GREEN;
+- `git diff --check` GREEN.
 
 ### Web Source y Projection Handoff
 
@@ -404,13 +501,14 @@ Profiles pertenece a Atlanticus y debe poder instalarse y operar sin Access.
 Access es específico de ADA y puede consumir/extender Profiles.
 La dependencia `Profiles -> ADA Access` está prohibida.
 
-La topología durable de Users ya tiene un cierre parcial independiente:
+Cierres independientes ya verificados:
 
 ```text
-USERS-STORAGE-TOPOLOGY  CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY          CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER    CLOSED / VERIFIED / CURRENT
 ```
 
-Ese cierre fija únicamente `users.runtime`; no congela la frontera completa Users / Profiles / ADA Access.
+Estos cierres fijan `users.runtime` y su reader/observe durable Cosmos, pero no congelan la frontera completa Users / Profiles / ADA Access ni el writer de Managed Users.
 
 La implementación actual restante y la decisión histórica
 `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
@@ -418,6 +516,14 @@ deben auditarse antes de congelar el resto del contrato físico y de composició
 
 Estado de la frontera completa:
 `DECIDED DIRECTION / IN PROGRESS / NOT YET FULLY AUDITED`.
+
+Siguiente frontera aislada:
+
+```text
+USERS-RUNTIME-PROJECTION-BOUNDARY  PLANNED / NEXT
+```
+
+Debe determinar quién materializa `ResolvedUserRecord` desde Users Configuration/Projection hacia `users.runtime`, incluyendo transición Pending→Resolved, usuarios retirados, concurrencia, idempotencia y provenance.
 
 ### Collector
 
@@ -504,105 +610,21 @@ Objetivo:
 
 Cosmos dispone de `CosmosProvisioner`.
 
-La Web ya dispone de contratos neutrales de resource topology y de una primera declaración durable real (`users.runtime`).
+La Web dispone de contratos neutrales de resource topology, una declaración durable real (`users.runtime`) y el bridge provider-specific hacia Connectivity Cosmos.
 
 Estado de la cadena:
 
 ```text
 Storage resource contracts        CLOSED / VERIFIED / CURRENT
 Users storage declaration         CLOSED / VERIFIED / CURRENT
-Cosmos preflight bridge           PLANNED / NEXT
-Users Cosmos runtime adapter      PLANNED
+Cosmos preflight bridge           CLOSED / VERIFIED / CURRENT
+Users Cosmos runtime adapter      CLOSED / VERIFIED / CURRENT
+Users runtime projection boundary PLANNED / NEXT
+Web lifecycle/resource readiness  OPEN / BLOCKED BY GLOBAL CONTRACTS
 ```
+
+El bridge existente no implica que Web ya ejecute resource preparation en startup.
+`ApplicationResourcePlan`, required/optional semantics, named connection resolution global y READY/DEGRADED/ERROR continúan abiertos.
 
 Objetivo:
-Web agrega todos los requirements instalados y prepara/valida recursos antes de Backend.
-
-Local:
-- puede crear database;
-- crea/valida containers.
-
-Cloud:
-- database preexistente;
-- Web no crea DB;
-- crea/valida containers permitidos;
-- mismatch de partition/TTL = error contractual.
-
-### Deployment
-
-Orden:
-
-```text
-base infra
-→ Web
-→ resource preparation
-→ projection bootstrap
-→ Web/Manager READY
-→ Backend
-```
-
-La Web puede estar disponible sin datos ni backend.
-
-### Manager access
-
-El bypass `is_local → full access` existe actualmente y debe retirarse.
-
-Se introduce una superficie pre-Manager que no depende de Users/Profile projection y permite diagnosticar/preparar infraestructura y proyecciones con autorización de bootstrap independiente.
-
-## KPI Backend recovery
-
-Los cuatro procesos auditados poseen gates `current` que evitan repetir trabajo:
-- KPI Runtime;
-- Latest Delivery;
-- Historian;
-- Timeseries Delivery.
-
-Esto es correcto en producción pero dificulta repair/testing cuando se borra un materializado.
-
-Dirección:
-
-```text
-REPROCESS_CURRENT
-```
-
-por proceso, default false.
-
-El modo sólo omite el shortcut `current`.
-
-No omite:
-- authority ordering;
-- lease;
-- fencing;
-- cancellation;
-- durable conflicts.
-
-Historian requiere full rebuild desde durable evaluation batches hasta KPI committed watermark.
-
-## Bootstrap closure status
-
-Canonical Baseline 1.0 es suficiente para ejecución.
-
-Primer delivery order:
-
-```text
-Operaciones Integradas
-→ Mina
-```
-
-El foco está en productización vertical, no en expansión arquitectónica general.
-
-## Checkpoint Source / Projection / Resource Preparation
-
-```text
-SOURCE-1A.1                 CORE + LOCAL                     CLOSED / VERIFIED
-SOURCE-1A.2                 BLOB                             CLOSED / VERIFIED
-PROJECTION                  EXACT-RELEASE CORE               CLOSED / VERIFIED
-NAV-SOURCE-PROJECTION-1     SOURCE CONTRACTS                 CLOSED / VERIFIED
-NAV-SOURCE-PROJECTION-2     LOCAL/COSMOS PROJECTION STORES   CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-A    RUNTIME                          CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-B    ADMIN / MANAGER                  BLOCKED
-MANAGER                     ROOT CONTRACT CUTOVER            BLOCKED / IN PROGRESS
-WEB-STORAGE-TOPOLOGY        RESOURCE CONTRACTS               CLOSED / VERIFIED
-USERS-STORAGE-TOPOLOGY      USERS.RUNTIME                    CLOSED / VERIFIED
-NEXT                        STORAGE-PREFLIGHT-COSMOS-BRIDGE   PLANNED
-```
+Web agrega todos los requirements instalados y prepara/valida recursos antes de Backend cuando esos contratos se congelen.

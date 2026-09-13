@@ -24,6 +24,17 @@ Estado: **CURRENT**
 | Users requiere `connection_ref` de composición y sólo permite ese override | FROZEN / IMPLEMENTED + VALIDATED |
 | Pending y Managed comparten `users.runtime`; no se separan físicamente sin requisito independiente | FROZEN / IMPLEMENTED + VALIDATED |
 | Datos durables de Users no deben expirar automáticamente por Cosmos TTL | FROZEN / IMPLEMENTED + VALIDATED |
+| Bridge Cosmos de Storage vive en `web/capabilities/storage/cosmos` | CURRENT / IMPLEMENTED + VALIDATED |
+| Bridge recibe `ResolvedStoragePlan` + provisioners Cosmos preconstruidos; no secretos/settings/client construction | FROZEN / IMPLEMENTED + VALIDATED |
+| Bridge valida topology/specs/bindings antes del primer provider I/O | FROZEN / IMPLEMENTED + VALIDATED |
+| Bridge no crea database; política local/cloud pertenece a resource preparation | FROZEN / IMPLEMENTED + VALIDATED |
+| `CosmosUsersRuntimeStore` vive en package provider-specific separado de Users core | CURRENT / IMPLEMENTED + VALIDATED |
+| Users Cosmos document usa `id == partition key == build_user_key(issuer, subject_id)` | FROZEN / IMPLEMENTED + VALIDATED |
+| Users Cosmos distingue `record_type = pending | resolved` | FROZEN / IMPLEMENTED + VALIDATED |
+| `observe()` de Users Cosmos es create-only + conflict reread y nunca upsert | FROZEN / IMPLEMENTED + VALIDATED |
+| `list_pending()` de Users Cosmos es cross-partition y determinista | FROZEN / IMPLEMENTED + VALIDATED |
+| Users Cosmos no provisiona database/container y recibe el physical container desde composición | FROZEN / IMPLEMENTED + VALIDATED |
+| Managed writer hacia `users.runtime` no se inventa dentro de `UsersRuntimeStore`; primero se congela ownership de Projection | CURRENT / NEXT DESIGN |
 | Manager posee shell/header administrativo propio | CURRENT |
 | ADA Generic usa shell/header operacional ADA | CURRENT |
 | Manager ≠ ADA operational shell | CURRENT |
@@ -82,24 +93,29 @@ Estado: **CURRENT**
 ## Source / Projection / Resource Preparation checkpoint
 
 ```text
-SOURCE-1A.1                 Core + Local                     CLOSED / VERIFIED
-SOURCE-1A.2                 Blob                             CLOSED / VERIFIED
-Projection                  Exact-release Core               CLOSED / VERIFIED
-NAV-SOURCE-PROJECTION-1     Source contracts                 CLOSED / VERIFIED
-NAV-SOURCE-PROJECTION-2     Local/Cosmos Projection stores   CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-A    Runtime consumer                 CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-B    Administrative consumer          BLOCKED
-Manager                     Root canonical cutover           BLOCKED / IN PROGRESS
-WEB-STORAGE-TOPOLOGY        Resource contracts               CLOSED / VERIFIED
-USERS-STORAGE-TOPOLOGY      users.runtime                    CLOSED / VERIFIED
-Next                         STORAGE-PREFLIGHT-COSMOS-BRIDGE   PLANNED
+SOURCE-1A.1                       Core + Local                     CLOSED / VERIFIED
+SOURCE-1A.2                       Blob                             CLOSED / VERIFIED
+Projection                        Exact-release Core               CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-1           Source contracts                 CLOSED / VERIFIED
+NAV-SOURCE-PROJECTION-2           Local/Cosmos Projection stores   CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-A          Runtime consumer                 CLOSED / VERIFIED
+NAV-CONSUMER-MIGRATION-B          Administrative consumer          BLOCKED
+Manager                           Root canonical cutover           BLOCKED / IN PROGRESS
+WEB-STORAGE-TOPOLOGY              Resource contracts               CLOSED / VERIFIED
+USERS-STORAGE-TOPOLOGY            users.runtime                    CLOSED / VERIFIED
+STORAGE-PREFLIGHT-COSMOS-BRIDGE   Cosmos resource preflight        CLOSED / VERIFIED
+COSMOS-USERS-RUNTIME-ADAPTER      Runtime store/reader              CLOSED / VERIFIED
+Next                              USERS-RUNTIME-PROJECTION-BOUNDARY PLANNED
 ```
 
 Implementación actual relevante:
 
 ```text
 web/capabilities/storage/topology
+web/capabilities/storage/cosmos
 web/capabilities/users/core
+web/capabilities/users/cosmos
+web/capabilities/users/configuration
 web/capabilities/source/core
 web/capabilities/source/local
 web/capabilities/source/blob
@@ -112,8 +128,13 @@ scopes/ada/web/application/ada-configuration-manager
 Storage Topology:
 - declara recursos físicos sin secretos ni clientes provider;
 - resuelve bindings y conflictos antes del provider;
-- expone `CosmosContainerTopology` sin acoplar las capabilities Web a `connectivity/cosmos`;
-- deja el bridge provider-specific como siguiente frontera independiente.
+- expone `CosmosContainerTopology` sin acoplar las capabilities Web a `connectivity/cosmos`.
+
+Cosmos Storage Bridge:
+- traduce el plan neutral a `CosmosContainerSpec`;
+- agrupa por `connection_ref` y usa provisioners preconstruidos;
+- valida errores locales antes de I/O;
+- no decide database creation ni Web readiness.
 
 Users Storage Topology:
 - declara un único `users.runtime`;
@@ -121,6 +142,13 @@ Users Storage Topology:
 - exige `connection_ref` de composición;
 - prohíbe override del nombre físico;
 - no separa Pending y Managed en containers distintos.
+
+Users Cosmos Runtime Adapter:
+- implementa `UsersRuntimeStore` y `PendingUsersReader`;
+- point-read para resolve;
+- create-only + conflict reread para observe;
+- query cross-partition para Pending;
+- no posee el writer de Projection de Managed Users.
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
@@ -146,9 +174,8 @@ Manager:
 - el cutover de raíz no debe introducir adapters temporales ni coordinators paralelos.
 
 No se consideran cerrados por este hito:
-- `STORAGE-PREFLIGHT-COSMOS-BRIDGE`;
-- `COSMOS-USERS-RUNTIME-ADAPTER`;
-- provisioning real de `users-runtime`;
+- provisioning/validation real de `users.runtime` dentro del lifecycle Web;
+- `USERS-RUNTIME-PROJECTION-BOUNDARY` y writer durable de Managed Users;
 - otros providers Projection Local/Cosmos concretos por dominio;
 - orchestration multi-capability;
 - derived resolutions;
@@ -209,14 +236,16 @@ ADA Access es una extensión/consumer específica de ADA.
 
 No incorporar permisos específicos de ADA dentro del Profile genérico.
 
-El sub-hito `USERS-STORAGE-TOPOLOGY` está `CLOSED / VERIFIED` y congela únicamente la persistencia lógica de `users.runtime`.
+Los sub-hitos `USERS-STORAGE-TOPOLOGY` y `COSMOS-USERS-RUNTIME-ADAPTER` están `CLOSED / VERIFIED`.
 
-No implica cierre de la frontera completa Users / Profiles / ADA Access.
+Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni del writer de Users Projection.
 
 Antes de cerrar esa frontera completa todavía se debe auditar:
 - implementación actual Users/Profile restante;
 - consumidores reales;
 - `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`.
+
+El siguiente foco aislado es `USERS-RUNTIME-PROJECTION-BOUNDARY`: primero contrato/ownership; después implementación.
 
 ## SharePoint
 

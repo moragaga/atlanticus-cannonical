@@ -44,17 +44,37 @@ Congelar containers antes de conocer toda la composición puede producir:
 
 Cosmos ya dispone de provisioning/validation contracts.
 
+Web Storage Topology y el bridge provider-specific Cosmos están implementados y validados:
+
+```text
+WEB-STORAGE-TOPOLOGY              CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE   CLOSED / VERIFIED / CURRENT
+```
+
+El bridge:
+- traduce `ResolvedStoragePlan` a `CosmosContainerSpec`;
+- usa provisioners preconstruidos por `connection_ref`;
+- ejecuta `ensure_containers` o `validate_containers` según la operación solicitada;
+- no crea database;
+- no contiene secretos ni Azure SDK;
+- no define lifecycle/readiness de aplicación.
+
+`users.runtime` es el primer recurso durable confirmado individualmente, pero no cierra la inventory global.
+
 Storage requiere cerrar su parity de provisioning.
 
 ## Local
 
-Cuando el inventario esté congelado:
+Cuando el lifecycle/plan de aplicación esté congelado:
 
 ```text
 Web
-→ puede crear DB local
+→ puede crear DB local según política explícita
 → ensure resources
 ```
+
+La creación local de database no pertenece al bridge Cosmos de Storage.
 
 ## Cloud
 
@@ -81,3 +101,10 @@ No auto-mutación silenciosa.
 6. Alarm pipeline;
 7. User Activity;
 8. Source/Blob.
+
+También permanecen OPEN:
+- owner/required/optional semantics;
+- named connection resolution global;
+- permisos Cloud para resource creation;
+- READY/DEGRADED/ERROR y wiring de readiness;
+- punto de composición/lifecycle Web que invoque el bridge.

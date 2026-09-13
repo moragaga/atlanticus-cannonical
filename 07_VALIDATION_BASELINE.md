@@ -18,9 +18,9 @@ No reinterpretar un `FAIL` histórico como fallo vigente sin revisar si fue:
 
 Checkpoint de implementación:
 
-`moragaga/atlanticus@d7b5e53b30012b0043f17c8a1e98c0ce03325bb2`
+`moragaga/atlanticus@d63886d8d42688e3d03d680f0a3d7b92cd3863ed`
 
-Evidencia ejecutada en el workspace Web real:
+Evidencia ejecutada en el workspace Web real para el cierre original de Topology:
 
 - `WEB-STORAGE-TOPOLOGY`: 19 tests focalizados PASS/GREEN.
 - Storage Topology + Users Storage: 39 tests focalizados PASS/GREEN.
@@ -44,6 +44,63 @@ Propiedades validadas:
 - espejo comentado equivalente al código productivo en el nuevo alcance.
 
 El cambio accidental de formato detectado fuera del alcance en `users/store.py` fue restaurado antes del cierre y no forma parte del checkpoint.
+
+## Storage Preflight Cosmos Bridge
+
+Estado:
+
+```text
+STORAGE-PREFLIGHT-COSMOS-BRIDGE  CLOSED / VERIFIED / CURRENT
+```
+
+Qualification ejecutada en workspace Web real:
+- package bridge: 17 passed;
+- Storage Topology + bridge: 51 passed;
+- Storage Topology + bridge + Users core: 87 passed;
+- suite Web: 448 passed, 7 skipped;
+- `uv lock` / `uv sync`: PASS/GREEN;
+- Ruff global: PASS/GREEN;
+- Ruff format focalizado: PASS/GREEN;
+- API público: PASS/GREEN;
+- `git diff --check`: PASS/GREEN.
+
+Propiedades demostradas:
+- traducción determinista de `ResolvedStoragePlan` a `CosmosContainerSpec`;
+- múltiples conexiones Cosmos por `connection_ref`;
+- topology/spec/binding validation antes de provider I/O;
+- provider no Cosmos ignorado;
+- zero Cosmos resources = no-op;
+- bridge sin Azure SDK, raw settings ni client construction;
+- bridge no crea database.
+
+## Users Cosmos Runtime Adapter
+
+Estado:
+
+```text
+COSMOS-USERS-RUNTIME-ADAPTER  CLOSED / VERIFIED / CURRENT
+```
+
+Qualification final ejecutada en workspace Web real:
+- package `capabilities/users/cosmos`: 23 passed;
+- Storage Topology + Storage Cosmos + Users core + Users Cosmos: 110 passed;
+- suite Web: 471 passed, 7 skipped;
+- Ruff check: PASS/GREEN;
+- Ruff format: PASS/GREEN;
+- `uv lock` / `uv sync`: PASS/GREEN;
+- contrato público `CosmosUsersRuntimeStore` implementando `UsersRuntimeStore` y `PendingUsersReader`: PASS/GREEN;
+- `git diff --check`: PASS/GREEN.
+
+Propiedades demostradas:
+- `resolve()` point-read por `user_id`;
+- `observe()` create-only, nunca upsert;
+- conflicto concurrente reread del estado durable vigente;
+- promoción/deshabilitación concurrente no es sobrescrita por Pending;
+- `list_pending()` cross-partition con orden determinista;
+- documento inválido/identity mismatch falla explícitamente;
+- errores Cosmos se sanitizan hacia el contrato Users conservando causa;
+- no provisioning ni Azure SDK dentro del adapter;
+- mirror comentado equivalente.
 
 ## Alarm Engine
 
@@ -77,7 +134,6 @@ Existe evidencia de construcción/prueba con:
 `python:3.14.7-slim-trixie`
 
 pero la migración global del repo no está materializada aún.
-
 
 ## ADA Web
 

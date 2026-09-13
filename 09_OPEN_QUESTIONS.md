@@ -13,11 +13,13 @@ Estos puntos no bloquean el cierre del bootstrap. Se resuelven durante ejecució
 
 ## Resources
 
-Cerrados para Users:
+Cerrados para Users/resource preflight:
 
 ```text
-WEB-STORAGE-TOPOLOGY    CLOSED / VERIFIED
-USERS-STORAGE-TOPOLOGY  CLOSED / VERIFIED
+WEB-STORAGE-TOPOLOGY              CLOSED / VERIFIED
+USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED
+STORAGE-PREFLIGHT-COSMOS-BRIDGE   CLOSED / VERIFIED
+COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED
 ```
 
 `users.runtime` queda confirmado como:
@@ -32,9 +34,8 @@ Continúan OPEN:
 5. complete resource/container inventory after tracing Operaciones Integradas;
 6. Storage provisioning parity;
 7. cloud permissions for application resource creation;
-8. implementar y validar `STORAGE-PREFLIGHT-COSMOS-BRIDGE` entre el plan resuelto Web y `CosmosContainerSpec` / `CosmosProvisioner`;
-9. validar provisioning/validation real de `users.runtime` en los entornos que correspondan;
-10. implementar `COSMOS-USERS-RUNTIME-ADAPTER` para `UsersRuntimeStore` y `PendingUsersReader`.
+8. integrar el bridge ya implementado dentro del lifecycle Web cuando se congelen `ApplicationResourcePlan`, required/optional, named connection resolution y readiness;
+9. validar provisioning/validation real de `users.runtime` en los entornos que correspondan.
 
 El cierre de `users.runtime` no congela la inventory global de recursos.
 
@@ -127,10 +128,15 @@ Cerrado dentro de esta frontera:
 - partition `/id`;
 - TTL `None`;
 - connection binding por composición;
+- bridge Cosmos entre topology y Connectivity;
+- `CosmosUsersRuntimeStore` para `UsersRuntimeStore` + `PendingUsersReader`;
+- semántica create-only de `observe()`;
 - sin dependencia de ADA Access.
 
-Continúa OPEN la frontera completa Users / Profiles / ADA Access:
+Continúa OPEN la frontera completa Users / Profiles / ADA Access y el writer administrativo de Managed Users:
 
-43. auditar implementación actual restante de Users/Profile y consumidores, sin reabrir el contrato cerrado de `users.runtime` salvo conflicto autoritativo explícito;
-44. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
-45. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes.
+43. `USERS-RUNTIME-PROJECTION-BOUNDARY`: auditar el flujo Users Configuration → `UsersProjectionRepository` → `users.runtime` y congelar ownership del write durable de `ResolvedUserRecord`;
+44. definir transición Pending→Resolved, comportamiento ante usuario retirado de configuración, concurrencia con `observe()`, idempotencia/reprojection y provenance/audit;
+45. auditar implementación actual restante de Users/Profile y consumidores, sin reabrir los contratos ya cerrados salvo conflicto autoritativo explícito;
+46. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
+47. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes.

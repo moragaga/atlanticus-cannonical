@@ -39,9 +39,9 @@ Debe verificarse dónde se declara físicamente el `CosmosContainerSpec` de User
 
 No asumir que el TTL está aplicado sólo porque el dominio lo requiere.
 
-## 4. Cosmos provisioning
+## 4. Cosmos provisioning / Web lifecycle
 
-Existe y ya soporta:
+Existe `CosmosProvisioner` y ya soporta:
 
 - create database;
 - ensure containers;
@@ -49,15 +49,48 @@ Existe y ya soporta:
 - partition key validation;
 - TTL validation.
 
-Falta integrarlo como lifecycle de aplicación Web.
+Además están implementados y verificados:
 
-## 5. Storage provisioning
+```text
+WEB-STORAGE-TOPOLOGY
+USERS-STORAGE-TOPOLOGY
+STORAGE-PREFLIGHT-COSMOS-BRIDGE
+```
+
+Por tanto el gap ya no es la traducción del resource plan a Cosmos.
+
+Gap vigente:
+- integrar resource preparation al lifecycle Web;
+- congelar `ApplicationResourcePlan`;
+- required/optional semantics;
+- named connection resolution global;
+- política local/cloud de database creation;
+- readiness READY/DEGRADED/ERROR.
+
+## 5. Users runtime durable / Projection
+
+Existe `CosmosUsersRuntimeStore` implementando:
+- `UsersRuntimeStore`;
+- `PendingUsersReader`.
+
+Está verificado para resolve, observe y list_pending sobre el documento común de `users.runtime`.
+
+Gap vigente:
+no está cerrado quién materializa `ResolvedUserRecord` desde Users Configuration/Projection hacia `users.runtime` ni las semánticas Pending→Resolved, usuario retirado, concurrencia, reprojection y provenance.
+
+Siguiente foco:
+
+```text
+USERS-RUNTIME-PROJECTION-BOUNDARY  PLANNED / NEXT
+```
+
+## 6. Storage provisioning
 
 No se encontró equivalente a `CosmosProvisioner` en `connectivity/storage`.
 
 Debe diseñarse únicamente si Source/Blob/bootstrap lo requiere.
 
-## 6. Manager bypass
+## 7. Manager bypass
 
 Actualmente `is_local` obtiene acceso completo en:
 
@@ -66,15 +99,15 @@ Actualmente `is_local` obtiene acceso completo en:
 
 Debe retirarse.
 
-## 7. Pre-Manager page
+## 8. Pre-Manager page
 
 No existe todavía una superficie de bootstrap equivalente en la aplicación ADA Configuration Manager auditada.
 
-## 8. Projection planner
+## 9. Projection planner
 
 Manager tiene workflows de proyección por módulo, pero aún debe congelarse un orquestador de proyecciones múltiples basado en dependencias.
 
-## 9. Command Center
+## 10. Command Center
 
 Debe aplicar el mismo modelo de:
 
