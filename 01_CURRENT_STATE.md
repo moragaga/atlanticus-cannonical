@@ -1,489 +1,111 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@b34581958e8d59f2cd14e47f56c4309ee76027fb`.
 
-## Estado implementado
+Corte de implementación:
+`moragaga/atlanticus@3ca92d5579e499dd4ab6413fa6d91c9d296b13c2`.
 
-### Plataforma genérica
-
-Backend transversal:
-- configuration;
-- datasets;
-- datasets-parquet;
-- datasets-runtime;
-- json;
-- kernel;
-- observability;
-- observability-azure;
-- runtime.
-
-`backend/` representa backend jobs y capacidades asociadas a esos jobs.
-
-La lógica Python server-side de aplicaciones Web pertenece a `web/` cuando su responsabilidad es Web.
-
-Connectivity:
-- cosmos;
-- docker;
-- http-client;
-- key-vault;
-- redis;
-- service-bus;
-- sql;
-- storage.
-
-Connectivity es reutilizable por Web y backend/jobs.
-
-No es owner funcional de Source, Manager, Tool Configuration ni otras capacidades Web.
-
-Operational Data:
-- calendar;
-- core;
-- planner;
-- processes;
-- producers;
-- sources.
-
-### Web Storage Topology / Users Storage Topology
-
-Storage Topology está implementado como capability Web genérica en:
+## Resumen de estado
 
 ```text
-web/capabilities/storage/topology
+WEB-STORAGE-TOPOLOGY                 CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY               CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE      CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER         CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY    CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1             CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2         CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER       CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION           CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS          CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-DOMAIN-SEPARATION     IN PROGRESS
+NAV-CONSUMER-MIGRATION-B             PLANNED
+USERS-CONTRACT-SEPARATION            PLANNED / NEXT RECOMMENDED
+USERS-RUNTIME-CANONICAL-CUTOVER      PLANNED
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE PLANNED
 ```
 
-Package:
+## Plataforma genérica
 
-```text
-atlanticus-web-storage-topology==0.1.0
-```
+Atlanticus mantiene fronteras separadas para:
+- backend jobs;
+- connectivity;
+- operational data;
+- Web capabilities;
+- Source/Projection;
+- aplicaciones/scopes.
 
-Estado:
+`backend/` representa backend jobs y capacidades propias de esos jobs.
 
-```text
-WEB-STORAGE-TOPOLOGY    CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY  CLOSED / VERIFIED / CURRENT
-```
+La lógica Python server-side cuya responsabilidad es Web pertenece a `web/`.
 
-El contrato genérico implementa:
-- `StorageResourceContract[TTopology]`;
-- `StorageResourceOverride`;
-- `ResolvedStorageResource[TTopology]`;
-- `ResolvedStoragePlan`;
-- `StorageResourceOverrideField`;
-- `resolve_storage_plan(...)`.
+Connectivity es dual-use y no adquiere ownership funcional de sus consumidores.
 
-El resolver es puro y provider-neutral:
-- no contiene secretos;
-- no contiene clientes provider;
-- no usa Azure SDK;
-- no realiza I/O;
-- deduplica declaraciones idénticas por `logical_id`;
-- rechaza declaraciones incompatibles con el mismo `logical_id`;
-- rechaza overrides desconocidos o no permitidos;
-- falla si falta un connection binding requerido;
-- rechaza dos `logical_id` que resuelvan al mismo `(provider, connection_ref, physical_name)`;
-- produce un plan inmutable y determinista.
+## Storage Topology y Users durable
 
-`CosmosContainerTopology` describe únicamente:
-- `partition_key_path`;
-- `default_ttl_seconds`.
+`web/capabilities/storage/topology` define contratos provider-neutral para resource topology.
 
-El nombre físico del container permanece en `StorageResourceContract`; Connectivity conserva la responsabilidad de materializar/validar el provider físico.
-
-Users declara un único recurso durable:
+Users declara un único recurso durable confirmado:
 
 ```text
 logical_id              users.runtime
 owner                   users
 provider                cosmos
-default_connection_ref  None
 default_physical_name   users-runtime
 partition_key_path      /id
 default_ttl_seconds     None
 ```
 
-`users.runtime` requiere que composición entregue `connection_ref`.
-Users permite override de `connection_ref`, pero no de `physical_name`, owner, provider ni topology.
+Invariantes CURRENT:
+- Pending y Managed comparten `users.runtime`;
+- `id == partition key == user_id`;
+- `user_id = build_user_key(issuer, subject_id)`;
+- no TTL automático para datos durables Users;
+- connection binding lo provee composición;
+- no se crean `users.pending`, `users.managed`, `users.projection` ni `profiles.runtime` por defecto.
 
-Pending y Managed comparten este recurso. No se crean `users.pending`, `users.managed`, `users.projection` ni `profiles.runtime` por defecto.
+`CosmosUsersRuntimeStore` implementa `UsersRuntimeStore` + `PendingUsersReader`.
 
-Invariante durable:
+`observe()` es create-only + conflict reread; no usa blind upsert.
 
-```text
-Users durable data MUST NOT be automatically deleted by Cosmos TTL.
-```
+El writer administrativo Managed permanece separado del runtime reader/observer y usa CAS/ETag.
 
-Gates ejecutados en el workspace real:
-- 19 tests focalizados de Web Storage Topology GREEN;
-- 39 tests focalizados Storage Topology + Users Storage GREEN;
-- suite Web global GREEN con 7 skips conocidos;
-- Ruff GREEN;
-- format GREEN;
-- `uv lock` GREEN;
-- imports públicos GREEN;
-- `git diff --check` GREEN.
+Managed removal conserva el documento como Resolved, disabled y `managed_state=retired`; re-add restaura `managed_state=present`.
 
-El intento previo de ubicar este contrato en `backend/storage-topology` fue descartado antes de integrarse y queda `SUPERSEDED`.
+## Source / Projection
 
-### Cosmos Storage Preflight Bridge
+Source Core, Local Source, Blob Source y Projection exact-release están implementados y validados.
 
-Implementado en:
+Contratos congelados:
+- release identity != content hash;
+- dos releases pueden compartir content hash;
+- Source current lo decide Source, nunca Cosmos;
+- Projection target ejecutable = `SourceKey + SourceReleaseRef`;
+- `project(target)` usa la release exacta y no relee current;
+- `CURRENT / OUTDATED` compara identidad de release;
+- retry conserva el mismo target;
+- no introducir shim `SourceReleaseId <-> str`.
 
-```text
-web/capabilities/storage/cosmos
-```
+Users dispone de Source canónico y Projection canónica exact-release.
 
-Package:
+`ProjectionRecord[UsersConfigurationCatalog]` continúa siendo el payload canónico vigente hasta un cutover explícito posterior.
 
-```text
-atlanticus-web-storage-cosmos==0.1.0
-```
+El provenance legacy dentro de `users.runtime` todavía usa `projection_source_revision`; su migración exact-release sigue PLANNED.
 
-Estado:
+## Manager
 
-```text
-STORAGE-PREFLIGHT-COSMOS-BRIDGE  CLOSED / VERIFIED / CURRENT
-```
+`MANAGER-ROOT-CANONICAL-CUTOVER` está CLOSED / VERIFIED / CURRENT.
 
-API pública:
-- `to_cosmos_container_spec(...)`;
-- `ensure_cosmos_storage_plan(...)`;
-- `validate_cosmos_storage_plan(...)`.
+La acción root Project:
+- usa `ProjectionTarget`;
+- selecciona current server-side;
+- transporta el target exacto;
+- no relee Source current durante `project(target)`;
+- no obtiene la identidad ejecutable desde browser state.
 
-Contrato vigente:
-- traduce recursos Cosmos del `ResolvedStoragePlan` a `CosmosContainerSpec`;
-- recibe `Mapping[str, CosmosProvisioner]` preconstruido por composición;
-- no recibe secretos, endpoints ni raw settings;
-- no construye `CosmosClient`;
-- no importa Azure SDK;
-- no llama `ensure_database()`;
-- resuelve topology, specs, conflictos y provisioners antes del primer provider I/O;
-- soporta múltiples conexiones nombradas por `connection_ref`;
-- ignora providers no Cosmos;
-- un plan sin recursos Cosmos es no-op;
-- mismatch físico continúa siendo responsabilidad explícita de Connectivity y nunca se corrige silenciosamente.
+Los contratos administrativos de publicación/verificación/history y el WORKSPACE IndexedDB continúan separados y pendientes.
 
-Qualification del checkpoint del bridge:
-- 17 tests focalizados GREEN;
-- Storage Topology + bridge: 51 GREEN;
-- Storage Topology + bridge + Users core: 87 GREEN;
-- suite Web del checkpoint: 448 passed, 7 skipped;
-- Ruff, format focalizado, imports públicos, `uv lock` y `git diff --check` GREEN.
-
-### Users Cosmos Runtime Adapter
-
-Implementado en:
-
-```text
-web/capabilities/users/cosmos
-```
-
-Package:
-
-```text
-atlanticus-web-users-cosmos==0.1.0
-```
-
-Estado:
-
-```text
-COSMOS-USERS-RUNTIME-ADAPTER  CLOSED / VERIFIED / CURRENT
-```
-
-`CosmosUsersRuntimeStore` implementa simultáneamente:
-- `UsersRuntimeStore`;
-- `PendingUsersReader`.
-
-Contrato durable implementado:
-
-```text
-id == partition key == user_id
-user_id = build_user_key(issuer, subject_id)
-record_type = pending | resolved
-```
-
-Semántica:
-- `resolve()` usa point-read;
-- `observe()` usa create-only y, ante `CosmosConflictError`, vuelve a leer el estado durable vigente;
-- `observe()` no usa upsert y por tanto no puede sobrescribir una promoción concurrente;
-- `list_pending()` consulta Pending cross-partition y devuelve orden determinista por `user_id`;
-- documento corrupto o identidad incompatible falla explícitamente y nunca se degrada silenciosamente a Guest;
-- errores Cosmos se traducen a `UsersRuntimeStoreUnavailableError` conservando causa;
-- el nombre físico del container se inyecta desde composición;
-- el adapter no provisiona database ni containers;
-- Users core continúa provider-neutral.
-
-Qualification final en workspace real:
-- package Users Cosmos: 23 passed;
-- Storage Topology + Storage Cosmos + Users core + Users Cosmos: 110 passed;
-- suite Web global: 471 passed, 7 skipped;
-- Ruff check GREEN;
-- Ruff format GREEN;
-- contrato público `CosmosUsersRuntimeStore -> UsersRuntimeStore + PendingUsersReader` GREEN;
-- `git diff --check` GREEN.
-
-### Users Runtime Projection Boundary
-
-Implementado en:
-
-```text
-web/capabilities/users/configuration
-web/capabilities/users/projection-cosmos
-```
-
-Packages actuales:
-
-```text
-atlanticus-web-users-configuration==0.1.9
-atlanticus-web-users-projection-cosmos==0.1.1
-```
-
-Estado:
-
-```text
-USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
-```
-
-Contrato implementado:
-- `UsersRuntimeProjectionWriter` es un contrato snapshot-level separado de `UsersRuntimeStore` y `PendingUsersReader`;
-- `UsersRuntimeMaterializingProjectionRepository` materializa runtime antes de avanzar el catálogo/estado de proyección legacy;
-- `CosmosUsersRuntimeProjectionWriter` es provider-specific y recibe un cliente Cosmos ya construido + container name;
-- el runtime adapter de lectura/observación no adquiere responsabilidades administrativas.
-
-Semántica durable Managed:
-- writer posee `resolved + is_local=false`;
-- Pending→Resolved conserva `id == partition key == user_id`;
-- usuario configurado no observado se crea directamente Resolved;
-- usuario removido no se elimina: queda Resolved, `enabled=false`, `managed_state=retired`;
-- re-add restaura `managed_state=present` y valores actuales de Source legacy;
-- actualización existente usa ETag/CAS y no blind upsert;
-- conflicto create con observación concurrente reread/promueve sin sobrescribir silenciosamente;
-- replay del mismo snapshot converge semánticamente;
-- fallo parcial de runtime no avanza el estado global de proyección legacy;
-- Local Resolved queda fuera del ownership del writer Managed.
-
-Provenance legacy implementado por documento:
-- `projection_source_revision`;
-- `projected_by`;
-- `projected_at_utc`.
-
-`projection_source_revision` continúa recibiendo `UsersConfigurationBundle.revision`, un digest de contenido legacy. No equivale a `SourceReleaseId`.
-
-Además, `UsersAccessResolver` rechaza un Managed deshabilitado antes de requerir su perfil histórico.
-
-Qualification del checkpoint:
-- tests focalizados Users core + Configuration runtime projection + Projection Cosmos: 33 passed;
-- suite Web: 496 passed, 7 skipped;
-- Ruff check GREEN;
-- Ruff format GREEN;
-- `uv lock` GREEN;
-- `git diff --check` GREEN.
-
-Checkpoint de implementación:
-`moragaga/atlanticus@4758d993296bfe2a629a9aa3b8e4b486cf7b2305`.
-
-### Web Source y Projection Handoff
-
-Source implementado en:
-
-```text
-web/capabilities/source/
-├── core
-├── local
-└── blob
-```
-
-Projection Core implementado en:
-
-```text
-web/capabilities/projection/core
-```
-
-Packages:
-
-```text
-atlanticus-web-source==0.1.0
-atlanticus-web-source-local==0.1.0
-atlanticus-web-source-blob==0.1.0
-atlanticus-web-projection==0.1.0
-```
-
-Estado:
-
-```text
-Source Core          VERIFIED / CURRENT
-Local Source         VERIFIED / CURRENT
-Blob Source          VERIFIED / CURRENT
-Projection Handoff   VERIFIED / CURRENT
-```
-
-Core Source implementa contratos neutrales para:
-- releases inmutables;
-- current manifest;
-- contenido e integridad;
-- publicación con concurrencia optimista;
-- history;
-- lectura de releases;
-- verificación de integridad.
-
-Local implementa semántica durable equivalente:
-- manifest como único commit point;
-- releases inmutables;
-- CAS real entre procesos;
-- candidatos perdedores como orphans;
-- history sólo por cadena de publicaciones;
-- recovery por reinicio;
-- integridad verificable.
-
-Blob implementa la misma semántica funcional sobre Azure Blob Storage:
-- `StorageClient` inyectado; Source no usa Azure SDK directamente;
-- manifest como único commit point;
-- create-only para first publish;
-- conditional write por ETag para promociones posteriores;
-- `ConcurrencyToken` público derivado del manifest e independiente del ETag;
-- releases inmutables y orphans fuera de History;
-- History sólo por predecessor chain;
-- recovery explícito ante ACK ambiguo;
-- integridad y restart verificados.
-
-Projection Core implementa el handoff exact-release:
-- target explícito `SourceKey + SourceReleaseRef`;
-- `project(target)` resuelve la release exacta con `read_release`;
-- la ejecución no vuelve a consultar Source current;
-- provenance durable con `source_release_id`;
-- retry del mismo target sin republish de Source;
-- alignment `NEVER_PROJECTED / CURRENT / OUTDATED`;
-- outcome de intento `SUCCESS / FAILED`;
-- `CURRENT / OUTDATED` se determina por identidad de release, no por content hash.
-
-Los gates Source Core + Local + Blob quedaron GREEN en el workspace real.
-El provider Blob tiene pruebas deterministas y 7 pruebas de integración Azurite GREEN, incluyendo carreras de first publish/update, ETag real, corrupción y recovery de ACK ambiguo.
-
-Projection Handoff quedó GREEN en el workspace real:
-- 15 tests de Projection;
-- suite Web global del checkpoint Projection: 327 passed, 7 skipped;
-- Ruff/format de `capabilities/projection/core` GREEN.
-
-### Users Configuration — Canonical Source
-
-Implementado en:
-
-```text
-web/capabilities/users/configuration
-```
-
-Package actual:
-
-```text
-atlanticus-web-users-configuration==0.1.9
-```
-
-Estado:
-
-```text
-USERS-CANONICAL-SOURCE-1  CLOSED / VERIFIED / CURRENT
-```
-
-Users expone una ruta Source canónica:
-- `UsersSourceCodec` serializa `UsersConfigurationCatalog + published_by` como un recurso Source;
-- resource path: `users/configuration.json.gz`;
-- document type: `atlanticus_users_configuration_release`;
-- schema de dominio Source: `1`;
-- JSON compacto y gzip determinista;
-- `UsersSourceRelease` combina payload de dominio con `SourceReleaseMetadata`;
-- `UsersSourceService` usa `SourceStore`;
-- publicación usa `PublishRequest`, `ConcurrencyToken` y `basis_release`;
-- History se obtiene desde `SourceStore.query_history`;
-- `load_current()` selecciona current una vez y luego lee esa `SourceReleaseRef` exacta;
-- `load_release()` valida que Source devuelva el mismo `SourceKey` y `SourceReleaseRef` solicitado;
-- dos publicaciones pueden compartir contenido/hash y conservar identidades de release distintas.
-
-Users no reimplementa:
-- release identity;
-- History;
-- CAS/concurrency;
-- provider Local/Blob.
-
-Qualification del checkpoint Source:
-- tests dirigidos Source Users: 7 passed;
-- Users Configuration: 54 passed;
-- suite Web global: 503 passed, 7 skipped;
-- Ruff check GREEN;
-- Ruff format GREEN;
-- `uv lock` GREEN;
-- `git diff --check` GREEN.
-
-Checkpoint:
-`moragaga/atlanticus@f996905c353de26c42bc4907e32a1f2f0c161648`.
-
-### Users Configuration — Canonical Projection
-
-Implementado en:
-
-```text
-web/capabilities/users/configuration
-web/capabilities/users/projection-cosmos
-```
-
-Packages:
-
-```text
-atlanticus-web-users-configuration==0.1.9
-atlanticus-web-users-projection-cosmos==0.1.1
-```
-
-Estado:
-
-```text
-USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
-```
-
-Contrato implementado:
-- `UsersProjectionBuilder` transforma una Source release exacta en `UsersConfigurationCatalog`;
-- `create_users_projection_service(...)` reutiliza `SourceProjectionService`;
-- target = `SourceKey + SourceReleaseRef`;
-- `project(target)` resuelve esa release exacta y no consulta Source current durante ejecución;
-- same content en releases distintas sigue siendo target distinto;
-- una release histórica exacta puede proyectarse y luego quedar `OUTDATED`;
-- `UsersConfigurationBundle.revision` no cruza la frontera canónica;
-- el actor de publicación no forma parte del payload proyectado.
-
-Provider Cosmos:
-- `CosmosUsersConfigurationProjectionStore` implementa `ProjectionStore[UsersConfigurationCatalog]`;
-- first active write create-only;
-- replace con ETag/CAS;
-- nunca blind upsert;
-- same exact release + same payload converge como retry idempotente;
-- same release ID con metadata o payload incompatible falla explícitamente;
-- conflicto concurrente same-target converge;
-- conflicto concurrente different-target produce `UsersConfigurationProjectionConflictError`;
-- el container name se recibe desde composición y no se hardcodea;
-- no se infiere ordering por release ID ni timestamps;
-- target histórico explícito permitido.
-
-Provenance canónico persistido:
-- `source_key`;
-- `source_release_id`;
-- `source_published_at_utc`;
-- `projected_at_utc`.
-
-Qualification final:
-- 10 tests nuevos focalizados GREEN;
-- Users Configuration + Projection Cosmos: 84 passed;
-- suite Web: 513 passed, 7 skipped;
-- `uv lock --check` GREEN;
-- Ruff check GREEN;
-- `git diff --check` GREEN.
-
-Checkpoint:
-`moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1`.
-
-El root productivo de Project en Manager ya no degrada la identidad a `source_revision: str`; quedó cerrado en `5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06`.
-
-Esto no migra el provenance legacy de `users.runtime`, no crea equivalencia entre `UsersConfigurationBundle.revision` y `SourceReleaseId` y tampoco completa por sí solo la migración administrativa de Users.
-
-### Profiles Domain Extraction
+## Profiles Domain Extraction
 
 Implementado en:
 
@@ -503,441 +125,211 @@ Estado:
 PROFILES-DOMAIN-EXTRACTION  CLOSED / VERIFIED / CURRENT
 ```
 
-Contrato implementado:
-- `ProfileDefinition`, `ProfileCatalog`, constantes y normalizadores pasan a ownership de Profiles;
-- `ProfilesDefinitionError` pertenece a Profiles y reemplaza la dependencia anterior sobre `UsersDefinitionError` para errores propios del dominio Profile;
+Ownership:
+- `ProfileDefinition`, `ProfileCatalog`, normalizadores y `ProfilesDefinitionError` pertenecen a Profiles;
 - Profiles no depende de Users;
-- Users core declara dependencia one-way sobre Profiles;
-- Users Configuration declara dependencia directa sobre Profiles;
-- los consumidores productivos, tests y mirrors comentados usan `atlanticus.web.profiles`;
-- `atlanticus.web.users.profiles` fue eliminado como módulo productivo;
-- no existe shim/re-export de compatibilidad para el namespace eliminado;
-- `PROFILE_CATALOG_SERVICE_KEY = 'atlanticus.web.users.profiles'` permanece como service key vigente; no es un import Python y no fue renombrado en este hito.
+- Users depende one-way de Profiles;
+- `atlanticus.web.users.profiles` no existe como namespace Python productivo;
+- no existe shim/re-export del namespace anterior.
 
-La extracción preservó deliberadamente la semántica vigente del `ProfileCatalog` para no mezclar movimiento de ownership con rediseño semántico. Por tanto, `local`, `administrator` y `guest` continúan presentes en el modelo actual hasta el siguiente cierre semántico.
-
-Qualification final:
-- `uv lock` GREEN;
-- `uv sync` GREEN;
-- Profiles + Users core + Users Configuration: 92 passed;
-- suite Web: 512 passed, 7 skipped;
-- Ruff global GREEN después de ordenar 7 bloques de imports;
-- búsqueda del import eliminado: 0 coincidencias Python.
-
-Checkpoint:
-`moragaga/atlanticus@b34581958e8d59f2cd14e47f56c4309ee76027fb`.
-
-### Navigation Configuration — Source / Projection
-
-Package actual:
-
-```text
-atlanticus-web-navigation-configuration==0.1.8
-```
+## Profiles Baseline Semantics
 
 Estado:
 
 ```text
-NAV-SOURCE-PROJECTION-1   Canonical Source backend contracts   CLOSED / VERIFIED / CURRENT
-NAV-SOURCE-PROJECTION-2   ProjectionStore Local + Cosmos       CLOSED / VERIFIED / CURRENT
-NAV-CONSUMER-MIGRATION-A  Runtime canonical consumer           CLOSED / VERIFIED / CURRENT
-NAV-CONSUMER-MIGRATION-B  Administrative consumer              PLANNED
-Navigation legacy delete                                      BLOCKED
+PROFILES-BASELINE-SEMANTICS  CLOSED / VERIFIED / CURRENT
 ```
 
-Navigation implementa:
-- `NavigationSourceCodec`;
-- `NavigationSourceService`;
-- publicación con `ConcurrencyToken` y `basis_release`;
-- History desde Source;
-- lectura histórica por `SourceReleaseRef`;
-- mismo contenido con releases distintas;
-- `NavigationProjectionBuilder`;
-- `LocalNavigationProjectionStore`;
-- `CosmosNavigationProjectionStore`.
-
-El runtime Navigation consume:
+Subincrementos:
 
 ```text
-ProjectionStore[NavigationConfigurationCatalog]
-+ SourceKey
+PB-1 PROFILES-SEMANTIC-CORE                 CLOSED / VERIFIED / INTEGRATED
+PB-2 DIRECT-CONSUMER-RECONCILIATION         CLOSED / VERIFIED / INTEGRATED
+PB-3 ROOT-ACCESS-CONTRACT                    CLOSED / VERIFIED / INTEGRATED
+PB-4 USERS-CONFIG-RECONCILIATION             ABSORBED BY PB-2 / CLOSED
+PB-5 USERS-ADMIN-SEMANTIC-CLEANUP            ABSORBED BY PB-2 / CLOSED
+PB-6 PROFILE-SERVICE-COMPOSITION-CLEANUP     CLOSED / VERIFIED / INTEGRATED
 ```
 
-y ya no depende del `NavigationProjectionRepository` legacy.
+### ProfileCatalog
 
-Gates del último incremento:
-- runtime Navigation: 7/7;
-- Navigation Configuration: 49/49;
-- Ruff GREEN;
-- format GREEN;
-- `git diff --check` GREEN;
-- suite Web global GREEN con 7 skips conocidos.
+`ProfileCatalog` es ahora semánticamente puro:
+- catálogo vacío significa vacío;
+- sólo contiene `ProfileDefinition` explícitos;
+- no fabrica Local, Administrator ni Guest;
+- no posee defaults especiales;
+- no posee `assignable()`;
+- `administrator`, `guest`, `local` y `root` son strings ordinarios para Profiles core;
+- duplicate normalized keys fallan;
+- `require()` normaliza la key.
 
-La migración administrativa Navigation sigue pendiente, pero ya no está bloqueada por el root Project del Manager.
+### Pending / Guest
 
-No se eliminan todavía:
-- `NavigationConfigurationSource`;
-- `NavigationConfigurationPublisher`;
-- `NavigationProjectionRepository`;
-- `NavigationConfigurationSourceDocument`;
-- `NavigationAdministrationService`;
-- `NavigationProjectionWorkflow`;
-- adapters Source/Projection legacy mientras exista un consumidor real.
+Pending pertenece a Users, no a Profiles.
 
-No existe evidencia en el checkpoint auditado de una clase productiva `NavigationManagerWorkflowAdapter`; el próximo incremento administrativo debe auditar el composition root real antes de fijar nombres.
+`EffectiveUser.profile` puede ser `None`.
 
-No introducir shim `SourceReleaseId <-> str` ni un segundo coordinator Manager paralelo.
+Para `pending=True`:
+- `enabled=True`;
+- `profile is None`;
+- `is_local=False`;
+- no se aceptan overrides de avatar;
+- colores estáticos actuales: fondo `#FF5722`, texto `#FFFFFF`.
 
-### ADA
+`PendingUserRecord.to_effective_user()` no consulta Profiles.
 
-`scopes/ada/` separa backend y Web.
+Un Resolved User requiere Profile funcional y no puede usar `profile_key == "guest"`.
 
-ADA Generic Application compone actualmente:
-- branding;
-- navegación ADA;
-- operational header ADA;
-- alarm management/status;
-- content state;
-- operational render binding/state;
-- runtime experience;
-- source participation;
-- time status;
-- global indicators.
+Guest deja de ser `ProfileDefinition` runtime.
 
-### Manager
+### Administrator y Profiles funcionales
 
-`ada-configuration-manager` es aplicación independiente sobre `atlanticus.web.manager`.
+Administrator es un Profile funcional normal.
 
-Módulos actualmente integrados:
-- users;
-- navigation;
-- tools;
-- KPI Configuration opcional;
-- KPI Definition opcional.
+`UsersConfigurationCatalog.profile_catalog()` materializa:
+- Administrator explícito;
+- perfiles funcionales configurados.
 
-Manager posee Home/navegación/header administrativo propio.
+No materializa Guest ni Local.
 
-No confundir con ADA operational header.
+Antes de una primera proyección, `FileUsersProjectionProfileCatalog.all() == ()`.
 
-Manager contiene contratos canónicos para BASE/SOURCE/WORKSPACE/PROJECTION en `workspace.py`:
-- `ManagerWorkspace`;
-- `ManagerSourceVerification`;
-- `ManagerPublicationContext`;
-- `SourceSnapshot`;
-- `ConcurrencyToken`;
-- `SourceReleaseRef`;
-- `ProjectionTarget`.
+Después de proyectar, expone únicamente Administrator + Profiles funcionales proyectados.
 
-Estado:
+Managed Users referencian Profiles funcionales mediante `profile_key`.
+
+### Durable Users Configuration
+
+El shape durable vigente se preservó deliberadamente:
 
 ```text
-Manager canonical workspace/source contracts   CURRENT
-Manager root Projection action cutover          CLOSED / VERIFIED / CURRENT
-Manager administrative publish/history legacy  CURRENT
-Manager IndexedDB workspace persistence         PLANNED
+administrator_background_color
+administrator_text_color
+guest_background_color
+guest_text_color
+profiles
+users
 ```
 
-Root Project productivo implementado:
-- `ConfigurationLifecycleWorkflow.get_current_projection_target() -> ProjectionTarget | None`;
-- `ConfigurationLifecycleWorkflow.project(target: ProjectionTarget)`;
-- `ProjectionExecutionResult.target: ProjectionTarget`;
-- `ManagerProjectionCoordinator.project(...)` transporta el target exacto sin releer current;
-- Project callback selecciona current server-side inmediatamente antes de ejecutar;
-- browser state no entrega la identidad ejecutable;
-- Project signal expone `source_key`, `source_release_id`, `source_published_at_utc`, `projection_revision`;
-- target histórico explícito se transporta intacto.
+Los campos Guest continúan round-trip por compatibilidad del contrato durable actual, pero no crean un Guest Profile runtime.
 
-Qualification del cierre:
-- 76 tests Manager GREEN;
-- suite Web: 514 passed, 7 skipped;
-- `uv lock --check` GREEN;
-- Ruff Manager GREEN;
-- `git diff --check` GREEN.
+La separación durable Users/Profiles no fue ejecutada en este hito.
 
-Checkpoint:
+### Local / John / Jane
+
+Local, John y Jane quedan fuera de Profiles semánticos.
+
+No deben reintroducirse como `ProfileDefinition` de sistema.
+
+Su contrato runtime/ownership final no fue definido por este hito y permanece OPEN.
+
+### Root bootstrap
+
+Root pertenece a Identity/bootstrap, no a Profiles ni al flujo normal Managed Users.
+
+Implementado:
+- `BootstrapRootPolicy`;
+- `BootstrapRootAccessResolver`;
+- `AccessDecision.bootstrap_root`;
+- `AccessSnapshot.bootstrap_root`.
+
+Contrato:
 
 ```text
-moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+policy.enabled
+AND identity.issuer == policy.issuer
+AND identity.subject_id == policy.subject_id
+→ READY
+→ bootstrap_root = True
+→ user_id = None
 ```
 
-La formulación anterior “Manager productive coordinator cutover” queda refinada: el cierre corresponde al root de la acción Projection, no a todos los contratos administrativos que todavía usan revisiones textuales.
+El match es exacto después del `strip()` normal de identidad; no se añadió `casefold()`.
 
-Permanecen fuera de este cierre:
-- `publish_draft(... expected_source_revision: str | None)`;
-- source verification/status textual;
-- history/load revision textual;
-- browser WORKSPACE/IndexedDB;
-- migraciones administrativas de dominio.
+`provider_key` no participa del match Root.
 
-### Alarm Engine
+Si la policy está disabled o no coincide, el resolver delega al fallback normal.
 
-Fronteras físicas:
-- alarms/core;
-- alarms/persistence;
-- processes/alarms-runtime.
+Invariantes:
+- `bootstrap_root=True` exige `READY`;
+- `bootstrap_root=True` exige `user_id is None`;
+- Root no se materializa como User ni Profile.
 
-Qualification R3.5 final: CLOSED PASS/GREEN.
+La sesión usa `_atlanticus_access_snapshot_v2`; snapshots previos no se adaptan.
 
-## Estado objetivo decidido
+La fuente física de `BootstrapRootPolicy` y el mapping exacto Entra permanecen UNVERIFIED / OPEN.
 
-### Python
+### Service composition
 
-- Python 3.14.7.
-- `python:3.14.7-slim-trixie`.
+Users ya no publica Profiles como servicio propio.
 
-El repo actual aún conserva 3.14.2 en varios proyectos, incluido el nuevo package Profiles y packages Users.
+Contrato CURRENT:
 
-Estado:
-`DECIDED / NOT YET IMPLEMENTED GLOBALLY`.
+```text
+create_users_module(runtime)
+→ registra únicamente USERS_RUNTIME_SERVICE_KEY
+```
 
-La migración 3.14.2 → 3.14.7 es un incremento transversal separado y no se mezcla con Source/Projection/Manager/Profiles semantics.
+`PROFILE_CATALOG_SERVICE_KEY = "atlanticus.web.users.profiles"` quedó eliminado.
 
-### Configuration Source
+Esto no elimina la dependencia semántica legítima de `UsersAccessResolver` sobre `ProfileCatalog`.
 
-Dirección aprobada:
-- Productivo: Azure Blob Storage.
-- Local: provider equivalente.
-- Projection: Cosmos DB / Local por dominio cuando corresponda.
+## Navigation
 
-Estado actual:
-- Source Core: `IMPLEMENTED + VALIDATED`;
-- Local provider: `IMPLEMENTED + VALIDATED`;
-- Blob provider: `IMPLEMENTED + VALIDATED`;
-- Projection exact-release Core: `IMPLEMENTED + VALIDATED`;
-- `source_release_id` en Projection Core: `IMPLEMENTED + VALIDATED`;
-- Navigation canonical Source: `IMPLEMENTED + VALIDATED`;
-- Users canonical Source: `IMPLEMENTED + VALIDATED`;
-- Projection Local/Cosmos concreto para Navigation: `IMPLEMENTED + VALIDATED`;
-- Users canonical exact-release Projection: `IMPLEMENTED + VALIDATED`;
-- otros providers Projection concretos por dominio: `PLANNED`;
-- Manager BASE/SOURCE/WORKSPACE/PROJECTION contracts: `IMPLEMENTED`;
-- Manager root Project workflow/callback exact-target cutover: `CLOSED / VERIFIED / CURRENT`;
-- Manager administrative publication/verification/history migration: `PLANNED`.
+Navigation canonical Source, Projection Local/Cosmos y runtime canonical consumer están CLOSED / VERIFIED / CURRENT.
 
-Blob parity y recovery ya están validados.
+La migración administrativa permanece PLANNED.
 
-SharePoint + Power Automate siguen destinados a salir del pipeline Source migrado, pero el retiro pertenece al incremento de migración de consumidores.
+Legacy deletion permanece BLOCKED hasta validar consumidores migrados.
 
-No borrar aún adapters/contracts Source legacy de Navigation ni Users Configuration: primero deben migrarse y validarse los consumidores administrativos reales.
+## Alarm Engine
 
-### Manager browser workspace
+La qualification R3.5 permanece CLOSED PASS/GREEN.
+
+Los contratos e invariantes específicos de Alarm siguen en `04_ALARM_ENGINE/`.
+
+Este cierre de Profiles no reabre Alarm.
+
+## Python / Trixie
 
 Dirección decidida:
+- Python 3.14.7;
+- `python:3.14.7-slim-trixie`;
+- `uv`, no pip como gestor normal.
 
-```text
-dcc.Store(memory)   = estado activo de sesión
-IndexedDB           = persistencia browser del WORKSPACE
-SourceStore / Blob  = autoridad durable publicada
-ProjectionStore     = proyección activa durable
-```
-
-IndexedDB:
-- no es autoridad;
-- no sustituye Source;
-- no usa inicialmente gzip/base64;
-- debe integrarse mediante JavaScript dedicado + `clientside_callback`;
-- perder IndexedDB sólo puede perder trabajo no publicado.
+La migración global 3.14.2 → 3.14.7 sigue fuera de este hito.
 
 Estado:
-`DECIDED / NOT YET IMPLEMENTED`.
-
-### Users / Profiles / Access
-
-Dirección congelada:
 
 ```text
-Profiles MUST NOT require Access.
-Access MAY consume/extend Profiles.
+DECIDED / NOT YET IMPLEMENTED GLOBALLY
 ```
 
-Profiles pertenece a Atlanticus y debe poder instalarse y operar sin Access.
+## Frontera Users / Profiles completa
 
-Access es específico de ADA y puede consumir/extender Profiles.
-La dependencia `Profiles -> ADA Access` está prohibida.
-
-Cierres independientes verificados:
-
-```text
-USERS-STORAGE-TOPOLOGY            CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2      CLOSED / VERIFIED / CURRENT
-MANAGER-ROOT-CANONICAL-CUTOVER    CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION        CLOSED / VERIFIED / CURRENT
-```
-
-`PROFILES-DOMAIN-EXTRACTION` añade como CURRENT:
-- capability `web/capabilities/profiles/core`;
-- package `atlanticus-web-profiles==0.1.0`;
-- ownership de `ProfileDefinition`, `ProfileCatalog`, constantes, normalizadores y errores propios en Profiles;
-- dependencia one-way `Users -> Profiles`;
-- dependencia directa de Users Configuration sobre Profiles cuando consume esos contratos;
-- eliminación del import namespace `atlanticus.web.users.profiles` sin shim.
-
-Estos cierres fijan además:
-- `users.runtime` y su reader/observe durable Cosmos;
-- ownership y semántica del writer Managed snapshot-level;
-- transición Pending→Resolved, retirement/re-add y CAS del runtime;
-- Source canónico de Users;
-- Projection canónica exact-release de Users;
-- provider Cosmos de la Projection canónica con CAS e idempotencia same-target;
-- transporte exact-target del root Project de Manager.
-
-No congelan todavía:
-- semántica final de `root`, `guest`, `local`, John/Jane y `administrator`;
-- representación runtime base de Guest;
-- bootstrap root contract y su ubicación;
-- separación contractual `UsersConfigurationCatalog` / Profiles;
-- Source/Projection propia de Profiles;
-- provenance exact-release dentro de documentos Managed de `users.runtime`;
-- resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
-- migración administrativa Users/Navigation;
-- browser workspace Manager;
-- borrado legacy.
-
-La decisión histórica `manager_dispatched/Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx` existe en `atlanticus-decisions`, pero su contenido continúa `UNVERIFIED` en este cierre y debe reconciliarse antes de congelar la frontera completa Profiles/Access.
-
-Estado de la frontera completa:
+Estado:
 
 ```text
 USERS-PROFILES-DOMAIN-SEPARATION  IN PROGRESS
-PROFILES-DOMAIN-EXTRACTION        CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS       PLANNED / NEXT
 ```
 
-La recomendación anterior:
+Aunque la baseline semántica está cerrada, permanecen fuera de este cierre:
+- separación contractual/durable de Users y Profiles;
+- eventual Source/Projection propia de Profiles si se justifica;
+- política frente a Profile eliminado/no proyectado;
+- runtime canonical cutover;
+- provenance exact-release dentro de `users.runtime`;
+- migración administrativa Users;
+- eliminación legacy;
+- configuración física Root;
+- contrato final de Local/John/Jane.
+
+## Siguiente frontera recomendada
+
+Un único foco:
 
 ```text
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  NEXT
+USERS-CONTRACT-SEPARATION  PLANNED / NEXT RECOMMENDED
 ```
 
-queda `SUPERSEDED AS NEXT`. El hito permanece `PLANNED`, pero se ejecutará después de cerrar las semánticas y contratos Users/Profiles que condicionan el runtime final.
-
-Dirección de diseño ya acordada, todavía no implementada ni frozen como contrato final:
-- `root` debe ser bootstrap/platform fuera de Profiles y fuera de asignación normal de Users;
-- `guest` debe ser baseline reservado de Pending/unresolved y no un Managed Profile normal;
-- John/Jane son identidades locales de desarrollo con colores estáticos;
-- `administrator`, `operator`, `viewer` y custom deben pertenecer a Profiles proyectados;
-- Managed Users normales deben referenciar perfiles funcionales proyectados por `profile_key`.
-
-### Collector
-
-La semántica de Collector está congelada:
-- 1 Collector contract por Component;
-- no por Subcomponent.
-
-No existe hoy capability top-level literalmente llamada `collectors`.
-
-Debe mapearse contra Producers/Sources/Processes antes de crear una frontera física nueva.
-
-## Dirección hacia entregable
-
-La prioridad es cerrar una vertical usable:
-
-Configuration
-→ Source Release
-→ Operational Data / Collector
-→ KPI / Alarm
-→ ADA Generic
-→ E2E
-
-Manager participa como plano administrativo con shell propio; no como shell de la Tool operacional.
-
-## ADA Command Center
-
-En `main` existe sólo backend físico:
-- Alarm Core;
-- Alarm Persistence;
-- Alarms Runtime.
-
-Web propia: `DECIDED/EXPECTED, NOT PRESENT IN CURRENT MAIN`.
-
-Configuration propia: necesaria, sin Tool authoring duplicado.
-
-Consume Tool topology confirmada y configura:
-- Rules;
-- Messages;
-- evaluator parameters;
-- deactivation;
-- escalation;
-- visual targets.
-
-Entra ID + Navigation + Profiles forman parte de la dirección inicial.
-
-User Activity, generic Actions y app/session auto-refresh no se priorizan inicialmente.
-
-La finalidad inicial es análisis histórico profundo y conclusiones trazables sobre todas las alarmas.
-
-## Web Platform / Deployment
-
-### Capability independence
-
-Los packages base de Profiles, Users, Navigation y User Activity están separados físicamente en `main`.
-
-Dependencia vigente:
-
-```text
-Profiles
-   ↑
-Users
-```
-
-Profiles puede existir sin Users. Users consume Profiles.
-Navigation y User Activity conservan sus fronteras independientes y pueden enlazarse por composición.
-
-Existe además un precedente correcto:
-
-```text
-atlanticus-web-composition-navigation-activity
-```
-
-que enlaza capabilities sin acoplar sus cores.
-
-Gap actual:
-ADA Manager obtiene Navigation profile options directamente desde Users.
-
-La frontera Users/Profiles debe preservar independencia de Access.
-ADA Access puede consumir Profiles mediante composición/extensión ADA, sin convertir Access en dependencia de Atlanticus Profiles.
-
-### User Activity
-
-Estado actual:
-- session summary;
-- route aggregates;
-- active seconds;
-- route changes.
-
-Objetivo:
-- historia ordenada por visita/página;
-- TTL funcional 24 h;
-- dashboard reconstruye secuencia sin forzar Navigation como dependency.
-
-### Resource preparation
-
-Cosmos dispone de `CosmosProvisioner`.
-
-La Web dispone de contratos neutrales de resource topology, una declaración durable real (`users.runtime`) y el bridge provider-specific hacia Connectivity Cosmos.
-
-Estado de la cadena:
-
-```text
-Storage resource contracts        CLOSED / VERIFIED / CURRENT
-Users storage declaration         CLOSED / VERIFIED / CURRENT
-Cosmos preflight bridge           CLOSED / VERIFIED / CURRENT
-Users Cosmos runtime adapter      CLOSED / VERIFIED / CURRENT
-Users runtime projection boundary CLOSED / VERIFIED / CURRENT
-Users canonical Source            CLOSED / VERIFIED / CURRENT
-Users canonical Projection        CLOSED / VERIFIED / CURRENT
-Manager root Project cutover      CLOSED / VERIFIED / CURRENT
-Profiles domain extraction        CLOSED / VERIFIED / CURRENT
-Web lifecycle/resource readiness  OPEN / BLOCKED BY GLOBAL CONTRACTS
-```
-
-El bridge existente no implica que Web ya ejecute resource preparation en startup.
-
-`ApplicationResourcePlan`, required/optional semantics, named connection resolution global y READY/DEGRADED/ERROR continúan abiertos.
-
-El resource físico del canonical Users Projection store tampoco quedó congelado por estos hitos.
-
-La extracción de Profiles no introduce por defecto `profiles.runtime` ni congela resource topology propia de Profiles.
+Debe definir contratos antes de consumidores y preservar los invariantes Source/Projection ya congelados.

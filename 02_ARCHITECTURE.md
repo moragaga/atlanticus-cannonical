@@ -8,7 +8,7 @@ Atlanticus es plataforma modular reusable.
 
 ADA consume Atlanticus.
 
-El núcleo genérico no depende de ADA.
+El núcleo genérico de Atlanticus no depende de ADA.
 
 ## Planos principales
 
@@ -20,206 +20,198 @@ Capacidades transversales:
 - integrations;
 - web.
 
-`backend/` significa backend jobs y capacidades propias de esos jobs.
+`backend/` representa backend jobs y capacidades propias de esos jobs.
 
-No significa “todo Python server-side”.
-
-`web/` es una frontera de primer nivel y contiene:
+`web/` es frontera de primer nivel para:
 - Flask/Dash;
 - JavaScript/CSS;
 - composición Web;
 - server-side Python cuya responsabilidad es Web;
 - capabilities Web reutilizables.
 
-`connectivity/` es dual-use:
-- puede ser consumido por Web;
-- puede ser consumido por backend/jobs;
-- expone conectividad técnica;
-- no adquiere ownership funcional del consumidor.
+Connectivity es dual-use y no adquiere ownership funcional.
 
 ### Configuration / Administration
 
-Manager:
-- aplicación administrativa;
-- header/shell propio;
-- registry;
-- workflow;
-- authoring;
-- validation;
-- Source publication;
-- history/conflict.
+Manager administra configuración, authoring, validation, publication, history y projection actions.
 
-Source genérico pertenece a Web:
+Source genérico pertenece a:
 
 ```text
 web/capabilities/source/
 ```
 
-Connectivity Storage puede ser dependencia técnica de un provider Blob, pero no es owner de Source.
+Projection genérica exact-release pertenece a:
+
+```text
+web/capabilities/projection/core
+```
 
 ### Operational Data
-- sources;
-- producers;
-- processes;
-- planner;
-- materialization.
+
+Operational Data conserva ownership separado para sources, producers, processes, planner y materialization.
 
 ### ADA Runtime
 
-ADA Generic:
-- compone la estructura operacional;
-- consume configuración/proyecciones;
-- monta runtime Web;
-- integra KPI/Alarm/estado operacional.
+ADA Generic compone la experiencia operacional y consume capacidades Atlanticus.
 
-### Alarm Engine
+ADA-specific authorization puede consumir/extender contratos genéricos, pero no convertirse en dependencia del core Atlanticus.
 
-Core + Persistence + Runtime Process.
+## Manager vs ADA Generic
 
-No reabrir sus invariantes cerradas para resolver problemas de integración.
+```text
+Manager      = administrar configuración
+ADA Generic  = consumir configuración y materializar experiencia operacional
+```
 
-## Frontera Manager vs ADA Generic
-
-Manager:
-`administrar la configuración`
-
-ADA Generic:
-`consumir configuración y materializar la experiencia operacional`
-
-Headers y navegación tienen ownership distinto.
-
-## Tool / Component
-
-Tool Configuration determina estructura.
-
-Component:
-- unidad funcional;
-- Store;
-- Collector contract;
-- KPI destination;
-- alarm baseline.
-
-Subcomponent:
-- unidad visual;
-- sin Store/Collector propio;
-- target visual de alarma.
+No comparten ownership de shell/header.
 
 ## Configuration vs Data
 
-`CONFIGURATION DETERMINES EXISTENCE`
-
-`DATA DETERMINES STATE`
+```text
+CONFIGURATION DETERMINES EXISTENCE
+DATA DETERMINES STATE
+```
 
 ## Source vs Projection
 
-Source y Projection son responsabilidades independientes.
-
-Estado objetivo:
+Source y Projection son responsabilidades separadas.
 
 ```text
 Source     = Local | Blob
 Projection = Local | Cosmos
 ```
 
-Source publica un `SourceReleaseRef` concreto.
+Projection representa un `SourceReleaseRef` concreto.
 
-Projection representa un Source release específico y puede quedar retrasada o fallar sin revertir Source.
-
-El current de Source nunca se determina desde Cosmos.
-
-## Source ownership
-
-Source es una capability Web genérica.
-
-No pertenece a:
-- backend jobs;
-- Connectivity;
-- ADA;
-- Navigation Configuration.
-
-Navigation Configuration y otros dominios pueden consumir Source sin convertirse en owners de su persistencia/versionado.
-
-## Principio de implementación
-
-Definir primero el contrato en el owner correcto y después sus consumidores.
-
-Cerrar capacidades verticalmente sin convertir “backend first” en una regla de ubicación física incorrecta.
-
-Ejemplo para Configuration:
-
-```text
-Tool Configuration semantics
-→ Web Source
-→ Projection
-→ runtime consumers
-→ E2E
-```
-
-Para contratos propios de backend jobs, backend se cierra antes de su frontend consumidor.
-
-No terminar capas horizontales aisladas y recién integrarlas al final.
-
-## ADA Command Center
-
-Es una aplicación hermana de ADA Generic y Manager.
-
-```text
-Tool Configuration
-     ↓
-confirmed topology
-     ↓
-Command Center Alarm Configuration
-     ↓
-B.2 Resolution
-     ↓
-Alarm Engine
-     ├── Live → ADA Generic
-     └── History/Analytics → Command Center Web
-```
-
-Command Center no es owner de Tool Configuration.
-
-Alarm Engine sí pertenece funcionalmente a Command Center.
+Source current nunca se determina desde Cosmos.
 
 ## Web Capability Composition
 
-Las capacidades Web conservan ownership separado y dependencias explícitas.
+Las capabilities mantienen ownership separado y dependencias explícitas.
 
-El cierre `PROFILES-DOMAIN-EXTRACTION` establece físicamente:
+### Profiles / Users
+
+Arquitectura CURRENT:
 
 ```text
 Profiles
    ↑
    │ one-way dependency
 Users
-
-Navigation       User Activity
-    │                 │
-    └──── optional composition ────┐
-                                   │
-Users / Profiles ──────────────────┘
 ```
 
-Contratos vigentes:
+Contratos:
 - Profiles vive en `web/capabilities/profiles/core`;
 - Profiles no depende de Users;
-- Users core depende de Profiles;
-- Users Configuration declara Profiles como dependencia directa cuando consume sus contratos;
-- `atlanticus.web.users.profiles` ya no existe como namespace Python productivo;
-- no existe shim/re-export de compatibilidad para el namespace eliminado;
-- cross-capability binding pertenece a composición/adapters y no justifica dependencias inversas.
+- Profiles no depende de ADA;
+- Users puede consumir Profiles;
+- Users Configuration puede consumir contratos Profile;
+- cross-capability binding pertenece a composición/adapters;
+- `atlanticus.web.users.profiles` no existe como namespace productivo;
+- no existe shim del namespace anterior.
 
-La extracción física no congela todavía la semántica final de perfiles base ni la separación Source/Projection de Users y Profiles.
+### Profiles semántico
 
-ADA Access puede consumir/extender Profiles mediante composición ADA, pero Profiles no depende de ADA Access.
+Profiles core modela exclusivamente Profiles funcionales explícitos.
 
-El dashboard puede agregar capabilities como consumidor/read model sin convertir producers en dependencias mutuas.
+```text
+ProfileCatalog()
+→ empty
+```
 
-## Web Storage Resource Topology
+No posee semántica especial de:
+- Root;
+- Guest/Pending;
+- Local;
+- John/Jane.
 
-Los requisitos de recursos físicos de una capability Web se declaran en una capa neutral bajo Web; no convierten Connectivity en owner funcional.
+Administrator es un Profile funcional explícito cuando la proyección/configuración lo materializa.
 
-La cadena arquitectónica vigente es:
+### Pending / Guest
+
+Pending pertenece a Users:
+
+```text
+PendingUserRecord
+→ EffectiveUser(
+     pending=True,
+     profile=None,
+     enabled=True,
+     is_local=False
+  )
+```
+
+Pending no depende de `ProfileCatalog`.
+
+Guest no es un Profile runtime.
+
+### Root bootstrap
+
+Root pertenece a Identity/bootstrap:
+
+```text
+AuthenticatedIdentity
+        ↓
+BootstrapRootAccessResolver
+        ├─ exact issuer + subject_id + enabled
+        │      ↓
+        │   READY
+        │   bootstrap_root=True
+        │   user_id=None
+        │
+        └─ otherwise
+               ↓
+          fallback AccessResolver
+```
+
+Root no se materializa como:
+- User;
+- Profile;
+- nuevo `AccessStatus`.
+
+El bootstrap Root genérico no equivale a política de autorización funcional ADA.
+
+ADA Access puede consumir/extender Profiles y el contexto Identity, pero Profiles no depende de ADA Access.
+
+### Local development identities
+
+Local/John/Jane quedan fuera de Profiles.
+
+Su representación runtime final permanece una frontera posterior.
+
+## Users durable vs Profiles runtime
+
+El aggregate durable `UsersConfigurationCatalog` aún contiene campos históricos de Administrator/Guest.
+
+Eso no convierte esos campos en ownership de Profiles core.
+
+La traducción runtime vigente produce:
+- Administrator;
+- Profiles funcionales configurados;
+- no Guest;
+- no Local.
+
+Separar físicamente/durablemente los contratos Users y Profiles pertenece a `USERS-CONTRACT-SEPARATION`.
+
+## Service Registry ownership
+
+Una capability sólo registra servicios que le pertenecen.
+
+CURRENT:
+
+```text
+create_users_module(runtime)
+→ USERS_RUNTIME_SERVICE_KEY
+```
+
+Users no publica un ProfileCatalog mediante un service key propio.
+
+Un consumidor que requiere `ProfileCatalog` debe recibirlo por composición explícita donde corresponda.
+
+## Storage Resource Topology
+
+Cadena vigente:
 
 ```text
 Capability resource declaration
@@ -232,89 +224,61 @@ ResolvedStorageResource[TTopology]
         ↓
 provider bridge
         ↓
-Connectivity provider primitive
+Connectivity primitive
         ↓
 provision / validate
 ```
 
-Responsabilidades:
-- la capability declara qué recurso necesita y sus invariantes;
-- composición enlaza conexiones permitidas;
-- Storage Topology resuelve conflictos y bindings sin I/O;
-- el bridge traduce una topology resuelta al primitive técnico del provider;
-- Connectivity crea/valida el recurso físico.
+Storage Topology:
+- no contiene secretos;
+- no construye SDK clients;
+- no hace I/O;
+- resuelve conflicts/bindings antes del provider.
 
-`StorageResourceContract` no contiene secretos, SDK clients ni I/O.
+`users.runtime` permanece el único recurso durable Users confirmado.
 
-V1 admite overrides genéricos únicamente para:
-- `connection_ref`;
-- `physical_name` cuando la capability lo autoriza explícitamente.
+No se crea `profiles.runtime` por inferencia.
 
-Owner, provider y topology no son overrides de composición en V1.
+## Source / Projection exact-release
 
-Para Cosmos, Web usa `CosmosContainerTopology` con:
-- `partition_key_path`;
-- `default_ttl_seconds`.
-
-El container name no pertenece a `CosmosContainerTopology`; permanece en el contrato genérico como `default_physical_name`.
-
-`CosmosContainerSpec` permanece en Connectivity como primitive físico del provider. El bridge entre ambos contratos es una responsabilidad separada y no introduce Azure SDK ni secretos en las capabilities Web.
-
-Users confirma el primer recurso de este modelo:
+Contrato:
 
 ```text
-users.runtime
-→ cosmos
-→ users-runtime
-→ partition /id
-→ TTL None
+ProjectionTarget = SourceKey + SourceReleaseRef
 ```
 
-Pending y Managed comparten el mismo recurso durable.
+`project(target)`:
+- lee la release exacta;
+- no relee current;
+- conserva release identity;
+- permite retry del mismo target.
 
-## Web as Startup Orchestrator
+No introducir adaptadores `SourceReleaseId <-> str`.
 
-La Web posee el lifecycle de preparación de aplicación:
+## Principio de implementación
 
-```text
-Web
-→ resource plan
-→ resource provisioning/validation
-→ projection plan
-→ readiness
-```
+Definir contratos antes que consumidores.
 
-Backend declara requisitos neutrales y después opera independientemente.
+Backend antes que frontend cuando el contrato pertenece al backend; no usar esta regla para ubicar incorrectamente server-side Web.
 
-No:
+Si una solución raíz reemplaza un contrato anterior, hacer cutover limpio:
+- sin shims temporales;
+- sin re-exports legacy;
+- sin ownership duplicado.
 
-```text
-Backend job
-→ Web runtime
-```
+## Fronteras futuras
 
-ni:
+No están cerradas por `PROFILES-BASELINE-SEMANTICS`:
+- separación durable Users/Profiles;
+- Profiles Source/Projection si se justifica;
+- runtime canonical cutover Users;
+- exact-release provenance en `users.runtime`;
+- Root physical configuration;
+- Local/John/Jane runtime contract;
+- Admin composition conjunta sin recombinar ownership.
 
-```text
-cada job iteration
-→ ensure infrastructure
-```
+## Alarm Engine
 
-## Availability vs Readiness
+Alarm conserva sus fronteras e invariantes cerrados.
 
-```text
-Web shell available
-≠
-domain ready
-```
-
-La Web puede representar READY / DEGRADED / ERROR sin desaparecer ante ausencia de datos/backend.
-
-## Deployment Direction
-
-```text
-Base infrastructure
-→ Web
-→ Application resources/projections
-→ Backend
-```
+No reabrir Alarm para resolver problemas de Users/Profiles/Identity.
