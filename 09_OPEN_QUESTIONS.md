@@ -116,7 +116,7 @@ moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
 ```
 
 38. **CLOSED / VERIFIED / CURRENT** — el root productivo de Project ya usa `ProjectionTarget = SourceKey + SourceReleaseRef`, selecciona current server-side y transporta el target exacto sin releer current durante `project(target)`.
-39. `PLANNED` — migrar el flujo administrativo Navigation al contrato canónico aplicable. Auditar primero el composition root real; no asumir una clase `NavigationManagerWorkflowAdapter` porque ese nombre no existe en `atlanticus:main@5fd2858...`.
+39. `PLANNED` — migrar el flujo administrativo Navigation al contrato canónico aplicable. Auditar primero el composition root real; no asumir una clase `NavigationManagerWorkflowAdapter` porque ese nombre no existe en el checkpoint auditado.
 40. `BLOCKED` — eliminar Source/Projection legacy de Navigation sólo después de validar que todos sus consumidores productivos hayan migrado.
 41. `PLANNED` — implementar persistencia browser de Manager WORKSPACE con IndexedDB + `dcc.Store(memory)`.
 42. `PLANNED` — retirar SharePoint/Power Automate del pipeline Source únicamente cuando las rutas consumidoras correspondientes hayan migrado.
@@ -125,7 +125,7 @@ El item 38 anterior, que trataba el root Manager como pendiente, queda `SUPERSED
 
 ## Users / Profiles / Access
 
-Dirección ya decidida:
+Dirección ya congelada:
 
 ```text
 Profiles MUST NOT require Access.
@@ -152,10 +152,13 @@ Cerrado dentro de esta frontera:
 - `ProjectionRecord[UsersConfigurationCatalog]`;
 - Cosmos ProjectionStore con provenance Source exact-release;
 - idempotencia same-target y conflicto CAS explícito;
-- sin dependencia de ADA Access;
-- root Project de Manager transportando target exacto.
+- root Project de Manager transportando target exacto;
+- capability Profiles extraída físicamente de Users;
+- dependencia one-way Users→Profiles;
+- Profiles sin dependencia de Users ni ADA Access;
+- eliminación del namespace Python productivo `atlanticus.web.users.profiles` sin shim.
 
-Cerrados durante ejecución:
+Cierres durante ejecución:
 
 43. `USERS-RUNTIME-PROJECTION-BOUNDARY`: `CLOSED / VERIFIED / CURRENT` en `moragaga/atlanticus@4758d993296bfe2a629a9aa3b8e4b486cf7b2305`.
 44. transición Pending→Resolved, retiro/re-add, concurrencia con `observe()`, convergencia/replay y provenance legacy de runtime quedaron implementados y validados en el mismo checkpoint.
@@ -163,9 +166,10 @@ Cerrados durante ejecución:
 Además:
 
 ```text
-USERS-CANONICAL-SOURCE-1      CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1       CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2   CLOSED / VERIFIED / CURRENT
 MANAGER-ROOT-CANONICAL-CUTOVER CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION     CLOSED / VERIFIED / CURRENT
 ```
 
 Checkpoints:
@@ -179,17 +183,41 @@ moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
 
 MANAGER-ROOT-CANONICAL-CUTOVER
 moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+
+PROFILES-DOMAIN-EXTRACTION
+moragaga/atlanticus@b34581958e8d59f2cd14e47f56c4309ee76027fb
 ```
 
-Continúa OPEN la frontera completa Users / Profiles / ADA Access y los cutovers administrativos/runtime restantes:
+La extracción física está cerrada, pero la frontera semántica completa Users / Profiles / ADA Access sigue `IN PROGRESS`.
 
-45. auditar implementación actual restante de Users/Profile y consumidores, sin reabrir los contratos ya cerrados salvo conflicto autoritativo explícito;
-46. extraer y reconciliar `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
-47. congelar la frontera restante Profiles / ADA Access y los bindings cross-capability antes de iniciar las migraciones dependientes;
-48. **CLOSED / SUPERSEDED AS OPEN ITEM** — `USERS-CANONICAL-PROJECTION-2` ya conecta Source exacta con Projection canónica en `139ee93a118e51f66c3d585f00235f212a2475c1`. La formulación anterior que incluía también provenance exact-release de `users.runtime` queda refinada: esa parte no fue cerrada por este hito;
-49. `PLANNED` — migrar el flujo administrativo Users después de auditar el composition root real. No asumir una clase `UsersManagerWorkflowAdapter`: ese nombre no existe en `atlanticus:main@5fd2858...`;
-50. `BLOCKED` — eliminar contratos/adapters Source legacy de Users únicamente después de validar que no quedan consumidores productivos legacy;
-51. **PLANNED / NEXT RECOMMENDED** — migrar el runtime Managed desde provenance legacy (`projection_source_revision`) a provenance exact-release. El bloqueo histórico “sólo después del Manager root cutover” queda `SUPERSEDED`, porque esa precondición ya está cerrada. No introducir shim `SourceReleaseId <-> str`;
-52. congelar y declarar, si corresponde, el resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`; el provider actual recibe `container_name`, pero `USERS-CANONICAL-PROJECTION-2` no fija physical name, TTL ni connection binding;
-53. validar el composition root productivo del canonical Users Projection store cuando corresponda al incremento de integración;
-54. mantener separados canonical Projection y runtime legacy hasta que `USERS-RUNTIME-EXACT-RELEASE-PROVENANCE` reemplace limpiamente ese provenance.
+45. **CLOSED / VERIFIED FOR PHYSICAL OWNERSHIP** — se auditó lo suficiente la implementación y los consumidores directos para extraer `ProfileDefinition`, `ProfileCatalog`, constantes, normalizadores y su error de dominio a `web/capabilities/profiles/core`. Esto no equivale a auditar toda la semántica futura ni todos los bindings cross-capability.
+46. **OPEN / UNVERIFIED** — extraer y reconciliar `manager_dispatched/Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`. Su existencia está verificada, pero su contenido no fue auditado en este hito.
+47. **OPEN / NEXT** — congelar `PROFILES-BASELINE-SEMANTICS` antes de nuevas migraciones dependientes.
+48. **CLOSED / SUPERSEDED AS OPEN ITEM** — `USERS-CANONICAL-PROJECTION-2` ya conecta Source exacta con Projection canónica. La formulación anterior que incluía también provenance exact-release de `users.runtime` queda refinada: esa parte sigue separada.
+49. `PLANNED` — migrar el flujo administrativo Users después de cerrar la separación de contratos y auditar el composition root real. No asumir una clase `UsersManagerWorkflowAdapter` sin evidencia.
+50. `BLOCKED` — eliminar contratos/adapters Source legacy de Users únicamente después de validar que no quedan consumidores productivos legacy.
+51. `PLANNED / SUPERSEDED AS NEXT` — migrar el runtime Managed desde provenance legacy (`projection_source_revision`) a provenance exact-release. La precondición Manager root ya está satisfecha, pero el orden recomendado cambió para cerrar primero la frontera semántica Profiles/Users. No introducir shim `SourceReleaseId <-> str`.
+52. `OPEN` — congelar y declarar, si corresponde, el resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`; el provider actual recibe `container_name`, pero `USERS-CANONICAL-PROJECTION-2` no fija physical name, TTL ni connection binding.
+53. `OPEN` — validar el composition root productivo del canonical Users Projection store cuando corresponda al incremento de integración.
+54. `CURRENT` — mantener separados canonical Projection y runtime legacy hasta que un cutover explícito reemplace limpiamente el provenance legacy.
+55. **CLOSED / VERIFIED / CURRENT** — `PROFILES-DOMAIN-EXTRACTION`: capability `atlanticus-web-profiles==0.1.0`, Users→Profiles one-way, namespace viejo eliminado sin shim, suite Web 512 passed / 7 skipped y Ruff GREEN.
+56. **PLANNED / NEXT** — `PROFILES-BASELINE-SEMANTICS`: resolver y congelar `root`, `guest`, `local`, John/Jane, `administrator` y la representación runtime de Guest sin tocar aún Source/Projection ni Access.
+57. **PLANNED** — `USERS-CONTRACT-SEPARATION`: separar ownership de catálogos/contratos Users y Profiles sin romper los invariantes Source/Projection ya cerrados silenciosamente.
+58. **PLANNED** — `USERS-PROFILES-ADMIN-COMPOSITION`: permitir una experiencia administrativa conjunta sin recombinar ownership de dominio.
+59. **PLANNED** — `USERS-RUNTIME-CANONICAL-CUTOVER`: materializar runtime desde contratos ya separados y revisar entonces el provenance exact-release.
+
+### OPEN semántico para el siguiente foco
+
+Debe resolverse explícitamente, no por inferencia:
+- si `guest` permanece representado por un `ProfileDefinition` sintético/runtime o por otro contrato base;
+- ubicación y forma exacta del bootstrap principal `root`;
+- claim/identity key inmutable que identifica al bootstrap principal;
+- representación de `root` en el effective principal sin convertirlo en Profile normal;
+- alcance mínimo de autorización bootstrap y eventual revocación/disable;
+- ownership exacto de John/Jane y sus colores estáticos;
+- destino de `LOCAL_PROFILE_KEY` y todos sus consumidores;
+- retiro de `administrator` como system profile reservado de Atlanticus;
+- regla para impedir que un Managed User apunte a un Profile eliminado/no proyectado;
+- eventual separación de Source/Projection de Profiles y coordinación de publicaciones;
+- destino de `PROFILE_CATALOG_SERVICE_KEY = 'atlanticus.web.users.profiles'`, que sigue siendo una service key vigente y no un import Python;
+- estrategia explícita para superseder el payload combinado `ProjectionRecord[UsersConfigurationCatalog]` si la separación contractual posterior lo requiere.

@@ -270,6 +270,50 @@ No demostrado ni cerrado por este hito:
 
 La formulación previa “Manager productive coordinator cutover” queda refinada: este cierre corresponde específicamente al root productivo de la acción Projection.
 
+## Profiles Domain Extraction
+
+Checkpoint de implementación:
+
+`moragaga/atlanticus@b34581958e8d59f2cd14e47f56c4309ee76027fb`
+
+Estado:
+
+```text
+PROFILES-DOMAIN-EXTRACTION  CLOSED / VERIFIED / CURRENT
+```
+
+Qualification ejecutada en el workspace Web real:
+- `uv lock`: PASS/GREEN;
+- `uv sync`: PASS/GREEN;
+- tests focalizados Profiles + Users core + Users Configuration: 92 passed;
+- suite Web global: 512 passed, 7 skipped;
+- `uv run ruff check . --fix`: 7 imports ordenados automáticamente, 0 restantes;
+- `uv run ruff check .`: PASS/GREEN;
+- búsqueda del import eliminado `from atlanticus.web.users.profiles import`: 0 coincidencias Python fuera de `.venv`.
+
+Propiedades demostradas:
+- existe `web/capabilities/profiles/core` como capability y workspace package propio;
+- package `atlanticus-web-profiles==0.1.0` está incorporado al workspace/lock;
+- `ProfileDefinition`, `ProfileCatalog`, constantes y normalizadores pertenecen al namespace `atlanticus.web.profiles`;
+- Profiles posee `ProfilesDefinitionError` y no importa Users;
+- Users core declara dependencia one-way en `atlanticus-web-profiles`;
+- Users Configuration declara dependencia directa en `atlanticus-web-profiles`;
+- consumidores productivos, tests y mirrors comentados fueron migrados al nuevo namespace;
+- el módulo productivo `atlanticus.web.users.profiles` fue eliminado;
+- no se introdujo re-export, alias ni shim del namespace viejo;
+- los errores de definición de Profiles dejaron de depender de `UsersDefinitionError`;
+- la semántica vigente de `ProfileCatalog` fue preservada durante la extracción para no mezclar ownership con rediseño semántico.
+
+No demostrado ni cerrado por este hito:
+- semántica final de `root`, `guest`, `local`, John/Jane o `administrator`;
+- bootstrap identity contract para `root`;
+- separación de `UsersConfigurationCatalog` en contratos Users y Profiles;
+- Source/Projection independiente de Profiles;
+- validación cross-domain final `user.profile_key` contra Profiles proyectados;
+- rename o retiro de `PROFILE_CATALOG_SERVICE_KEY = 'atlanticus.web.users.profiles'`;
+- reconciliación del DOCX histórico de Users/Profiles/Access;
+- runtime exact-release provenance.
+
 ## Alarm Engine
 
 La campaña R3.5 llegó a cierre final `PASS/GREEN`.
@@ -303,7 +347,7 @@ Existe evidencia de construcción/prueba con:
 
 pero la migración global del repo no está materializada aún.
 
-Los packages Users afectados por los hitos previos aún pueden declarar `requires-python ==3.14.2`; esta discrepancia es preexistente y no se resolvió dentro de Source/Projection ni del Manager root cutover.
+Los packages Users y Profiles afectados por los hitos previos aún declaran `requires-python ==3.14.2`; esta discrepancia es preexistente y no se resolvió dentro de Source/Projection, Manager root cutover ni Profiles Domain Extraction.
 
 ## ADA Web
 

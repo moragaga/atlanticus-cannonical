@@ -1,7 +1,7 @@
 # Atlanticus — Current State
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
-Corte de implementación: `moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06`.
+Corte de implementación: `moragaga/atlanticus@b34581958e8d59f2cd14e47f56c4309ee76027fb`.
 
 ## Estado implementado
 
@@ -483,6 +483,50 @@ El root productivo de Project en Manager ya no degrada la identidad a `source_re
 
 Esto no migra el provenance legacy de `users.runtime`, no crea equivalencia entre `UsersConfigurationBundle.revision` y `SourceReleaseId` y tampoco completa por sí solo la migración administrativa de Users.
 
+### Profiles Domain Extraction
+
+Implementado en:
+
+```text
+web/capabilities/profiles/core
+```
+
+Package:
+
+```text
+atlanticus-web-profiles==0.1.0
+```
+
+Estado:
+
+```text
+PROFILES-DOMAIN-EXTRACTION  CLOSED / VERIFIED / CURRENT
+```
+
+Contrato implementado:
+- `ProfileDefinition`, `ProfileCatalog`, constantes y normalizadores pasan a ownership de Profiles;
+- `ProfilesDefinitionError` pertenece a Profiles y reemplaza la dependencia anterior sobre `UsersDefinitionError` para errores propios del dominio Profile;
+- Profiles no depende de Users;
+- Users core declara dependencia one-way sobre Profiles;
+- Users Configuration declara dependencia directa sobre Profiles;
+- los consumidores productivos, tests y mirrors comentados usan `atlanticus.web.profiles`;
+- `atlanticus.web.users.profiles` fue eliminado como módulo productivo;
+- no existe shim/re-export de compatibilidad para el namespace eliminado;
+- `PROFILE_CATALOG_SERVICE_KEY = 'atlanticus.web.users.profiles'` permanece como service key vigente; no es un import Python y no fue renombrado en este hito.
+
+La extracción preservó deliberadamente la semántica vigente del `ProfileCatalog` para no mezclar movimiento de ownership con rediseño semántico. Por tanto, `local`, `administrator` y `guest` continúan presentes en el modelo actual hasta el siguiente cierre semántico.
+
+Qualification final:
+- `uv lock` GREEN;
+- `uv sync` GREEN;
+- Profiles + Users core + Users Configuration: 92 passed;
+- suite Web: 512 passed, 7 skipped;
+- Ruff global GREEN después de ordenar 7 bloques de imports;
+- búsqueda del import eliminado: 0 coincidencias Python.
+
+Checkpoint:
+`moragaga/atlanticus@b34581958e8d59f2cd14e47f56c4309ee76027fb`.
+
 ### Navigation Configuration — Source / Projection
 
 Package actual:
@@ -540,7 +584,7 @@ No se eliminan todavía:
 - `NavigationProjectionWorkflow`;
 - adapters Source/Projection legacy mientras exista un consumidor real.
 
-No existe evidencia en `atlanticus:main@5fd2858...` de una clase productiva `NavigationManagerWorkflowAdapter`; el próximo incremento administrativo debe auditar el composition root real antes de fijar nombres.
+No existe evidencia en el checkpoint auditado de una clase productiva `NavigationManagerWorkflowAdapter`; el próximo incremento administrativo debe auditar el composition root real antes de fijar nombres.
 
 No introducir shim `SourceReleaseId <-> str` ni un segundo coordinator Manager paralelo.
 
@@ -641,12 +685,12 @@ Qualification R3.5 final: CLOSED PASS/GREEN.
 - Python 3.14.7.
 - `python:3.14.7-slim-trixie`.
 
-El repo actual aún conserva 3.14.2 en varios proyectos, incluidos packages Users afectados por hitos previos.
+El repo actual aún conserva 3.14.2 en varios proyectos, incluido el nuevo package Profiles y packages Users.
 
 Estado:
 `DECIDED / NOT YET IMPLEMENTED GLOBALLY`.
 
-La migración 3.14.2 → 3.14.7 es un incremento transversal separado y no se mezcla con Source/Projection/Manager root.
+La migración 3.14.2 → 3.14.7 es un incremento transversal separado y no se mezcla con Source/Projection/Manager/Profiles semantics.
 
 ### Configuration Source
 
@@ -699,7 +743,7 @@ Estado:
 
 ### Users / Profiles / Access
 
-Dirección decidida:
+Dirección congelada:
 
 ```text
 Profiles MUST NOT require Access.
@@ -720,9 +764,18 @@ USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-PROJECTION-2      CLOSED / VERIFIED / CURRENT
 MANAGER-ROOT-CANONICAL-CUTOVER    CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION        CLOSED / VERIFIED / CURRENT
 ```
 
-Estos cierres fijan:
+`PROFILES-DOMAIN-EXTRACTION` añade como CURRENT:
+- capability `web/capabilities/profiles/core`;
+- package `atlanticus-web-profiles==0.1.0`;
+- ownership de `ProfileDefinition`, `ProfileCatalog`, constantes, normalizadores y errores propios en Profiles;
+- dependencia one-way `Users -> Profiles`;
+- dependencia directa de Users Configuration sobre Profiles cuando consume esos contratos;
+- eliminación del import namespace `atlanticus.web.users.profiles` sin shim.
+
+Estos cierres fijan además:
 - `users.runtime` y su reader/observe durable Cosmos;
 - ownership y semántica del writer Managed snapshot-level;
 - transición Pending→Resolved, retirement/re-add y CAS del runtime;
@@ -732,29 +785,41 @@ Estos cierres fijan:
 - transporte exact-target del root Project de Manager.
 
 No congelan todavía:
-- provenance exact-release dentro de los documentos Managed de `users.runtime`;
+- semántica final de `root`, `guest`, `local`, John/Jane y `administrator`;
+- representación runtime base de Guest;
+- bootstrap root contract y su ubicación;
+- separación contractual `UsersConfigurationCatalog` / Profiles;
+- Source/Projection propia de Profiles;
+- provenance exact-release dentro de documentos Managed de `users.runtime`;
 - resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
-- la frontera completa Profiles / ADA Access;
 - migración administrativa Users/Navigation;
 - browser workspace Manager;
 - borrado legacy.
 
-La implementación restante y la decisión histórica
-`Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`
-deben auditarse antes de congelar el resto del contrato físico y de composición de Profiles/Access.
+La decisión histórica `manager_dispatched/Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx` existe en `atlanticus-decisions`, pero su contenido continúa `UNVERIFIED` en este cierre y debe reconciliarse antes de congelar la frontera completa Profiles/Access.
 
 Estado de la frontera completa:
-`DECIDED DIRECTION / IN PROGRESS / NOT YET FULLY AUDITED`.
-
-Siguiente frontera aislada recomendada:
 
 ```text
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  PLANNED
+USERS-PROFILES-DOMAIN-SEPARATION  IN PROGRESS
+PROFILES-DOMAIN-EXTRACTION        CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS       PLANNED / NEXT
 ```
 
-El bloqueo histórico “después del Manager root cutover” queda `SUPERSEDED`: esa precondición está satisfecha.
+La recomendación anterior:
 
-El siguiente incremento debe reemplazar limpiamente el provenance `projection_source_revision` sin reabrir las invariantes durable/runtime ya cerradas ni mezclar la migración administrativa de Users.
+```text
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  NEXT
+```
+
+queda `SUPERSEDED AS NEXT`. El hito permanece `PLANNED`, pero se ejecutará después de cerrar las semánticas y contratos Users/Profiles que condicionan el runtime final.
+
+Dirección de diseño ya acordada, todavía no implementada ni frozen como contrato final:
+- `root` debe ser bootstrap/platform fuera de Profiles y fuera de asignación normal de Users;
+- `guest` debe ser baseline reservado de Pending/unresolved y no un Managed Profile normal;
+- John/Jane son identidades locales de desarrollo con colores estáticos;
+- `administrator`, `operator`, `viewer` y custom deben pertenecer a Profiles proyectados;
+- Managed Users normales deben referenciar perfiles funcionales proyectados por `profile_key`.
 
 ### Collector
 
@@ -808,7 +873,18 @@ La finalidad inicial es análisis histórico profundo y conclusiones trazables s
 
 ### Capability independence
 
-Los packages base de Users, Navigation y User Activity están separados en `main`.
+Los packages base de Profiles, Users, Navigation y User Activity están separados físicamente en `main`.
+
+Dependencia vigente:
+
+```text
+Profiles
+   ↑
+Users
+```
+
+Profiles puede existir sin Users. Users consume Profiles.
+Navigation y User Activity conservan sus fronteras independientes y pueden enlazarse por composición.
 
 Existe además un precedente correcto:
 
@@ -854,6 +930,7 @@ Users runtime projection boundary CLOSED / VERIFIED / CURRENT
 Users canonical Source            CLOSED / VERIFIED / CURRENT
 Users canonical Projection        CLOSED / VERIFIED / CURRENT
 Manager root Project cutover      CLOSED / VERIFIED / CURRENT
+Profiles domain extraction        CLOSED / VERIFIED / CURRENT
 Web lifecycle/resource readiness  OPEN / BLOCKED BY GLOBAL CONTRACTS
 ```
 
@@ -862,3 +939,5 @@ El bridge existente no implica que Web ya ejecute resource preparation en startu
 `ApplicationResourcePlan`, required/optional semantics, named connection resolution global y READY/DEGRADED/ERROR continúan abiertos.
 
 El resource físico del canonical Users Projection store tampoco quedó congelado por estos hitos.
+
+La extracción de Profiles no introduce por defecto `profiles.runtime` ni congela resource topology propia de Profiles.

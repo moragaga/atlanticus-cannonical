@@ -183,17 +183,37 @@ Alarm Engine sí pertenece funcionalmente a Command Center.
 
 ## Web Capability Composition
 
-Las capacidades Web permanecen independientes.
+Las capacidades Web conservan ownership separado y dependencias explícitas.
+
+El cierre `PROFILES-DOMAIN-EXTRACTION` establece físicamente:
 
 ```text
-Users/Profile       Navigation       User Activity
-     │                  │                 │
-     └──────── optional composition ──────┘
+Profiles
+   ↑
+   │ one-way dependency
+Users
+
+Navigation       User Activity
+    │                 │
+    └──── optional composition ────┐
+                                   │
+Users / Profiles ──────────────────┘
 ```
 
-No introducir dependencia funcional directa sólo porque una aplicación use ambas.
+Contratos vigentes:
+- Profiles vive en `web/capabilities/profiles/core`;
+- Profiles no depende de Users;
+- Users core depende de Profiles;
+- Users Configuration declara Profiles como dependencia directa cuando consume sus contratos;
+- `atlanticus.web.users.profiles` ya no existe como namespace Python productivo;
+- no existe shim/re-export de compatibilidad para el namespace eliminado;
+- cross-capability binding pertenece a composición/adapters y no justifica dependencias inversas.
 
-El dashboard puede agregarlas como consumidor/read model.
+La extracción física no congela todavía la semántica final de perfiles base ni la separación Source/Projection de Users y Profiles.
+
+ADA Access puede consumir/extender Profiles mediante composición ADA, pero Profiles no depende de ADA Access.
+
+El dashboard puede agregar capabilities como consumidor/read model sin convertir producers en dependencias mutuas.
 
 ## Web Storage Resource Topology
 

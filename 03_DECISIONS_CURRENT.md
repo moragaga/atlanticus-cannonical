@@ -103,12 +103,25 @@ Estado: **CURRENT**
 | Users runtime exact-release provenance permanece separado del canonical Projection | CURRENT DIRECTION / PLANNED |
 | No introducir shim `SourceReleaseId <-> str` para completar migraciones Manager/dominio | FROZEN |
 | No crear un segundo Manager coordinator canónico paralelo | FROZEN |
-| No asumir `UsersManagerWorkflowAdapter` ni `NavigationManagerWorkflowAdapter` como clases existentes sin evidencia en `main` | CURRENT |
+| No asumir `UsersManagerWorkflowAdapter` ni `NavigationManagerWorkflowAdapter` como clases existentes sin evidencia | CURRENT |
 | Manager browser WORKSPACE persistirá en IndexedDB | DECIDED / NOT YET IMPLEMENTED |
 | Manager active workspace en Dash usa `dcc.Store(memory)` | DECIDED / NOT YET IMPLEMENTED |
 | IndexedDB no es Source authority | FROZEN |
 | Profiles debe funcionar sin Access | FROZEN DIRECTION |
 | ADA Access puede consumir/extender Profiles; Profiles no depende de ADA Access | FROZEN DIRECTION |
+| Profiles core pertenece a `web/capabilities/profiles/core` | CURRENT / IMPLEMENTED + VALIDATED |
+| Profiles no depende de Users | FROZEN OWNERSHIP / IMPLEMENTED + VALIDATED |
+| Users core depende one-way de Profiles | FROZEN OWNERSHIP / IMPLEMENTED + VALIDATED |
+| Users Configuration declara Profiles como dependencia directa cuando consume contratos Profile | CURRENT / IMPLEMENTED + VALIDATED |
+| `atlanticus.web.users.profiles` queda eliminado como namespace Python productivo | SUPERSEDED / IMPLEMENTED + VALIDATED |
+| No existe shim/re-export de compatibilidad para `atlanticus.web.users.profiles` | FROZEN CUTOVER / IMPLEMENTED + VALIDATED |
+| Errores propios de Profiles usan `ProfilesDefinitionError`, no `UsersDefinitionError` | CURRENT / IMPLEMENTED + VALIDATED |
+| `PROFILE_CATALOG_SERVICE_KEY = 'atlanticus.web.users.profiles'` sigue siendo service key vigente; no es import namespace | CURRENT / NOT YET REASSESSED |
+| Semántica actual `local + administrator + guest` de `ProfileCatalog` fue preservada durante la extracción | CURRENT IMPLEMENTATION / NOT FROZEN AS FINAL SEMANTICS |
+| `root` fuera de Profiles y fuera de asignación Users normal | PROPOSED / AGREED DIRECTION / NOT YET IMPLEMENTED |
+| `guest` como baseline Pending/unresolved fuera de Profiles proyectados | PROPOSED / AGREED DIRECTION / NOT YET IMPLEMENTED |
+| John/Jane como identidades locales con colores estáticos | PROPOSED / AGREED DIRECTION / NOT YET IMPLEMENTED |
+| perfiles funcionales (`administrator`, `operator`, `viewer`, custom) provenientes de Profiles proyectados | PROPOSED / AGREED DIRECTION / NOT YET IMPLEMENTED |
 | Tool Configuration determina existencia estructural | FROZEN |
 | Data determina estado | FROZEN |
 | Component = Store + Collector contract + KPI destination | FROZEN |
@@ -143,6 +156,8 @@ USERS-RUNTIME-PROJECTION-BOUNDARY Managed runtime writer             CLOSED / VE
 USERS-CANONICAL-SOURCE-1          Canonical Source backend           CLOSED / VERIFIED
 USERS-CANONICAL-PROJECTION-2      Canonical exact-release Projection CLOSED / VERIFIED
 MANAGER-ROOT-CANONICAL-CUTOVER    Root Project exact-target          CLOSED / VERIFIED
+PROFILES-DOMAIN-EXTRACTION        Profiles core ownership            CLOSED / VERIFIED
+PROFILES-BASELINE-SEMANTICS       Root/Guest/Local/Admin semantics   PLANNED / NEXT
 USERS-RUNTIME-EXACT-RELEASE-PROVENANCE Runtime provenance            PLANNED
 ```
 
@@ -151,6 +166,7 @@ Implementación actual relevante:
 ```text
 web/capabilities/storage/topology
 web/capabilities/storage/cosmos
+web/capabilities/profiles/core
 web/capabilities/users/core
 web/capabilities/users/cosmos
 web/capabilities/users/configuration
@@ -196,7 +212,7 @@ Users Runtime Projection:
 - removal produce retired tombstone durable, no delete;
 - promotion/update usa CAS/ETag y no blind upsert;
 - `UsersRuntimeStore` y `PendingUsersReader` permanecen sin cambios;
-- provenance todavía usa `projection_source_revision` legacy y queda como siguiente frontera aislada.
+- provenance todavía usa `projection_source_revision` legacy y permanece `PLANNED` para cutover posterior.
 
 Users Canonical Source:
 - `UsersSourceCodec` mapea `UsersConfigurationCatalog + published_by` a `SourceResource`;
@@ -213,6 +229,16 @@ Users Canonical Projection:
 - same-target retry idempotente;
 - different-target conflict explícito;
 - no ordering inferido.
+
+Profiles Domain Extraction:
+- `atlanticus-web-profiles==0.1.0` es workspace package propio;
+- `ProfileDefinition`, `ProfileCatalog`, constantes y normalizadores pertenecen a `atlanticus.web.profiles.models`;
+- `ProfilesDefinitionError` pertenece a `atlanticus.web.profiles.errors`;
+- Profiles no importa Users;
+- Users importa Profiles one-way;
+- Users Configuration declara Profiles directamente;
+- old namespace eliminado sin shim;
+- semántica del catálogo no fue rediseñada en este incremento.
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
@@ -238,7 +264,7 @@ Manager:
 - callback selecciona target server-side y `project(target)` no relee current;
 - publication/verification/history textual permanece como contrato administrativo separado y no debe reinterpretarse como release identity.
 
-No se consideran cerrados por `MANAGER-ROOT-CANONICAL-CUTOVER`:
+No se consideran cerrados por los hitos anteriores ni por `PROFILES-DOMAIN-EXTRACTION`:
 - provisioning/validation real de `users.runtime` dentro del lifecycle Web;
 - resource topology/provisioning físico del canonical Users Projection store;
 - provenance exact-release dentro de `users.runtime`;
@@ -251,7 +277,9 @@ No se consideran cerrados por `MANAGER-ROOT-CANONICAL-CUTOVER`:
 - Users legacy Source/Projection deletion;
 - Manager browser WORKSPACE/IndexedDB;
 - Manager publication/verification/history migration;
-- Users/Profiles/Access boundary audit completa.
+- semántica final Users/Profiles/Access;
+- bootstrap root contract;
+- Profiles Source/Projection separation.
 
 ## Refinamiento de no-op publish
 
@@ -353,7 +381,16 @@ USERS-RUNTIME-PROJECTION-BOUNDARY
 USERS-CANONICAL-SOURCE-1
 USERS-CANONICAL-PROJECTION-2
 MANAGER-ROOT-CANONICAL-CUTOVER
+PROFILES-DOMAIN-EXTRACTION
 ```
+
+`PROFILES-DOMAIN-EXTRACTION` congela ownership físico, no semántica final:
+- Profiles core propio;
+- Profiles no depende de Users;
+- Users depende one-way de Profiles;
+- imports consumidores migrados;
+- namespace viejo eliminado sin shim;
+- `ProfilesDefinitionError` propio.
 
 Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni de los cutovers administrativos/runtime restantes.
 
@@ -367,20 +404,40 @@ Contratos congelados adicionales:
 - Users canonical Source sobre Source Core;
 - Users canonical Projection exact-release sobre Projection Core;
 - legacy content revision no equivale a Source release identity;
-- Manager root Project transporta exact target sin string shim.
+- Manager root Project transporta exact target sin string shim;
+- Profiles core no puede adquirir dependencia sobre Users ni ADA Access para resolver la siguiente semántica.
 
-Antes de cerrar la frontera completa todavía se debe auditar:
-- implementación actual Users/Profile restante;
-- consumidores reales;
-- `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`.
+Permanece `OPEN` antes de cerrar la frontera completa:
+- contenido del DOCX histórico `Atlanticus_ADA_Usuarios_Perfiles_Acceso_Arquitectura_2026-09-10.docx`;
+- semántica final de root/guest/local/administrator;
+- representación Guest en runtime;
+- bootstrap identity contract de root;
+- separación contractual Users/Profiles;
+- Profiles Source/Projection;
+- validación cross-domain final;
+- service key `atlanticus.web.users.profiles`;
+- orphan prevention cuando un Profile deja de estar proyectado.
 
 Siguiente foco aislado:
 
 ```text
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  PLANNED
+PROFILES-BASELINE-SEMANTICS  PLANNED / NEXT
 ```
 
-Debe reemplazar `projection_source_revision` por provenance exact-release sin reabrir las invariantes durable/runtime ya cerradas y sin mezclar migración administrativa de Users.
+Dirección acordada pero todavía no frozen como contrato implementado:
+- `root` bootstrap/platform, fuera de Profiles y de asignación Users normal;
+- `guest` baseline reservado Pending/unresolved;
+- John/Jane identidades locales con colores estáticos;
+- perfiles funcionales como `administrator` pertenecen a Profiles proyectados;
+- Managed Users normales referencian perfiles funcionales proyectados por `profile_key`.
+
+La recomendación previa:
+
+```text
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  NEXT
+```
+
+queda `SUPERSEDED AS NEXT` y permanece `PLANNED` para un incremento posterior. No introducir shim `SourceReleaseId <-> str`.
 
 ## SharePoint
 
@@ -415,8 +472,10 @@ No optimizar roadmap por orden histórico de incrementos si existe un camino má
 
 ## Web Platform / Deployment
 
-- Users/Profile, Navigation y User Activity deben poder instalarse independientemente: `CURRENT DIRECTION`.
-- Profiles debe poder operar sin ADA Access: `FROZEN DIRECTION`.
+- Profiles es capability propia: `CURRENT / IMPLEMENTED + VALIDATED`.
+- Profiles puede operar sin Users ni ADA Access: `FROZEN OWNERSHIP/DIRECTION`.
+- Users depende one-way de Profiles: `CURRENT / IMPLEMENTED + VALIDATED`.
+- Navigation y User Activity conservan fronteras propias: `CURRENT DIRECTION`.
 - ADA Access puede consumir/extender Profiles mediante composición ADA: `FROZEN DIRECTION`.
 - Cross-capability binding pertenece a composition/adapters: `CURRENT DIRECTION`.
 - ADA Manager Users→Navigation direct coupling debe retirarse: `IDENTIFIED GAP`.
