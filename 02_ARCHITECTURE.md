@@ -47,6 +47,8 @@ Projection genérica exact-release pertenece a:
 web/capabilities/projection/core
 ```
 
+La administración de un dominio puede exponer un workflow exact-source opt-in sin reemplazar de una vez todos los workflows legacy.
+
 ### Operational Data
 
 Operational Data conserva ownership separado para sources, producers, processes, planner y materialization.
@@ -136,13 +138,7 @@ ProfilesConfiguration
 └── profiles: tuple[ProfileDefinition, ...]
 ```
 
-Propiedades:
-- sólo Profiles funcionales explícitos;
-- serialización provider-neutral;
-- reconstruye `ProfileCatalog` sin defaults implícitos;
-- no depende de Users;
-- no implica `profiles.runtime`;
-- no implica Source/Projection independiente de Profiles.
+No implica `profiles.runtime` ni Source/Projection independiente de Profiles.
 
 ### Users durable configuration
 
@@ -183,7 +179,7 @@ Esta composición no transfiere ownership de Profiles a Users.
 
 ## Canonical Users Source
 
-UCS-1 conserva una única exact Source release y separa resources por ownership:
+Una única exact Source release separa resources por ownership:
 
 ```text
 SourceReleaseRef
@@ -191,18 +187,16 @@ SourceReleaseRef
 └── profiles/configuration.json.gz
 ```
 
-No existe un segundo coordinator.
-
-No existe un reloj/release current independiente de Profiles.
+No existe segundo coordinator ni reloj independiente de Profiles.
 
 Escritura nueva:
 - Users schema `2`;
 - Profiles resource schema `1`;
-- `published_by` permanece en el resource Users como metadata funcional del flujo actual.
+- `published_by` permanece en Users.
 
 Lectura histórica:
 - Users source schema `1` permanece soportado;
-- el aggregate legacy se normaliza a `UsersConfiguration + ProfilesConfiguration`;
+- aggregate legacy se normaliza;
 - no se vuelve a escribir schema `1`.
 
 ## Canonical Users Projection
@@ -220,69 +214,115 @@ schema_version = 2
 ```
 
 El store:
-- lee schema `1` histórico y lo normaliza;
+- lee schema `1` histórico y normaliza;
 - escribe sólo schema `2`;
 - conserva exact release provenance;
 - conserva create-only/CAS;
 - conserva idempotencia same-target;
-- rechaza same exact release con payload diferente.
+- rechaza misma exact release con payload diferente.
 
-La compatibilidad durable v1 es reader compatibility, no un shim `SourceReleaseId <-> str`.
+## Canonical admin composition
+
+El backend administrativo canónico nuevo opera directamente sobre:
+
+```text
+UsersProfilesConfiguration
+```
+
+No introduce un `UsersProfilesAdminCatalog` ni otro aggregate durable mixto.
+
+El estado administrativo separa:
+- payload editable;
+- snapshot Source exacto usado como base;
+- revisión local del draft;
+- metadata local del draft.
+
+```text
+UsersProfilesAdminDraft
+├── owner_subject_id
+├── configuration: UsersProfilesConfiguration
+├── source_snapshot: SourceSnapshot
+├── revision
+└── saved_at_utc
+```
+
+`revision` identifica contenido del draft; no identifica Source release.
+
+La precondición de publicación es el `SourceSnapshot` exacto:
+- `SourceKey`;
+- current `SourceReleaseRef` cuando existe;
+- current content hash informativo;
+- `ConcurrencyToken` cuando existe.
+
+El backend de Users pasa:
+- `basis_release = source_snapshot.current.release_ref`;
+- `expected_concurrency_token = source_snapshot.concurrency_token`.
+
+No convertir esas identidades a `str`.
+
+### Admin mutation rules
+
+Administrator:
+- Profile explícito;
+- no eliminable;
+- key estable;
+- edición dedicada de colores en el contrato actual.
+
+Profile funcional:
+- key derivada al crear;
+- key inmutable al editar;
+- delete referenciado requiere replacement explícito;
+- reasignación + eliminación ocurre en una única transformación validada.
+
+Managed User:
+- creación administrativa parte de Pending;
+- identidad autenticada se conserva;
+- identidad de un Managed existente no es editable.
+
+## Manager exact-source publication boundary
+
+Manager incorpora un protocolo opt-in:
+
+```text
+ExactSourcePublicationWorkflow
+├── get_source_snapshot() -> SourceSnapshot
+└── publish_draft_exact(
+       payload,
+       expected_source_snapshot
+   ) -> ExactSourcePublicationResult
+```
+
+`ExactSourcePublicationResult` contiene el `PublishResult` tipado de Source.
+
+`ManagerProjectionCoordinator` transporta el snapshot exacto y detecta stale source sin reinterpretar strings legacy.
+
+El protocolo exact-source:
+- convive con `ConfigurationLifecycleWorkflow`;
+- no fuerza migración de módulos legacy;
+- no redefine `source_revision: str`;
+- no crea segundo coordinator;
+- no es todavía el wiring productivo de Users.
 
 ## Legacy administrative boundary
 
-`UsersConfigurationCatalog` permanece como aggregate del camino administrativo legacy existente.
+`UsersConfigurationCatalog` permanece como aggregate del camino administrativo productivo legacy mientras callbacks/layout/store no hayan migrado.
 
-Eso no define el ownership canónico nuevo.
+El nuevo backend canónico existe en paralelo como destino del cutover, pero no debe adaptarse de vuelta al aggregate legacy.
 
-El authoring/admin actual todavía debe migrarse a los contratos separados en un incremento independiente.
+La compatibilidad durable de schema histórico no justifica un adapter de authoring mixto.
 
 ## Pending / Guest
 
-Pending pertenece a Users:
-
-```text
-PendingUserRecord
-→ EffectiveUser(
-     pending=True,
-     profile=None,
-     enabled=True,
-     is_local=False
-  )
-```
-
-Pending no depende de `ProfileCatalog`.
+Pending pertenece a Users y no depende de `ProfileCatalog`.
 
 Guest:
 - no es Profile runtime;
-- no es Profile funcional configurable en `ProfilesConfiguration`;
-- no aparece como durable field en la escritura Source canónica nueva.
+- no es Profile funcional configurable;
+- no aparece como durable field en escritura Source nueva.
 
 ## Root bootstrap
 
-Root pertenece a Identity/bootstrap:
-
-```text
-AuthenticatedIdentity
-        ↓
-BootstrapRootAccessResolver
-        ├─ exact issuer + subject_id + enabled
-        │      ↓
-        │   READY
-        │   bootstrap_root=True
-        │   user_id=None
-        │
-        └─ otherwise
-               ↓
-          fallback AccessResolver
-```
-
-Root no se materializa como:
-- User;
-- Profile;
-- nuevo `AccessStatus`.
-
-El bootstrap Root genérico no equivale a política de autorización funcional ADA.
+Root pertenece a Identity/bootstrap y no se materializa como User/Profile.
 
 ## Local development identities
 
@@ -301,33 +341,9 @@ create_users_module(runtime)
 → USERS_RUNTIME_SERVICE_KEY
 ```
 
-Users no publica un ProfileCatalog mediante un service key propio.
+Users no publica ProfileCatalog mediante service key propio.
 
 ## Storage Resource Topology
-
-Cadena vigente:
-
-```text
-Capability resource declaration
-        ↓
-StorageResourceContract[TTopology]
-        ↓
-resolve_storage_plan(...)
-        ↓
-ResolvedStorageResource[TTopology]
-        ↓
-provider bridge
-        ↓
-Connectivity primitive
-        ↓
-provision / validate
-```
-
-Storage Topology:
-- no contiene secretos;
-- no construye SDK clients;
-- no hace I/O;
-- resuelve conflicts/bindings antes del provider.
 
 `users.runtime` permanece el único recurso durable runtime Users confirmado.
 
@@ -355,31 +371,31 @@ No introducir adaptadores `SourceReleaseId <-> str`.
 
 Definir contratos antes que consumidores.
 
-Backend antes que frontend cuando el contrato pertenece al backend; no usar esta regla para ubicar incorrectamente server-side Web.
+Backend antes que frontend cuando el contrato pertenece al backend.
 
 Si una solución raíz reemplaza un contrato anterior, hacer cutover limpio:
 - sin shims temporales;
 - sin re-exports legacy nuevos;
 - sin ownership duplicado.
 
-La compatibilidad de lectura de schemas durables históricos no se considera shim temporal cuando es necesaria para replay exact-release.
+La compatibilidad de lectura durable histórica necesaria para replay exact-release no se considera shim temporal.
 
 ## Fronteras futuras
 
-No están cerradas por UCS-1:
-- admin composition sobre contratos Users/Profiles separados;
+No están cerradas todavía:
+- callbacks/layout/browser draft cutover de Users admin;
+- wiring Users ↔ Manager exact-source;
 - runtime canonical cutover Users;
 - exact-release provenance en `users.runtime`;
-- Users administrative canonical migration;
-- legacy deletion;
+- eliminación legacy;
 - resource topology físico de canonical Users Projection;
 - Root physical configuration;
 - Local/John/Jane runtime contract.
 
-No crear Profiles Source/Projection independiente sin un requisito nuevo que justifique otro lifecycle/release clock.
+No crear Profiles Source/Projection independiente sin requisito nuevo de lifecycle/release propio.
 
 ## Alarm Engine
 
 Alarm conserva sus fronteras e invariantes cerrados.
 
-No reabrir Alarm para resolver problemas de Users/Profiles/Identity.
+No reabrir Alarm para resolver Users/Profiles/Identity.

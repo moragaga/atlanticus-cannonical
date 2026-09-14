@@ -1,6 +1,6 @@
 # Manager — Workflow and Session
 
-Estado: **CURRENT CONTRACT / ROOT PROJECTION CUTOVER CLOSED**
+Estado: **CURRENT CONTRACT / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED**
 
 ## Flujo conceptual
 
@@ -34,27 +34,17 @@ PROJECTION
     active projection de una Source release exacta
 ```
 
-`web/capabilities/manager/.../workspace.py` implementa los contratos base:
-- `ManagerWorkspace`;
-- `ManagerSourceVerification`;
-- `ManagerPublicationContext`;
-- `SourceSnapshot`;
-- `ConcurrencyToken`;
-- `SourceReleaseRef`;
-- selección de `ProjectionTarget`.
-
 Estado:
 
 ```text
-contracts/model                         CURRENT
 root Projection action cutover          CLOSED / VERIFIED / CURRENT
-administrative publish/workspace legacy CURRENT
-browser persistence                     PLANNED
+generic exact-source boundary           CLOSED / VERIFIED / CURRENT
+legacy publication workflows            CURRENT
+Users exact-source workflow wiring      PLANNED
+browser persistence global              PLANNED
 ```
 
-La formulación anterior “productive coordinator cutover” queda refinada: el hito cerrado reemplaza el contrato raíz de la acción Projection, no todas las revisiones textuales usadas todavía por publicación/verificación/history administrativa.
-
-No crear un segundo coordinator paralelo ni un shim `SourceReleaseId <-> str` para completar consumidores posteriores.
+No crear segundo coordinator ni shim `SourceReleaseId <-> str`.
 
 ## Root Projection action
 
@@ -69,80 +59,103 @@ ProjectionExecutionResult
     target: ProjectionTarget
 ```
 
-`ManagerProjectionCoordinator.project(...)` recibe un `ProjectionTarget` y lo entrega al workflow sin convertirlo a string, normalizarlo ni volver a seleccionar Source current.
+`ManagerProjectionCoordinator.project(...)` recibe un `ProjectionTarget` y lo entrega sin convertirlo a string ni releer current.
 
-La UI productiva de Project:
-1. obtiene el principal y módulo en servidor;
-2. selecciona `get_current_projection_target(...)` en servidor;
-3. ejecuta inmediatamente `project(..., target)`;
-4. no confía en un target/revision serializado desde browser state;
-5. emite provenance observable de la release exacta.
+Browser state no es autoridad del target ejecutable.
 
-Signal de Projection:
+## Exact-source publication boundary
+
+Checkpoint:
 
 ```text
-source_key
-source_release_id
-source_published_at_utc
-projection_revision
+moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
 ```
 
-No contiene `source_revision` como identidad de ejecución.
-
-El botón Project depende de que exista un target canónico exacto, no de la comparación legacy `active_source_revision != source_revision`.
-
-## Exact target y concurrencia de selección
-
-Selección y ejecución son pasos distintos.
-
-Una vez seleccionado el target:
+Manager define:
 
 ```text
-project(target)
+@runtime_checkable
+ExactSourcePublicationWorkflow
+
+get_source_snapshot() -> SourceSnapshot
+
+publish_draft_exact(
+    payload: dict[str, object],
+    expected_source_snapshot: SourceSnapshot,
+) -> ExactSourcePublicationResult
 ```
 
-no vuelve a consultar Source current.
+Resultado:
 
-Por tanto es válido:
-- seleccionar V48;
-- que Source avance a V49;
-- ejecutar V48;
-- terminar con éxito;
-- observar después `OUTDATED`.
+```text
+ExactSourcePublicationResult
+├── source: PublishResult
+├── audit: ProjectionAuditRecord
+└── summary: tuple[ProjectionSummaryItem, ...]
+```
 
-El coordinator también acepta un target histórico explícito y lo transporta intacto; no lo reemplaza por current.
+Propiedades congeladas:
+- `SourceSnapshot` se transporta como value object;
+- `PublishResult` se conserva tipado;
+- no se degrada release/token a una revisión textual;
+- el protocolo es opt-in;
+- no reemplaza `ConfigurationLifecycleWorkflow`;
+- un workflow legacy puede seguir sin implementar exact-source.
+
+Coordinator:
+
+```text
+get_exact_source_snapshot(...)
+publish_draft_exact(...)
+```
+
+`publish_draft_exact(...)`:
+1. resuelve exclusivamente workflows que implementen `ExactSourcePublicationWorkflow`;
+2. aplica autorización de publication;
+3. relee current snapshot;
+4. compara el value object completo con el snapshot esperado;
+5. si difiere, falla con `ManagerSourceConflictError`;
+6. invoca el workflow con el snapshot exacto;
+7. si el workflow falla, relee Source;
+8. si Source cambió, adjudica el fallo como conflict;
+9. si Source no cambió, propaga el error original.
+
+La garantía CAS final sigue perteneciendo a Source/workflow; el precheck de Manager no sustituye `ConcurrencyToken`.
 
 ## Qué permanece legacy
 
-El cierre root Projection no elimina todavía todos los campos textuales administrativos.
-
-Permanecen fuera de este hito, entre otros:
-- `ProjectionStatus.source_revision` y `active_source_revision` como estado administrativo legacy;
+Permanecen vigentes para workflows no migrados:
+- `ProjectionStatus.source_revision`;
+- `ProjectionStatus.active_source_revision`;
 - `SourcePublicationResult.source_revision`;
 - `SourceVerificationResult.source_revision`;
 - `publish_draft(... expected_source_revision: str | None)`;
-- history/load revision textual;
-- workspace/browser persistence aún no migrada a IndexedDB.
+- history/load revision textual.
 
-Esos contratos no deben reinterpretarse como `SourceReleaseId` ni convertirse mediante shim temporal.
+Esos strings:
+- no son `SourceReleaseId`;
+- no son `SourceSnapshot`;
+- no deben reinterpretarse mediante shim.
+
+La existencia del protocolo exact-source refina, pero no elimina, estos contratos.
 
 ## Session
 
 Invariantes:
-- primera visita hidrata desde Source cuando no existe un workspace recuperable;
+- primera visita hidrata desde Source cuando no existe workspace recuperable;
 - navegación interna reutiliza working state;
 - paginación/filtro local no relee Source;
-- no hidratar preventivamente todo el Manager sólo para pintar la pantalla;
-- una BASE stale nunca autoriza descartar o sobrescribir automáticamente el WORKSPACE;
-- SOURCE se consulta de forma independiente para verificar conflicto antes de publicar.
+- no hidratar preventivamente todo Manager;
+- una BASE stale nunca autoriza sobrescribir automáticamente el WORKSPACE;
+- SOURCE se consulta independientemente para verificar conflicto.
 
 ## Browser WORKSPACE
 
-Dirección decidida:
+Dirección global decidida:
 
 ```text
 dcc.Store(storage_type="memory")
-    = estado activo de la sesión Dash
+    = estado activo de sesión Dash
 
 IndexedDB
     = persistencia browser del WORKSPACE
@@ -154,65 +167,33 @@ ProjectionStore
     = proyección activa durable
 ```
 
-IndexedDB:
-- no es autoridad;
-- no sustituye Source;
-- no debe almacenar secretos;
-- perderlo sólo puede perder trabajo no publicado;
-- no requiere gzip/base64 inicialmente;
-- debe guardar el workspace estructurado;
-- debe integrarse con Dash mediante JavaScript dedicado + `clientside_callback`.
+IndexedDB general permanece PLANNED.
 
-`localStorage` queda reservado para estado/preferencias UI pequeñas; no es el almacenamiento del WORKSPACE.
-
-La implementación IndexedDB pertenece a un incremento posterior y no al root Projection cutover.
-
-## Integridad
-
-La UI anticipa problemas pero no es autoridad final.
-
-Ejemplos:
-- referencias antes de delete;
-- Source conflict;
-- validación antes de publicación.
-
-Backend conserva la última garantía autoritativa.
+Un dominio puede migrar su draft store actual al contrato canónico sin declarar implementado el WORKSPACE IndexedDB global.
 
 ## Draft / Workspace
 
 Guardar WORKSPACE no equivale a publicar Source.
 
-- WORKSPACE browser no genera `source_release`;
-- sólo `SourceStore.publish(...)` genera una publicación Source;
-- History durable contiene publicaciones Source reales, no autosaves del browser.
+- WORKSPACE no genera Source release;
+- sólo Source publication crea release;
+- revision local del draft no es release identity;
+- History durable contiene publicaciones reales, no autosaves.
 
 ## Concurrencia
 
-Frontend:
-- detecta;
-- explica;
-- permite inspeccionar;
-- deja decisión humana.
+Backend autoritativo aplica `ConcurrencyToken`.
 
-Backend:
-- aplica la precondición autoritativa mediante `ConcurrencyToken`.
+Para exact-source:
+- el workspace/draft conserva `SourceSnapshot`;
+- publication usa el token correspondiente;
+- `basis_release` puede conservar la base original;
+- Manager puede detectar stale snapshot antes del workflow;
+- Source conserva el CAS final.
 
-Publicación normal:
-- BASE conserva la release sobre la que se inició el trabajo;
-- SOURCE se verifica;
-- la publicación usa el token autoritativo correspondiente.
-
-Conflicto / overwrite autorizado:
-- se conserva la BASE original como `basis_release`;
-- se relee SOURCE current;
-- se usa un `ConcurrencyToken` fresco;
-- no existe bypass `force=True`.
-
-No implementar merge automático sin contrato de dominio explícito.
+No implementar merge automático sin contrato de dominio.
 
 ## Source -> Projection
-
-Manager selecciona un target exacto:
 
 ```text
 ProjectionTarget =
@@ -221,32 +202,24 @@ ProjectionTarget =
     SourceReleaseRef
 ```
 
-La ejecución de Projection:
-- no depende de un `latest` mutable;
-- puede proyectar una release seleccionada aunque Source haya avanzado;
-- puede terminar correctamente y quedar `OUTDATED`;
-- un fallo no revierte Source ni reemplaza el último active projection exitoso.
+La ejecución puede proyectar una release seleccionada aunque Source avance.
 
-Este root handoff quedó implementado y validado en:
+## Checkpoints
+
+Root exact Projection handoff:
 
 ```text
 moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
 ```
 
+Generic exact-source publication boundary:
+
+```text
+moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
+```
+
 ## Multi-module projection bootstrap
 
-El workflow normal por módulo permanece.
+Permanece PLANNED.
 
-Adicionalmente, primera instalación requiere un coordinador de múltiples proyecciones.
-
-Ese coordinador:
-- toma únicamente módulos instalados;
-- ordena por dependencias declaradas;
-- no fuerza Users/Navigation/Tools/KPI cuando no existen;
-- muestra estados y bloqueos;
-- ejecuta idempotentemente;
-- preserva historial/source authority.
-
-La lógica de orden no pertenece a la UI del Manager.
-
-Estado: **PLANNED**. No fue parte de `MANAGER-ROOT-CANONICAL-CUTOVER`.
+No fue parte de este cierre.

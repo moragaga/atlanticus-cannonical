@@ -31,70 +31,103 @@ Repetir el patrón estabilizado.
 ## Web Platform — checkpoint actual
 
 ```text
-WEB-STORAGE-TOPOLOGY                    CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY                  CLOSED / VERIFIED / CURRENT
-STORAGE-PREFLIGHT-COSMOS-BRIDGE         CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER            CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY       CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1                CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2            CLOSED / VERIFIED / CURRENT
-MANAGER-ROOT-CANONICAL-CUTOVER          CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION              CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS             CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION               CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT          CLOSED / VERIFIED / CURRENT
+WEB-STORAGE-TOPOLOGY                       CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY                     CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE            CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER               CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY          CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1                   CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2               CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER             CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION                 CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS                CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION                  CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT             CLOSED / VERIFIED / CURRENT
+ADMIN-COMPOSITION-BACKEND                  CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-SOURCE-BOUNDARY              CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-ADMIN-COMPOSITION           IN PROGRESS
 ```
 
 Checkpoint actual:
 
 ```text
-moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3
+moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
 ```
 
-## Cierre UCS-1
+## Cierre backend de Admin Composition
 
 Queda congelado:
-- `ProfilesConfiguration` Profiles-owned;
-- `UsersConfiguration` Users-owned;
-- `UsersProfilesConfiguration` como composición cross-contract;
-- Administrator explícito y obligatorio en el payload canónico;
-- `guest`/`local` fuera de Profiles funcionales;
-- todos los Users, incluso disabled, deben resolver `profile_key`;
-- una exact Source release con dos resources Users/Profiles;
-- read Users Source v1 / write v2;
-- canonical Projection payload `UsersProfilesConfiguration`;
-- Cosmos Projection read v1 / write v2;
-- exact-release invariants preservadas;
-- no se creó segundo Source/coordinator ni `profiles.runtime`.
+- authoring backend canónico usa `UsersProfilesConfiguration`;
+- no se crea aggregate admin mixto nuevo;
+- `UsersProfilesAdminDraft` conserva exact `SourceSnapshot`;
+- draft revision es local y no release identity;
+- parser canónico no acepta shape legacy;
+- Administrator explícito/no eliminable;
+- Profile edit preserva key;
+- delete referenciado requiere replacement;
+- reassign+delete es transformación única;
+- Managed creation parte de Pending;
+- Managed identity no es editable;
+- Users admin publication usa exact snapshot + CAS + basis release.
 
-Permanece legacy:
-- aggregate `UsersConfigurationCatalog`;
-- bundle/services/callbacks administrativos que aún no migraron;
+## Cierre Manager Exact-Source Boundary
+
+Queda congelado:
+- `ExactSourcePublicationWorkflow` es opt-in;
+- no reemplaza `ConfigurationLifecycleWorkflow`;
+- `get_source_snapshot()` devuelve `SourceSnapshot`;
+- `publish_draft_exact(...)` recibe el snapshot esperado;
+- `ExactSourcePublicationResult` conserva `PublishResult`;
+- coordinator compara snapshot completo;
+- los campos legacy textuales no se reinterpretan como release identity;
+- no existe segundo coordinator.
+
+## Qué permanece legacy
+
+Continúan productivos hasta su cutover explícito:
+- callbacks/layout/browser store administrativos de Users;
+- `UsersConfigurationCatalog` en ese camino;
+- `UsersAdministrationService` legacy y bundle/contracts asociados donde aún se consumen;
+- Manager publication/verification/history textual para workflows legacy;
 - runtime Managed writer;
-- provenance `projection_source_revision` en `users.runtime`.
+- `projection_source_revision` en `users.runtime`.
 
 ## Siguiente foco aislado recomendado
 
 ```text
-USERS-PROFILES-ADMIN-COMPOSITION  PLANNED / NEXT
+ADMIN-UI-DRAFT-CUTOVER  PLANNED / NEXT
 ```
 
-Objetivo:
-- adaptar la experiencia administrativa para authoring conjunto de Users y Profiles;
-- consumir/producir los contratos separados sin volver a crear un aggregate de ownership mixto;
-- definir cómo se editan Administrator y Profiles funcionales en la nueva forma;
-- preservar la regla de no orphan references;
-- mantener una sola publicación exact-release;
-- no tocar runtime canonical cutover ni provenance salvo bloqueo contractual real.
+Objetivo único:
+- migrar callbacks, layout y store administrativo de Users Configuration al payload `UsersProfilesConfiguration`;
+- usar `UsersProfilesAdminDraft` como contrato del draft nuevo;
+- mantener el `SourceSnapshot` de base;
+- aplicar las operaciones backend ya cerradas;
+- retirar del camino UI activo la construcción/edición de `UsersConfigurationCatalog`.
 
-Debe auditar específicamente:
-- callbacks/layout/store administrativo de Users Configuration;
-- `UsersAdministrationService`;
-- `UsersConfigurationBundle` y contracts legacy;
-- `FileUsersProjectionProfileCatalog`;
-- representación de drafts/admin payload;
-- delete/reassign de Profiles referenciados;
-- publicación hacia `UsersSourceService.publish_configuration(...)`.
+No mezclar en este incremento:
+- wiring Users↔Manager exact-source;
+- runtime canonical cutover;
+- runtime provenance;
+- IndexedDB general del Manager;
+- Navigation;
+- Root physical config;
+- Python migration;
+- ADA Access;
+- legacy deletion global.
+
+## Incremento inmediatamente posterior
+
+```text
+USERS-MANAGER-EXACT-SOURCE-WIRING  PLANNED
+```
+
+Debe:
+- implementar/adaptar el workflow productivo Users al protocolo `ExactSourcePublicationWorkflow`;
+- transportar `SourceSnapshot` desde el admin workspace hasta publication;
+- retornar `ExactSourcePublicationResult`;
+- conservar autorización/audit/summary requeridos por Manager;
+- no adaptar el snapshot exacto a `source_revision: str`.
 
 ## Después, como incrementos independientes
 
@@ -106,15 +139,15 @@ NAV-CONSUMER-MIGRATION-B                  PLANNED
 DOMAIN-LEGACY-DELETION                     BLOCKED
 ```
 
-El orden exacto después de `USERS-PROFILES-ADMIN-COMPOSITION` debe recalcularse sobre `main`.
+El orden exacto después del wiring debe recalcularse sobre `main`.
 
 ## Runtime canonical cutover
 
 Permanece PLANNED.
 
-Debe materializar `users.runtime` desde el contrato/projection canónico separado.
+Debe materializar `users.runtime` desde contrato/projection canónico.
 
-No mezclarlo con la composición administrativa salvo necesidad contractual inevitable.
+No mezclarlo con UI admin cutover.
 
 ## Runtime exact-release provenance
 
@@ -122,19 +155,13 @@ Permanece PLANNED.
 
 No introducir shim `SourceReleaseId <-> str`.
 
-El runtime actual conserva provenance legacy hasta el cutover explícito.
-
 ## Root physical configuration
 
 ```text
 ROOT-PHYSICAL-CONFIGURATION  PLANNED / UNVERIFIED
 ```
 
-No bloquear el foco Users/Profiles con:
-- env var names;
-- Key Vault schema;
-- Entra claim mapping;
-- deployment wiring.
+No bloquear Users/Profiles con deployment wiring.
 
 ## Local identities
 
@@ -148,13 +175,13 @@ Sólo está congelado que no son Profiles funcionales.
 
 Users y Navigation administrative migration permanecen PLANNED.
 
-Legacy deletion permanece BLOCKED hasta demostrar que no quedan consumidores productivos legacy.
+Legacy deletion permanece BLOCKED hasta demostrar ausencia de consumidores productivos legacy.
 
 ## Manager browser workspace
 
-IndexedDB + `dcc.Store(memory)` permanece PLANNED.
+IndexedDB + `dcc.Store(memory)` general permanece PLANNED.
 
-No mezclarlo con Users/Profiles admin composition.
+El siguiente foco puede migrar el draft store actual de Users sin convertirlo en la implementación global de IndexedDB Manager.
 
 ## Python/Trixie
 
@@ -166,15 +193,13 @@ No mezclarlo con el siguiente foco.
 
 El resource físico de `users.runtime` está congelado.
 
-La inventory global y el resource topology del canonical Users Projection store continúan abiertos.
+La inventory global y resource topology del canonical Users Projection store continúan abiertos.
 
 No inferir `profiles.runtime`.
 
 ## Backend / Frontend productization
 
-Se mantiene la prioridad de cerrar el Golden Path hacia un artefacto usable.
-
-No usar los pendientes de plataforma como excusa para expandir arquitectura fuera de un bloqueo real.
+Se mantiene la prioridad de cerrar el Golden Path hacia artefacto usable.
 
 ## Command Center
 

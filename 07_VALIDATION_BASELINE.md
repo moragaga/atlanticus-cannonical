@@ -22,6 +22,8 @@ No reinterpretar un FAIL histórico como fallo vigente sin revisar su adjudicaci
 | PROFILES-DOMAIN-EXTRACTION | CLOSED / VERIFIED | Profiles + Users + Web GREEN |
 | PROFILES-BASELINE-SEMANTICS | CLOSED / VERIFIED | PB-1…PB-6 + Web GREEN |
 | USERS-CONTRACT-SEPARATION / UCS-1 | CLOSED / VERIFIED | 31 focused + full Web + Ruff + compile GREEN |
+| ADMIN-COMPOSITION-BACKEND | CLOSED / VERIFIED | 14 focused admin composition tests within 19 new focused tests |
+| MANAGER-EXACT-SOURCE-BOUNDARY | CLOSED / VERIFIED | 5 focused Manager exact-source tests within 19 new focused tests |
 
 El detalle histórico de checkpoints anteriores permanece en canonical especializado y commits previos.
 
@@ -70,132 +72,161 @@ USERS-CONTRACT-SEPARATION        CLOSED / VERIFIED / CURRENT
 UCS-1 CANONICAL-CONTRACT-SPLIT   CLOSED / VERIFIED / CURRENT
 ```
 
-### Propiedades demostradas — Profiles durable
-
-- existe `ProfilesConfiguration`;
-- contiene sólo Profiles explícitos;
-- round-trip durable conserva `ProfileDefinition`;
-- duplicate normalized profile keys fallan mediante la semántica existente de Profiles;
-- `ProfilesConfiguration.catalog()` no introduce defaults implícitos.
-
-### Propiedades demostradas — Users durable
-
-- existe `UsersConfiguration`;
-- contiene Managed Users;
-- ids duplicados fallan;
-- emails no nulos duplicados fallan;
-- identidades `(issuer, subject_id)` duplicadas fallan.
-
-### Propiedades demostradas — composición Users/Profiles
-
-- existe `UsersProfilesConfiguration`;
-- exige Profile `administrator`;
-- rechaza `guest` y `local` como Profiles funcionales;
-- todo Managed User debe resolver `profile_key`;
-- la validación aplica también a Users disabled;
-- Administrator se representa como Profile explícito.
-
-### Propiedades demostradas — Source
-
-Escritura nueva:
+Qualification UCS-1 preservada:
 
 ```text
-users/configuration.json.gz
-profiles/configuration.json.gz
+31 focused passed
+9 Cosmos store hotfix tests passed
+552 passed, 7 skipped full Web
+Ruff GREEN
+productive/commented compile GREEN
+git diff --check GREEN
 ```
 
-- ambos resources pertenecen a la misma exact Source release;
-- Users resource escribe schema `2`;
-- Profiles resource escribe schema `1`;
-- `published_by` se preserva;
-- gzip/JSON de tests es determinista;
-- nueva escritura no incluye `administrator_*` ni `guest_*` en Users configuration;
-- misma configuración puede publicarse como otra release distinta sin colapsar release identity.
+## Admin Composition Backend + Manager Exact-Source Boundary
 
-Lectura histórica:
-- Users source schema `1` continúa legible;
-- aggregate legacy se normaliza;
-- Administrator colors históricos crean Administrator explícito;
-- Guest histórico no crea Profile funcional.
+Checkpoint integrado:
 
-### Propiedades demostradas — Projection
+```text
+moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
+```
 
-- `UsersProjectionBuilder` produce `UsersProfilesConfiguration`;
-- actor Source no entra al payload de Projection;
-- `project(target)` usa exactamente la release seleccionada;
-- `project(target)` no relee current;
-- same content en releases distintas sigue siendo target distinto.
+Parent:
 
-### Propiedades demostradas — Cosmos Projection
+```text
+moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3
+```
 
-- write schema actual = `2`;
-- read schema `1` normaliza hacia `UsersProfilesConfiguration`;
-- misma exact release + mismo payload es idempotente;
-- misma exact release + payload diferente falla por invariantes;
-- nueva release reemplaza con CAS/ETag;
-- concurrent same-target winner es éxito idempotente;
-- concurrent different target produce conflict;
-- se puede activar explícitamente una release exacta anterior.
+Estados:
+
+```text
+USERS-PROFILES-ADMIN-COMPOSITION  IN PROGRESS
+ADMIN-COMPOSITION-BACKEND         CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-SOURCE-BOUNDARY     CLOSED / VERIFIED / CURRENT
+```
+
+### Propiedades demostradas — admin composition
+
+- `UsersProfilesAdminDraft` usa `UsersProfilesConfiguration`;
+- draft serializa `SourceSnapshot` exacto;
+- draft revision se deriva del contenido canónico;
+- draft inválido por revision mismatch falla;
+- nuevo draft tiene document type/schema propio;
+- payload legacy no es aceptado por el parser canónico;
+- default composition contiene Administrator explícito;
+- Administrator no puede eliminarse;
+- edición Administrator actual preserva key/label;
+- Profile edit preserva key;
+- Profile referenciado no puede borrarse sin replacement;
+- replacement reasigna Users y elimina Profile en una transformación válida;
+- la reasignación incluye Users disabled;
+- alta Managed parte de `PendingUserRecord`;
+- duplicate/configured identity se rechaza;
+- identidad Managed existente no puede cambiar;
+- pending ya configurado deja de listarse;
+- `UsersProfilesAdministrationService` conserva exact Source snapshot;
+- source change durante load/publication se detecta;
+- publication usa `ConcurrencyToken` y `basis_release`.
+
+### Propiedades demostradas — Manager exact-source
+
+- existe `ExactSourcePublicationWorkflow` runtime-checkable y opt-in;
+- workflow legacy que no lo implementa no adquiere automáticamente el nuevo contrato;
+- `get_exact_source_snapshot(...)` transporta `SourceSnapshot`;
+- `publish_draft_exact(...)` compara el snapshot esperado con current;
+- stale snapshot produce `ManagerSourceConflictError`;
+- cambio de Source observado después de fallo del workflow se adjudica como conflict;
+- `ExactSourcePublicationResult` conserva `PublishResult` tipado;
+- no se introduce conversión `SourceReleaseId <-> str`.
 
 ### Qualification ejecutada en workspace real
 
-Focal UCS-1:
+Focused:
 
 ```text
-31 passed
+19 passed
 ```
 
-Hotfix de estilo del store test:
+Suites de capabilities afectadas:
 
 ```text
-9 passed
+Users Configuration tests  GREEN
+Manager tests              GREEN
+```
+
+Mirror:
+
+```text
+test_canonical_commented_mirrors.py
+→ GREEN
+```
+
+Compile:
+
+```text
+productive/commented compile
+→ GREEN
+```
+
+Ruff final sobre archivos productivos/tests modificados:
+
+```text
+ruff check
+→ All checks passed!
+
+ruff format --check
+→ 7 files already formatted
 ```
 
 Suite Web completa:
 
 ```text
-552 passed, 7 skipped
+571 passed, 7 skipped
 0 failures
 0 errors
 ```
 
-Calidad:
+Git:
 
 ```text
-uv run --frozen ruff check .
-→ All checks passed!
-
-productive/commented compile
-→ GREEN
-
 git diff --check
 → GREEN
+
+12 implementation files expected in the increment
 ```
 
-El hotfix final cambió sólo formato del test `users/projection-cosmos/tests/test_store.py`; no cambió comportamiento.
+Nota de adjudicación:
+- el primer Ruff detectó tres import blocks ordenables y formato en `admin_composition.py`;
+- se corrigieron;
+- el mirror comentado se realineó;
+- después se repitió la full Web suite y quedó GREEN.
 
-## No demostrado / no cerrado por UCS-1
+No se afirma:
+- `ruff check .` global nuevo;
+- CI remoto adicional;
+- UI/browser admin cutover;
+- Users↔Manager exact-source wiring productivo.
 
-- composición administrativa Users/Profiles usando contratos separados;
-- runtime canonical cutover desde la Projection nueva;
-- provenance exact-release dentro de `users.runtime`;
-- migración administrativa Users completa;
-- eliminación de legacy Users;
+## No demostrado / no cerrado por este checkpoint
+
+- callbacks/layout/browser store usando `UsersProfilesAdminDraft`;
+- política UI concreta ante draft browser legacy incompatible;
+- wiring productivo de Users como `ExactSourcePublicationWorkflow`;
+- runtime canonical cutover;
+- provenance exact-release en `users.runtime`;
+- eliminación legacy;
 - resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
 - fuente física de `BootstrapRootPolicy`;
-- mapping exacto de claims Entra;
-- Local/John/Jane runtime contract final;
-- Profiles Source/Projection independiente;
+- mapping exacto Entra;
+- Local/John/Jane runtime final;
 - migración global Python 3.14.7.
-
-Sobre Profiles Source/Projection independiente: UCS-1 demuestra que no fue necesario para separar ownership actual; no se considera requisito pendiente salvo que aparezca una necesidad nueva.
 
 ## Git / CI
 
-El checkpoint `05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3` está verificado como tip de `moragaga/atlanticus:main` durante este cierre.
+`9342769a626c39d1f7f860f81e051e2ef1300620` está verificado como tip de `moragaga/atlanticus:main` durante este cierre.
 
 La qualification reportada proviene del workspace real del Project.
 
-No se afirma CI remoto adicional salvo evidencia explícita.
+No se afirma CI remoto adicional.
 
 Git continúa READ ONLY para este cierre documental.
