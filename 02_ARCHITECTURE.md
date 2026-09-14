@@ -106,7 +106,6 @@ Contratos:
 - Profiles no depende de Users;
 - Profiles no depende de ADA;
 - Users puede consumir Profiles;
-- Users Configuration puede consumir contratos Profile;
 - cross-capability binding pertenece a composición/adapters;
 - `atlanticus.web.users.profiles` no existe como namespace productivo;
 - no existe shim del namespace anterior.
@@ -126,9 +125,119 @@ No posee semántica especial de:
 - Local;
 - John/Jane.
 
-Administrator es un Profile funcional explícito cuando la proyección/configuración lo materializa.
+Administrator es un Profile funcional ordinario.
 
-### Pending / Guest
+### Profiles durable configuration
+
+`ProfilesConfiguration` es el contrato durable Profiles-owned actual.
+
+```text
+ProfilesConfiguration
+└── profiles: tuple[ProfileDefinition, ...]
+```
+
+Propiedades:
+- sólo Profiles funcionales explícitos;
+- serialización provider-neutral;
+- reconstruye `ProfileCatalog` sin defaults implícitos;
+- no depende de Users;
+- no implica `profiles.runtime`;
+- no implica Source/Projection independiente de Profiles.
+
+### Users durable configuration
+
+`UsersConfiguration` es el contrato durable Users-owned actual.
+
+```text
+UsersConfiguration
+└── users: tuple[UserConfiguration, ...]
+```
+
+Posee invariantes exclusivamente Users:
+- ids únicos;
+- emails no nulos únicos;
+- identidades únicas.
+
+No posee el catálogo de Profiles.
+
+### Composition contract
+
+La referencia Users→Profiles se valida en una frontera que ve ambos contratos:
+
+```text
+UsersConfiguration
+        +
+ProfilesConfiguration
+        ↓
+UsersProfilesConfiguration
+```
+
+`UsersProfilesConfiguration`:
+- exige Administrator explícito;
+- rechaza `guest` y `local` como Profiles funcionales;
+- exige que todo `UserConfiguration.profile_key` resuelva en Profiles;
+- aplica la regla también a Users disabled;
+- expone `ProfileCatalog` desde el contrato Profiles-owned.
+
+Esta composición no transfiere ownership de Profiles a Users.
+
+## Canonical Users Source
+
+UCS-1 conserva una única exact Source release y separa resources por ownership:
+
+```text
+SourceReleaseRef
+├── users/configuration.json.gz
+└── profiles/configuration.json.gz
+```
+
+No existe un segundo coordinator.
+
+No existe un reloj/release current independiente de Profiles.
+
+Escritura nueva:
+- Users schema `2`;
+- Profiles resource schema `1`;
+- `published_by` permanece en el resource Users como metadata funcional del flujo actual.
+
+Lectura histórica:
+- Users source schema `1` permanece soportado;
+- el aggregate legacy se normaliza a `UsersConfiguration + ProfilesConfiguration`;
+- no se vuelve a escribir schema `1`.
+
+## Canonical Users Projection
+
+Payload CURRENT:
+
+```text
+ProjectionRecord[UsersProfilesConfiguration]
+```
+
+Cosmos Projection schema CURRENT:
+
+```text
+schema_version = 2
+```
+
+El store:
+- lee schema `1` histórico y lo normaliza;
+- escribe sólo schema `2`;
+- conserva exact release provenance;
+- conserva create-only/CAS;
+- conserva idempotencia same-target;
+- rechaza same exact release con payload diferente.
+
+La compatibilidad durable v1 es reader compatibility, no un shim `SourceReleaseId <-> str`.
+
+## Legacy administrative boundary
+
+`UsersConfigurationCatalog` permanece como aggregate del camino administrativo legacy existente.
+
+Eso no define el ownership canónico nuevo.
+
+El authoring/admin actual todavía debe migrarse a los contratos separados en un incremento independiente.
+
+## Pending / Guest
 
 Pending pertenece a Users:
 
@@ -144,9 +253,12 @@ PendingUserRecord
 
 Pending no depende de `ProfileCatalog`.
 
-Guest no es un Profile runtime.
+Guest:
+- no es Profile runtime;
+- no es Profile funcional configurable en `ProfilesConfiguration`;
+- no aparece como durable field en la escritura Source canónica nueva.
 
-### Root bootstrap
+## Root bootstrap
 
 Root pertenece a Identity/bootstrap:
 
@@ -172,27 +284,11 @@ Root no se materializa como:
 
 El bootstrap Root genérico no equivale a política de autorización funcional ADA.
 
-ADA Access puede consumir/extender Profiles y el contexto Identity, pero Profiles no depende de ADA Access.
-
-### Local development identities
+## Local development identities
 
 Local/John/Jane quedan fuera de Profiles.
 
 Su representación runtime final permanece una frontera posterior.
-
-## Users durable vs Profiles runtime
-
-El aggregate durable `UsersConfigurationCatalog` aún contiene campos históricos de Administrator/Guest.
-
-Eso no convierte esos campos en ownership de Profiles core.
-
-La traducción runtime vigente produce:
-- Administrator;
-- Profiles funcionales configurados;
-- no Guest;
-- no Local.
-
-Separar físicamente/durablemente los contratos Users y Profiles pertenece a `USERS-CONTRACT-SEPARATION`.
 
 ## Service Registry ownership
 
@@ -206,8 +302,6 @@ create_users_module(runtime)
 ```
 
 Users no publica un ProfileCatalog mediante un service key propio.
-
-Un consumidor que requiere `ProfileCatalog` debe recibirlo por composición explícita donde corresponda.
 
 ## Storage Resource Topology
 
@@ -235,9 +329,11 @@ Storage Topology:
 - no hace I/O;
 - resuelve conflicts/bindings antes del provider.
 
-`users.runtime` permanece el único recurso durable Users confirmado.
+`users.runtime` permanece el único recurso durable runtime Users confirmado.
 
 No se crea `profiles.runtime` por inferencia.
+
+El resource topology físico de `CosmosUsersConfigurationProjectionStore` continúa OPEN.
 
 ## Source / Projection exact-release
 
@@ -263,19 +359,24 @@ Backend antes que frontend cuando el contrato pertenece al backend; no usar esta
 
 Si una solución raíz reemplaza un contrato anterior, hacer cutover limpio:
 - sin shims temporales;
-- sin re-exports legacy;
+- sin re-exports legacy nuevos;
 - sin ownership duplicado.
+
+La compatibilidad de lectura de schemas durables históricos no se considera shim temporal cuando es necesaria para replay exact-release.
 
 ## Fronteras futuras
 
-No están cerradas por `PROFILES-BASELINE-SEMANTICS`:
-- separación durable Users/Profiles;
-- Profiles Source/Projection si se justifica;
+No están cerradas por UCS-1:
+- admin composition sobre contratos Users/Profiles separados;
 - runtime canonical cutover Users;
 - exact-release provenance en `users.runtime`;
+- Users administrative canonical migration;
+- legacy deletion;
+- resource topology físico de canonical Users Projection;
 - Root physical configuration;
-- Local/John/Jane runtime contract;
-- Admin composition conjunta sin recombinar ownership.
+- Local/John/Jane runtime contract.
+
+No crear Profiles Source/Projection independiente sin un requisito nuevo que justifique otro lifecycle/release clock.
 
 ## Alarm Engine
 

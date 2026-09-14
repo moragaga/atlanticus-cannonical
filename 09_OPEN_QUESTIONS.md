@@ -6,7 +6,7 @@ Los puntos listados aquí no reabren contratos ya CLOSED.
 
 ## Users / Profiles / Identity
 
-### Cerrado por PROFILES-BASELINE-SEMANTICS
+### Cerrado por PROFILES-BASELINE-SEMANTICS + UCS-1
 
 Ya no están OPEN:
 - si Guest debe ser `ProfileDefinition`;
@@ -16,28 +16,37 @@ Ya no están OPEN:
 - si `ProfileCatalog()` debe fabricar defaults;
 - destino de `PROFILE_CATALOG_SERVICE_KEY`;
 - si Users WebModule debe registrar ProfileCatalog;
-- si Local/Guest deben mostrarse como Profiles en Users Configuration.
+- separación ownership durable Users vs Profiles;
+- destino canónico de `administrator_*`;
+- destino canónico de `guest_*`;
+- payload canónico que reemplaza `ProjectionRecord[UsersConfigurationCatalog]`;
+- regla canónica ante Managed User con Profile inexistente;
+- necesidad de Source/Projection independiente de Profiles para este baseline.
 
 Estado:
 
 ```text
-PROFILES-BASELINE-SEMANTICS  CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS     CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION       CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT  CLOSED / VERIFIED / CURRENT
 ```
 
 ### OPEN
 
-1. `USERS-CONTRACT-SEPARATION` — separar ownership durable/contractual Users vs Profiles preservando Source/Projection vigente.
-2. Definir el destino de `administrator_*` y `guest_*` dentro del aggregate durable actual durante esa separación.
-3. Definir estrategia explícita para superseder `ProjectionRecord[UsersConfigurationCatalog]` sólo si la separación contractual lo exige.
-4. Definir regla final cuando un Managed User referencia un Profile eliminado/no proyectado.
-5. Decidir si Profiles necesita Source/Projection propia o si otro contrato satisface el requisito; no crearla por inferencia.
-6. `USERS-PROFILES-ADMIN-COMPOSITION` — experiencia administrativa conjunta sin recombinar ownership.
-7. `USERS-RUNTIME-CANONICAL-CUTOVER` — materializar runtime desde contratos separados.
+1. `USERS-PROFILES-ADMIN-COMPOSITION` — migrar authoring/admin a contratos separados sin recombinar ownership.
+2. Definir payload/draft administrativo exacto para editar Users + Profiles antes de publicar la única exact Source release.
+3. Definir UX de Profile delete/reassign cuando existen Managed Users referenciándolo; el contrato canónico ya rechaza orphan references.
+4. Definir cómo migra `UsersAdministrationService` desde `UsersConfigurationCatalog`.
+5. Definir destino de `UsersConfigurationBundle` y contracts legacy durante la migración administrativa.
+6. Definir destino de `FileUsersProjectionProfileCatalog` dentro del cutover de consumidores.
+7. `USERS-RUNTIME-CANONICAL-CUTOVER` — materializar runtime desde `UsersProfilesConfiguration`.
 8. `USERS-RUNTIME-EXACT-RELEASE-PROVENANCE` — reemplazar provenance legacy sólo en cutover explícito.
-9. Migración administrativa Users al contrato canónico.
+9. `USERS-ADMIN-CANONICAL-MIGRATION` — completar migración administrativa tras la composición.
 10. Legacy deletion Users — BLOCKED hasta demostrar ausencia de consumidores legacy.
 11. Resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`.
 12. Composition root productivo del canonical Users Projection store.
+
+No está OPEN por defecto crear Source/Projection independiente de Profiles. UCS-1 resolvió el ownership actual con dos resources en una sola exact release. Sólo reabrir esa decisión si aparece un requisito de lifecycle/release independiente.
 
 ## Root bootstrap physical configuration
 
@@ -115,7 +124,8 @@ Cerrado:
 - SourceStore;
 - concurrency/current;
 - Local/Blob parity;
-- exact-release Projection handoff.
+- exact-release Projection handoff;
+- Users canonical multi-resource exact-release.
 
 OPEN:
 34. retention/cleanup policy fuera de `SourceStore`.
@@ -181,13 +191,13 @@ OPEN:
 Único foco recomendado:
 
 ```text
-USERS-CONTRACT-SEPARATION  PLANNED / NEXT
+USERS-PROFILES-ADMIN-COMPOSITION  PLANNED / NEXT
 ```
 
 No mezclarlo con:
-- Root physical configuration;
+- runtime canonical cutover;
 - runtime exact-release provenance;
-- Admin migration;
+- Root physical configuration;
 - Navigation;
 - Python 3.14.7;
 - Manager IndexedDB;

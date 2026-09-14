@@ -32,7 +32,7 @@ Estado: **OPEN**
 17. Definir Storage provisioning parity.
 18. Integrar el bridge Cosmos ya cerrado al punto de resource preparation cuando los contratos anteriores estén congelados.
 
-## Users Source / Projection
+## Users Source / Projection / Profiles
 
 Cerrados:
 
@@ -40,41 +40,54 @@ Cerrados:
 USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-SOURCE-1           CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-PROJECTION-2       CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION          CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT     CLOSED / VERIFIED / CURRENT
 ```
 
-Los items históricos sobre definir ownership del writer Managed, Pending→Resolved, retirement/re-add, CAS, idempotencia y package boundary quedan `SUPERSEDED` como open items porque ya fueron implementados y validados.
+Ya no están OPEN:
+- ownership durable Profiles vs Users;
+- destino canónico de `administrator_*`;
+- destino canónico de `guest_*`;
+- payload Projection que reemplaza `UsersConfigurationCatalog`;
+- orphan validation;
+- necesidad de una Projection independiente de Profiles para este baseline.
 
 Permanecen OPEN/BLOCKED:
 
-19. Manager root productive cutover desde `source_revision: str`.
-20. Users administrative consumer migration posterior al root cutover.
-21. Runtime Managed exact-release provenance posterior al root cutover, sin shim `SourceReleaseId <-> str`.
-22. Freeze resource topology/provisioning del Cosmos canonical Projection store si el deployment lo requiere.
-23. Legacy Users Source/Projection deletion sólo tras consumer migration.
-24. Validar composition root productivo del canonical Projection store en su incremento de integración.
+19. `USERS-PROFILES-ADMIN-COMPOSITION`.
+20. Migrar `UsersAdministrationService` y authoring/drafts a los contratos separados.
+21. Definir UX delete/reassign de Profiles referenciados respetando no-orphans.
+22. `USERS-RUNTIME-CANONICAL-CUTOVER`.
+23. `USERS-RUNTIME-EXACT-RELEASE-PROVENANCE`, sin shim `SourceReleaseId <-> str`.
+24. Freeze resource topology/provisioning del Cosmos canonical Projection store si deployment lo requiere.
+25. Legacy Users Source/Projection/admin deletion sólo tras consumer migration.
+26. Validar composition root productivo del canonical Projection store en su incremento de integración.
+27. Definir destino final de `FileUsersProjectionProfileCatalog` durante consumer cutover.
 
 ## Readiness
 
-25. Freeze READY/DEGRADED/ERROR semantics.
-26. Definir qué dependencies son required por aplicación.
-27. Definir health/readiness endpoints/surface.
+28. Freeze READY/DEGRADED/ERROR semantics.
+29. Definir qué dependencies son required por aplicación.
+30. Definir health/readiness endpoints/surface.
 
 ## Pre-Manager
 
-28. Freeze route/name.
-29. Freeze bootstrap authorization en Azure.
-30. Eliminar `is_local` full-access bypass.
-31. Definir local development access sin volver a crear bypass.
-32. Freeze projection action permissions.
+31. Freeze route/name.
+32. Freeze bootstrap authorization en Azure.
+33. Eliminar `is_local` full-access bypass.
+34. Definir local development access sin volver a crear bypass.
+35. Freeze projection action permissions.
 
 ## Projection orchestration
 
-33. Freeze projection dependency contract.
-34. Freeze deterministic ordering.
-35. Definir retry/resume.
-36. Definir rollback/no-op semantics.
-37. Integrar Source Release identity en los consumers pendientes; las base projections Users/Navigation ya usan identidad canónica.
+36. Freeze projection dependency contract sólo si múltiples projections realmente lo requieren.
+37. Freeze deterministic ordering cuando exista esa necesidad.
+38. Definir retry/resume.
+39. Definir rollback/no-op semantics.
+40. Mantener Source Release identity en consumers pendientes.
+
+UCS-1 no crea un segundo coordinator ni un release clock independiente de Profiles.
 
 ## Deployment
 
-38. Crear esquema/ilustración final para soporte una vez congelado el contrato.
+41. Crear esquema/ilustración final para soporte una vez congelado el contrato.

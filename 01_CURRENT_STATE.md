@@ -3,26 +3,28 @@
 Estado: **CURRENT EXECUTION CHECKPOINT**
 
 Corte de implementación:
-`moragaga/atlanticus@3ca92d5579e499dd4ab6413fa6d91c9d296b13c2`.
+`moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3`.
 
 ## Resumen de estado
 
 ```text
-WEB-STORAGE-TOPOLOGY                 CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY               CLOSED / VERIFIED / CURRENT
-STORAGE-PREFLIGHT-COSMOS-BRIDGE      CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER         CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY    CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1             CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2         CLOSED / VERIFIED / CURRENT
-MANAGER-ROOT-CANONICAL-CUTOVER       CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION           CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS          CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-DOMAIN-SEPARATION     IN PROGRESS
-NAV-CONSUMER-MIGRATION-B             PLANNED
-USERS-CONTRACT-SEPARATION            PLANNED / NEXT RECOMMENDED
-USERS-RUNTIME-CANONICAL-CUTOVER      PLANNED
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE PLANNED
+WEB-STORAGE-TOPOLOGY                    CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY                  CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE         CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER            CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY       CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1                CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2            CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER          CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION              CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS             CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION               CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT          CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-DOMAIN-SEPARATION        IN PROGRESS
+USERS-PROFILES-ADMIN-COMPOSITION        PLANNED / NEXT RECOMMENDED
+USERS-RUNTIME-CANONICAL-CUTOVER         PLANNED
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  PLANNED
+NAV-CONSUMER-MIGRATION-B                PLANNED
 ```
 
 ## Plataforma genérica
@@ -45,7 +47,7 @@ Connectivity es dual-use y no adquiere ownership funcional de sus consumidores.
 
 `web/capabilities/storage/topology` define contratos provider-neutral para resource topology.
 
-Users declara un único recurso durable confirmado:
+Users declara un único recurso durable runtime confirmado:
 
 ```text
 logical_id              users.runtime
@@ -72,7 +74,7 @@ El writer administrativo Managed permanece separado del runtime reader/observer 
 
 Managed removal conserva el documento como Resolved, disabled y `managed_state=retired`; re-add restaura `managed_state=present`.
 
-## Source / Projection
+## Source / Projection exact-release
 
 Source Core, Local Source, Blob Source y Projection exact-release están implementados y validados.
 
@@ -88,82 +90,93 @@ Contratos congelados:
 
 Users dispone de Source canónico y Projection canónica exact-release.
 
-`ProjectionRecord[UsersConfigurationCatalog]` continúa siendo el payload canónico vigente hasta un cutover explícito posterior.
+Después de UCS-1 una nueva exact Source release de Users Configuration contiene dos resources contractualmente separados:
+
+```text
+users/configuration.json.gz
+profiles/configuration.json.gz
+```
+
+La release sigue siendo única y atómica desde la perspectiva de Source; no se creó un Source independiente de Profiles ni un segundo coordinator.
+
+Escritura nueva:
+- Users source document schema `2`;
+- Profiles source resource schema `1`;
+- `users/configuration.json.gz` contiene `UsersConfiguration` + `published_by`;
+- `profiles/configuration.json.gz` contiene `ProfilesConfiguration`;
+- Guest durable fields no forman parte del nuevo contrato canónico.
+
+Lectura histórica:
+- Source schema Users `1` continúa soportado;
+- se normaliza `UsersConfigurationCatalog` histórico hacia los contratos separados;
+- Administrator se materializa como `ProfileDefinition(key="administrator", label="Administrador", ...)`;
+- campos Guest históricos no crean Profile funcional en la normalización.
+
+Projection canónica vigente:
+
+```text
+ProjectionRecord[UsersProfilesConfiguration]
+```
+
+`UsersProfilesConfiguration` compone:
+- `UsersConfiguration`;
+- `ProfilesConfiguration`.
+
+El Cosmos canonical Projection store escribe schema `2`, puede leer schema `1` y normaliza el payload histórico antes de aplicar las invariantes de exact target e idempotencia.
 
 El provenance legacy dentro de `users.runtime` todavía usa `projection_source_revision`; su migración exact-release sigue PLANNED.
 
-## Manager
+## Profiles Domain
 
-`MANAGER-ROOT-CANONICAL-CUTOVER` está CLOSED / VERIFIED / CURRENT.
+`ProfilesConfiguration` vive en Profiles y conserva exclusivamente Profiles funcionales explícitos.
 
-La acción root Project:
-- usa `ProjectionTarget`;
-- selecciona current server-side;
-- transporta el target exacto;
-- no relee Source current durante `project(target)`;
-- no obtiene la identidad ejecutable desde browser state.
-
-Los contratos administrativos de publicación/verificación/history y el WORKSPACE IndexedDB continúan separados y pendientes.
-
-## Profiles Domain Extraction
-
-Implementado en:
-
-```text
-web/capabilities/profiles/core
-```
-
-Package:
-
-```text
-atlanticus-web-profiles==0.1.0
-```
-
-Estado:
-
-```text
-PROFILES-DOMAIN-EXTRACTION  CLOSED / VERIFIED / CURRENT
-```
-
-Ownership:
-- `ProfileDefinition`, `ProfileCatalog`, normalizadores y `ProfilesDefinitionError` pertenecen a Profiles;
+Ownership CURRENT:
 - Profiles no depende de Users;
-- Users depende one-way de Profiles;
-- `atlanticus.web.users.profiles` no existe como namespace Python productivo;
-- no existe shim/re-export del namespace anterior.
+- Users puede depender de Profiles;
+- `ProfilesConfiguration` no introduce Source/Projection propia de Profiles;
+- no existe `profiles.runtime` por inferencia.
 
-## Profiles Baseline Semantics
-
-Estado:
-
-```text
-PROFILES-BASELINE-SEMANTICS  CLOSED / VERIFIED / CURRENT
-```
-
-Subincrementos:
-
-```text
-PB-1 PROFILES-SEMANTIC-CORE                 CLOSED / VERIFIED / INTEGRATED
-PB-2 DIRECT-CONSUMER-RECONCILIATION         CLOSED / VERIFIED / INTEGRATED
-PB-3 ROOT-ACCESS-CONTRACT                    CLOSED / VERIFIED / INTEGRATED
-PB-4 USERS-CONFIG-RECONCILIATION             ABSORBED BY PB-2 / CLOSED
-PB-5 USERS-ADMIN-SEMANTIC-CLEANUP            ABSORBED BY PB-2 / CLOSED
-PB-6 PROFILE-SERVICE-COMPOSITION-CLEANUP     CLOSED / VERIFIED / INTEGRATED
-```
-
-### ProfileCatalog
-
-`ProfileCatalog` es ahora semánticamente puro:
+`ProfileCatalog` permanece semánticamente puro:
 - catálogo vacío significa vacío;
 - sólo contiene `ProfileDefinition` explícitos;
 - no fabrica Local, Administrator ni Guest;
-- no posee defaults especiales;
-- no posee `assignable()`;
-- `administrator`, `guest`, `local` y `root` son strings ordinarios para Profiles core;
 - duplicate normalized keys fallan;
 - `require()` normaliza la key.
 
-### Pending / Guest
+## Users canonical configuration
+
+`UsersConfiguration` posee exclusivamente Managed Users y valida:
+- `user_id` único;
+- email no nulo único;
+- identidad `(issuer, subject_id)` única.
+
+`UsersProfilesConfiguration` posee la validación cross-contract:
+- exige Profile `administrator`;
+- prohíbe Profiles funcionales `guest` y `local`;
+- cada Managed User, enabled o disabled, debe referenciar un Profile existente en el mismo payload mediante `profile_key`.
+
+La regla anterior cierra la ambigüedad de orphan references en el contrato canónico. La UX/política administrativa para reasignar o impedir borrado sigue perteneciendo al siguiente hito administrativo.
+
+## Legacy administrative configuration
+
+El aggregate histórico `UsersConfigurationCatalog` y los servicios/bundle/callbacks administrativos existentes no fueron migrados por UCS-1.
+
+Su shape histórico puede seguir conteniendo:
+
+```text
+administrator_background_color
+administrator_text_color
+guest_background_color
+guest_text_color
+profiles
+users
+```
+
+Ese shape ya no es el contrato de escritura Source/Projection canónico nuevo.
+
+La compatibilidad v1 es de lectura durable, no un shim runtime ni un nuevo contrato de authoring.
+
+## Pending / Guest
 
 Pending pertenece a Users, no a Profiles.
 
@@ -176,54 +189,19 @@ Para `pending=True`:
 - no se aceptan overrides de avatar;
 - colores estáticos actuales: fondo `#FF5722`, texto `#FFFFFF`.
 
-`PendingUserRecord.to_effective_user()` no consulta Profiles.
+Guest no es un Profile runtime ni un Profile funcional configurable en el nuevo contrato canónico.
 
-Un Resolved User requiere Profile funcional y no puede usar `profile_key == "guest"`.
-
-Guest deja de ser `ProfileDefinition` runtime.
-
-### Administrator y Profiles funcionales
+## Administrator
 
 Administrator es un Profile funcional normal.
 
-`UsersConfigurationCatalog.profile_catalog()` materializa:
-- Administrator explícito;
-- perfiles funcionales configurados.
+En el contrato canónico nuevo aparece como `ProfileDefinition` explícito dentro de `ProfilesConfiguration`.
 
-No materializa Guest ni Local.
+`UsersProfilesConfiguration` exige su presencia.
 
-Antes de una primera proyección, `FileUsersProjectionProfileCatalog.all() == ()`.
+El aggregate legacy puede continuar sintetizándolo desde `administrator_*` mientras ese camino administrativo siga vigente.
 
-Después de proyectar, expone únicamente Administrator + Profiles funcionales proyectados.
-
-Managed Users referencian Profiles funcionales mediante `profile_key`.
-
-### Durable Users Configuration
-
-El shape durable vigente se preservó deliberadamente:
-
-```text
-administrator_background_color
-administrator_text_color
-guest_background_color
-guest_text_color
-profiles
-users
-```
-
-Los campos Guest continúan round-trip por compatibilidad del contrato durable actual, pero no crean un Guest Profile runtime.
-
-La separación durable Users/Profiles no fue ejecutada en este hito.
-
-### Local / John / Jane
-
-Local, John y Jane quedan fuera de Profiles semánticos.
-
-No deben reintroducirse como `ProfileDefinition` de sistema.
-
-Su contrato runtime/ownership final no fue definido por este hito y permanece OPEN.
-
-### Root bootstrap
+## Root bootstrap
 
 Root pertenece a Identity/bootstrap, no a Profiles ni al flujo normal Managed Users.
 
@@ -244,24 +222,13 @@ AND identity.subject_id == policy.subject_id
 → user_id = None
 ```
 
-El match es exacto después del `strip()` normal de identidad; no se añadió `casefold()`.
-
 `provider_key` no participa del match Root.
-
-Si la policy está disabled o no coincide, el resolver delega al fallback normal.
-
-Invariantes:
-- `bootstrap_root=True` exige `READY`;
-- `bootstrap_root=True` exige `user_id is None`;
-- Root no se materializa como User ni Profile.
-
-La sesión usa `_atlanticus_access_snapshot_v2`; snapshots previos no se adaptan.
 
 La fuente física de `BootstrapRootPolicy` y el mapping exacto Entra permanecen UNVERIFIED / OPEN.
 
-### Service composition
+## Service composition
 
-Users ya no publica Profiles como servicio propio.
+Users no publica Profiles como servicio propio.
 
 Contrato CURRENT:
 
@@ -270,40 +237,32 @@ create_users_module(runtime)
 → registra únicamente USERS_RUNTIME_SERVICE_KEY
 ```
 
-`PROFILE_CATALOG_SERVICE_KEY = "atlanticus.web.users.profiles"` quedó eliminado.
+`PROFILE_CATALOG_SERVICE_KEY = "atlanticus.web.users.profiles"` permanece eliminado.
 
 Esto no elimina la dependencia semántica legítima de `UsersAccessResolver` sobre `ProfileCatalog`.
 
-## Navigation
+## Local / John / Jane
 
-Navigation canonical Source, Projection Local/Cosmos y runtime canonical consumer están CLOSED / VERIFIED / CURRENT.
+Local, John y Jane quedan fuera de Profiles semánticos.
 
-La migración administrativa permanece PLANNED.
+No deben reintroducirse como `ProfileDefinition` de sistema.
 
-Legacy deletion permanece BLOCKED hasta validar consumidores migrados.
+Su contrato runtime/ownership final permanece OPEN.
 
-## Alarm Engine
+## Qualification UCS-1
 
-La qualification R3.5 permanece CLOSED PASS/GREEN.
-
-Los contratos e invariantes específicos de Alarm siguen en `04_ALARM_ENGINE/`.
-
-Este cierre de Profiles no reabre Alarm.
-
-## Python / Trixie
-
-Dirección decidida:
-- Python 3.14.7;
-- `python:3.14.7-slim-trixie`;
-- `uv`, no pip como gestor normal.
-
-La migración global 3.14.2 → 3.14.7 sigue fuera de este hito.
-
-Estado:
+Qualification ejecutada sobre el workspace real e integrada en `atlanticus:main`:
 
 ```text
-DECIDED / NOT YET IMPLEMENTED GLOBALLY
+focused UCS-1 tests       31 passed
+Cosmos store hotfix test   9 passed
+full Web suite            552 passed, 7 skipped
+ruff check .              GREEN
+compile productive/mirror GREEN
+git diff --check          GREEN
 ```
+
+No se afirma CI remoto adicional.
 
 ## Frontera Users / Profiles completa
 
@@ -313,23 +272,32 @@ Estado:
 USERS-PROFILES-DOMAIN-SEPARATION  IN PROGRESS
 ```
 
-Aunque la baseline semántica está cerrada, permanecen fuera de este cierre:
-- separación contractual/durable de Users y Profiles;
-- eventual Source/Projection propia de Profiles si se justifica;
-- política frente a Profile eliminado/no proyectado;
+Cerrado por UCS-1:
+- ownership durable contractual Users vs Profiles;
+- representación canónica Administrator como Profile explícito;
+- destino canónico de Guest fields: fuera del nuevo contrato;
+- cross-contract orphan validation;
+- Source único con dos resources;
+- Projection payload compuesto separado;
+- read-v1/write-v2 compatibility;
+- Cosmos Projection read-v1/write-v2.
+
+Permanece fuera:
+- composición administrativa sobre contratos separados;
 - runtime canonical cutover;
 - provenance exact-release dentro de `users.runtime`;
 - migración administrativa Users;
 - eliminación legacy;
+- resource topology físico del canonical Projection store;
 - configuración física Root;
-- contrato final de Local/John/Jane.
+- contrato final Local/John/Jane.
 
 ## Siguiente frontera recomendada
 
 Un único foco:
 
 ```text
-USERS-CONTRACT-SEPARATION  PLANNED / NEXT RECOMMENDED
+USERS-PROFILES-ADMIN-COMPOSITION  PLANNED / NEXT RECOMMENDED
 ```
 
-Debe definir contratos antes de consumidores y preservar los invariantes Source/Projection ya congelados.
+Debe migrar la composición administrativa para authoring conjunto sin recombinar ownership durable y sin tocar todavía runtime provenance.

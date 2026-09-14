@@ -8,7 +8,7 @@ Qualification y tests son evidencia de propiedades.
 
 No reinterpretar un FAIL histórico como fallo vigente sin revisar su adjudicación.
 
-## Checkpoints principales previos preservados
+## Checkpoints principales preservados
 
 | Hito | Estado | Evidencia resumida |
 |---|---|---|
@@ -18,14 +18,16 @@ No reinterpretar un FAIL histórico como fallo vigente sin revisar su adjudicaci
 | USERS-RUNTIME-PROJECTION-BOUNDARY | CLOSED / VERIFIED | focal + Web GREEN |
 | USERS-CANONICAL-SOURCE-1 | CLOSED / VERIFIED | Source Users + Web GREEN |
 | USERS-CANONICAL-PROJECTION-2 | CLOSED / VERIFIED | exact-release + Cosmos Projection GREEN |
-| MANAGER-ROOT-CANONICAL-CUTOVER | CLOSED / VERIFIED | Manager 76 passed + Web GREEN |
+| MANAGER-ROOT-CANONICAL-CUTOVER | CLOSED / VERIFIED | Manager + Web GREEN |
 | PROFILES-DOMAIN-EXTRACTION | CLOSED / VERIFIED | Profiles + Users + Web GREEN |
+| PROFILES-BASELINE-SEMANTICS | CLOSED / VERIFIED | PB-1…PB-6 + Web GREEN |
+| USERS-CONTRACT-SEPARATION / UCS-1 | CLOSED / VERIFIED | 31 focused + full Web + Ruff + compile GREEN |
 
-El detalle histórico de esos checkpoints permanece en canonical especializado y commits previos.
+El detalle histórico de checkpoints anteriores permanece en canonical especializado y commits previos.
 
 ## Profiles Baseline Semantics
 
-Checkpoint final:
+Checkpoint final previo a UCS-1:
 
 ```text
 moragaga/atlanticus@3ca92d5579e499dd4ab6413fa6d91c9d296b13c2
@@ -37,138 +39,163 @@ Estado:
 PROFILES-BASELINE-SEMANTICS  CLOSED / VERIFIED / CURRENT
 ```
 
-### PB-1 — Profiles semantic core
-
-Propiedades demostradas:
-- `ProfileCatalog()` es realmente vacío;
+Propiedades finales preservadas:
+- `ProfileCatalog()` es vacío;
 - sólo contiene `ProfileDefinition` explícitos;
-- no existen defaults especiales Local/Admin/Guest;
-- no existe `assignable()`;
-- duplicate normalized keys fallan;
-- `require()` normaliza;
-- Profiles core conserva ownership de modelos/normalizadores/error.
+- no fabrica Local/Admin/Guest;
+- Pending pertenece a Users y usa `profile=None`;
+- Guest no es Profile runtime;
+- Administrator es Profile funcional;
+- Root pertenece Identity/bootstrap;
+- Users WebModule registra únicamente Users runtime.
 
-Qualification:
-- Profiles tests GREEN;
-- Ruff GREEN;
-- compile GREEN.
+## UCS-1 — Canonical Contract Split
 
-El primer full Web posterior a PB-1 encontró consumidores directos rotos; por eso PB-1 no se consideró integrable aisladamente hasta PB-2.
-
-### PB-2 — Direct consumer reconciliation
-
-Propiedades demostradas:
-- Pending materializa `EffectiveUser(profile=None)`;
-- Pending funciona con `ProfileCatalog()` vacío;
-- Pending usa visual fijo `#FF5722/#FFFFFF`;
-- Pending rechaza profile, disabled, local y color overrides;
-- Resolved requiere Profile y rechaza key Guest;
-- Users resolver no consulta Profiles para Pending;
-- Users session snapshot soporta `profile=None` para Pending;
-- Users Configuration runtime catalog contiene Administrator + Profiles funcionales;
-- Guest durable fields continúan round-trip sin crear Profile runtime;
-- Users Configuration Web ya no muestra Local/Guest como Profiles;
-- File projection profile catalog está vacío antes de Project;
-- después de Project expone únicamente Profiles funcionales;
-- API legacy `assignable/custom_profiles/special color properties` quedó eliminada del adapter.
-
-Qualification ejecutada en workspace real:
-- residual tests: 5 passed;
-- Profiles + Users core + Users Configuration: GREEN;
-- Ruff: GREEN;
-- production/commented compile: GREEN;
-- full Web suite: GREEN, 7 skips, 0 failures/errors.
-
-Checkpoint integrado posterior a PB-2:
+Checkpoint integrado:
 
 ```text
-moragaga/atlanticus@1f60a1b8cb48d941877c30235332be711f7774c1
+moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3
 ```
 
-### PB-3 — Root access contract
-
-Propiedades demostradas:
-- `BootstrapRootPolicy` usa `issuer + subject_id + enabled`;
-- match exacto;
-- Root match no ejecuta fallback;
-- no-match/disabled delega al fallback;
-- `bootstrap_root=True` sólo admite READY;
-- Root no admite `user_id`;
-- Access snapshot persiste el flag;
-- session key v2 invalida limpiamente snapshot anterior.
-
-Qualification ejecutada en workspace real:
-- Identity core tests: 37 passed;
-- Ruff: GREEN;
-- production/commented compile: GREEN;
-- full Web suite: GREEN, 7 skips, 0 failures/errors.
-
-Checkpoint:
-
-```text
-moragaga/atlanticus@9d69d955191cdf8320f43a34398b38ffbea8fcc4
-```
-
-### PB-6 — Profile service composition cleanup
-
-Propiedades demostradas:
-- `create_users_module(runtime)` registra sólo Users runtime;
-- Users WebModule no recibe ProfileCatalog;
-- `PROFILE_CATALOG_SERVICE_KEY` fue eliminado;
-- test focal congela únicamente ownership Users;
-- mirror pedagógico acompaña productivo.
-
-Qualification ejecutada en workspace real:
-- Users core: 37 passed;
-- Ruff: GREEN;
-- production/commented compile: GREEN;
-- full Web suite: GREEN, 7 skips, 0 failures/errors.
-
-Checkpoint final:
+Parent:
 
 ```text
 moragaga/atlanticus@3ca92d5579e499dd4ab6413fa6d91c9d296b13c2
 ```
 
-## Propiedades finales demostradas
+Estado:
 
 ```text
-Profiles core
-→ no special identities
-
-Pending
-→ Users
-→ profile=None
-
-Administrator/custom
-→ explicit functional Profiles
-
-Root
-→ Identity/bootstrap
-→ bootstrap_root=True
-→ no user_id
-
-Users WebModule
-→ owns Users runtime only
+USERS-CONTRACT-SEPARATION        CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT   CLOSED / VERIFIED / CURRENT
 ```
 
-## No demostrado por este hito
+### Propiedades demostradas — Profiles durable
 
+- existe `ProfilesConfiguration`;
+- contiene sólo Profiles explícitos;
+- round-trip durable conserva `ProfileDefinition`;
+- duplicate normalized profile keys fallan mediante la semántica existente de Profiles;
+- `ProfilesConfiguration.catalog()` no introduce defaults implícitos.
+
+### Propiedades demostradas — Users durable
+
+- existe `UsersConfiguration`;
+- contiene Managed Users;
+- ids duplicados fallan;
+- emails no nulos duplicados fallan;
+- identidades `(issuer, subject_id)` duplicadas fallan.
+
+### Propiedades demostradas — composición Users/Profiles
+
+- existe `UsersProfilesConfiguration`;
+- exige Profile `administrator`;
+- rechaza `guest` y `local` como Profiles funcionales;
+- todo Managed User debe resolver `profile_key`;
+- la validación aplica también a Users disabled;
+- Administrator se representa como Profile explícito.
+
+### Propiedades demostradas — Source
+
+Escritura nueva:
+
+```text
+users/configuration.json.gz
+profiles/configuration.json.gz
+```
+
+- ambos resources pertenecen a la misma exact Source release;
+- Users resource escribe schema `2`;
+- Profiles resource escribe schema `1`;
+- `published_by` se preserva;
+- gzip/JSON de tests es determinista;
+- nueva escritura no incluye `administrator_*` ni `guest_*` en Users configuration;
+- misma configuración puede publicarse como otra release distinta sin colapsar release identity.
+
+Lectura histórica:
+- Users source schema `1` continúa legible;
+- aggregate legacy se normaliza;
+- Administrator colors históricos crean Administrator explícito;
+- Guest histórico no crea Profile funcional.
+
+### Propiedades demostradas — Projection
+
+- `UsersProjectionBuilder` produce `UsersProfilesConfiguration`;
+- actor Source no entra al payload de Projection;
+- `project(target)` usa exactamente la release seleccionada;
+- `project(target)` no relee current;
+- same content en releases distintas sigue siendo target distinto.
+
+### Propiedades demostradas — Cosmos Projection
+
+- write schema actual = `2`;
+- read schema `1` normaliza hacia `UsersProfilesConfiguration`;
+- misma exact release + mismo payload es idempotente;
+- misma exact release + payload diferente falla por invariantes;
+- nueva release reemplaza con CAS/ETag;
+- concurrent same-target winner es éxito idempotente;
+- concurrent different target produce conflict;
+- se puede activar explícitamente una release exacta anterior.
+
+### Qualification ejecutada en workspace real
+
+Focal UCS-1:
+
+```text
+31 passed
+```
+
+Hotfix de estilo del store test:
+
+```text
+9 passed
+```
+
+Suite Web completa:
+
+```text
+552 passed, 7 skipped
+0 failures
+0 errors
+```
+
+Calidad:
+
+```text
+uv run --frozen ruff check .
+→ All checks passed!
+
+productive/commented compile
+→ GREEN
+
+git diff --check
+→ GREEN
+```
+
+El hotfix final cambió sólo formato del test `users/projection-cosmos/tests/test_store.py`; no cambió comportamiento.
+
+## No demostrado / no cerrado por UCS-1
+
+- composición administrativa Users/Profiles usando contratos separados;
+- runtime canonical cutover desde la Projection nueva;
+- provenance exact-release dentro de `users.runtime`;
+- migración administrativa Users completa;
+- eliminación de legacy Users;
+- resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
 - fuente física de `BootstrapRootPolicy`;
 - mapping exacto de claims Entra;
 - Local/John/Jane runtime contract final;
-- separación durable Users/Profiles;
-- Profiles Source/Projection propia;
-- profile deletion/orphan prevention final;
-- provenance exact-release de `users.runtime`;
-- Users administrative canonical cutover;
-- physical resource topology del canonical Users Projection store;
+- Profiles Source/Projection independiente;
 - migración global Python 3.14.7.
+
+Sobre Profiles Source/Projection independiente: UCS-1 demuestra que no fue necesario para separar ownership actual; no se considera requisito pendiente salvo que aparezca una necesidad nueva.
 
 ## Git / CI
 
-La qualification reportada para PB-1…PB-6 proviene del workspace real del Project.
+El checkpoint `05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3` está verificado como tip de `moragaga/atlanticus:main` durante este cierre.
 
-No se afirma un CI remoto adicional salvo evidencia explícita.
+La qualification reportada proviene del workspace real del Project.
+
+No se afirma CI remoto adicional salvo evidencia explícita.
 
 Git continúa READ ONLY para este cierre documental.

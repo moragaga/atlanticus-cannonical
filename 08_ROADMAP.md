@@ -31,63 +31,74 @@ Repetir el patrón estabilizado.
 ## Web Platform — checkpoint actual
 
 ```text
-WEB-STORAGE-TOPOLOGY                 CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY               CLOSED / VERIFIED / CURRENT
-STORAGE-PREFLIGHT-COSMOS-BRIDGE      CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER         CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY    CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1             CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2         CLOSED / VERIFIED / CURRENT
-MANAGER-ROOT-CANONICAL-CUTOVER       CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION           CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS          CLOSED / VERIFIED / CURRENT
+WEB-STORAGE-TOPOLOGY                    CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY                  CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE         CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER            CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY       CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1                CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2            CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER          CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION              CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS             CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION               CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT          CLOSED / VERIFIED / CURRENT
 ```
 
-Checkpoint final del cierre Profiles:
+Checkpoint actual:
 
 ```text
-moragaga/atlanticus@3ca92d5579e499dd4ab6413fa6d91c9d296b13c2
+moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3
 ```
 
-## Cierre Profiles Baseline
+## Cierre UCS-1
 
 Queda congelado:
-- Profiles core explícito y sin special identities;
-- Guest/Pending fuera de Profiles;
-- Administrator como Profile funcional;
-- Root en Identity/bootstrap;
-- Local/John/Jane fuera de Profiles;
-- Users WebModule sin ownership de ProfileCatalog.
+- `ProfilesConfiguration` Profiles-owned;
+- `UsersConfiguration` Users-owned;
+- `UsersProfilesConfiguration` como composición cross-contract;
+- Administrator explícito y obligatorio en el payload canónico;
+- `guest`/`local` fuera de Profiles funcionales;
+- todos los Users, incluso disabled, deben resolver `profile_key`;
+- una exact Source release con dos resources Users/Profiles;
+- read Users Source v1 / write v2;
+- canonical Projection payload `UsersProfilesConfiguration`;
+- Cosmos Projection read v1 / write v2;
+- exact-release invariants preservadas;
+- no se creó segundo Source/coordinator ni `profiles.runtime`.
 
-PB-4 y PB-5 quedaron absorbidos por PB-2.
-
-PB-6 eliminó el service key `atlanticus.web.users.profiles`.
+Permanece legacy:
+- aggregate `UsersConfigurationCatalog`;
+- bundle/services/callbacks administrativos que aún no migraron;
+- runtime Managed writer;
+- provenance `projection_source_revision` en `users.runtime`.
 
 ## Siguiente foco aislado recomendado
 
 ```text
-USERS-CONTRACT-SEPARATION  PLANNED / NEXT
+USERS-PROFILES-ADMIN-COMPOSITION  PLANNED / NEXT
 ```
 
-Objetivo del próximo hito:
-- separar ownership contractual/durable de Users y Profiles;
-- definir contratos antes de consumidores;
-- preservar Source/Projection exact-release vigente;
-- no introducir un segundo coordinator;
-- no introducir shims;
-- no cambiar todavía runtime provenance ni migración administrativa salvo que compile contractualmente lo exija.
+Objetivo:
+- adaptar la experiencia administrativa para authoring conjunto de Users y Profiles;
+- consumir/producir los contratos separados sin volver a crear un aggregate de ownership mixto;
+- definir cómo se editan Administrator y Profiles funcionales en la nueva forma;
+- preservar la regla de no orphan references;
+- mantener una sola publicación exact-release;
+- no tocar runtime canonical cutover ni provenance salvo bloqueo contractual real.
 
 Debe auditar específicamente:
-- `UsersConfigurationCatalog`;
-- campos durable Administrator/Guest;
-- payload canónico `ProjectionRecord[UsersConfigurationCatalog]`;
-- consumers que requieren Profiles authoring/runtime;
-- frontera de validación `user.profile_key`.
+- callbacks/layout/store administrativo de Users Configuration;
+- `UsersAdministrationService`;
+- `UsersConfigurationBundle` y contracts legacy;
+- `FileUsersProjectionProfileCatalog`;
+- representación de drafts/admin payload;
+- delete/reassign de Profiles referenciados;
+- publicación hacia `UsersSourceService.publish_configuration(...)`.
 
 ## Después, como incrementos independientes
 
 ```text
-USERS-PROFILES-ADMIN-COMPOSITION          PLANNED
 USERS-RUNTIME-CANONICAL-CUTOVER           PLANNED
 USERS-RUNTIME-EXACT-RELEASE-PROVENANCE    PLANNED
 USERS-ADMIN-CANONICAL-MIGRATION           PLANNED
@@ -95,7 +106,23 @@ NAV-CONSUMER-MIGRATION-B                  PLANNED
 DOMAIN-LEGACY-DELETION                     BLOCKED
 ```
 
-El orden exacto después de `USERS-CONTRACT-SEPARATION` debe recalcularse sobre `main`.
+El orden exacto después de `USERS-PROFILES-ADMIN-COMPOSITION` debe recalcularse sobre `main`.
+
+## Runtime canonical cutover
+
+Permanece PLANNED.
+
+Debe materializar `users.runtime` desde el contrato/projection canónico separado.
+
+No mezclarlo con la composición administrativa salvo necesidad contractual inevitable.
+
+## Runtime exact-release provenance
+
+Permanece PLANNED.
+
+No introducir shim `SourceReleaseId <-> str`.
+
+El runtime actual conserva provenance legacy hasta el cutover explícito.
 
 ## Root physical configuration
 
@@ -103,13 +130,11 @@ El orden exacto después de `USERS-CONTRACT-SEPARATION` debe recalcularse sobre 
 ROOT-PHYSICAL-CONFIGURATION  PLANNED / UNVERIFIED
 ```
 
-No bloquear `USERS-CONTRACT-SEPARATION` con:
+No bloquear el foco Users/Profiles con:
 - env var names;
 - Key Vault schema;
 - Entra claim mapping;
 - deployment wiring.
-
-Esas decisiones pertenecen a un incremento separado de composición/configuración.
 
 ## Local identities
 
@@ -118,14 +143,6 @@ LOCAL-JOHN-JANE-RUNTIME-CONTRACT  PLANNED / UNVERIFIED
 ```
 
 Sólo está congelado que no son Profiles funcionales.
-
-## Runtime exact-release provenance
-
-Permanece PLANNED.
-
-No es NEXT mientras `UsersConfigurationCatalog` siga combinando ownership que debe separarse.
-
-No introducir shim `SourceReleaseId <-> str`.
 
 ## Administrative migrations
 
@@ -137,13 +154,13 @@ Legacy deletion permanece BLOCKED hasta demostrar que no quedan consumidores pro
 
 IndexedDB + `dcc.Store(memory)` permanece PLANNED.
 
-No mezclarlo con Users/Profiles contract separation.
+No mezclarlo con Users/Profiles admin composition.
 
 ## Python/Trixie
 
 Python 3.14.7 + Trixie permanece decidido y pendiente global.
 
-No mezclarlo con `USERS-CONTRACT-SEPARATION`.
+No mezclarlo con el siguiente foco.
 
 ## Resource readiness
 
