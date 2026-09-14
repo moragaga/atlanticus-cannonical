@@ -1,6 +1,6 @@
 # Source Storage — Open Contracts
 
-Estado: **IN PROGRESS — POST-PROJECTION-HANDOFF**
+Estado: **IN PROGRESS — POST-MANAGER-ROOT-CUTOVER**
 
 ## Cerrado en SOURCE-1A.1
 
@@ -132,18 +132,65 @@ queda validado para `CosmosUsersConfigurationProjectionStore`:
 
 Este cierre es domain/provider-specific y no cierra los contratos equivalentes para otros dominios/providers.
 
-## Abierto después de Projection Handoff
+## Cerrado en Manager root Projection
 
-### Manager
+En:
+
+```text
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+```
+
+quedan congelados para el root productivo de Project:
+
+1. `ConfigurationLifecycleWorkflow.get_current_projection_target() -> ProjectionTarget | None`.
+2. `ConfigurationLifecycleWorkflow.project(target: ProjectionTarget)`.
+3. `ProjectionExecutionResult.target: ProjectionTarget`.
+4. `ManagerProjectionCoordinator.project(...)` no transforma el target ni relee current.
+5. La selección current del callback ocurre server-side inmediatamente antes de ejecutar.
+6. Browser state no define la identidad ejecutable.
+7. Project signal expone identidad exact-release.
+8. El botón Project depende de existencia de target exacto.
+9. Un target histórico explícito se transporta sin ser sustituido por current.
+10. No se introduce shim `SourceReleaseId <-> str` ni segundo coordinator.
+
+La formulación previa de “Manager productive coordinator cutover” queda refinada: los contratos administrativos de publicación, verificación y history que todavía usan revisiones textuales no fueron parte de este cierre.
+
+## Abierto después del Manager root cutover
+
+### Siguiente frontera recomendada — Users runtime exact-release provenance
+
+Estado: **PLANNED / OPEN**.
 
 Pendiente:
-- cutover productivo BASE/SOURCE/WORKSPACE/PROJECTION;
-- compare;
-- conflict workflow;
-- restore orchestration;
-- migración de consumers administrativos Users/Navigation.
+- reemplazar `projection_source_revision` como provenance canónico del Managed runtime;
+- definir qué campos exact-release persiste `users.runtime` y su invariante de compatibilidad;
+- conservar `projected_by` / `projected_at_utc` sólo si siguen perteneciendo al contrato;
+- mantener ownership snapshot-level del writer Managed;
+- mantener CAS/ETag y semántica Pending→Resolved/retired/re-add ya cerradas;
+- no equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`;
+- no introducir shim `SourceReleaseId <-> str`.
 
-Compare no se añade automáticamente a `SourceStore`; pertenece a la capa que interprete contenido/dominio salvo que aparezca una necesidad genérica demostrada.
+El bloqueo “esperar Manager root cutover” queda `SUPERSEDED`: esa precondición ya está satisfecha.
+
+### Manager administrativo
+
+Permanece abierto por separado:
+- publicación/verificación/source status legacy basados en revisiones textuales;
+- compare;
+- conflict workflow completo;
+- restore orchestration;
+- browser WORKSPACE/IndexedDB.
+
+No reabrir el root Projection exact-target para resolver estos frentes.
+
+### Consumer migrations
+
+Pendiente:
+- migración administrativa Navigation;
+- migración administrativa Users;
+- auditar composition roots reales antes de fijar nombres de adapters;
+- no asumir que existen `NavigationManagerWorkflowAdapter` o `UsersManagerWorkflowAdapter` en `main`;
+- validar consumidores antes de borrar legacy.
 
 ### Projection providers y orchestration
 
@@ -156,21 +203,17 @@ Pendiente:
 
 Users/Cosmos ya satisface estos contratos para su provider concreto.
 
-### Users runtime legacy
+### Resource topology de canonical Users Projection
 
 Pendiente:
-- migrar provenance Managed desde `projection_source_revision` legacy a release identity canónica;
-- integrar esa migración sólo después del Manager root canonical cutover;
-- no introducir equivalencia `UsersConfigurationBundle.revision <-> SourceReleaseId`;
-- no introducir shim `SourceReleaseId <-> str`;
-- congelar resource topology/provisioning físico del canonical Projection store si el deployment lo requiere.
+- congelar resource topology/provisioning físico del canonical Projection store si el deployment lo requiere;
+- validar composition root productivo cuando corresponda.
 
 ### Migración legacy
 
 Pendiente:
-- migrar consumers administrativos restantes;
 - identificar rutas exactas a reemplazar/eliminar;
-- conservar adapters legacy mientras exista consumer productivo;
+- conservar contracts legacy mientras exista consumer productivo;
 - retirar SharePoint/Power Automate Source sólo dentro del incremento de migración correspondiente; el gate de paridad/recovery ya está satisfecho.
 
 ### Operación

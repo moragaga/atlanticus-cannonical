@@ -49,6 +49,7 @@ COSMOS-USERS-RUNTIME-ADAPTER      CLOSED / VERIFIED / CURRENT
 USERS-RUNTIME-PROJECTION-BOUNDARY CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-SOURCE-1          CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-PROJECTION-2      CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER    CLOSED / VERIFIED / CURRENT
 ```
 
 Las fronteras permanecen separadas:
@@ -58,30 +59,47 @@ Las fronteras permanecen separadas:
 - `CosmosUsersRuntimeProjectionWriter` materializa snapshots Managed en `users.runtime` dentro del camino legacy;
 - `UsersSourceService` conecta Users con Source Core sin reimplementar releases, History ni CAS;
 - `UsersProjectionBuilder` + `SourceProjectionService` conectan una `SourceReleaseRef` exacta con `ProjectionRecord[UsersConfigurationCatalog]`;
-- `CosmosUsersConfigurationProjectionStore` persiste la Projection canónica con create-only + ETag/CAS.
+- `CosmosUsersConfigurationProjectionStore` persiste la Projection canónica con create-only + ETag/CAS;
+- Manager root transporta `ProjectionTarget` exacto en la acción Project sin degradarlo a `source_revision: str`.
 
-`USERS-CANONICAL-PROJECTION-2` quedó cerrado en:
+Checkpoints relevantes:
 
 ```text
+USERS-CANONICAL-PROJECTION-2
 moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+
+MANAGER-ROOT-CANONICAL-CUTOVER
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
 ```
 
-Este cierre no convierte `projection_source_revision` de `users.runtime` en `SourceReleaseId` y no migra el consumer administrativo de Users.
+El cierre de Manager se limita al root productivo de la acción Projection. Publicación/verificación/history administrativa y browser WORKSPACE conservan contratos separados que siguen pendientes de migración cuando corresponda.
 
-Siguiente foco aislado:
+Siguiente foco aislado recomendado:
 
 ```text
-MANAGER-ROOT-CANONICAL-CUTOVER
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  PLANNED
 ```
 
-Debe reemplazar de raíz el contrato productivo `source_revision: str` por BASE/SOURCE/WORKSPACE/PROJECTION canónico, sin introducir shim `SourceReleaseId <-> str` ni un segundo coordinator paralelo.
+Objetivo:
+- reemplazar el provenance Managed basado en `projection_source_revision` por identidad Source exact-release;
+- conservar el ownership snapshot-level y las invariantes de `users.runtime` ya cerradas;
+- no equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`;
+- no introducir shim `SourceReleaseId <-> str`.
 
 No mezclar este foco con:
+- migración administrativa Users;
+- migración administrativa Navigation;
 - migración Python 3.14.7;
 - lifecycle global de resource readiness;
 - Profiles / ADA Access;
 - cleanup general de legacy;
+- browser IndexedDB del Manager;
 - projection orchestration multi-capability.
+
+Después, como incrementos independientes:
+- migración administrativa Users: `PLANNED`;
+- migración administrativa Navigation: `PLANNED`;
+- legacy deletion de cada dominio: `BLOCKED` hasta validar consumidores migrados.
 
 ## Backend productization
 

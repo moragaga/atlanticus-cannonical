@@ -5,11 +5,12 @@ Estado: **CURRENT PLAN**
 ## Checkpoint
 
 ```text
-SOURCE-1A.1  Core + Local            CLOSED / VERIFIED
-SOURCE-1A.2  Blob                    CLOSED / VERIFIED
-Projection   Exact-release Core      CLOSED / VERIFIED
-Manager      BASE/SOURCE/WORKSPACE/
-             PROJECTION              NEXT
+SOURCE-1A.1                       Core + Local                 CLOSED / VERIFIED
+SOURCE-1A.2                       Blob                         CLOSED / VERIFIED
+Projection                        Exact-release Core           CLOSED / VERIFIED
+USERS-CANONICAL-PROJECTION-2      Users/Cosmos provider        CLOSED / VERIFIED
+MANAGER-ROOT-CANONICAL-CUTOVER    Root Projection transport    CLOSED / VERIFIED
+Users runtime exact provenance    Next isolated frontier       PLANNED
 ```
 
 ## Orden y estado
@@ -76,11 +77,30 @@ Manager      BASE/SOURCE/WORKSPACE/
    - regresión Web: 327 passed, 7 skipped.
    - Ruff/format Projection GREEN.
 
-10. **NEXT** — Integrar Manager BASE/SOURCE/WORKSPACE/PROJECTION, history/compare/conflict.
+10. **CLOSED / VERIFIED — USERS-CANONICAL-PROJECTION-2** — Materializar Projection canónica Users/Cosmos con exact-release provenance, create-only + ETag/CAS e idempotencia same-target.
 
-11. **PLANNED** — Migrar dominios/consumidores progresivamente.
+11. **CLOSED / VERIFIED — MANAGER-ROOT-CANONICAL-CUTOVER** — Reemplazar el contrato raíz de la acción Project por `ProjectionTarget` exacto.
+   - `get_current_projection_target()` forma parte del workflow root.
+   - `project(target)` transporta el target exacto.
+   - callback selecciona current en servidor inmediatamente antes de ejecución.
+   - browser no aporta la identidad ejecutable.
+   - signal exact-release.
+   - target histórico explícito preservado.
+   - 76 tests Manager GREEN.
+   - suite Web: 514 passed, 7 skipped.
+   - Ruff/lock/diff check GREEN.
 
-12. **PLANNED** — Retirar bindings Source legacy de SharePoint/Power Automate durante la migración de consumidores. El gate Blob parity/recovery ya está CLOSED / VERIFIED.
+   Este step no representa una migración completa de todos los modelos administrativos basados en `source_revision: str`.
+
+12. **PLANNED — siguiente frontera aislada recomendada** — Migrar provenance Managed de `users.runtime` a identidad exact-release.
+   - no equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`;
+   - no introducir shim release/string;
+   - conservar ownership y CAS ya cerrados del writer Managed;
+   - definir primero el contrato durable exacto antes de consumidores.
+
+13. **PLANNED** — Migrar consumidores administrativos por dominio sobre los contratos canónicos reales de composición.
+
+14. **PLANNED** — Retirar bindings Source legacy de SharePoint/Power Automate y contracts legacy sólo cuando no existan consumidores productivos.
 
 ## Regla de reemplazo
 
@@ -108,7 +128,7 @@ No eliminar un archivo completo si contiene responsabilidades que deben conserva
 
 No empezar por UI de historial.
 
-Manager debe consumir contratos Source y Projection ya estabilizados.
+Manager y consumidores deben usar contratos Source y Projection estabilizados.
 
 ## Regla de chat/checkpoint
 

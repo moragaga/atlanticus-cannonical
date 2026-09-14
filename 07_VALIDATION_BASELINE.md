@@ -1,6 +1,6 @@
 # Atlanticus — Validation Baseline
 
-Estado: **CANDIDATE**
+Estado: **CURRENT**
 
 ## Regla
 
@@ -169,9 +169,7 @@ Propiedades demostradas:
 - publicación usa `ConcurrencyToken` y `basis_release`;
 - lectura de current selecciona una release y luego hidrata esa release exacta;
 - mismo contenido puede republicarse como otra release con identidad distinta;
-- metadata devuelta con `SourceKey` o `SourceReleaseRef` inconsistente falla explícitamente;
-- `atlanticus-web-users-configuration==0.1.8` dependía de `atlanticus-web-source==0.1.0` en ese checkpoint;
-- los contratos legacy administrativos permanecen disponibles porque el consumer Manager productivo aún no ha migrado.
+- metadata devuelta con `SourceKey` o `SourceReleaseRef` inconsistente falla explícitamente.
 
 ## Users Canonical Projection
 
@@ -228,6 +226,50 @@ No demostrado por este hito:
 - migración Manager/Users administrativa;
 - eliminación de contracts legacy.
 
+## Manager Root Canonical Cutover
+
+Checkpoint de implementación:
+
+`moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06`
+
+Estado:
+
+```text
+MANAGER-ROOT-CANONICAL-CUTOVER  CLOSED / VERIFIED / CURRENT
+```
+
+Qualification ejecutada en el workspace Web real antes de integrar el commit:
+- `uv lock --check`: PASS/GREEN;
+- `uv run ruff check capabilities/manager`: PASS/GREEN;
+- `uv run pytest capabilities/manager/tests -q`: 76 passed;
+- `uv run pytest -q`: 514 passed, 7 skipped;
+- `git diff --check`: PASS/GREEN;
+- el diff del hito modificó exactamente 9 archivos del Manager, incluidos mirrors comentados y tests.
+
+Propiedades demostradas:
+- `ConfigurationLifecycleWorkflow.get_current_projection_target()` expone un target canónico exacto;
+- `ConfigurationLifecycleWorkflow.project(...)` recibe `ProjectionTarget` y no una revisión textual;
+- `ProjectionExecutionResult.target` conserva la identidad exacta ejecutada;
+- `ManagerProjectionCoordinator.project(...)` transporta ese target sin convertirlo a string ni volver a seleccionar current;
+- el callback productivo selecciona current server-side inmediatamente antes de ejecutar;
+- browser state no suministra la identidad ejecutable de Project;
+- el signal de Projection contiene `source_key`, `source_release_id`, `source_published_at_utc` y `projection_revision`;
+- el botón Project depende de que exista un target exacto;
+- un target histórico explícito es transportado intacto y no reemplazado por current;
+- no se introdujo shim `SourceReleaseId <-> str` ni un segundo coordinator paralelo.
+
+No demostrado ni cerrado por este hito:
+- migración de los contratos administrativos de publicación/verificación/history que siguen usando revisiones textuales;
+- migración administrativa de Users o Navigation;
+- provenance exact-release dentro de `users.runtime`;
+- IndexedDB para WORKSPACE;
+- eliminación de contracts/adapters legacy de dominio;
+- resource topology del canonical Users Projection store;
+- orchestration multi-capability;
+- CI remoto para el commit: GitHub no expone status checks asociados al checkpoint.
+
+La formulación previa “Manager productive coordinator cutover” queda refinada: este cierre corresponde específicamente al root productivo de la acción Projection.
+
 ## Alarm Engine
 
 La campaña R3.5 llegó a cierre final `PASS/GREEN`.
@@ -261,7 +303,7 @@ Existe evidencia de construcción/prueba con:
 
 pero la migración global del repo no está materializada aún.
 
-Los packages Users afectados por el último hito aún declaran `requires-python ==3.14.2`; esta discrepancia es preexistente y no se resolvió dentro de Source/Projection.
+Los packages Users afectados por los hitos previos aún pueden declarar `requires-python ==3.14.2`; esta discrepancia es preexistente y no se resolvió dentro de Source/Projection ni del Manager root cutover.
 
 ## ADA Web
 

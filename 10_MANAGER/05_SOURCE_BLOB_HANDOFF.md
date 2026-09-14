@@ -1,6 +1,6 @@
 # Manager — Source Blob Handoff
 
-Estado: **SOURCE IMPLEMENTED / CONSUMER MIGRATION IN PROGRESS**
+Estado: **SOURCE IMPLEMENTED / ROOT PROJECTION CUTOVER CLOSED / CONSUMER MIGRATION IN PROGRESS**
 
 Fuente histórica:
 `Atlanticus_ADA_Upgrade_Source_Blob_Trabajo_Pendiente.docx`
@@ -35,6 +35,7 @@ Source Core
 Local Source
 Blob Source
 Projection exact-release Core
+Manager root Projection exact-target transport
 ```
 
 Source Core cubre:
@@ -142,7 +143,7 @@ ProjectionTarget =
 `project(target)`:
 - resuelve la release exacta mediante `read_release`;
 - no consulta Source current durante la operación;
-- persiste provenance con `source_release_id`.
+- persiste provenance con `source_release_id` en los stores canónicos que lo implementan.
 
 Source puede avanzar mientras se proyecta una release anterior.
 La proyección seleccionada sigue siendo válida y puede quedar `OUTDATED` al comparar después.
@@ -152,6 +153,26 @@ Un fallo de Projection:
 - no reemplaza el último active projection exitoso.
 
 Retry conserva el mismo target sin republicar Source.
+
+## Manager root Projection checkpoint
+
+`MANAGER-ROOT-CANONICAL-CUTOVER` quedó `CLOSED / VERIFIED / CURRENT` en:
+
+```text
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+```
+
+Contrato implementado:
+- `ConfigurationLifecycleWorkflow.get_current_projection_target()` expone `ProjectionTarget | None`;
+- `ConfigurationLifecycleWorkflow.project(...)` recibe `ProjectionTarget`;
+- `ProjectionExecutionResult` conserva `target: ProjectionTarget`;
+- `ManagerProjectionCoordinator.project(...)` transporta el target intacto y no relee current;
+- callback Project selecciona current server-side inmediatamente antes de ejecutar;
+- browser state no provee la identidad ejecutable;
+- projection signal expone `source_key`, `source_release_id`, `source_published_at_utc` y `projection_revision`;
+- un target histórico explícito puede ejecutarse sin ser reemplazado por current.
+
+Este cierre no elimina todos los `source_revision: str` del Manager. Publicación/verificación/history/workspace legacy permanecen fuera del hito.
 
 ## Navigation checkpoint
 
@@ -164,14 +185,13 @@ Navigation Configuration ya implementa:
 - ProjectionStore Cosmos;
 - runtime consumiendo ProjectionStore canónico.
 
-Permanece bloqueado:
-- consumer administrativo Manager;
-- eliminación de Source/Projection legacy Navigation.
+Estado posterior al root cutover:
+- consumer administrativo Navigation: **PLANNED**;
+- eliminación de Source/Projection legacy Navigation: **BLOCKED** hasta validar que no quedan consumidores legacy.
 
-Razón:
-el coordinator Manager y `NavigationManagerWorkflowAdapter` productivos todavía usan `source_revision: str`.
+No existe evidencia en `atlanticus:main@5fd2858...` de una clase productiva llamada `NavigationManagerWorkflowAdapter`; canonical no debe asumir ese nombre como implementación existente.
 
-No crear adaptadores string/release temporales para ocultar este bloqueo.
+No crear adaptadores string/release temporales para completar la migración.
 
 ## Users checkpoint
 
@@ -192,32 +212,34 @@ Estado:
 ```text
 USERS-CANONICAL-SOURCE-1      CLOSED / VERIFIED / CURRENT
 USERS-CANONICAL-PROJECTION-2  CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER CLOSED / VERIFIED / CURRENT
 ```
 
-Checkpoint Projection:
+Checkpoint root cutover:
 
 ```text
-moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
 ```
 
-Permanece bloqueado:
-- consumer administrativo Manager de Users;
-- migración de `projection_source_revision` legacy dentro de `users.runtime`;
-- eliminación de Source/Projection legacy Users.
+Continúan abiertos:
+- migración administrativa de Users: **PLANNED**;
+- migración de `projection_source_revision` legacy dentro de `users.runtime`: **PLANNED** y ya no bloqueada por el root Projection cutover;
+- eliminación de Source/Projection legacy Users: **BLOCKED** hasta validar consumidores;
+- resource topology/provisioning físico del canonical Users Projection store: **PLANNED / OPEN**.
 
-Razón:
-el coordinator Manager y `UsersManagerWorkflowAdapter` productivos todavía usan `source_revision: str`.
+No existe evidencia en `atlanticus:main@5fd2858...` de una clase productiva llamada `UsersManagerWorkflowAdapter`; canonical no debe asumir ese nombre como implementación existente.
 
-El cierre de canonical Projection no crea equivalencia entre `UsersConfigurationBundle.revision` y `SourceReleaseId`.
+El cierre canónico de Projection no crea equivalencia entre `UsersConfigurationBundle.revision` y `SourceReleaseId`.
 
 No crear adaptadores string/release temporales ni un segundo coordinator Manager.
 
 ## Pendiente
 
-Fuera del Source/Projection Core ya cerrado:
+Fuera de Source/Projection Core y del root Projection cutover ya cerrados:
 - retention/cleanup policy;
-- Manager root canonical cutover;
+- provenance exact-release de `users.runtime`;
 - migración de consumidores administrativos Navigation y Users;
-- runtime exact-release provenance de Users después del cutover raíz;
+- browser WORKSPACE/IndexedDB del Manager;
 - retiro efectivo de SharePoint/Power Automate donde deje de existir consumidor;
-- eliminación de adapters legacy de dominio sólo después de validar consumidores.
+- eliminación de adapters/contracts legacy de dominio sólo después de validar consumidores;
+- orchestration multi-capability cuando exista requisito real.

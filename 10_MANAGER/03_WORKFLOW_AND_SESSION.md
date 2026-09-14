@@ -1,6 +1,6 @@
 # Manager — Workflow and Session
 
-Estado: **CURRENT CONTRACT / PRODUCT CUTOVER IN PROGRESS**
+Estado: **CURRENT CONTRACT / ROOT PROJECTION CUTOVER CLOSED**
 
 ## Flujo conceptual
 
@@ -34,7 +34,7 @@ PROJECTION
     active projection de una Source release exacta
 ```
 
-`web/capabilities/manager/.../workspace.py` ya implementa los contratos base:
+`web/capabilities/manager/.../workspace.py` implementa los contratos base:
 - `ManagerWorkspace`;
 - `ManagerSourceVerification`;
 - `ManagerPublicationContext`;
@@ -46,13 +46,85 @@ PROJECTION
 Estado:
 
 ```text
-contracts/model          CURRENT
-productive coordinator  BLOCKED / IN PROGRESS
-browser persistence     PLANNED
+contracts/model                         CURRENT
+root Projection action cutover          CLOSED / VERIFIED / CURRENT
+administrative publish/workspace legacy CURRENT
+browser persistence                     PLANNED
 ```
 
-El coordinator productivo todavía usa contratos legacy basados en `source_revision: str`.
-No crear un segundo coordinator paralelo ni un shim de compatibilidad como solución transitoria.
+La formulación anterior “productive coordinator cutover” queda refinada: el hito cerrado reemplaza el contrato raíz de la acción Projection, no todas las revisiones textuales usadas todavía por publicación/verificación/history administrativa.
+
+No crear un segundo coordinator paralelo ni un shim `SourceReleaseId <-> str` para completar consumidores posteriores.
+
+## Root Projection action
+
+Contrato congelado:
+
+```text
+ConfigurationLifecycleWorkflow
+    get_current_projection_target() -> ProjectionTarget | None
+    project(target: ProjectionTarget) -> ProjectionExecutionResult
+
+ProjectionExecutionResult
+    target: ProjectionTarget
+```
+
+`ManagerProjectionCoordinator.project(...)` recibe un `ProjectionTarget` y lo entrega al workflow sin convertirlo a string, normalizarlo ni volver a seleccionar Source current.
+
+La UI productiva de Project:
+1. obtiene el principal y módulo en servidor;
+2. selecciona `get_current_projection_target(...)` en servidor;
+3. ejecuta inmediatamente `project(..., target)`;
+4. no confía en un target/revision serializado desde browser state;
+5. emite provenance observable de la release exacta.
+
+Signal de Projection:
+
+```text
+source_key
+source_release_id
+source_published_at_utc
+projection_revision
+```
+
+No contiene `source_revision` como identidad de ejecución.
+
+El botón Project depende de que exista un target canónico exacto, no de la comparación legacy `active_source_revision != source_revision`.
+
+## Exact target y concurrencia de selección
+
+Selección y ejecución son pasos distintos.
+
+Una vez seleccionado el target:
+
+```text
+project(target)
+```
+
+no vuelve a consultar Source current.
+
+Por tanto es válido:
+- seleccionar V48;
+- que Source avance a V49;
+- ejecutar V48;
+- terminar con éxito;
+- observar después `OUTDATED`.
+
+El coordinator también acepta un target histórico explícito y lo transporta intacto; no lo reemplaza por current.
+
+## Qué permanece legacy
+
+El cierre root Projection no elimina todavía todos los campos textuales administrativos.
+
+Permanecen fuera de este hito, entre otros:
+- `ProjectionStatus.source_revision` y `active_source_revision` como estado administrativo legacy;
+- `SourcePublicationResult.source_revision`;
+- `SourceVerificationResult.source_revision`;
+- `publish_draft(... expected_source_revision: str | None)`;
+- history/load revision textual;
+- workspace/browser persistence aún no migrada a IndexedDB.
+
+Esos contratos no deben reinterpretarse como `SourceReleaseId` ni convertirse mediante shim temporal.
 
 ## Session
 
@@ -93,7 +165,7 @@ IndexedDB:
 
 `localStorage` queda reservado para estado/preferencias UI pequeñas; no es el almacenamiento del WORKSPACE.
 
-La implementación IndexedDB pertenece al cutover posterior de Manager y no a los incrementos Source/Projection de dominio.
+La implementación IndexedDB pertenece a un incremento posterior y no al root Projection cutover.
 
 ## Integridad
 
@@ -140,7 +212,7 @@ No implementar merge automático sin contrato de dominio explícito.
 
 ## Source -> Projection
 
-Manager debe seleccionar un target exacto:
+Manager selecciona un target exacto:
 
 ```text
 ProjectionTarget =
@@ -155,7 +227,11 @@ La ejecución de Projection:
 - puede terminar correctamente y quedar `OUTDATED`;
 - un fallo no revierte Source ni reemplaza el último active projection exitoso.
 
-El coordinator productivo todavía no completa este cutover.
+Este root handoff quedó implementado y validado en:
+
+```text
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+```
 
 ## Multi-module projection bootstrap
 
@@ -172,3 +248,5 @@ Ese coordinador:
 - preserva historial/source authority.
 
 La lógica de orden no pertenece a la UI del Manager.
+
+Estado: **PLANNED**. No fue parte de `MANAGER-ROOT-CANONICAL-CUTOVER`.

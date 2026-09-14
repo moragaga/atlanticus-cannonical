@@ -91,9 +91,19 @@ Estado: **CURRENT**
 | Conflicto concurrente same-target converge; different-target falla explícitamente | FROZEN / IMPLEMENTED + VALIDATED |
 | Users Cosmos Projection no infiere ordering por release ID ni timestamps | FROZEN / IMPLEMENTED + VALIDATED |
 | Users canonical Projection provider recibe `container_name` desde composición | FROZEN / IMPLEMENTED + VALIDATED |
-| Users runtime exact-release provenance permanece separado del canonical Projection | CURRENT DIRECTION / BLOCKED |
-| No introducir shim `SourceReleaseId <-> str` para completar migraciones Manager | FROZEN |
+| Manager root Project contract usa `ProjectionTarget = SourceKey + SourceReleaseRef` | FROZEN / IMPLEMENTED + VALIDATED |
+| Manager workflow expone `get_current_projection_target()` y `project(target: ProjectionTarget)` | FROZEN / IMPLEMENTED + VALIDATED |
+| `ProjectionExecutionResult.target` conserva la identidad Source exacta ejecutada | FROZEN / IMPLEMENTED + VALIDATED |
+| `ManagerProjectionCoordinator.project(...)` transporta el target sin degradarlo a string ni releer current | FROZEN / IMPLEMENTED + VALIDATED |
+| Project callback selecciona current server-side inmediatamente antes de ejecutar | FROZEN / IMPLEMENTED + VALIDATED |
+| Browser state no es autoridad para la identidad ejecutable de Project | FROZEN / IMPLEMENTED + VALIDATED |
+| Project signal expone `source_key + source_release_id + source_published_at_utc + projection_revision` | FROZEN / IMPLEMENTED + VALIDATED |
+| Target histórico explícito en Manager Project no se reemplaza por current | FROZEN / IMPLEMENTED + VALIDATED |
+| Manager root Project cutover no implica migración de publicación/verificación/history administrativa | FROZEN REFINEMENT |
+| Users runtime exact-release provenance permanece separado del canonical Projection | CURRENT DIRECTION / PLANNED |
+| No introducir shim `SourceReleaseId <-> str` para completar migraciones Manager/dominio | FROZEN |
 | No crear un segundo Manager coordinator canónico paralelo | FROZEN |
+| No asumir `UsersManagerWorkflowAdapter` ni `NavigationManagerWorkflowAdapter` como clases existentes sin evidencia en `main` | CURRENT |
 | Manager browser WORKSPACE persistirá en IndexedDB | DECIDED / NOT YET IMPLEMENTED |
 | Manager active workspace en Dash usa `dcc.Store(memory)` | DECIDED / NOT YET IMPLEMENTED |
 | IndexedDB no es Source authority | FROZEN |
@@ -124,7 +134,7 @@ Projection                        Exact-release Core                 CLOSED / VE
 NAV-SOURCE-PROJECTION-1           Source contracts                   CLOSED / VERIFIED
 NAV-SOURCE-PROJECTION-2           Local/Cosmos Projection stores     CLOSED / VERIFIED
 NAV-CONSUMER-MIGRATION-A          Runtime consumer                   CLOSED / VERIFIED
-NAV-CONSUMER-MIGRATION-B          Administrative consumer            BLOCKED
+NAV-CONSUMER-MIGRATION-B          Administrative consumer            PLANNED
 WEB-STORAGE-TOPOLOGY              Resource contracts                 CLOSED / VERIFIED
 USERS-STORAGE-TOPOLOGY            users.runtime                      CLOSED / VERIFIED
 STORAGE-PREFLIGHT-COSMOS-BRIDGE   Cosmos resource preflight          CLOSED / VERIFIED
@@ -132,7 +142,8 @@ COSMOS-USERS-RUNTIME-ADAPTER      Runtime store/reader               CLOSED / VE
 USERS-RUNTIME-PROJECTION-BOUNDARY Managed runtime writer             CLOSED / VERIFIED
 USERS-CANONICAL-SOURCE-1          Canonical Source backend           CLOSED / VERIFIED
 USERS-CANONICAL-PROJECTION-2      Canonical exact-release Projection CLOSED / VERIFIED
-Manager                           Root canonical cutover             BLOCKED / IN PROGRESS
+MANAGER-ROOT-CANONICAL-CUTOVER    Root Project exact-target          CLOSED / VERIFIED
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE Runtime provenance            PLANNED
 ```
 
 Implementación actual relevante:
@@ -184,14 +195,14 @@ Users Runtime Projection:
 - `CosmosUsersRuntimeProjectionWriter` posee materialización Managed provider-specific;
 - removal produce retired tombstone durable, no delete;
 - promotion/update usa CAS/ETag y no blind upsert;
-- `UsersRuntimeStore` y `PendingUsersReader` permanecen sin cambios.
+- `UsersRuntimeStore` y `PendingUsersReader` permanecen sin cambios;
+- provenance todavía usa `projection_source_revision` legacy y queda como siguiente frontera aislada.
 
 Users Canonical Source:
 - `UsersSourceCodec` mapea `UsersConfigurationCatalog + published_by` a `SourceResource`;
 - `UsersSourceService` usa `SourceStore` con release identity, History y CAS canónicos;
 - mismo contenido puede republicarse como otra release;
-- `UsersConfigurationBundle.revision` no se usa como identidad canónica de publicación;
-- contratos legacy siguen presentes mientras Manager continúe con `source_revision: str`.
+- `UsersConfigurationBundle.revision` no se usa como identidad canónica de publicación.
 
 Users Canonical Projection:
 - `UsersProjectionBuilder` decodifica la release exacta y produce `UsersConfigurationCatalog`;
@@ -201,8 +212,7 @@ Users Canonical Projection:
 - create-only + ETag/CAS;
 - same-target retry idempotente;
 - different-target conflict explícito;
-- no ordering inferido;
-- runtime provenance legacy no se modifica en este cierre.
+- no ordering inferido.
 
 Blob reutiliza `connectivity/storage` y conserva ETag como detalle técnico interno.
 El prerequisito técnico `upload_if_match` quedó incorporado y validado en Storage; no hay otra carencia de Connectivity pendiente para Source Blob.
@@ -220,25 +230,27 @@ Navigation:
 - mismo contenido puede republicarse como una release distinta;
 - implementa Projection stores concretos Local/Cosmos;
 - runtime usa el `ProjectionStore` canónico;
-- administración sigue bloqueada por el contrato productivo legacy de Manager.
+- migración administrativa queda `PLANNED` y legacy deletion `BLOCKED` hasta validar consumidores.
 
 Manager:
-- `workspace.py` ya modela BASE/SOURCE/WORKSPACE/PROJECTION con `SourceSnapshot`, `ConcurrencyToken`, `basis_release` y `ProjectionTarget`;
-- coordinator/workflows productivos siguen usando `source_revision: str`;
-- el cutover de raíz no debe introducir adapters temporales ni coordinators paralelos.
+- `workspace.py` modela BASE/SOURCE/WORKSPACE/PROJECTION con `SourceSnapshot`, `ConcurrencyToken`, `basis_release` y `ProjectionTarget`;
+- root Project quedó migrado a `ProjectionTarget` exacto en `5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06`;
+- callback selecciona target server-side y `project(target)` no relee current;
+- publication/verification/history textual permanece como contrato administrativo separado y no debe reinterpretarse como release identity.
 
-No se consideran cerrados por `USERS-CANONICAL-PROJECTION-2`:
+No se consideran cerrados por `MANAGER-ROOT-CANONICAL-CUTOVER`:
 - provisioning/validation real de `users.runtime` dentro del lifecycle Web;
 - resource topology/provisioning físico del canonical Users Projection store;
 - provenance exact-release dentro de `users.runtime`;
 - otros providers Projection concretos por dominio;
 - orchestration multi-capability;
 - derived resolutions;
-- Manager root productive cutover;
 - Navigation administrative consumer migration;
 - Users administrative consumer migration;
 - Navigation legacy deletion;
 - Users legacy Source/Projection deletion;
+- Manager browser WORKSPACE/IndexedDB;
+- Manager publication/verification/history migration;
 - Users/Profiles/Access boundary audit completa.
 
 ## Refinamiento de no-op publish
@@ -259,6 +271,44 @@ no-op por equivalencia funcional
 Dos publicaciones con el mismo `content_hash` siguen siendo releases distintas.
 
 Users Canonical Source confirma esta semántica: un mismo `UsersConfigurationCatalog` puede volver a publicarse y producir otra `SourceReleaseId`.
+
+## Manager root Projection cutover
+
+Contrato congelado:
+
+```text
+ConfigurationLifecycleWorkflow
+    get_current_projection_target() -> ProjectionTarget | None
+    project(target: ProjectionTarget) -> ProjectionExecutionResult
+
+ProjectionExecutionResult
+    target: ProjectionTarget
+```
+
+Invariantes:
+- la selección de current puede ocurrir antes de ejecutar;
+- una vez seleccionado, `project(target)` transporta exactamente ese target;
+- el coordinator no vuelve a consultar current;
+- Project callback selecciona target server-side inmediatamente antes de ejecutar;
+- browser state no determina la identidad ejecutable;
+- Source puede avanzar después de selección sin invalidar el target ya congelado;
+- target histórico explícito no se sustituye por current;
+- el signal observable conserva exact-release identity;
+- no existe shim release/string ni coordinator paralelo.
+
+Estado:
+
+```text
+MANAGER-ROOT-CANONICAL-CUTOVER  CLOSED / VERIFIED / CURRENT
+```
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+```
+
+La formulación anterior “Manager productive coordinator cutover” queda refinada. Los contratos administrativos de publicación/verificación/history que todavía usan revisiones textuales no forman parte de este cierre.
 
 ## Manager browser WORKSPACE
 
@@ -302,9 +352,10 @@ COSMOS-USERS-RUNTIME-ADAPTER
 USERS-RUNTIME-PROJECTION-BOUNDARY
 USERS-CANONICAL-SOURCE-1
 USERS-CANONICAL-PROJECTION-2
+MANAGER-ROOT-CANONICAL-CUTOVER
 ```
 
-Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni del cutover canónico de Manager/runtime.
+Esto no implica cierre de la frontera completa Users / Profiles / ADA Access ni de los cutovers administrativos/runtime restantes.
 
 Contratos congelados adicionales:
 - writer Managed snapshot-level separado de runtime store/reader;
@@ -316,7 +367,7 @@ Contratos congelados adicionales:
 - Users canonical Source sobre Source Core;
 - Users canonical Projection exact-release sobre Projection Core;
 - legacy content revision no equivale a Source release identity;
-- runtime exact-release provenance permanece separado hasta el root cutover.
+- Manager root Project transporta exact target sin string shim.
 
 Antes de cerrar la frontera completa todavía se debe auditar:
 - implementación actual Users/Profile restante;
@@ -326,10 +377,10 @@ Antes de cerrar la frontera completa todavía se debe auditar:
 Siguiente foco aislado:
 
 ```text
-MANAGER-ROOT-CANONICAL-CUTOVER
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE  PLANNED
 ```
 
-Debe reemplazar el root productivo `source_revision: str` y luego habilitar migraciones administrativas sin shims.
+Debe reemplazar `projection_source_revision` por provenance exact-release sin reabrir las invariantes durable/runtime ya cerradas y sin mezclar migración administrativa de Users.
 
 ## SharePoint
 

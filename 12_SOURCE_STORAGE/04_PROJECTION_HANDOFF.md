@@ -226,16 +226,37 @@ Contrato verificado:
 
 Esta evidencia es específica de Users/Cosmos y no congela la estrategia de providers de otros dominios.
 
+## Evidencia consumer posterior — Manager root Projection
+
+`MANAGER-ROOT-CANONICAL-CUTOVER` cerró el transporte root exact-target en:
+
+```text
+moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
+```
+
+Quedó validado que:
+- el workflow root expone `get_current_projection_target()`;
+- `project(...)` recibe `ProjectionTarget`;
+- `ProjectionExecutionResult` conserva el target exacto;
+- el coordinator transporta un target explícito sin releer current;
+- la UI selecciona current server-side y no toma la identidad ejecutable desde browser state;
+- un target histórico explícito no es reemplazado por current;
+- el signal del Project expone identidad exact-release.
+
+La formulación anterior “Manager BASE/SOURCE/WORKSPACE/PROJECTION cutover” queda refinada: este cierre cubre la frontera Projection del root productivo. Los contratos administrativos de publicación/workspace que todavía usan revisiones textuales permanecen separados.
+
 ## Fuera de este cierre
 
 Permanecen abiertos:
 
-- providers Projection Local/Cosmos concretos de otros dominios cuando sean necesarios;
-- Manager productive BASE/SOURCE/WORKSPACE/PROJECTION cutover;
+- provenance exact-release de `users.runtime`;
 - migración de consumidores administrativos Navigation/Users y otros;
+- otros providers Projection concretos cuando sean necesarios;
 - Projection planner/orchestration multi-capability;
 - derived resolutions;
 - idempotencia provider/domain-level de otros providers;
-- retention/GC operacional.
+- retention/GC operacional;
+- browser WORKSPACE/IndexedDB del Manager;
+- eliminación de contracts legacy una vez que no queden consumidores.
 
-El cierre de Projection Handoff y del provider Users/Cosmos no implica cerrar esas capas.
+El cierre de Projection Handoff, Users/Cosmos y Manager root exact-target no implica cerrar esas capas.
