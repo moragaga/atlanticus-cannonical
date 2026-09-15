@@ -10,15 +10,18 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Último checkpoint de implementación verificado para este cierre:
-  `9342769a626c39d1f7f860f81e051e2ef1300620`
-- Fecha del checkpoint: `2026-09-14T23:42:18Z`
+  `7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98`
+- Fecha del checkpoint:
+  `2026-09-15T01:54:51Z`
 - Parent inmediato verificado:
-  `05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3`
+  `567e1a12c862b46dfd7f4ec75c3be750c95bbd54`
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
+- Checkpoint canonical inspeccionado antes de este reemplazo:
+  `6dbf7ea08a257bdb287dcf94ffbeec4a80e53543`
 - Contiene el estado vigente, contratos, fronteras, roadmap y decisiones activas del Project.
 
 `atlanticus-cannonical:main` reemplaza a `atlanticus-decisions` como autoridad documental vigente.

@@ -31,66 +31,87 @@ Repetir el patrón estabilizado.
 ## Web Platform — checkpoint actual
 
 ```text
-WEB-STORAGE-TOPOLOGY                       CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY                     CLOSED / VERIFIED / CURRENT
-STORAGE-PREFLIGHT-COSMOS-BRIDGE            CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER               CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY          CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1                   CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2               CLOSED / VERIFIED / CURRENT
-MANAGER-ROOT-CANONICAL-CUTOVER             CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION                 CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS                CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION                  CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT             CLOSED / VERIFIED / CURRENT
-ADMIN-COMPOSITION-BACKEND                  CLOSED / VERIFIED / CURRENT
-MANAGER-EXACT-SOURCE-BOUNDARY              CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-ADMIN-COMPOSITION           IN PROGRESS
+WEB-STORAGE-TOPOLOGY                          CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY                        CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE               CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER                  CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY             CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1                      CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2                  CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER                CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION                    CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS                   CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION                     CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT                CLOSED / VERIFIED / CURRENT
+ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
+USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
 ```
 
 Checkpoint actual:
 
 ```text
-moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
+moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
 ```
 
-## Cierre backend de Admin Composition
+## Cierre draft baseline semantics
 
 Queda congelado:
-- authoring backend canónico usa `UsersProfilesConfiguration`;
-- no se crea aggregate admin mixto nuevo;
-- `UsersProfilesAdminDraft` conserva exact `SourceSnapshot`;
-- draft revision es local y no release identity;
-- parser canónico no acepta shape legacy;
-- Administrator explícito/no eliminable;
-- Profile edit preserva key;
-- delete referenciado requiere replacement;
-- reassign+delete es transformación única;
-- Managed creation parte de Pending;
-- Managed identity no es editable;
-- Users admin publication usa exact snapshot + CAS + basis release.
+- draft schema `2`;
+- `base_payload_revision`;
+- create = clean;
+- `has_local_changes`;
+- edit preserva BASE + SourceSnapshot;
+- rebase adopta nuevo exact SourceSnapshot;
+- schema 1 no se migra;
+- local revision nunca es Source identity.
 
-## Cierre Manager Exact-Source Boundary
+## Cierre Manager exact-source composition
 
 Queda congelado:
-- `ExactSourcePublicationWorkflow` es opt-in;
-- no reemplaza `ConfigurationLifecycleWorkflow`;
-- `get_source_snapshot()` devuelve `SourceSnapshot`;
-- `publish_draft_exact(...)` recibe el snapshot esperado;
-- `ExactSourcePublicationResult` conserva `PublishResult`;
-- coordinator compara snapshot completo;
-- los campos legacy textuales no se reinterpretan como release identity;
-- no existe segundo coordinator.
+- adapter vive en `web/compositions/users-manager`;
+- composition depende de Manager + Source + Users Configuration;
+- Manager no depende de Users;
+- Users Configuration no depende de Manager;
+- payload se revalida como `UsersProfilesConfiguration`;
+- actor usa `UsersAuditActorProvider`;
+- audit timestamp usa release publicada;
+- no persiste/rebasa draft;
+- no registra servicios del host;
+- no proyecta.
 
 ## Qué permanece legacy
 
-Continúan productivos hasta su cutover explícito:
+Continúan productivos hasta cutover explícito:
 - callbacks/layout/browser store administrativos de Users;
 - `UsersConfigurationCatalog` en ese camino;
 - `UsersAdministrationService` legacy y bundle/contracts asociados donde aún se consumen;
+- `UsersManagerWorkflowAdapter` del host ADA;
 - Manager publication/verification/history textual para workflows legacy;
 - runtime Managed writer;
 - `projection_source_revision` en `users.runtime`.
+
+## Refinamiento de roadmap
+
+El antiguo nombre:
+
+```text
+USERS-MANAGER-EXACT-SOURCE-WIRING
+```
+
+queda refinado en:
+
+```text
+USERS-MANAGER-EXACT-SOURCE-COMPOSITION
+    CLOSED / VERIFIED / CURRENT
+
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
+    PLANNED
+```
+
+La existencia del adapter no equivale al cutover productivo del host.
 
 ## Siguiente foco aislado recomendado
 
@@ -100,34 +121,35 @@ ADMIN-UI-DRAFT-CUTOVER  PLANNED / NEXT
 
 Objetivo único:
 - migrar callbacks, layout y store administrativo de Users Configuration al payload `UsersProfilesConfiguration`;
-- usar `UsersProfilesAdminDraft` como contrato del draft nuevo;
-- mantener el `SourceSnapshot` de base;
-- aplicar las operaciones backend ya cerradas;
+- usar `UsersProfilesAdminDraft` schema 2;
+- preservar exact `SourceSnapshot`;
+- usar `revision/base_payload_revision` para estado local;
+- aplicar operaciones backend ya cerradas;
 - retirar del camino UI activo la construcción/edición de `UsersConfigurationCatalog`.
 
-No mezclar en este incremento:
-- wiring Users↔Manager exact-source;
+No mezclar:
 - runtime canonical cutover;
 - runtime provenance;
-- IndexedDB general del Manager;
-- Navigation;
 - Root physical config;
 - Python migration;
-- ADA Access;
-- legacy deletion global.
+- Navigation migration;
+- legacy deletion global;
+- Manager IndexedDB global.
 
-## Incremento inmediatamente posterior
+## Incremento posterior separado
 
 ```text
-USERS-MANAGER-EXACT-SOURCE-WIRING  PLANNED
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER  PLANNED
 ```
 
 Debe:
-- implementar/adaptar el workflow productivo Users al protocolo `ExactSourcePublicationWorkflow`;
-- transportar `SourceSnapshot` desde el admin workspace hasta publication;
-- retornar `ExactSourcePublicationResult`;
-- conservar autorización/audit/summary requeridos por Manager;
-- no adaptar el snapshot exacto a `source_revision: str`.
+- reemplazar el service registration productivo legacy Users por la composition exact-source;
+- usar el payload canónico ya migrado;
+- transportar exact `SourceSnapshot`;
+- usar `ManagerProjectionCoordinator.publish_draft_exact(...)`;
+- no reinterpretar release/token como strings;
+- mantener autorización/audit;
+- no reintroducir adapter hacia `UsersConfigurationCatalog`.
 
 ## Después, como incrementos independientes
 
@@ -139,15 +161,13 @@ NAV-CONSUMER-MIGRATION-B                  PLANNED
 DOMAIN-LEGACY-DELETION                     BLOCKED
 ```
 
-El orden exacto después del wiring debe recalcularse sobre `main`.
+El orden exacto después del productive exact-source cutover debe recalcularse sobre `main`.
 
 ## Runtime canonical cutover
 
 Permanece PLANNED.
 
 Debe materializar `users.runtime` desde contrato/projection canónico.
-
-No mezclarlo con UI admin cutover.
 
 ## Runtime exact-release provenance
 
@@ -160,8 +180,6 @@ No introducir shim `SourceReleaseId <-> str`.
 ```text
 ROOT-PHYSICAL-CONFIGURATION  PLANNED / UNVERIFIED
 ```
-
-No bloquear Users/Profiles con deployment wiring.
 
 ## Local identities
 
@@ -181,13 +199,15 @@ Legacy deletion permanece BLOCKED hasta demostrar ausencia de consumidores produ
 
 IndexedDB + `dcc.Store(memory)` general permanece PLANNED.
 
-El siguiente foco puede migrar el draft store actual de Users sin convertirlo en la implementación global de IndexedDB Manager.
+El UI draft cutover de Users no debe declararse implementación global de IndexedDB Manager.
 
 ## Python/Trixie
 
 Python 3.14.7 + Trixie permanece decidido y pendiente global.
 
-No mezclarlo con el siguiente foco.
+El workspace y el nuevo package `users-manager` todavía conservan `requires-python ==3.14.2`.
+
+No mezclar esta migración con el siguiente foco.
 
 ## Resource readiness
 

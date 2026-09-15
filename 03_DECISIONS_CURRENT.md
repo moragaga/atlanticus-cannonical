@@ -62,7 +62,6 @@ Estado: **CURRENT**
 | `ProfileCatalog` sólo contiene Profiles explícitos | FROZEN / IMPLEMENTED + VALIDATED |
 | `ProfileCatalog()` significa catálogo vacío | FROZEN / IMPLEMENTED + VALIDATED |
 | Profiles core no reserva Local/Admin/Guest/Root como system profiles | FROZEN / IMPLEMENTED + VALIDATED |
-| `assignable()` deja de ser contrato de `ProfileCatalog` | SUPERSEDED / REMOVED |
 | `ProfilesConfiguration` es el contrato durable Profiles-owned | FROZEN / IMPLEMENTED + VALIDATED |
 | `ProfilesConfiguration` no implica Source/Projection independiente | FROZEN FOR CURRENT BASELINE |
 | No inferir `profiles.runtime` | FROZEN |
@@ -79,7 +78,7 @@ Estado: **CURRENT**
 | Todo Managed User, enabled o disabled, debe referenciar un Profile existente | FROZEN / IMPLEMENTED + VALIDATED |
 | Orphan references se rechazan en la composición canónica | CLOSED / IMPLEMENTED + VALIDATED |
 
-## Canonical Source contract split
+## Canonical Source / Projection split
 
 | Decisión | Estado |
 |---|---|
@@ -92,81 +91,33 @@ Estado: **CURRENT**
 | No crear segundo Source/coordinator para Profiles | FROZEN FOR CURRENT BASELINE |
 | Source Users schema `1` se puede leer y normalizar | FROZEN COMPATIBILITY |
 | Nuevas publicaciones no escriben schema Users `1` | FROZEN |
-| Legacy Administrator colors → explicit Administrator Profile durante normalization | FROZEN COMPATIBILITY |
-| Legacy Guest fields no crean Profile funcional | FROZEN COMPATIBILITY |
-
-## Canonical Projection contract split
-
-| Decisión | Estado |
-|---|---|
 | `ProjectionRecord[UsersConfigurationCatalog]` como payload canónico | SUPERSEDED BY UCS-1 |
 | `ProjectionRecord[UsersProfilesConfiguration]` es payload canónico vigente | FROZEN / IMPLEMENTED + VALIDATED |
 | Cosmos Users configuration projection write schema = `2` | CURRENT / IMPLEMENTED + VALIDATED |
-| Cosmos projection schema `1` se puede leer y normalizar | FROZEN COMPATIBILITY |
-| same exact release + same payload = idempotent | FROZEN |
-| same exact release + different payload = invariant error | FROZEN |
-| new exact release usa CAS/ETag para reemplazo activo | FROZEN |
-| concurrent same-target winner = idempotent success | FROZEN |
-| concurrent different target = conflict | FROZEN |
 
 ## Admin composition
 
 | Decisión | Estado |
 |---|---|
-| El payload de authoring canónico es `UsersProfilesConfiguration`, no un aggregate admin nuevo | FROZEN / IMPLEMENTED + VALIDATED |
-| `UsersProfilesAdminDraft` conserva `SourceSnapshot` exacto | FROZEN / IMPLEMENTED + VALIDATED |
-| Draft `revision` = SHA-256 del JSON canónico del payload y sólo identifica el draft local | FROZEN / IMPLEMENTED + VALIDATED |
-| Draft local revision no equivale a `SourceReleaseId` ni `content_hash` | FROZEN |
-| Nuevo draft usa `document_type=atlanticus_users_profiles_admin_draft`, schema `1` | CURRENT / IMPLEMENTED + VALIDATED |
-| Parser del nuevo draft no acepta shape legacy | FROZEN CLEAN CUTOVER DIRECTION |
+| Payload de authoring canónico = `UsersProfilesConfiguration` | FROZEN / IMPLEMENTED + VALIDATED |
+| No crear aggregate admin durable mixto nuevo | FROZEN |
+| `UsersProfilesAdminDraft` conserva exact `SourceSnapshot` | FROZEN / IMPLEMENTED + VALIDATED |
+| Draft `revision` = SHA-256 del payload canónico actual | FROZEN / IMPLEMENTED + VALIDATED |
+| Draft `base_payload_revision` conserva la BASE local | FROZEN / IMPLEMENTED + VALIDATED |
+| Draft creado nace limpio (`revision == base_payload_revision`) | FROZEN / IMPLEMENTED + VALIDATED |
+| `has_local_changes` depende de revisiones locales, no de Source | FROZEN / IMPLEMENTED + VALIDATED |
+| `with_configuration(...)` preserva BASE + exact Source snapshot | FROZEN / IMPLEMENTED + VALIDATED |
+| `rebase(...)` adopta snapshot exacto nuevo y hace current revision = BASE | FROZEN / IMPLEMENTED + VALIDATED |
+| Draft local revision no equivale a `SourceReleaseId`, `content_hash` ni token | FROZEN |
+| Draft document schema vigente = `2` | CURRENT / IMPLEMENTED + VALIDATED |
+| Draft schema `1` no se migra mediante parser/adapter | FROZEN CLEAN CUTOVER |
 | Administrator no se elimina | FROZEN / IMPLEMENTED + VALIDATED |
-| Administrator se edita por operación dedicada; key y label se preservan en el contrato actual | CURRENT / IMPLEMENTED + VALIDATED |
-| Profile funcional creado deriva key desde label | CURRENT / IMPLEMENTED + VALIDATED |
-| Profile key es inmutable durante edición | FROZEN / IMPLEMENTED + VALIDATED |
+| Profile edit preserva key | FROZEN / IMPLEMENTED + VALIDATED |
 | Profile referenciado requiere replacement explícito antes de delete | FROZEN / IMPLEMENTED + VALIDATED |
-| Reassign + delete ocurre como una sola transformación validada | FROZEN / IMPLEMENTED + VALIDATED |
-| Reassign aplica también a Users disabled | FROZEN / IMPLEMENTED + VALIDATED |
+| Reassign + delete ocurre como una sola transformación | FROZEN / IMPLEMENTED + VALIDATED |
 | Alta Managed canónica parte de `PendingUserRecord` | FROZEN / IMPLEMENTED + VALIDATED |
 | Identidad `(issuer, subject_id)` de Managed existente es inmutable | FROZEN / IMPLEMENTED + VALIDATED |
-| No crear upsert genérico de Managed que invente identidad | FROZEN |
 | Users admin publish usa exact `SourceSnapshot`, `ConcurrencyToken` y `basis_release` | FROZEN / IMPLEMENTED + VALIDATED |
-
-## Pending / Guest
-
-| Decisión | Estado |
-|---|---|
-| Pending pertenece a Users, no Profiles | FROZEN / IMPLEMENTED + VALIDATED |
-| Pending `EffectiveUser.profile is None` | FROZEN / IMPLEMENTED + VALIDATED |
-| Pending siempre enabled | FROZEN / IMPLEMENTED + VALIDATED |
-| Pending no puede ser Local | FROZEN / IMPLEMENTED + VALIDATED |
-| Pending avatar no acepta overrides | FROZEN / IMPLEMENTED + VALIDATED |
-| Pending visual actual = `#FF5722` / `#FFFFFF` | FROZEN FOR CURRENT BASELINE |
-| Guest no es Profile runtime | FROZEN / IMPLEMENTED + VALIDATED |
-| Guest no existe como Profile durable funcional nuevo | FROZEN / IMPLEMENTED + VALIDATED |
-| Resolved User requiere Profile funcional | FROZEN / IMPLEMENTED + VALIDATED |
-| Resolved User no puede usar `profile_key="guest"` | FROZEN / IMPLEMENTED + VALIDATED |
-
-## Administrator / functional Profiles
-
-| Decisión | Estado |
-|---|---|
-| Administrator es Profile funcional normal | FROZEN / IMPLEMENTED + VALIDATED |
-| Administrator canónico es `ProfileDefinition` explícito | FROZEN / IMPLEMENTED + VALIDATED |
-| Operator/Viewer/custom son Profiles funcionales | FROZEN DIRECTION |
-| Managed Users referencian Profile funcional por `profile_key` | FROZEN / IMPLEMENTED + VALIDATED |
-| Guest/Local no se materializan en runtime Profile catalog | FROZEN / IMPLEMENTED + VALIDATED |
-
-## Legacy Users Configuration
-
-| Decisión | Estado |
-|---|---|
-| Combined `UsersConfigurationCatalog` sigue existiendo en camino administrativo productivo legacy | CURRENT LEGACY / NOT CANONICAL WRITE CONTRACT |
-| Shape `administrator_* / guest_* / profiles / users` como contrato canónico nuevo | SUPERSEDED BY UCS-1 |
-| `guest_*` puede round-trip en contrato legacy | CURRENT LEGACY |
-| Nuevas Source publications omiten `guest_*` | FROZEN / IMPLEMENTED + VALIDATED |
-| No adaptar el nuevo admin payload canónico de vuelta a `UsersConfigurationCatalog` | FROZEN |
-| Migración de callbacks/layout/browser store | PLANNED / NEXT |
-| Eliminación legacy | BLOCKED |
 
 ## Manager
 
@@ -175,31 +126,69 @@ Estado: **CURRENT**
 | Manager posee shell administrativo propio | CURRENT |
 | ADA Generic posee shell operacional | CURRENT |
 | Manager root Project usa `ProjectionTarget` exacto | FROZEN / IMPLEMENTED + VALIDATED |
-| Project callback selecciona current server-side | FROZEN |
 | Browser state no es autoridad de target ejecutable | FROZEN |
-| Manager publication/verification/history textual no se reinterpretan como release identity | FROZEN REFINEMENT |
+| Manager publication/verification/history textual no se reinterpretan como release identity | FROZEN |
 | `ExactSourcePublicationWorkflow` es extensión opt-in separada del workflow legacy | FROZEN / IMPLEMENTED + VALIDATED |
 | Exact-source workflow expone `SourceSnapshot`, no `source_revision: str` | FROZEN / IMPLEMENTED + VALIDATED |
 | `ExactSourcePublicationResult` conserva `PublishResult` tipado | FROZEN / IMPLEMENTED + VALIDATED |
 | Coordinator exact-source compara snapshot completo antes de publicar | FROZEN / IMPLEMENTED + VALIDATED |
-| Exact-source failure + Source cambiado se adjudica como source conflict | FROZEN / IMPLEMENTED + VALIDATED |
+| CAS autoritativo permanece en Source/workflow | FROZEN |
 | Workflows legacy no están obligados a implementar exact-source | FROZEN COMPATIBILITY |
-| Users↔Manager exact-source wiring | PLANNED |
-| Manager WORKSPACE futuro: `dcc.Store(memory)` + IndexedDB | DECIDED / NOT YET IMPLEMENTED |
-| IndexedDB no es Source authority | FROZEN |
+
+## Web compositions
+
+| Decisión | Estado |
+|---|---|
+| Cross-capability binding puede vivir en `web/compositions` cuando ninguna capability debe poseer la otra | CURRENT |
+| `navigation-activity` conecta Navigation con `ActivityRouteResolver`; Activity sigue siendo owner del tracking | CURRENT / PREEXISTING |
+| `users-manager` conecta Users Configuration con el protocolo exact-source de Manager | CURRENT / IMPLEMENTED + VALIDATED |
+| Manager no depende de Users por el wiring exact-source | FROZEN OWNERSHIP |
+| Users Configuration no depende de Manager por el wiring exact-source | FROZEN OWNERSHIP |
+| `UsersManagerExactSourceWorkflow` no posee draft, UI, projection ni service registration del host | FROZEN |
+| `compositions/` no es un cajón general ni una capa obligatoria | FROZEN DIRECTION |
+
+## Users ↔ Manager exact-source
+
+| Decisión | Estado |
+|---|---|
+| Adapter/composition exact-source Users↔Manager | CLOSED / VERIFIED / CURRENT |
+| Payload del adapter se revalida con `UsersProfilesConfiguration.from_document(...)` | FROZEN / IMPLEMENTED + VALIDATED |
+| Actor se obtiene mediante `UsersAuditActorProvider` | FROZEN / IMPLEMENTED + VALIDATED |
+| Audit timestamp usa la release confirmada por Source | FROZEN / IMPLEMENTED + VALIDATED |
+| Adapter retorna `ExactSourcePublicationResult` | FROZEN / IMPLEMENTED + VALIDATED |
+| Adapter hace `rebase()` del draft | SUPERSEDED / FORBIDDEN |
+| Adapter registra por sí mismo servicios del host | SUPERSEDED / FORBIDDEN |
+| Productive ADA Users workflow ya usa exact-source | PLANNED / NOT YET IMPLEMENTED |
+| Productive host todavía registra `UsersManagerWorkflowAdapter` legacy | CURRENT LEGACY |
+
+## Legacy Users Configuration
+
+| Decisión | Estado |
+|---|---|
+| `UsersConfigurationCatalog` sigue existiendo en camino administrativo productivo legacy | CURRENT LEGACY / NOT CANONICAL WRITE CONTRACT |
+| Shape `administrator_* / guest_* / profiles / users` como contrato canónico nuevo | SUPERSEDED BY UCS-1 |
+| No adaptar nuevo admin payload canónico de vuelta a `UsersConfigurationCatalog` | FROZEN |
+| Migración de callbacks/layout/browser store | PLANNED / NEXT |
+| Productive exact-source service cutover | PLANNED |
+| Eliminación legacy | BLOCKED |
+
+## Pending / Guest / Administrator
+
+| Decisión | Estado |
+|---|---|
+| Pending pertenece a Users, no Profiles | FROZEN / IMPLEMENTED + VALIDATED |
+| Pending `EffectiveUser.profile is None` | FROZEN / IMPLEMENTED + VALIDATED |
+| Guest no es Profile runtime ni Profile durable funcional nuevo | FROZEN / IMPLEMENTED + VALIDATED |
+| Administrator es Profile funcional normal y explícito | FROZEN / IMPLEMENTED + VALIDATED |
+| Managed Users referencian Profile funcional por `profile_key` | FROZEN / IMPLEMENTED + VALIDATED |
 
 ## Root bootstrap
 
 | Decisión | Estado |
 |---|---|
 | Root pertenece a Identity/bootstrap, no Profiles | FROZEN / IMPLEMENTED + VALIDATED |
-| Root no es Managed User | FROZEN / IMPLEMENTED + VALIDATED |
-| Root no es Profile | FROZEN / IMPLEMENTED + VALIDATED |
+| Root no es Managed User ni Profile | FROZEN / IMPLEMENTED + VALIDATED |
 | Root match = exact `issuer + subject_id` con policy enabled | FROZEN / IMPLEMENTED + VALIDATED |
-| `provider_key` no participa del Root match | FROZEN / IMPLEMENTED + VALIDATED |
-| Root access = READY + `bootstrap_root=True` + `user_id=None` | FROZEN / IMPLEMENTED + VALIDATED |
-| Non-match/disabled cae al fallback normal | FROZEN / IMPLEMENTED + VALIDATED |
-| Access session contract usa `_atlanticus_access_snapshot_v2` | CURRENT |
 | Fuente física Root policy y Entra claim mapping | OPEN / UNVERIFIED |
 
 ## Local / John / Jane
@@ -218,69 +207,55 @@ Estado: **CURRENT**
 | `PROFILE_CATALOG_SERVICE_KEY = "atlanticus.web.users.profiles"` | SUPERSEDED / REMOVED |
 | `create_users_module(runtime, profiles)` | SUPERSEDED |
 | `create_users_module(runtime)` | CURRENT / IMPLEMENTED + VALIDATED |
-| Dependencia semántica `UsersAccessResolver -> ProfileCatalog` permanece válida | CURRENT |
 
 ## Status de hitos
 
 ```text
-PROFILES-DOMAIN-EXTRACTION                CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS               CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION                 CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT            CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-DOMAIN-SEPARATION          IN PROGRESS
-USERS-PROFILES-ADMIN-COMPOSITION          IN PROGRESS
-ADMIN-COMPOSITION-BACKEND                 CLOSED / VERIFIED / CURRENT
-MANAGER-EXACT-SOURCE-BOUNDARY             CLOSED / VERIFIED / CURRENT
-ADMIN-UI-DRAFT-CUTOVER                    PLANNED / NEXT
-USERS-MANAGER-EXACT-SOURCE-WIRING         PLANNED
-USERS-RUNTIME-CANONICAL-CUTOVER           PLANNED
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE    PLANNED
-USERS-ADMIN-CANONICAL-MIGRATION           PLANNED
+PROFILES-DOMAIN-EXTRACTION                    CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS                   CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION                     CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT                CLOSED / VERIFIED / CURRENT
+ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
+USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-DOMAIN-SEPARATION              IN PROGRESS
+USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
+ADMIN-UI-DRAFT-CUTOVER                        PLANNED / NEXT
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED
+USERS-RUNTIME-CANONICAL-CUTOVER               PLANNED
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE        PLANNED
+USERS-ADMIN-CANONICAL-MIGRATION               PLANNED
 ```
 
-## Refinamientos / superseded
+## Refinamientos / superseded de este cierre
 
-1. “`ProfileCatalog` preserva Local + Administrator + Guest”
-   → `SUPERSEDED`: catálogo puro y explícito.
+1. “Draft canónico schema 1 con sólo `revision`”
+   → `SUPERSEDED`: schema 2 agrega `base_payload_revision` y semántica clean/dirty/rebase.
 
-2. “Guest es un Profile runtime base”
-   → `SUPERSEDED`: Pending User con `profile=None`; Guest fuera de Profiles runtime.
+2. “USERS-MANAGER-EXACT-SOURCE-WIRING” como un único hito binario
+   → `REFINED` en dos fronteras:
+   - adapter/composition exact-source: CLOSED;
+   - productive host cutover: PLANNED.
 
-3. “Root es sólo dirección propuesta fuera de Profiles”
-   → `REFINED + IMPLEMENTED` en Identity/bootstrap.
+3. “El adapter exact-source debe vivir dentro de Users o Manager”
+   → `SUPERSEDED`: vive en `web/compositions/users-manager`.
 
-4. “`PROFILE_CATALOG_SERVICE_KEY` sigue vigente en Users”
-   → `SUPERSEDED / REMOVED`.
+4. “El workflow exact-source debería rebasar el draft”
+   → `SUPERSEDED`: caller/session posee el draft y hace rebase después del éxito.
 
-5. “El aggregate durable canónico vigente es siempre `UsersConfigurationCatalog`”
-   → `SUPERSEDED BY UCS-1`.
+5. “Users exact-source ya está productivamente conectado porque existe el adapter”
+   → `SUPERSEDED`: el host ADA todavía registra `UsersManagerWorkflowAdapter` legacy.
 
-6. “`ProjectionRecord[UsersConfigurationCatalog]` sigue congelado”
-   → `SUPERSEDED BY UCS-1`.
+6. “`compositions/` apareció con Users↔Manager”
+   → `SUPERSEDED`: `navigation-activity` ya era una composition preexistente.
 
-7. “Administrator/Guest durable fields deben encontrar ownership dentro del nuevo contrato”
-   → `REFINED/CLOSED`: Administrator explícito; Guest sólo legacy/history.
+## Siguiente decisión de ejecución
 
-8. “Profile deletion/orphan rule permanece abierta”
-   → `REFINED/CLOSED`: delete referenciado exige replacement y la operación canónica reasigna + elimina atómicamente.
+Único foco recomendado:
 
-9. “Profiles puede requerir Source/Projection propia para separar ownership”
-   → `NOT REQUIRED FOR CURRENT BASELINE`.
+```text
+ADMIN-UI-DRAFT-CUTOVER
+```
 
-10. “El admin composition debe crear un nuevo aggregate que posea Users + Profiles”
-    → `SUPERSEDED`: authoring usa directamente `UsersProfilesConfiguration`.
-
-11. “Manager necesita reinterpretar `source_revision: str` para publicar exact-source”
-    → `SUPERSEDED`: exact-source es un protocolo opt-in con `SourceSnapshot` y `PublishResult` tipados.
-
-12. “Toda publication administrativa de Manager sigue necesariamente por contrato textual legacy”
-    → `REFINED`: el camino legacy permanece, pero existe un boundary exact-source opt-in ya implementado.
-
-13. `USERS-PROFILES-ADMIN-COMPOSITION` como trabajo completamente no iniciado
-    → `REFINED`: backend composition y Manager exact-source boundary están CLOSED; UI/store y wiring permanecen pendientes.
-
-## Decisiones especializadas preservadas
-
-Las decisiones detalladas de Alarm, Command Center, Source/Blob, Manager y otros dominios permanecen vigentes salvo los refinamientos explicitados arriba.
-
-Este cierre no reabre dominios no relacionados.
+No mezclar en ese incremento runtime provenance, Python migration, Root physical configuration ni legacy deletion global.

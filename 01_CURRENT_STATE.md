@@ -3,47 +3,43 @@
 Estado: **CURRENT EXECUTION CHECKPOINT**
 
 Corte de implementación:
-`moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620`.
+`moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98`.
 
 Parent inmediato:
-`moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3`.
+`moragaga/atlanticus@567e1a12c862b46dfd7f4ec75c3be750c95bbd54`.
 
 ## Resumen de estado
 
 ```text
-WEB-STORAGE-TOPOLOGY                       CLOSED / VERIFIED / CURRENT
-USERS-STORAGE-TOPOLOGY                     CLOSED / VERIFIED / CURRENT
-STORAGE-PREFLIGHT-COSMOS-BRIDGE            CLOSED / VERIFIED / CURRENT
-COSMOS-USERS-RUNTIME-ADAPTER               CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY          CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1                   CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2               CLOSED / VERIFIED / CURRENT
-MANAGER-ROOT-CANONICAL-CUTOVER             CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION                 CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS                CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION                  CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT             CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-DOMAIN-SEPARATION           IN PROGRESS
-USERS-PROFILES-ADMIN-COMPOSITION           IN PROGRESS
-ADMIN-COMPOSITION-BACKEND                  CLOSED / VERIFIED / CURRENT
-MANAGER-EXACT-SOURCE-BOUNDARY              CLOSED / VERIFIED / CURRENT
-ADMIN-UI-DRAFT-CUTOVER                     PLANNED / NEXT
-USERS-MANAGER-EXACT-SOURCE-WIRING          PLANNED
-USERS-RUNTIME-CANONICAL-CUTOVER            PLANNED
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE     PLANNED
-USERS-ADMIN-CANONICAL-MIGRATION            PLANNED
-NAV-CONSUMER-MIGRATION-B                   PLANNED
+WEB-STORAGE-TOPOLOGY                          CLOSED / VERIFIED / CURRENT
+USERS-STORAGE-TOPOLOGY                        CLOSED / VERIFIED / CURRENT
+STORAGE-PREFLIGHT-COSMOS-BRIDGE               CLOSED / VERIFIED / CURRENT
+COSMOS-USERS-RUNTIME-ADAPTER                  CLOSED / VERIFIED / CURRENT
+USERS-RUNTIME-PROJECTION-BOUNDARY             CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-SOURCE-1                      CLOSED / VERIFIED / CURRENT
+USERS-CANONICAL-PROJECTION-2                  CLOSED / VERIFIED / CURRENT
+MANAGER-ROOT-CANONICAL-CUTOVER                CLOSED / VERIFIED / CURRENT
+PROFILES-DOMAIN-EXTRACTION                    CLOSED / VERIFIED / CURRENT
+PROFILES-BASELINE-SEMANTICS                   CLOSED / VERIFIED / CURRENT
+USERS-CONTRACT-SEPARATION                     CLOSED / VERIFIED / CURRENT
+UCS-1 CANONICAL-CONTRACT-SPLIT                CLOSED / VERIFIED / CURRENT
+ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
+USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-DOMAIN-SEPARATION              IN PROGRESS
+USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
+ADMIN-UI-DRAFT-CUTOVER                        PLANNED / NEXT
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED
+USERS-RUNTIME-CANONICAL-CUTOVER               PLANNED
+USERS-RUNTIME-EXACT-RELEASE-PROVENANCE        PLANNED
+USERS-ADMIN-CANONICAL-MIGRATION               PLANNED
+NAV-CONSUMER-MIGRATION-B                      PLANNED
 ```
 
 ## Plataforma genérica
 
-Atlanticus mantiene fronteras separadas para:
-- backend jobs;
-- connectivity;
-- operational data;
-- Web capabilities;
-- Source/Projection;
-- aplicaciones/scopes.
+Atlanticus mantiene fronteras separadas para backend jobs, connectivity, operational data, Web capabilities, Source/Projection y scopes/aplicaciones.
 
 `backend/` representa backend jobs y capacidades propias de esos jobs.
 
@@ -84,8 +80,6 @@ Managed removal conserva el documento como Resolved, disabled y `managed_state=r
 
 ## Source / Projection exact-release
 
-Source Core, Local Source, Blob Source y Projection exact-release están implementados y validados.
-
 Contratos congelados:
 - release identity != content hash;
 - dos releases pueden compartir content hash;
@@ -112,11 +106,11 @@ Escritura nueva:
 - Profiles source resource schema `1`;
 - `users/configuration.json.gz` contiene `UsersConfiguration` + `published_by`;
 - `profiles/configuration.json.gz` contiene `ProfilesConfiguration`;
-- Guest durable fields no forman parte del nuevo contrato canónico.
+- Guest durable fields no forman parte del contrato canónico nuevo.
 
 Lectura histórica:
 - Source schema Users `1` continúa soportado;
-- se normaliza `UsersConfigurationCatalog` histórico hacia los contratos separados;
+- se normaliza `UsersConfigurationCatalog` histórico hacia contratos separados;
 - Administrator se materializa como `ProfileDefinition(key="administrator", label="Administrador", ...)`;
 - campos Guest históricos no crean Profile funcional.
 
@@ -161,61 +155,64 @@ Ownership CURRENT:
 
 ## Admin composition backend
 
-En `9342769a...` existe un nuevo camino backend canónico de administración basado directamente en `UsersProfilesConfiguration`.
+El camino backend canónico opera directamente sobre `UsersProfilesConfiguration`.
 
-No crea un nuevo aggregate mixto de ownership.
-
-Contratos CURRENT implementados:
+Contratos CURRENT:
 - `UsersProfilesAdminState`;
 - `UsersProfilesAdminDraft`;
 - `UsersProfilesAdministrationService`;
 - operaciones puras de edición sobre `UsersProfilesConfiguration`.
 
-### Draft canónico
+### Draft canónico — schema 2
 
 `UsersProfilesAdminDraft` contiene:
 - `owner_subject_id`;
 - `configuration: UsersProfilesConfiguration`;
 - `source_snapshot: SourceSnapshot`;
 - `revision`;
+- `base_payload_revision`;
 - `saved_at_utc`.
 
 Documento:
 - `document_type = "atlanticus_users_profiles_admin_draft"`;
-- `schema_version = 1`;
+- `schema_version = 2`;
 - payload = `UsersProfilesConfiguration`;
 - serializa el `SourceSnapshot` exacto, incluido current release y `ConcurrencyToken` cuando existen.
 
-`revision` es SHA-256 de JSON canónico de `UsersProfilesConfiguration`.
+Semántica local congelada:
+- `revision` = SHA-256 del JSON canónico del payload actual;
+- `base_payload_revision` identifica el payload que constituye la BASE local;
+- draft recién creado: `revision == base_payload_revision`;
+- `has_local_changes` depende únicamente de esas dos revisiones locales;
+- `with_configuration(...)` cambia `revision` y preserva BASE + exact `SourceSnapshot`;
+- `rebase(new_source_snapshot)` conserva payload, adopta el nuevo exact `SourceSnapshot` y hace `base_payload_revision = revision`;
+- revisión local no es `SourceReleaseId`, `content_hash` ni `ConcurrencyToken`;
+- parser schema 2 no acepta schema 1 ni shape legacy.
 
-Es identidad local del draft; no es `SourceReleaseId`, no es `content_hash` y no debe reinterpretarse como release identity.
-
-El parser del nuevo draft no acepta el shape legacy administrativo.
-
-La UI/browser store productiva todavía no usa este contrato; su cutover es el siguiente foco.
+La UI/browser store productiva todavía no usa este contrato.
 
 ### Operaciones administrativas canónicas
 
 Administrator:
-- es Profile explícito;
+- Profile explícito;
 - no puede eliminarse;
-- su key permanece estable;
-- la operación dedicada actual cambia colores y preserva label/key.
+- key estable;
+- operación dedicada actual cambia colores y preserva label/key.
 
 Profiles funcionales:
 - creación deriva key desde label;
 - edición preserva key;
-- Administrator no se edita mediante la operación genérica;
+- Administrator no se edita mediante operación genérica;
 - eliminar Profile no referenciado es válido;
 - eliminar Profile referenciado requiere `replacement_profile_key`;
-- la operación reasigna todos los Users referenciados y luego elimina el Profile en una sola transformación;
+- reasignación + eliminación ocurre en una sola transformación;
 - la regla incluye Users disabled.
 
 Managed Users:
 - alta administrativa canónica parte de `PendingUserRecord`;
 - conserva `user_id`, `issuer` y `subject_id` del Pending;
-- no existe un upsert genérico que invente una identidad Managed;
-- actualización exige que el User exista;
+- no existe upsert genérico que invente una identidad Managed;
+- actualización exige User existente;
 - `(issuer, subject_id)` no puede cambiarse.
 
 Pending:
@@ -225,19 +222,17 @@ Pending:
 
 `UsersProfilesAdministrationService`:
 - carga current mediante `UsersSourceService`;
-- cuando carga una release revalida que el `SourceSnapshot` no haya cambiado;
+- si carga una release, revalida que el `SourceSnapshot` no haya cambiado;
 - publica sólo si el snapshot esperado coincide con current;
 - valida `SourceKey`;
 - exige actor no vacío;
 - usa `expected_source_snapshot.concurrency_token` como precondición;
-- usa la `release_ref` de la base como `basis_release`;
+- para publication normal usa la `release_ref` del snapshot esperado como `basis_release`;
 - delega en `UsersSourceService.publish_configuration(...)`.
-
-Esto cierra el contrato backend de composición/publicación exacta, pero no migra todavía callbacks/layout/browser draft store.
 
 ## Manager exact-source boundary
 
-Manager incorpora un contrato opt-in:
+Manager conserva un contrato opt-in:
 
 ```text
 ExactSourcePublicationWorkflow
@@ -250,41 +245,98 @@ ExactSourcePublicationWorkflow
 
 `ExactSourcePublicationResult` conserva `PublishResult` tipado de Source, audit y summary.
 
-`ManagerProjectionCoordinator` agrega:
-- `get_exact_source_snapshot(...)`;
-- `publish_draft_exact(...)`.
-
-El coordinator:
+`ManagerProjectionCoordinator`:
 - aplica autorización;
 - compara el `SourceSnapshot` completo antes de publicar;
 - no reduce release/token a string;
 - si el workflow falla y Source cambió, convierte el caso en `ManagerSourceConflictError`;
-- resuelve el protocolo exact-source por separado del workflow legacy.
+- resuelve exact-source por separado del workflow legacy.
 
-Este contrato no obliga a módulos legacy a migrar.
+La garantía CAS final sigue perteneciendo a Source/workflow.
 
-Los campos textuales legacy de publication/verification/history continúan existiendo y no se reinterpretan como release identity.
+## Users ↔ Manager exact-source composition
 
-No existe todavía wiring productivo de Users hacia `ExactSourcePublicationWorkflow`.
+Checkpoint:
+
+```text
+moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
+```
+
+Implementado en:
+
+```text
+web/compositions/users-manager
+```
+
+`UsersManagerExactSourceWorkflow`:
+- satisface estructuralmente `ExactSourcePublicationWorkflow`;
+- `get_source_snapshot()` delega a `UsersProfilesAdministrationService`;
+- `publish_draft_exact(...)` parsea estrictamente `UsersProfilesConfiguration`;
+- obtiene actor mediante `UsersAuditActorProvider`;
+- delega publication exacta al backend administrativo Users;
+- retorna `ExactSourcePublicationResult`;
+- toma `audit.occurred_at` de la release confirmada por Source;
+- no persiste draft;
+- no hace `rebase`;
+- no proyecta;
+- no conoce Dash/IndexedDB;
+- no registra por sí mismo servicios del host.
+
+Dirección de dependencias CURRENT:
+
+```text
+Manager                 Users Configuration
+   ↑                           ↑
+   └──── compositions/users-manager ────┘
+```
+
+Manager no depende de Users y Users Configuration no depende de Manager.
+
+### Límite importante
+
+El composition root productivo ADA todavía registra:
+
+```text
+UsersManagerWorkflowAdapter(dependencies.users)
+```
+
+Ese adapter:
+- usa `UsersConfigurationCatalog`;
+- usa `publish_draft(... expected_source_revision: str | None)`;
+- sigue siendo legacy.
+
+Por tanto:
+
+```text
+USERS-MANAGER-EXACT-SOURCE-COMPOSITION         CLOSED / VERIFIED / CURRENT
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER  PLANNED
+```
+
+No afirmar que el Manager productivo de Users ya publica mediante `publish_draft_exact(...)`.
+
+## Web compositions
+
+`web/compositions` no nació con este hito.
+
+`navigation-activity` ya existía y conecta Navigation con el pequeño contrato `ActivityRouteResolver` de Users Activity.
+
+Ownership:
+- Users Activity posee tracking de actividad del actor;
+- Navigation posee definición de rutas;
+- `navigation-activity` adapta una definición Navigation a route keys de Activity;
+- la composición no transfiere ownership.
+
+El patrón se reutiliza para `users-manager` porque la integración necesita conocer ambas capabilities sin invertir sus dependencias.
+
+No usar `compositions/` como cajón genérico: sólo cuando dos capabilities independientes necesitan un binding explícito que ninguna debe poseer.
 
 ## Legacy administrative configuration
 
 El aggregate histórico `UsersConfigurationCatalog`, `UsersAdministrationService`, `UsersConfigurationBundle`, contracts y callbacks legacy siguen presentes para consumidores no migrados.
 
-Su shape histórico puede contener:
+Su shape no es el contrato canónico nuevo de Source/Projection ni el payload del nuevo backend admin composition.
 
-```text
-administrator_background_color
-administrator_text_color
-guest_background_color
-guest_text_color
-profiles
-users
-```
-
-Ese shape no es el contrato canónico nuevo de Source/Projection ni el payload del nuevo backend admin composition.
-
-La compatibilidad v1 durable es lectura histórica, no un shim runtime.
+La compatibilidad v1 durable es lectura histórica, no shim runtime.
 
 ## Pending / Guest
 
@@ -292,32 +344,11 @@ Pending pertenece a Users, no a Profiles.
 
 `EffectiveUser.profile` puede ser `None`.
 
-Para `pending=True`:
-- `enabled=True`;
-- `profile is None`;
-- `is_local=False`;
-- no se aceptan overrides de avatar;
-- colores estáticos actuales: fondo `#FF5722`, texto `#FFFFFF`.
-
 Guest no es Profile runtime ni Profile funcional configurable en el contrato canónico.
-
-## Administrator
-
-Administrator es un Profile funcional normal y explícito en `ProfilesConfiguration`.
-
-`UsersProfilesConfiguration` exige su presencia.
-
-El aggregate legacy puede continuar sintetizándolo mientras el camino legacy siga vigente.
 
 ## Root bootstrap
 
 Root pertenece a Identity/bootstrap, no a Profiles ni al flujo normal Managed Users.
-
-Implementado:
-- `BootstrapRootPolicy`;
-- `BootstrapRootAccessResolver`;
-- `AccessDecision.bootstrap_root`;
-- `AccessSnapshot.bootstrap_root`.
 
 La fuente física de `BootstrapRootPolicy` y el mapping exacto Entra permanecen UNVERIFIED / OPEN.
 
@@ -340,27 +371,34 @@ Local, John y Jane quedan fuera de Profiles semánticos.
 
 Su contrato runtime/ownership final permanece OPEN.
 
-## Qualification del checkpoint `9342769a...`
+## Qualification de los checkpoints recientes
 
-Qualification ejecutada por el usuario sobre el workspace real después de integrar el incremento:
+### Draft baseline semantics — `567e1a12...`
+
+Qualification reportada por el usuario:
 
 ```text
-focused new tests                    19 passed
-Users Configuration package tests   GREEN
-Manager package tests               GREEN
-commented mirror contract           GREEN
-productive/commented compile        GREEN
-changed-file Ruff lint              GREEN
-changed-file Ruff format check      GREEN
-full Web suite                       571 passed, 7 skipped
-git diff --check                     GREEN
-changed implementation files         12 expected files
+focused tests        19 passed
+Ruff                  GREEN
+full Web suite        580 passed, 7 skipped
+Python runtime        3.14.7
 ```
 
-Notas:
-- el primer gate Ruff detectó tres imports ordenables y formato en `admin_composition.py`; fueron corregidos antes de la qualification final;
-- no se afirma un `ruff check .` global nuevo para este checkpoint;
-- no se afirma CI remoto adicional.
+### Users Manager exact-source composition — `7ffebdbb...`
+
+Qualification reportada por el usuario:
+
+```text
+uv lock --check                         GREEN
+composition focused tests              7 passed
+Ruff composition src/tests             GREEN
+full Web suite                          587 passed, 7 skipped
+git diff --check                        GREEN
+```
+
+`atlanticus:main` fue verificado apuntando a `7ffebdbb...`.
+
+No se afirma CI remoto adicional.
 
 ## Frontera Users / Profiles completa
 
@@ -380,17 +418,19 @@ Cerrado:
 - read-v1/write-v2;
 - backend admin composition sobre `UsersProfilesConfiguration`;
 - draft backend con exact `SourceSnapshot`;
+- baseline local `revision/base_payload_revision`;
 - delete/reassign atómico;
 - creación Managed desde Pending;
-- Manager exact-source opt-in boundary.
+- Manager exact-source opt-in boundary;
+- adapter/composition exact-source Users↔Manager.
 
 Permanece fuera:
-- callbacks/layout/store administrativo productivo;
-- wiring Users ↔ Manager exact-source;
+- callbacks/layout/store administrativo productivo canónico;
+- registro productivo del exact-source workflow Users en el Manager host;
 - runtime canonical cutover;
 - exact-release provenance en `users.runtime`;
 - eliminación legacy;
-- resource topology físico del canonical Projection store;
+- resource topology físico canonical Users Projection;
 - configuración física Root;
 - contrato final Local/John/Jane.
 
@@ -402,4 +442,6 @@ Un único foco:
 ADMIN-UI-DRAFT-CUTOVER  PLANNED / NEXT
 ```
 
-Objetivo: migrar callbacks, layout y browser draft store de Users Configuration al `UsersProfilesAdminDraft` / `UsersProfilesConfiguration` ya implementado, sin introducir todavía el wiring Manager exact-source ni tocar runtime/provenance.
+Objetivo: migrar callbacks, layout y browser draft store de Users Configuration al `UsersProfilesAdminDraft` schema 2 / `UsersProfilesConfiguration`, sin mezclar todavía runtime/provenance ni eliminación legacy global.
+
+El productivo exact-source service cutover permanece como incremento separado posterior.

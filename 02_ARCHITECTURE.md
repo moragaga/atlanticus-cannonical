@@ -22,12 +22,7 @@ Capacidades transversales:
 
 `backend/` representa backend jobs y capacidades propias de esos jobs.
 
-`web/` es frontera de primer nivel para:
-- Flask/Dash;
-- JavaScript/CSS;
-- composición Web;
-- server-side Python cuya responsabilidad es Web;
-- capabilities Web reutilizables.
+`web/` es frontera de primer nivel para Flask/Dash, JavaScript/CSS, composición Web, server-side Python con responsabilidad Web y capabilities Web reutilizables.
 
 Connectivity es dual-use y no adquiere ownership funcional.
 
@@ -92,6 +87,32 @@ Source current nunca se determina desde Cosmos.
 
 Las capabilities mantienen ownership separado y dependencias explícitas.
 
+Una composition se justifica cuando:
+- capability A debe seguir siendo reusable sin B;
+- capability B debe seguir siendo reusable sin A;
+- el binding necesita conocer ambas;
+- ninguna de las dos debe adquirir ownership de la otra.
+
+No usar `web/compositions` como capa obligatoria ni como cajón general.
+
+### Composition existente: Navigation ↔ User Activity
+
+```text
+Navigation
+    ↓
+navigation-activity
+    ↓
+ActivityRouteResolver
+    ↓
+Users Activity
+```
+
+Ownership:
+- Navigation posee la definición de rutas;
+- Users Activity posee sesiones, page views, active time y route activity;
+- `navigation-activity` traduce rutas Navigation a `ActivityRoute`/route keys;
+- Identity aporta contexto del actor, pero no posee el historial de actividad.
+
 ### Profiles / Users
 
 Arquitectura CURRENT:
@@ -108,7 +129,7 @@ Contratos:
 - Profiles no depende de Users;
 - Profiles no depende de ADA;
 - Users puede consumir Profiles;
-- cross-capability binding pertenece a composición/adapters;
+- cross-capability validation pertenece a una frontera que ve ambos contratos;
 - `atlanticus.web.users.profiles` no existe como namespace productivo;
 - no existe shim del namespace anterior.
 
@@ -121,11 +142,7 @@ ProfileCatalog()
 → empty
 ```
 
-No posee semántica especial de:
-- Root;
-- Guest/Pending;
-- Local;
-- John/Jane.
+No posee semántica especial de Root, Guest/Pending, Local ni John/Jane.
 
 Administrator es un Profile funcional ordinario.
 
@@ -133,21 +150,11 @@ Administrator es un Profile funcional ordinario.
 
 `ProfilesConfiguration` es el contrato durable Profiles-owned actual.
 
-```text
-ProfilesConfiguration
-└── profiles: tuple[ProfileDefinition, ...]
-```
-
 No implica `profiles.runtime` ni Source/Projection independiente de Profiles.
 
 ### Users durable configuration
 
 `UsersConfiguration` es el contrato durable Users-owned actual.
-
-```text
-UsersConfiguration
-└── users: tuple[UserConfiguration, ...]
-```
 
 Posee invariantes exclusivamente Users:
 - ids únicos;
@@ -156,9 +163,7 @@ Posee invariantes exclusivamente Users:
 
 No posee el catálogo de Profiles.
 
-### Composition contract
-
-La referencia Users→Profiles se valida en una frontera que ve ambos contratos:
+### Composition contract Users + Profiles
 
 ```text
 UsersConfiguration
@@ -172,8 +177,7 @@ UsersProfilesConfiguration
 - exige Administrator explícito;
 - rechaza `guest` y `local` como Profiles funcionales;
 - exige que todo `UserConfiguration.profile_key` resuelva en Profiles;
-- aplica la regla también a Users disabled;
-- expone `ProfileCatalog` desde el contrato Profiles-owned.
+- aplica la regla también a Users disabled.
 
 Esta composición no transfiere ownership de Profiles a Users.
 
@@ -207,35 +211,11 @@ Payload CURRENT:
 ProjectionRecord[UsersProfilesConfiguration]
 ```
 
-Cosmos Projection schema CURRENT:
-
-```text
-schema_version = 2
-```
-
-El store:
-- lee schema `1` histórico y normaliza;
-- escribe sólo schema `2`;
-- conserva exact release provenance;
-- conserva create-only/CAS;
-- conserva idempotencia same-target;
-- rechaza misma exact release con payload diferente.
+Cosmos Projection escribe schema `2`, lee schema `1` histórico, conserva exact release provenance y CAS.
 
 ## Canonical admin composition
 
-El backend administrativo canónico nuevo opera directamente sobre:
-
-```text
-UsersProfilesConfiguration
-```
-
-No introduce un `UsersProfilesAdminCatalog` ni otro aggregate durable mixto.
-
-El estado administrativo separa:
-- payload editable;
-- snapshot Source exacto usado como base;
-- revisión local del draft;
-- metadata local del draft.
+El backend administrativo canónico opera directamente sobre `UsersProfilesConfiguration`.
 
 ```text
 UsersProfilesAdminDraft
@@ -243,41 +223,21 @@ UsersProfilesAdminDraft
 ├── configuration: UsersProfilesConfiguration
 ├── source_snapshot: SourceSnapshot
 ├── revision
+├── base_payload_revision
 └── saved_at_utc
 ```
 
-`revision` identifica contenido del draft; no identifica Source release.
+Semántica:
+- `revision` identifica el payload local actual;
+- `base_payload_revision` identifica la BASE local;
+- draft recién creado queda limpio;
+- `with_configuration(...)` preserva BASE y `SourceSnapshot`;
+- `rebase(...)` adopta un nuevo exact `SourceSnapshot` y convierte la revisión actual en nueva BASE;
+- local revision no es release identity;
+- schema vigente del draft = `2`;
+- no existe parser legacy/schema 1 para el draft canónico.
 
-La precondición de publicación es el `SourceSnapshot` exacto:
-- `SourceKey`;
-- current `SourceReleaseRef` cuando existe;
-- current content hash informativo;
-- `ConcurrencyToken` cuando existe.
-
-El backend de Users pasa:
-- `basis_release = source_snapshot.current.release_ref`;
-- `expected_concurrency_token = source_snapshot.concurrency_token`.
-
-No convertir esas identidades a `str`.
-
-### Admin mutation rules
-
-Administrator:
-- Profile explícito;
-- no eliminable;
-- key estable;
-- edición dedicada de colores en el contrato actual.
-
-Profile funcional:
-- key derivada al crear;
-- key inmutable al editar;
-- delete referenciado requiere replacement explícito;
-- reasignación + eliminación ocurre en una única transformación validada.
-
-Managed User:
-- creación administrativa parte de Pending;
-- identidad autenticada se conserva;
-- identidad de un Managed existente no es editable.
+La precondición de publicación es el `SourceSnapshot` exacto.
 
 ## Manager exact-source publication boundary
 
@@ -292,24 +252,68 @@ ExactSourcePublicationWorkflow
    ) -> ExactSourcePublicationResult
 ```
 
-`ExactSourcePublicationResult` contiene el `PublishResult` tipado de Source.
+`ExactSourcePublicationResult` conserva `PublishResult` tipado.
 
 `ManagerProjectionCoordinator` transporta el snapshot exacto y detecta stale source sin reinterpretar strings legacy.
 
-El protocolo exact-source:
+El protocolo:
 - convive con `ConfigurationLifecycleWorkflow`;
-- no fuerza migración de módulos legacy;
 - no redefine `source_revision: str`;
-- no crea segundo coordinator;
-- no es todavía el wiring productivo de Users.
+- no crea segundo coordinator.
+
+## Composition Users ↔ Manager exact-source
+
+CURRENT:
+
+```text
+Manager                     Users Configuration
+   ↑                               ↑
+   └── compositions/users-manager ─┘
+```
+
+`UsersManagerExactSourceWorkflow` es el adapter de integración exact-source.
+
+Responsabilidades:
+- delegar `get_source_snapshot()`;
+- parsear payload con `UsersProfilesConfiguration.from_document(...)`;
+- obtener actor mediante `UsersAuditActorProvider`;
+- delegar publication exacta al backend Users;
+- devolver `ExactSourcePublicationResult`;
+- audit timestamp = timestamp de la release publicada.
+
+No posee:
+- draft/session;
+- `rebase`;
+- Projection execution;
+- Dash/UI;
+- IndexedDB;
+- registro de servicios del host.
+
+La composition depende de Manager + Source + Users Configuration.
+
+Manager no adquiere dependencia de Users y Users Configuration no adquiere dependencia de Manager.
+
+## Productive host boundary
+
+El host ADA Configuration Manager todavía registra el adapter legacy:
+
+```text
+UsersManagerWorkflowAdapter
+```
+
+y ese adapter todavía consume:
+- `UsersConfigurationCatalog`;
+- `publish_draft(... expected_source_revision: str | None)`.
+
+Por tanto, la composition exact-source está implementada, pero el cutover productivo del servicio Users en Manager permanece PLANNED.
 
 ## Legacy administrative boundary
 
-`UsersConfigurationCatalog` permanece como aggregate del camino administrativo productivo legacy mientras callbacks/layout/store no hayan migrado.
+`UsersConfigurationCatalog` permanece en el camino administrativo productivo legacy mientras callbacks/layout/store y workflow registration no hayan migrado.
 
-El nuevo backend canónico existe en paralelo como destino del cutover, pero no debe adaptarse de vuelta al aggregate legacy.
+El nuevo backend canónico no debe adaptarse de vuelta al aggregate legacy.
 
-La compatibilidad durable de schema histórico no justifica un adapter de authoring mixto.
+La compatibilidad durable histórica no justifica un adapter de authoring mixto.
 
 ## Pending / Guest
 
@@ -328,7 +332,7 @@ Root pertenece a Identity/bootstrap y no se materializa como User/Profile.
 
 Local/John/Jane quedan fuera de Profiles.
 
-Su representación runtime final permanece una frontera posterior.
+Su representación runtime final permanece abierta.
 
 ## Service Registry ownership
 
@@ -359,11 +363,7 @@ Contrato:
 ProjectionTarget = SourceKey + SourceReleaseRef
 ```
 
-`project(target)`:
-- lee la release exacta;
-- no relee current;
-- conserva release identity;
-- permite retry del mismo target.
+`project(target)` lee release exacta, no relee current y conserva release identity.
 
 No introducir adaptadores `SourceReleaseId <-> str`.
 
@@ -384,7 +384,7 @@ La compatibilidad de lectura durable histórica necesaria para replay exact-rele
 
 No están cerradas todavía:
 - callbacks/layout/browser draft cutover de Users admin;
-- wiring Users ↔ Manager exact-source;
+- cutover productivo del workflow Users hacia exact-source en Manager;
 - runtime canonical cutover Users;
 - exact-release provenance en `users.runtime`;
 - eliminación legacy;
