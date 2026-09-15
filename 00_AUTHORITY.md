@@ -10,27 +10,27 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Último checkpoint de implementación verificado para este cierre:
-  `384a68fe8fa42263623c95d1d132af2ca54574c8`
-- Fecha del checkpoint:
-  `2026-09-15T17:15:17Z`
+  `59fcd3ecc8f3441e64fbe0fc892b4467fa56f181`
 - Parent inmediato verificado:
-  `b2254450b4543d2422ca8580357b9054b515cd6e`
+  `1302fefdf046b1cef7beed594e832f9a7a181a06`
+- Alcance del checkpoint de este cierre:
+  cutover genérico de `web/capabilities/manager`
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint canonical inspeccionado antes de este reemplazo:
-  `b58a6c8f0f7631de6789adaee4b913b197be8806`
+  `d4681dc3d14b0233c857ca3870795368456c7bad`
 - Contiene estado vigente, contratos, fronteras, roadmap y decisiones activas del Project.
 
-`atlanticus-cannonical:main` reemplaza a `atlanticus-decisions` como autoridad documental vigente.
+`atlanticus-cannonical:main` es la autoridad documental vigente, subordinada a la realidad implementada de `atlanticus:main`.
 
 ## Referencias históricas
 
 `moragaga/atlanticus-decisions` es **HISTORICAL**.
 
-Puede usarse para rationale, qualification previa y rastreo histórico. No puede por sí solo contradecir o reemplazar `atlanticus-cannonical:main`.
+Puede usarse para rationale, qualification previa y rastreo histórico. No puede por sí solo contradecir o reemplazar `atlanticus:main` ni `atlanticus-cannonical:main`.
 
 ## Jerarquía
 
@@ -66,8 +66,8 @@ Git es **READ ONLY** por defecto.
 
 No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización explícita.
 
-## Referencias externas
+## Regla de continuidad del Manager
 
-Otros repositorios, proyectos o implementaciones sólo son referencias cuando el usuario lo indique.
+Después del cutover genérico de Manager, cada consumidor se cierra en un chat/incremento independiente.
 
-No transfieren automáticamente autoridad, contratos, nombres, dependencias ni arquitectura a Atlanticus.
+No usar un chat para mezclar Navigation, Tools, KPI Configuration y KPI Definition.

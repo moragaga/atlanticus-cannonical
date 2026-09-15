@@ -43,7 +43,7 @@ Projection genérica exact-release pertenece a:
 web/capabilities/projection/core
 ```
 
-Las capabilities exactas se declaran de forma independiente en cada `ManagerModule`. Una capability migrada no necesita un lifecycle legacy monolítico.
+Manager consume estos contratos genéricos directamente. No mantiene una arquitectura paralela `legacy` vs `exact`.
 
 ### Operational Data
 
@@ -77,231 +77,97 @@ Source y Projection son responsabilidades separadas.
 
 ```text
 Source     = Local | Blob
-Projection = Local | Cosmos
+Projection = Local | Cosmos | provider equivalente
 ```
 
 Projection representa un `SourceReleaseRef` concreto.
 
 Source current nunca se determina desde Cosmos.
 
-## Exact capability composition en Manager
+## Contrato único de Manager
 
-Manager puede resolver por separado:
+Cada `ManagerModule` declara:
 
 ```text
-DraftValidationWorkflow
-ExactSourceReaderWorkflow
-ExactSourcePublicationWorkflow
-ExactSourceHistoryWorkflow
-ExactProjectionWorkflow
+SourceKey
+source_service
+source_reader_service
+projection_service
+draft_validation_service
+source_history_service | None
 ```
 
-`workflow_service` legacy sólo es obligatorio para módulos que todavía usan `ConfigurationLifecycleWorkflow`.
+No existe una segunda familia `exact_*`.
 
-No existe fallback silencioso desde una capability exacta declarada hacia un servicio legacy.
-
-## Web Capability Composition
-
-Las capabilities mantienen ownership separado y dependencias explícitas.
-
-Una composition se justifica cuando:
-
-- capability A debe seguir siendo reusable sin B;
-- capability B debe seguir siendo reusable sin A;
-- el binding necesita conocer ambas;
-- ninguna de las dos debe adquirir ownership de la otra.
-
-No usar `web/compositions` como capa obligatoria ni como cajón general.
-
-### Composition existente: Navigation ↔ User Activity
+### Source
 
 ```text
-Navigation
-    ↓
-navigation-activity
-    ↓
-ActivityRouteResolver
-    ↓
-Users Activity
+SourceReaderWorkflow
+SourcePublicationWorkflow
+SourceHistoryWorkflow
 ```
 
-Ownership:
-
-- Navigation posee definición de rutas;
-- Users Activity posee sesiones/page views/active time;
-- composition traduce rutas a activity route keys;
-- Identity aporta actor, no ownership del historial.
-
-### Composition Users ↔ Manager
+Todos transportan modelos de `source/core`:
 
 ```text
-Manager                         Users Configuration
-   ↑                                   ↑
-   └──── web/compositions/users-manager ┘
-```
-
-La composition expone bindings explícitos para:
-
-- validation;
-- Source read;
-- Source publication;
-- Source History;
-- Projection.
-
-Manager no depende de Users.
-
-Users Configuration no depende de Manager.
-
-## Profiles / Users
-
-```text
-Profiles
-   ↑
-   │ one-way dependency
-Users
-```
-
-Contratos:
-
-- Profiles vive en `web/capabilities/profiles/core`;
-- Profiles no depende de Users;
-- Profiles no depende de ADA;
-- Users puede consumir Profiles;
-- cross-capability validation pertenece a una frontera que ve ambos contratos;
-- no existe shim del namespace anterior `atlanticus.web.users.profiles`.
-
-## Profiles semántico
-
-Profiles core modela exclusivamente Profiles funcionales explícitos.
-
-```text
-ProfileCatalog()
-→ empty
-```
-
-No posee semántica especial de Root, Guest/Pending, Local ni John/Jane.
-
-Administrator es Profile funcional explícito.
-
-## Canonical Users Source
-
-Una única exact Source release separa resources por ownership:
-
-```text
+SourceSnapshot
 SourceReleaseRef
-├── users/configuration.json.gz
-└── profiles/configuration.json.gz
+HistoryPage
+PublishResult
 ```
 
-No existe segundo coordinator ni reloj independiente de Profiles.
+### Projection
 
-Escritura nueva:
-
-- Users schema `2`;
-- Profiles resource schema `1`;
-- `published_by` permanece en Users.
-
-Lectura histórica:
-
-- Users source schema `1` permanece soportado;
-- aggregate legacy se normaliza;
-- no se vuelve a escribir schema `1`.
-
-## Canonical Users Projection
-
-Payload CURRENT:
+Manager consume el servicio de Projection mediante:
 
 ```text
-ProjectionRecord[UsersProfilesConfiguration]
+get_status(source_key)
+select_current_target(source_key)
+project(ProjectionTarget)
 ```
 
-Cosmos Projection escribe schema `2`, lee schema `1` histórico, conserva exact release provenance y CAS.
-
-## Canonical admin composition
-
-El backend administrativo canónico opera directamente sobre `UsersProfilesConfiguration`.
+y conserva los modelos de `projection/core`:
 
 ```text
-UsersProfilesAdminDraft
-├── owner_subject_id
-├── configuration: UsersProfilesConfiguration
-├── source_snapshot: SourceSnapshot
-├── revision
-├── base_payload_revision
-└── saved_at_utc
+ProjectionStatus
+ProjectionTarget
+ProjectionExecutionResult
 ```
 
-Semántica:
+No existe adapter Manager hacia una identidad textual de revisión.
 
-- local revision identifica payload local;
-- base revision identifica BASE local;
-- create nace clean;
-- edit preserva BASE y exact Source snapshot;
-- rebase adopta exact Source snapshot nuevo;
-- local revision no es release identity;
-- draft schema vigente = `2`;
-- no existe parser legacy schema `1` para el draft canónico.
-
-## Manager exact workspace
+## Workspace genérico
 
 `ManagerWorkspace` conserva:
 
-- owner;
-- payload local;
-- exact `SourceSnapshot` como BASE;
-- local revision;
-- base payload revision.
-
-El exact workspace controller:
-
-- carga Source current por `ExactSourceReaderWorkflow`;
-- valida payload por `DraftValidationWorkflow`;
-- verifica contra exact Source snapshot;
-- publica por `ExactSourcePublicationWorkflow`;
-- rebasa sólo después de publicación exitosa.
-
-No usa `source_revision: str` como identidad del Source exacto.
-
-## Exact Projection
-
-Contrato:
-
 ```text
-ExactProjectionWorkflow
-    get_status() -> ProjectionStatus
-    get_current_projection_target() -> ProjectionTarget | None
-    project(ProjectionTarget) -> ProjectionExecutionResult
+owner
+payload local
+SourceSnapshot como BASE
+local revision
+base payload revision
+saved_at
 ```
 
-`ProjectionStatus` es el modelo de `projection/core`:
+Reglas:
 
-```text
-alignment
-source_current_release
-projected_source_release
-```
+- local revision identifica payload local;
+- Source release identity permanece en `SourceSnapshot`;
+- concurrency token no se convierte en release identity;
+- schema vigente = `2`;
+- no hay parser/shim legacy para workspace anterior.
 
-Manager no inventa audit actor, projection revision ni timestamps ausentes del core.
+## Concurrencia
 
-## Exact History
+Antes de publicar:
 
-Contrato:
+1. Manager verifica que la release current siga siendo la misma observada por el workspace.
+2. Manager obtiene el snapshot current fresco.
+3. si sólo cambió el concurrency token, utiliza el token fresco;
+4. si cambió la release, falla como conflicto;
+5. Source conserva la precondición autoritativa final.
 
-```text
-ExactSourceHistoryWorkflow
-    list_history_exact(limit) -> HistoryPage
-    load_history_release_exact(SourceReleaseRef) -> ExactSourceHistoryReadResult
-```
-
-Invariantes:
-
-- History lista publicaciones Source, no autosaves;
-- `SourceReleaseRef` se conserva completo;
-- no se convierte a `RevisionHistoryEntry`;
-- no se crea alias textual de release;
-- lectura exacta debe devolver la misma identidad solicitada.
-
-History y status son capabilities separadas: fallo/ausencia de History no convierte un status exacto válido en unavailable.
+No implementar merge automático sin contrato de dominio.
 
 ## Historical release -> WORKSPACE
 
@@ -319,90 +185,59 @@ validate → verify → publish
 new Source release
 ```
 
-Si todavía no existe workspace, Manager carga Source current para establecer BASE y después aplica el payload histórico.
+History conserva `SourceReleaseRef`.
 
-## Productive Users host
+## Web Capability Composition
 
-CURRENT en ADA Configuration Manager:
+Las capabilities mantienen ownership separado y dependencias explícitas.
+
+Una composition se justifica cuando:
+
+- capability A debe seguir siendo reusable sin B;
+- capability B debe seguir siendo reusable sin A;
+- el binding necesita conocer ambas;
+- ninguna de las dos debe adquirir ownership de la otra.
+
+No usar `web/compositions` como capa obligatoria ni como cajón general.
+
+## Consumers de Manager
+
+El core genérico ya está cerrado.
+
+Cada dominio consumidor debe alinearse directamente al contrato único.
+
+No crear arquitectura especial para:
+
+- Navigation;
+- Tools;
+- KPI Configuration;
+- KPI Definition.
+
+Si un consumidor sigue usando nombres/servicios legacy, se reemplaza de raíz.
+
+## Regla de reemplazo
+
+Cuando una solución raíz reemplaza el contrato anterior:
 
 ```text
-Users ManagerModule
-├── workflow_service = None
-├── draft_validation_service
-├── exact_source_reader_service
-├── exact_source_history_service
-├── exact_source_workflow_service
-└── exact_projection_service
+LEGACY                      REMOVE
+ADAPTERS / SHIMS / ALIASES  FORBIDDEN
+DOBLE CONTRATO              FORBIDDEN
+revision -> ProjectionTarget reconstruction REMOVE
+expected_source_revision    REMOVE
 ```
 
-ADA registra las capabilities exactas Users por separado.
-
-Projection llega ya compuesta mediante `ConfigurationManagerDependencies.users_exact_projection`; ADA no extrae SourceStore/ProjectionStore privados.
-
-`UsersManagerWorkflowAdapter` fue retirado.
-
-## Legacy administrative boundary
-
-Legacy permanece sólo donde existan consumidores no migrados.
-
-Para Users Manager:
-
-- authoring activo no usa `UsersConfigurationCatalog`;
-- publication no usa lifecycle legacy;
-- status no usa `Manager ProjectionStatus` legacy;
-- projection no usa adapter legacy;
-- History preview no usa catálogo legacy.
-
-No crear adapters exact→legacy para preservar APIs no publicadas.
-
-Navigation/Tools/KPI/KPI Definitions siguen teniendo adapters legacy que deben alinearse en un frente separado.
-
-## Pending / Guest / Root
-
-Pending pertenece a Users.
-
-Guest no es Profile runtime ni Profile funcional configurable.
-
-Root pertenece a Identity/bootstrap y no se materializa como Managed User/Profile.
-
-Local/John/Jane quedan fuera de Profiles; su representación runtime final sigue OPEN.
-
-## Storage Resource Topology
-
-`users.runtime` permanece el único recurso durable runtime Users confirmado.
-
-No se crea `profiles.runtime` por inferencia.
-
-El resource topology físico del canonical Users Projection store continúa OPEN.
-
-## Principio de implementación
-
-Definir contratos antes que consumidores.
-
-Backend antes que frontend cuando el contrato pertenece al backend.
-
-Si una solución raíz reemplaza un contrato anterior:
-
-- cutover limpio;
-- sin shims temporales;
-- sin re-exports legacy nuevos;
-- sin ownership duplicado.
-
-Read/import compatibility histórica durable puede permanecer cuando está explícitamente separada del authoring canónico.
+Compatibilidad durable histórica de un dominio sólo puede permanecer cuando sea un requisito explícito y esté separada del contrato activo.
 
 ## Fronteras futuras
 
 OPEN / PLANNED:
 
-- ADA legacy Projection contract alignment;
-- wiring físico externo y Docker E2E;
-- Profile replacement UX;
-- Users runtime canonical cutover;
-- exact-release provenance en `users.runtime`;
-- eliminación legacy;
-- resource topology físico canonical Users Projection;
-- Root physical configuration;
-- Local/John/Jane runtime contract;
-- Python 3.14.7 global migration.
+- consumer cutover Navigation;
+- consumer cutover Tools;
+- consumer cutover KPI Configuration;
+- consumer cutover KPI Definition;
+- qualification global posterior a esos cutovers;
+- demás frentes globales ya abiertos en sus documentos especializados.
 
-No crear Profiles Source/Projection independiente sin requisito nuevo de lifecycle/release propio.
+No reabrir el contrato core de Manager para resolver consumidores.

@@ -13,125 +13,156 @@ Git permanece READ ONLY salvo autorización explícita.
 ## Checkpoint actual
 
 ```text
-moragaga/atlanticus@384a68fe8fa42263623c95d1d132af2ca54574c8
-parent: b2254450b4543d2422ca8580357b9054b515cd6e
+moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+parent: 1302fefdf046b1cef7beed594e832f9a7a181a06
 ```
 
-`atlanticus:main` fue verificado apuntando exactamente a ese commit.
+GitHub confirma ese commit y parent.
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@b58a6c8f0f7631de6789adaee4b913b197be8806
+moragaga/atlanticus-cannonical@d4681dc3d14b0233c857ca3870795368456c7bad
 ```
 
-## Checkpoints preservados
+## Cambio implementado
 
 ```text
-5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
-    Manager root exact Projection handoff
-
-9342769a626c39d1f7f860f81e051e2ef1300620
-    Generic Manager exact-source boundary
-
-567e1a12c862b46dfd7f4ec75c3be750c95bbd54
-    Users admin draft baseline semantics
-
-7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
-    Users Manager exact-source composition
-
-d23bff025ab899367a8da1178dde5ab50806fe47
-    Users admin UI draft cutover
-
-964ec5b3ab4bc9883d1aebf85fbeefbabf657925
-    Manager exact Projection boundary
-
-abe6061ffb38c0dde67dfe908fa455c48c387619
-    Users exact Projection composition
-
-8ca25e68603f4fb90177dc90f4079b5ab5ff959f
-    Users exact Projection host cutover
-
-b2254450b4543d2422ca8580357b9054b515cd6e
-    Users exact Projection status cutover
-
-384a68fe8fa42263623c95d1d132af2ca54574c8
-    Users exact Source History boundary + host/UI cutover
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Los commits intermedios del 15-09-2026 entre `d23bff...` y `964ec...` contienen la migración de workspace/source callbacks y exact-only module contract; su realidad final está consolidada en `384a68fe...`.
+El commit reemplaza el diseño de coexistencia exact/legacy por un contrato único.
 
-## Implementación actual inspeccionada
+## Archivos legacy removidos de Manager
 
-- `web/capabilities/manager`;
-- `web/capabilities/source/core`;
-- `web/capabilities/projection/core`;
-- `web/capabilities/users/configuration`;
-- `web/compositions/users-manager`;
-- `scopes/ada/web/application/ada-configuration-manager`.
+Productivo:
 
-## Estado Users Manager
+```text
+web/capabilities/manager/src/atlanticus/web/manager/exact_projection.py
+web/capabilities/manager/src/atlanticus/web/manager/exact_source.py
+web/capabilities/manager/src/atlanticus/web/manager/exact_workspace.py
+web/capabilities/manager/src/atlanticus/web/manager/web/exact_workspace.py
+```
 
-VERIFIED en main:
+Espejo comentado equivalente:
 
-- `workflow_service=None`;
-- validation exact/canonical;
-- exact Source reader;
-- exact Source History;
-- exact Source publication;
-- exact Projection;
-- canonical History preview;
-- `UsersManagerWorkflowAdapter` eliminado.
+```text
+web/capabilities/manager/commented/atlanticus/web/manager/exact_projection.py
+web/capabilities/manager/commented/atlanticus/web/manager/exact_source.py
+web/capabilities/manager/commented/atlanticus/web/manager/exact_workspace.py
+web/capabilities/manager/commented/atlanticus/web/manager/web/exact_workspace.py
+```
+
+También fueron retirados tests cuyo contrato era la arquitectura anterior o estructura visual no contractual.
+
+## Contrato inspeccionado en main
+
+`ManagerModule` CURRENT:
+
+```text
+source_key
+source_service
+source_reader_service
+projection_service
+draft_validation_service
+source_history_service | None
+```
+
+Source CURRENT:
+
+```text
+SourceReaderWorkflow
+SourcePublicationWorkflow
+SourceHistoryWorkflow
+```
+
+Projection CURRENT:
+
+```text
+ProjectionStatus
+ProjectionTarget
+ProjectionExecutionResult
+```
+
+Workspace CURRENT:
+
+```text
+ManagerWorkspace schema 2
+BASE = SourceSnapshot
+```
 
 ## Qualification observada
 
-Reportada por el usuario:
+Reportada por el usuario después de aplicar el cutover:
 
 ```text
-focused Manager + Users Configuration + users-manager  238 passed
-full ADA                                               56 passed / 4 failed
+web/capabilities/manager
+54 passed
+0 failed
 ```
 
-Los cuatro failures ADA actuales corresponden a adapters legacy Projection no-Users.
+## Evidence scope
 
-No se afirma:
+VERIFIED:
 
-- full Web suite current;
+- commit `59fcd3e...` existe en `atlanticus:main`;
+- parent `1302fefd...`;
+- Manager contract genérico;
+- eliminación de la ruta exact/legacy dentro de Manager;
+- Manager scoped tests GREEN.
+
+UNVERIFIED:
+
+- full Web suite;
+- full ADA suite;
+- Navigation consumer;
+- Tools consumer;
+- KPI Configuration consumer;
+- KPI Definition consumer;
 - Docker E2E;
-- Python 3.14.7 current;
+- Python 3.14.7 global;
 - CI remoto adicional.
 
-## Conflicto canonical previo a este reemplazo
+## Canonical conflict encontrado
 
-El canonical anterior todavía afirmaba que:
+El canonical anterior todavía describía:
 
-- el host ADA Users registraba `UsersManagerWorkflowAdapter`;
-- productive exact-source Users estaba PLANNED;
-- History preview Users seguía legacy;
-- exact status/history de Users no estaban cerrados.
+- `workflow_service`;
+- `exact_source_*`;
+- `exact_projection_service`;
+- `ExactSource*Workflow`;
+- `ExactProjectionWorkflow`;
+- coexistencia exact/legacy;
+- `ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT` como un único frente conjunto.
 
-Eso contradice `atlanticus:main@384a68fe...`.
+Eso contradice el contrato implementado en `59fcd3e...`.
 
-Este reemplazo adjudica el conflicto a favor de la realidad implementada y actualiza canonical.
+Este reemplazo adjudica el conflicto a favor de `atlanticus:main`.
 
-## Decisions repo
+## Decisions histórico
 
-`moragaga/atlanticus-decisions` permanece HISTORICAL.
+Se inspeccionó `ATLANTICUS_MANAGER_GLOBAL_RULES_2026-09-02.md`.
 
-No se utiliza para revertir el lifecycle exacto implementado.
+Sus reglas de aplicación — Manager genérico, Home real, registry como fuente única, separación configuration/workflow — son compatibles con el cutover.
 
-## Siguiente ledger frontier
+El documento usa “revisión” como concepto de UX/workflow, pero no define un contrato Source/Projection que obligue a conservar revision strings como identidad ejecutable.
+
+No se realizó auditoría exhaustiva de todos los archivos históricos de `atlanticus-decisions`; cualquier otro conflicto permanece UNVERIFIED y no bloquea este cierre.
+
+## Próximo ledger frontier
 
 ```text
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
+NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED / NEXT
 ```
 
-Affected:
+Después, en chats separados:
 
-- Navigation;
-- Tools;
-- KPI;
-- KPI Definitions.
+```text
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+```
 
-No reabrir Users.
+No reabrir Manager core.

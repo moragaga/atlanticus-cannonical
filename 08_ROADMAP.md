@@ -10,167 +10,86 @@ Cerrar verticalmente capacidades integrables y verificables.
 
 Mantener un foco por incremento.
 
-## Web Platform — checkpoint actual
+Para la fase actual del Manager:
 
 ```text
-moragaga/atlanticus@384a68fe8fa42263623c95d1d132af2ca54574c8
+UN CHAT = UN CONSUMER = UN INCREMENTO CERRABLE
 ```
 
-Estado relevante:
+## Checkpoint actual de este cierre
 
 ```text
-USERS-CANONICAL-SOURCE-1                      CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2                  CLOSED / VERIFIED / CURRENT
-PROFILES-DOMAIN-EXTRACTION                    CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS                   CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT                CLOSED / VERIFIED / CURRENT
-ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
-MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
-USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
-ADMIN-UI-DRAFT-CUTOVER                        CLOSED / VERIFIED / CURRENT
-USERS-EXACT-MANAGER-LIFECYCLE                 CLOSED / VERIFIED / CURRENT
-
-USERS-PROFILES-DOMAIN-SEPARATION              IN PROGRESS
-USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
-
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT       PLANNED / NEXT
-USERS-RUNTIME-CANONICAL-CUTOVER               PLANNED
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE        PLANNED
-DOMAIN-LEGACY-DELETION                        BLOCKED
+moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
 ```
 
-## Cierre Users exact Manager lifecycle
-
-Queda congelado:
+## Hito cerrado
 
 ```text
-validate        EXACT
-read            EXACT
-publish         EXACT
-status          EXACT
-project         EXACT
-history list    EXACT
-history read    EXACT
-history preview EXACT
-history -> work EXACT
-legacy workflow NONE
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Además:
+Resultado:
 
-- `UsersManagerWorkflowAdapter` fue removido;
-- Users `ManagerModule.workflow_service=None`;
-- exact Source reader/publication/history son servicios separados;
-- exact Projection status/target/result conserva modelos `projection/core`;
-- History conserva `HistoryPage` + `SourceReleaseRef`;
-- preview Users usa `UsersProfilesConfiguration`;
-- historical load crea trabajo local sobre BASE current;
-- no se repunta Source current;
-- no existen shims release/string.
+- una sola ruta Source/Projection;
+- legacy Manager removido;
+- adapters/shims/aliases de transición prohibidos;
+- `expected_source_revision` removido;
+- reconstruction revision→`ProjectionTarget` removida;
+- workspace genérico basado en `SourceSnapshot`;
+- Manager tests: `54 passed`.
 
-`USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER` queda SUPERSEDED por este cierre más preciso.
+## Secuencia de consumers
 
-## Qualification actual
+Cada componente debe cerrarse en chat separado.
+
+Orden recomendado:
 
 ```text
-focused Manager + Users Configuration + users-manager   238 passed
-full ADA                                                56 passed / 4 failed
+1. NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
+2. TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+3. KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+4. KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+5. otros consumers reales encontrados en atlanticus:main
+6. MANAGER-CONSUMER-GLOBAL-QUALIFICATION
 ```
 
-Los cuatro failures ADA restantes pertenecen a adapters Projection legacy de Navigation/Tools/KPI/KPI Definitions.
+No se presupone que todos requieran los mismos cambios.
 
-No son un motivo para reabrir Users.
+## Criterio de cierre por consumer
 
-## Siguiente foco aislado recomendado
+Cada chat debe:
+
+1. localizar su implementación real en `atlanticus:main`;
+2. verificar cómo construye `ManagerModule`;
+3. verificar sus servicios Source/Projection;
+4. reemplazar directamente cualquier contrato anterior;
+5. eliminar adapters/shims/aliases;
+6. actualizar tests del comportamiento final;
+7. ejecutar qualification scoped;
+8. cerrar antes de abrir otro consumer.
+
+## No mezclar
+
+Durante cada consumer cutover no mezclar:
+
+- otro consumer de Manager;
+- Python migration;
+- runtime provenance no relacionado;
+- Root/bootstrap físico;
+- legacy deletion global de otros dominios;
+- Docker E2E general;
+- rediseños visuales no contractuales.
+
+## Qualification global
 
 ```text
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
-PLANNED / NEXT
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED
 ```
 
-Objetivo de debate/diseño:
+Se desbloquea sólo cuando los consumers identificados estén cerrados.
 
-- auditar el contrato `ConfigurationLifecycleWorkflow` vigente;
-- alinear `get_current_projection_target()`;
-- reemplazar `project(expected_source_revision: str)` por `project(ProjectionTarget)` donde corresponda;
-- construir `ProjectionExecutionResult` con `target`;
-- mantener History/publication legacy sólo donde aún sean contratos válidos;
-- no inventar exact-source para dominios que aún no lo requieren;
-- conservar cambios pequeños por adapter/capability.
+## Otros frentes
 
-Affected:
-
-```text
-NavigationManagerWorkflowAdapter
-ToolConfigurationManagerWorkflowAdapter
-KpiConfigurationManagerWorkflowAdapter
-KpiDefinitionManagerWorkflowAdapter
-```
-
-## No mezclar con el siguiente foco
-
-- Users exact lifecycle;
-- Users runtime canonical cutover;
-- Users runtime exact-release provenance;
-- Root physical config;
-- Python 3.14.7 global migration;
-- Navigation administrative migration general;
-- Manager IndexedDB global;
-- legacy deletion global;
-- Docker E2E general.
-
-## Después, como incrementos independientes
-
-```text
-USERS-RUNTIME-CANONICAL-CUTOVER           PLANNED
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE    PLANNED
-NAV-CONSUMER-MIGRATION-B                  PLANNED
-DOMAIN-LEGACY-DELETION                    BLOCKED
-```
-
-`USERS-ADMIN-CANONICAL-MIGRATION` permanece IN PROGRESS como umbrella hasta retirar o adjudicar consumidores legacy fuera del Manager Users ya migrado.
-
-## Profile delete replacement UX
-
-Backend contract CLOSED: delete de Profile referenciado exige replacement y reasignación atómica.
-
-UI actual bloquea/no ejecuta ese delete cuando hay referencias.
-
-La UX para elegir replacement permanece PLANNED y no reabre el backend contract.
-
-## Runtime canonical cutover
-
-Permanece PLANNED.
-
-Debe materializar `users.runtime` desde contrato/projection canónico.
-
-## Runtime exact-release provenance
-
-Permanece PLANNED.
-
-No introducir shim `SourceReleaseId <-> str`.
-
-## Productive dependency construction / E2E
-
-UNVERIFIED:
-
-- assembly externo concreto de `users_profiles_administration`;
-- assembly externo concreto de `users_exact_projection`;
-- Docker E2E del host completo.
-
-No inferir estas capas desde la composición de aplicación ya cerrada.
-
-## Python/Trixie
-
-Python 3.14.7 + Trixie permanece decidido y pendiente global.
-
-No mezclar esta migración con el siguiente foco.
-
-## Resource readiness
-
-El resource físico de `users.runtime` está congelado.
-
-La inventory global y resource topology del canonical Users Projection store continúan abiertos.
-
-No inferir `profiles.runtime`.
+Los demás frentes del roadmap anterior continúan según sus documentos especializados y no fueron revalidados por este cierre.

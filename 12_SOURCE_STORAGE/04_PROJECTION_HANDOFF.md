@@ -31,144 +31,81 @@ project(target)
 
 resuelve exactamente la release del target y no relee current para sustituirla.
 
-Source puede avanzar durante ejecución sin invalidar una Projection exacta ya iniciada.
-
 ## Provenance durable
 
-Projection activa conserva:
-
-- `source_key`;
-- `source_release_id`;
-- `source_published_at_utc`;
-- `projected_at_utc`.
+Projection activa conserva identidad de Source release exacta.
 
 CURRENT/OUTDATED compara release identity, nunca content hash.
 
-## Alignment
+## Manager generic handoff
+
+Manager consume directamente Projection Core.
+
+Contrato de servicio esperado por el coordinator:
 
 ```text
-NEVER_PROJECTED
-CURRENT
-OUTDATED
+get_status(source_key) -> ProjectionStatus
+select_current_target(source_key) -> ProjectionTarget | None
+project(target) -> ProjectionExecutionResult
 ```
 
-Attempt outcome:
+Invariantes:
 
-```text
-SUCCESS
-FAILED
-```
+- el target llega completo a `project`;
+- el target debe usar el `SourceKey` del módulo;
+- Manager no reconstruye target desde revision;
+- Manager no crea un resultado paralelo;
+- `ProjectionExecutionResult.target` conserva el target ejecutado.
 
-Failure no reemplaza la última Projection exitosa.
+## Contrato superseded
 
-## Projection Store Core
-
-Core expone:
-
-```text
-get_active(source_key)
-replace_active(projection)
-```
-
-No define history genérico ni failure journal durable.
-
-## Users CURRENT payload
-
-La evidencia temprana de Users/Cosmos usó un aggregate anterior.
-
-Ese payload fue SUPERSEDED por UCS-1.
-
-Contrato CURRENT:
-
-```text
-ProjectionStore[UsersProfilesConfiguration]
-ProjectionRecord[UsersProfilesConfiguration]
-```
-
-`CosmosUsersConfigurationProjectionStore`:
-
-- escribe schema `2`;
-- puede leer schema `1` histórico;
-- usa create-only first write;
-- reemplazo por ETag/CAS;
-- no blind upsert;
-- same exact target + same payload es idempotente;
-- target histórico explícito puede activarse;
-- no infiere ordering por release id/timestamps.
-
-## Manager root exact-target
-
-CLOSED:
-
-- `get_current_projection_target()`;
-- `project(ProjectionTarget)`;
-- result conserva exact target;
-- callback selecciona current server-side;
-- browser no aporta identidad ejecutable.
-
-## Manager exact Projection boundary
-
-Manager además posee:
+Ya no forman parte de la frontera Manager:
 
 ```text
 ExactProjectionWorkflow
-    get_status()
-    get_current_projection_target()
-    project(target)
+ConfigurationLifecycleWorkflow
+get_current_projection_target() sin source_key como servicio Manager específico
+project(expected_source_revision)
+projection revision textual
 ```
 
-El status es `projection/core.ProjectionStatus`, no un adapter al modelo legacy.
+La semántica exact-release permanece; lo que se elimina es la duplicación Manager `exact` vs `legacy`.
 
-Manager presentation deriva state desde:
+## Source publication handoff
+
+Manager publication usa `SourceSnapshot`.
+
+No usa:
 
 ```text
-source_current_release
-projected_source_release
-alignment
+expected_source_revision
 ```
 
-No inventa audit/projection revision.
-
-## Users exact Projection adoption
-
-CURRENT:
-
-```text
-UsersManagerExactProjectionWorkflow
-    SourceProjectionService[UsersProfilesConfiguration]
-    + SourceKey
-```
-
-El workflow:
-
-- obtiene exact status;
-- selecciona target current;
-- valida source key del target;
-- proyecta exactamente el target.
-
-ADA recibe esa capability ya compuesta mediante `users_exact_projection`.
+La selección del target posterior se realiza desde el servicio Projection con el `SourceKey`.
 
 ## Qualification actual
 
 Current implementation checkpoint:
 
 ```text
-384a68fe8fa42263623c95d1d132af2ca54574c8
+59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
 ```
 
-Users exact Projection status/host está CLOSED/VERIFIED/CURRENT.
+Manager scoped suite:
 
-Los failures ADA restantes pertenecen a legacy adapters no-Users y no contradicen el handoff exacto Users.
+```text
+54 passed
+```
 
 ## Fuera de este cierre
 
 OPEN:
 
-- `users.runtime` exact provenance;
-- runtime canonical cutover;
-- legacy Projection alignment Navigation/Tools/KPI/KPI Definitions;
-- otros providers/domain consumers;
-- orchestration multi-capability;
-- retention/GC;
-- resource topology físico Users Projection;
-- browser IndexedDB global.
+- Navigation consumer alignment;
+- Tools consumer alignment;
+- KPI Configuration consumer alignment;
+- KPI Definition consumer alignment;
+- global consumer qualification;
+- demás contratos especializados ya abiertos.
+
+No reabrir Projection Core para resolver un consumer.

@@ -14,9 +14,9 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `07_VALIDATION_BASELINE.md` | Evidencia de qualification. | CURRENT |
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items no bloqueantes. | CURRENT |
-| `10_MANAGER/` | Manager, login/bootstrap y metadata ADA. | CURRENT DIRECTION |
+| `10_MANAGER/` | Manager genérico, workflow, Source/Projection y fronteras administrativas. | CURRENT |
 | `11_ADA_GENERIC/` | ADA Generic y orden de Tools. | CURRENT DIRECTION |
-| `12_SOURCE_STORAGE/` | Source Core/Local/Blob + Projection Handoff implementados; Manager/migración siguientes. | IN PROGRESS |
+| `12_SOURCE_STORAGE/` | Source/Projection exact-release y handoff genérico a Manager. | IN PROGRESS |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
 | `14_ADA_COMMAND_CENTER/` | Command Center y Alarm ownership. | CURRENT DIRECTION |
 | `15_WEB_PLATFORM/` | Web platform, Activity, startup y projections. | CURRENT |
@@ -25,6 +25,22 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `18_UNIVERSITY/` | Casos pedagógicos reales. | CURRENT DIRECTION |
 | `ATLANTICUS_ENGINEERING_RULES.md` | Reglas de ingeniería. | CURRENT |
 | `BASELINE_CLOSURE.md` | Qué queda congelado y qué no. | CURRENT |
+
+## Checkpoint de implementación de este cierre
+
+```text
+moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+parent: 1302fefdf046b1cef7beed594e832f9a7a181a06
+```
+
+## Cambio canónico principal
+
+```text
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+Manager ya no mantiene rutas `exact` y `legacy` paralelas.
 
 Atajos:
 

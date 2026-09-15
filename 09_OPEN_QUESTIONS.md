@@ -4,240 +4,114 @@ Estado: **CANONICAL OPEN ITEMS**
 
 Los puntos aquí no reabren contratos ya CLOSED.
 
-## Users / Manager exact lifecycle
+## Manager generic core
 
 ### CLOSED
 
 Ya no están OPEN:
 
-- productive exact-source registration Users en ADA;
-- Users lifecycle legacy coexistence;
-- Users exact Source read;
-- Users exact publication;
-- Users exact Projection status;
-- Users exact Projection execution;
-- Users exact History list/read;
-- History preview Users;
-- History release identity transport;
-- load History como local work;
-- destino de `UsersManagerWorkflowAdapter` en el host ADA.
+- dual routing exact/legacy;
+- `workflow_service` como lifecycle Manager;
+- `ExactSourceReaderWorkflow`;
+- `ExactSourcePublicationWorkflow`;
+- `ExactSourceHistoryWorkflow`;
+- `ExactProjectionWorkflow` como frontera Manager;
+- `expected_source_revision`;
+- reconstruction revision→`ProjectionTarget`;
+- `resolve_exact_source_lifecycle`;
+- archivos `exact_*` dentro de Manager;
+- schema workspace anterior al cutover.
 
 Estado:
 
 ```text
-USERS-EXACT-MANAGER-LIFECYCLE
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Contrato cerrado:
+## OPEN — Navigation consumer
+
+Siguiente foco recomendado:
 
 ```text
-workflow_service               None
-draft_validation_service       exact/canonical
-exact_source_reader_service    exact
-exact_source_history_service   exact
-exact_source_workflow_service  exact
-exact_projection_service       exact
+NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED / NEXT
 ```
 
-## OPEN — ADA legacy Projection contract alignment
-
-Este es el único foco recomendado para el siguiente chat.
-
-Affected:
-
-1. `NavigationManagerWorkflowAdapter`
-2. `ToolConfigurationManagerWorkflowAdapter`
-3. `KpiConfigurationManagerWorkflowAdapter`
-4. `KpiDefinitionManagerWorkflowAdapter`
-
-VERIFIED gap:
-
-- Manager `ConfigurationLifecycleWorkflow` vigente requiere `get_current_projection_target()`;
-- `project(...)` recibe `ProjectionTarget`;
-- `ProjectionExecutionResult` requiere `target`;
-- adapters ADA legacy todavía exponen/esperan revisions textuales;
-- full ADA suite actual: `56 passed, 4 failed`.
-
 OPEN:
 
-5. Definir el mínimo cutover limpio para esos adapters.
-6. Determinar si cada dominio ya puede seleccionar `ProjectionTarget` exacto desde su workflow actual.
-7. Separar cualquier dominio que requiera contrato adicional en vez de inventar target/provenance.
-8. Reejecutar full ADA suite tras la alineación.
-9. No tocar Users para resolver estos fallos.
+1. localizar todos los archivos Navigation que consumen Manager;
+2. verificar su `ManagerModule`;
+3. verificar Source reader/publication/history real;
+4. verificar Projection service real;
+5. eliminar cualquier dependencia del contrato anterior;
+6. ejecutar tests scoped;
+7. cerrar Navigation antes de abrir Tools.
 
-## OPEN — Users residual fuera de Manager lifecycle
+## OPEN — Tools consumer
 
-10. `USERS-RUNTIME-CANONICAL-CUTOVER`.
-11. `USERS-RUNTIME-EXACT-RELEASE-PROVENANCE`.
-12. `USERS-ADMIN-CANONICAL-MIGRATION` umbrella para consumidores legacy restantes fuera del Manager Users.
-13. Destino final de `UsersAdministrationService` legacy.
-14. Destino final de `UsersConfigurationBundle`.
-15. Destino de otros consumers de `UsersConfigurationCatalog`.
-16. Legacy deletion Users — BLOCKED hasta demostrar ausencia de consumers.
-17. Resource topology/provisioning físico de canonical Users Projection store.
-18. Composition root productivo concreto del canonical Users Projection store si corresponde.
-19. UX explícita de `replacement_profile_key` al borrar Profile referenciado.
-20. Qualification visual browser productiva del UI/History exacto si no existe evidencia separada.
+```text
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
+```
 
-## OPEN / UNVERIFIED — runtime assembly
+No analizar ni implementar en el chat de Navigation.
 
-21. Constructor físico externo que inyecta `ConfigurationManagerDependencies.users_profiles_administration`.
-22. Constructor físico externo que inyecta `ConfigurationManagerDependencies.users_exact_projection`.
-23. Docker E2E del host completo.
+## OPEN — KPI Configuration consumer
 
-La ausencia de evidencia aquí no reabre la composición de aplicación ya verificada.
+```text
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
+```
 
-## Root bootstrap physical configuration
+No analizar ni implementar junto con Tools o KPI Definition.
 
-Contrato lógico CLOSED.
+## OPEN — KPI Definition consumer
 
-Permanece OPEN / UNVERIFIED:
+```text
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
+```
 
-24. fuente física de `BootstrapRootPolicy`;
-25. almacenamiento/configuración de `issuer`;
-26. almacenamiento/configuración de `subject_id`;
-27. mapping exacto claims Entra;
-28. lifecycle operativo disable/revoke;
-29. integración Key Vault/env/config si corresponde.
+Debe cerrarse como componente independiente.
 
-No inventar secretos ni claims.
+## OPEN — otros consumers
 
-## Local / John / Jane
+Después de los cuatro nombres conocidos, realizar una búsqueda final en `atlanticus:main` para detectar otros `ManagerModule` o consumers del contrato anterior.
 
-Boundary CLOSED:
+No inventar consumers por nombres históricos.
 
-- no son Profiles funcionales.
+## BLOCKED — qualification global
 
-Permanece OPEN:
+```text
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED
+```
 
-30. owner exacto contrato runtime Local;
-31. representación runtime John/Jane;
-32. colores/visuals estáticos definitivos;
-33. interacción Local con `EffectiveUser`.
+Motivo:
 
-## Navigation / Manager Source migration
+- Manager core está GREEN scoped;
+- consumers todavía no fueron verificados contra el contrato nuevo;
+- full Web/ADA no fue ejecutado en `59fcd3e...`.
 
-Cerrado:
+## UNVERIFIED
 
-- Navigation canonical Source;
-- Navigation ProjectionStore Local/Cosmos;
-- Navigation runtime canonical consumer;
-- Manager root Project exact-target cutover;
-- Manager generic exact-source boundaries.
+- full Web suite en `59fcd3e...`;
+- full ADA suite en `59fcd3e...`;
+- Docker E2E;
+- CI remoto;
+- Python 3.14.7/Trixie global;
+- ausencia total de legacy fuera de Manager;
+- impacto real del cutover en cada consumer hasta inspeccionarlo.
 
-OPEN:
+## Otros open items históricos
 
-34. ADA legacy Projection contract alignment del adapter Navigation;
-35. migración administrativa Navigation más amplia;
-36. Navigation legacy deletion — BLOCKED;
-37. Manager WORKSPACE IndexedDB;
-38. retiro SharePoint/Power Automate sólo cuando consumers migren.
-
-## Resources
-
-Cerrado:
-
-- `users.runtime`;
-- Storage Topology;
-- Cosmos preflight bridge;
-- Users Cosmos runtime adapter.
-
-OPEN:
-
-39. inventory completa de recursos;
-40. Storage provisioning parity;
-41. permisos cloud creación/validación;
-42. lifecycle Web resource readiness;
-43. provisioning/validation real `users.runtime` por entorno;
-44. resource physical contract canonical Users Projection store.
-
-## Source / Blob
-
-Cerrado:
-
-- release identity;
-- immutable releases;
-- SourceStore;
-- concurrency/current;
-- Local/Blob parity;
-- exact-release Projection handoff;
-- Users canonical multi-resource release;
-- Manager exact Source publication/read/history boundaries;
-- Users exact Manager lifecycle.
-
-OPEN:
-
-45. retention/cleanup policy fuera de `SourceStore`.
-
-## User Activity
-
-OPEN:
-
-46. partition key final;
-47. deterministic id format final;
-48. persistence across reload;
-49. TTL 86400 físico.
-
-## Backend / Frontend generation
-
-OPEN:
-
-50. ProcessDefinition/generator audit/freeze;
-51. external DevOps distribution metadata;
-52. Python 3.14.7/Trixie global migration;
-53. ADA Generic artifact tooling;
-54. final Web distribution contract.
-
-## Manager / Login
-
-OPEN:
-
-55. eliminar local full-access bypass donde corresponda;
-56. Login/Bootstrap Console;
-57. Component External Links schema;
-58. warmup/cache contract.
-
-## KPI
-
-OPEN:
-
-59. ADA legacy Projection alignment de KPI/KPI Definitions;
-60. `REPROCESS_CURRENT`;
-61. full Historian rebuild semantics.
-
-## Alarm / Command Center
-
-OPEN según documentos especializados:
-
-62. B.2 runtime/materialization gap;
-63. Management payload/actions ADA Web;
-64. History/Data Sufficiency qualification;
-65. analytics sólo después de GREEN.
-
-## Scripts / Docs
-
-OPEN:
-
-66. component-level gates faltantes;
-67. master repo integrity gate;
-68. env.detail enrichment;
-69. final READMEs.
-
-## Loaders
-
-OPEN:
-
-70. ADA loader;
-71. Manager loader;
-72. Command Center loader cuando cierre Web design.
+Los open items de otros dominios permanecen en sus documentos especializados y no fueron revalidados en este cierre.
 
 ## Siguiente foco
 
 ```text
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
-PLANNED / NEXT
+NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
 ```
 
-No mezclarlo con runtime provenance, Python migration, Root physical config, legacy deletion global ni Users exact lifecycle.
+No mezclarlo con Tools, KPI Configuration, KPI Definition ni otros frentes.

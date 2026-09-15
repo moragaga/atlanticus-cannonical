@@ -1,10 +1,10 @@
 # Manager — Source Blob Handoff
 
-Estado: **SOURCE IMPLEMENTED / USERS EXACT MANAGER LIFECYCLE CLOSED / CONSUMER MIGRATION IN PROGRESS**
+Estado: **SOURCE IMPLEMENTED / MANAGER GENERIC HANDOFF CLOSED / CONSUMER MIGRATION IN PROGRESS**
 
 ## Source productivo
 
-Source productivo disponible:
+Source productivo objetivo:
 
 ```text
 Azure Blob Storage
@@ -12,7 +12,7 @@ Azure Blob Storage
 
 Local conserva semántica equivalente de desarrollo/QA.
 
-SharePoint/Power Automate permanecen sólo donde existan consumidores legacy.
+SharePoint/Power Automate pueden permanecer sólo donde consumidores todavía no hayan migrado; no son autoridad donde Blob ya lo sea.
 
 ## Source Core
 
@@ -29,8 +29,6 @@ Source Core cubre:
 - exact reads;
 - integrity verification.
 
-Blob cubre manifest como commit point, create-only first publish, conditional write, `ConcurrencyToken` opaco, recovery e integridad.
-
 ## History
 
 Cada publicación Source es snapshot completo, autocontenido e inmutable.
@@ -45,21 +43,11 @@ Restore publica una nueva release.
 
 Nunca repunta current directamente a una release histórica.
 
-Manager Users implementa este principio cargando el payload histórico como trabajo local sobre BASE current.
-
-## No-op publish
-
-`SourceStore.publish(...)` válido crea una nueva publicación.
-
-Si una UI desea no-op funcional debe decidirlo antes de invocar Source.
-
 ## Concurrencia
 
 Backend aplica la precondición autoritativa con `ConcurrencyToken`.
 
-No existe `force=True`.
-
-`basis_release` preserva base/provenance según el contrato de publication.
+Manager conserva `SourceSnapshot` hasta publication y relee current antes de invocar el workflow.
 
 ## Source -> Projection
 
@@ -70,103 +58,76 @@ ProjectionTarget =
     SourceReleaseRef
 ```
 
-`project(target)` lee la release exacta, no consulta current durante ejecución y conserva provenance exacto.
+`project(target)` ejecuta el target exacto.
 
-## Manager exact adoption
+## Manager generic adoption
 
 Manager CURRENT expone:
+
+```text
+SourceReaderWorkflow
+SourcePublicationWorkflow
+SourceHistoryWorkflow
+```
+
+y consume Projection mediante:
+
+```text
+get_status(source_key)
+select_current_target(source_key)
+project(ProjectionTarget)
+```
+
+No convierte `SourceReleaseRef`, `ConcurrencyToken`, `SourceSnapshot`, `HistoryPage`, `ProjectionTarget` ni `ProjectionExecutionResult` a contratos legacy de revisión textual.
+
+## Cutover
+
+Removido del contrato Manager:
 
 ```text
 ExactSourceReaderWorkflow
 ExactSourcePublicationWorkflow
 ExactSourceHistoryWorkflow
 ExactProjectionWorkflow
+ConfigurationLifecycleWorkflow
+expected_source_revision
 ```
 
-No convierte `SourceReleaseRef`, `ConcurrencyToken`, `SourceSnapshot` ni `HistoryPage` a contratos legacy de revisión textual.
+No existe dual contract.
 
-## Users checkpoint
+## Consumers
 
-Users Configuration implementa:
+El handoff genérico de Manager está cerrado.
 
-- Source codec/service;
-- History y exact reads;
-- multi-resource Users+Profiles release;
-- canonical payload `UsersProfilesConfiguration`;
-- exact Source→Projection service;
-- Cosmos Projection schema `2` con lectura histórica schema `1`;
-- exact provenance en Projection;
-- CAS/idempotencia exact-target.
-
-Users Manager implementa:
-
-- canonical draft validation;
-- exact Source reader;
-- exact Source publication;
-- exact Projection status/target/project;
-- exact History list/read;
-- canonical History preview;
-- History load como local work.
-
-Host ADA:
-
-- no registra Users lifecycle legacy;
-- registra servicios exactos separados;
-- recibe Projection ya compuesta;
-- no exporta `UsersManagerWorkflowAdapter`.
-
-Estado:
+La adopción de cada módulo consumidor permanece separada:
 
 ```text
-USERS-EXACT-MANAGER-LIFECYCLE
-CLOSED / VERIFIED / CURRENT
+Navigation        PLANNED / NEXT
+Tools             PLANNED
+KPI Configuration PLANNED
+KPI Definition    PLANNED
 ```
 
-## Exact History handoff
-
-```text
-SourceStore.query_history(...)
-        ↓
-HistoryPage
-        ↓
-UsersProfilesAdministrationService
-        ↓
-UsersManagerExactSourceHistoryWorkflow
-        ↓
-ManagerProjectionCoordinator
-        ↓
-preview / local workspace
-```
-
-La identidad se conserva como `SourceReleaseRef`.
-
-No hay `SourceReleaseId -> revision` shim.
-
-## Consumer migration todavía pendiente
-
-Fuera del Manager Users ya migrado:
-
-- Navigation/Tools/KPI/KPI Definitions Projection contract alignment;
-- runtime canonical Users cutover;
-- runtime exact-release provenance;
-- otros consumidores administrativos legacy;
-- resource topology físico canonical Users Projection;
-- legacy deletion global;
-- browser IndexedDB global;
-- retiro efectivo SharePoint/Power Automate por consumidor.
+No crear adapters para mantener el API Manager anterior.
 
 ## Qualification caveat
 
 Current checkpoint:
 
 ```text
-384a68fe8fa42263623c95d1d132af2ca54574c8
+59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
 ```
 
-Focused Users/Manager suite: `238 passed`.
+Manager scoped suite:
 
-Full ADA: `56 passed / 4 failed`.
+```text
+54 passed
+```
 
-Los failures restantes pertenecen a adapters Projection legacy no-Users y no reabren el Source/History/Projection exacto de Users.
+No se afirma:
 
-Docker E2E y wiring físico externo permanecen UNVERIFIED.
+- full Web GREEN;
+- full ADA GREEN;
+- consumer suites GREEN;
+- Docker E2E;
+- Python 3.14.7 qualification global.

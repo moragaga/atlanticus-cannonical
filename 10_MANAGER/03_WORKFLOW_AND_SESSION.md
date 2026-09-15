@@ -1,6 +1,6 @@
 # Manager — Workflow and Session
 
-Estado: **CURRENT CONTRACT / USERS EXACT MANAGER LIFECYCLE CLOSED**
+Estado: **CURRENT CONTRACT / GENERIC CUTOVER CLOSED**
 
 ## Flujo conceptual
 
@@ -15,268 +15,195 @@ WORKSPACE
 → history/preview
 ```
 
+Guardar WORKSPACE no equivale a publicar Source.
+
 ## BASE / SOURCE / WORKSPACE / PROJECTION
 
 ```text
 BASE
-    exact SourceSnapshot observado al establecer/rebasar el workspace
+    SourceSnapshot observado al establecer/rebasar el workspace
 
 SOURCE
     current durable autoritativo, independiente del workspace
 
 WORKSPACE
-    payload editable local + revision propia + BASE
+    payload editable local + revision local + BASE
 
 PROJECTION
     active projection de una Source release exacta
 ```
 
-Guardar WORKSPACE no equivale a publicar Source.
+## ManagerModule
 
-## Capability model
-
-Un `ManagerModule` puede declarar de forma independiente:
+Contrato vigente:
 
 ```text
-workflow_service
+source_key
+source_service
+source_reader_service
+projection_service
 draft_validation_service
-exact_source_reader_service
-exact_source_history_service
-exact_source_workflow_service
-exact_projection_service
+source_history_service | None
 ```
 
-Para un módulo exacto, `workflow_service` puede ser `None`.
+No existe routing alternativo exact/legacy.
 
-No existe fallback silencioso desde un exact service declarado hacia legacy.
-
-## Exact Source contracts
+## Source contracts
 
 ```text
-ExactSourceReaderWorkflow
-    load_current_source_exact() -> ExactSourceReadResult
+SourceReaderWorkflow
+    load_current_source() -> SourceReadResult
 
-ExactSourcePublicationWorkflow
+SourcePublicationWorkflow
     get_source_snapshot() -> SourceSnapshot
-    publish_draft_exact(
+    publish_draft(
         payload,
         expected_source_snapshot,
-    ) -> ExactSourcePublicationResult
+    ) -> SourcePublicationResult
 
-ExactSourceHistoryWorkflow
-    list_history_exact(limit) -> HistoryPage
-    load_history_release_exact(
+SourceHistoryWorkflow
+    list_history(limit) -> HistoryPage
+    load_history_release(
         release_ref: SourceReleaseRef,
-    ) -> ExactSourceHistoryReadResult
+    ) -> SourceHistoryReadResult
 ```
 
 Invariantes:
 
-- `ExactSourceReadResult` tiene payload exactamente cuando Source existe;
+- `SourceReadResult` tiene payload exactamente cuando Source existe;
 - payload se copia defensivamente;
-- publication conserva `PublishResult` tipado;
+- publication conserva `PublishResult`;
 - expected Source se transporta como `SourceSnapshot`;
-- History conserva `SourceReleaseRef`;
+- History conserva `HistoryPage` y `SourceReleaseRef`;
 - History read debe devolver la misma release solicitada;
-- no reducir exact Source identity a strings legacy.
+- Source identity no se reduce a strings de revisión.
 
-## Exact Projection contract
+## Projection contract
+
+Manager consume el servicio genérico de Projection:
 
 ```text
+get_status(source_key) -> ProjectionStatus
+select_current_target(source_key) -> ProjectionTarget | None
+project(target: ProjectionTarget) -> ProjectionExecutionResult
+```
+
+El coordinator:
+
+- valida autorización;
+- valida `SourceKey`;
+- transporta `ProjectionTarget` completo;
+- no reconstruye target desde una revision;
+- no adapta resultados a un modelo Manager paralelo.
+
+## Workspace
+
+`ManagerWorkspace` schema `2`:
+
+```text
+owner_subject_id
+revision
+base_payload_revision
+saved_at_utc
+source_snapshot
+payload
+```
+
+`revision` y `base_payload_revision` son identidad local del payload.
+
+No son Source release identity.
+
+## Source verification
+
+`ManagerSourceVerification` conserva:
+
+```text
+workspace_revision
+base: SourceSnapshot
+source: SourceSnapshot
+checked_at_utc
+```
+
+`matches` compara:
+
+```text
+base.current == source.current
+```
+
+Un cambio aislado del concurrency token no equivale a una nueva Source release.
+
+## Publication concurrency
+
+Antes de publicar:
+
+1. coordinator valida que `expected_source_snapshot.source_key` sea el del módulo;
+2. relee Source current;
+3. si cambió `current` release → conflict;
+4. si la release es la misma, usa el snapshot current fresco;
+5. el workflow recibe ese snapshot con el token actual;
+6. Source conserva el CAS autoritativo final.
+
+Si publication falla y una reread detecta cambio de release, Manager expone conflicto.
+
+## Lifecycle
+
+Existe una sola función de lifecycle:
+
+```text
+resolve_manager_lifecycle
+```
+
+`resolve_exact_source_lifecycle` fue removido.
+
+## History
+
+History es opcional por módulo.
+
+Cuando existe:
+
+- lista publicaciones Source reales;
+- conserva `SourceReleaseRef`;
+- preview no cambia current;
+- cargar historical reemplaza payload local;
+- BASE current se conserva;
+- validation y verification previas quedan inválidas;
+- volver a publicar crea una release nueva.
+
+## Projection selection
+
+El target actual se obtiene server-side desde el projection service.
+
+El browser no construye identidad ejecutable a partir de strings.
+
+## Contrato removido
+
+SUPERSEDED / REMOVED:
+
+```text
+ConfigurationLifecycleWorkflow
+ExactSourceReaderWorkflow
+ExactSourcePublicationWorkflow
+ExactSourceHistoryWorkflow
 ExactProjectionWorkflow
-    get_status() -> projection.core.ProjectionStatus
-    get_current_projection_target() -> ProjectionTarget | None
-    project(target) -> projection.core.ProjectionExecutionResult
+workflow_service
+exact_source_* services
+exact_projection_service
+expected_source_revision
+source_revision como identidad ejecutable
+revision -> ProjectionTarget reconstruction
 ```
 
-Manager conserva el status core:
+## Consumer boundary
 
-```text
-ProjectionStatus
-├── alignment
-├── source_current_release
-└── projected_source_release
-```
+Manager core no contiene excepciones especiales para Navigation, Tools, KPI Configuration o KPI Definition.
 
-No sintetiza:
-
-- actor;
-- projection revision;
-- projection audit timestamp.
-
-## Coordinator routing
-
-`ManagerProjectionCoordinator` decide por capability declarada:
-
-- `get_status` usa exact Projection si existe;
-- `get_current_projection_target` usa exact Projection si existe;
-- `project` usa exact Projection si existe;
-- validation usa `draft_validation_service`;
-- exact Source read usa `exact_source_reader_service`;
-- exact Source publication usa `exact_source_workflow_service`;
-- exact History usa `exact_source_history_service`.
-
-Legacy `ConfigurationLifecycleWorkflow` permanece sólo para módulos todavía no migrados.
-
-## Status presentation
-
-Exact status browser state conserva:
-
-```text
-source_release_id
-source_published_at_utc
-projected_source_release_id
-projected_source_published_at_utc
-```
-
-Nunca los llama `source_revision`.
-
-History se carga en un bloque independiente. Una ausencia/falla de History no degrada un status exacto válido.
-
-## Manager exact workspace
-
-`ManagerExactWorkspaceController`:
-
-- carga Source current exacto;
-- valida que el browser workspace pertenezca al principal;
-- detecta local work;
-- valida;
-- verifica Source;
-- publica exacto;
-- rebasa tras publicación exitosa;
-- permite reemplazar workspace desde Source current;
-- permite reemplazar sólo payload local.
-
-Force publication no forma parte del camino exacto Users.
-
-## Users CURRENT
-
-En ADA Configuration Manager:
-
-```text
-Users ManagerModule
-    workflow_service               = None
-    draft_validation_service       = USERS_DRAFT_VALIDATION_SERVICE
-    exact_source_reader_service    = USERS_EXACT_SOURCE_READER_SERVICE
-    exact_source_history_service   = USERS_EXACT_SOURCE_HISTORY_SERVICE
-    exact_source_workflow_service  = USERS_EXACT_SOURCE_WORKFLOW_SERVICE
-    exact_projection_service       = USERS_EXACT_PROJECTION_SERVICE
-```
-
-Service registration:
-
-- validation se compone desde users-manager;
-- reader se compone sobre `UsersProfilesAdministrationService`;
-- History se compone sobre `UsersProfilesAdministrationService`;
-- publication se compone sobre `UsersProfilesAdministrationService`;
-- Projection se inyecta ya compuesta mediante dependencies.
-
-`UsersManagerWorkflowAdapter` está removido.
-
-## Users History CURRENT
-
-History exacto usa:
-
-```text
-HistoryPage
-SourceReleaseSummary
-SourceReleaseRef
-ExactSourceHistoryReadResult
-```
-
-La UI serializa para Dash:
-
-```text
-release_id
-published_at_utc
-```
-
-Los dos campos reconstruyen `SourceReleaseRef`; no constituyen `revision`.
-
-`build_users_history_preview` consume `UsersProfilesConfiguration`.
-
-## Load historical as work
-
-Cargar una release histórica:
-
-1. lee exactamente `SourceReleaseRef`;
-2. muestra preview canónico;
-3. al elegir cargarla, aplica su payload al workspace local;
-4. preserva BASE current;
-5. invalida validation/source verification previas;
-6. deja cambios locales;
-7. requiere validate → verify → publish para crear una release nueva.
-
-Si no existe workspace local, primero carga Source current para establecer BASE.
-
-No repunta Source current.
-
-## Concurrencia
-
-Exact Source:
-
-- workspace conserva `SourceSnapshot`;
-- verify compara workspace BASE contra current exacto;
-- publish usa exact snapshot verificado;
-- coordinator detecta stale antes del workflow;
-- Source conserva CAS final.
-
-No implementar merge automático sin contrato de dominio.
-
-## Source -> Projection
-
-```text
-ProjectionTarget =
-    SourceKey
-    +
-    SourceReleaseRef
-```
-
-La ejecución puede proyectar una release seleccionada aunque Source avance.
-
-## Legacy restante
-
-Para módulos no migrados pueden seguir existiendo:
-
-- `ProjectionStatus.source_revision`;
-- `SourcePublicationResult.source_revision`;
-- `SourceVerificationResult.source_revision`;
-- `RevisionHistoryWorkflow`;
-- `publish_draft(... expected_source_revision: str | None)`.
-
-Esos strings no son Source exact identity.
-
-Actualmente Navigation/Tools/KPI/KPI Definitions tienen además un gap Projection con el contrato Manager vigente.
+Cada consumer debe implementar/registrar el contrato genérico directamente.
 
 ## Qualification
 
-Current checkpoint:
-
 ```text
-384a68fe8fa42263623c95d1d132af2ca54574c8
+59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+web/capabilities/manager: 54 passed
 ```
 
-Qualification:
-
-```text
-focused Manager + Users Configuration + users-manager  238 passed
-full ADA                                               56 passed / 4 failed
-```
-
-Los 4 failures pertenecen a adapters Projection legacy no-Users.
-
-## Browser persistence
-
-`dcc.Store(memory)` = estado activo de sesión Dash.
-
-IndexedDB general permanece PLANNED.
-
-SourceStore/Blob sigue siendo autoridad durable publicada.
-
-## Siguiente foco
-
-```text
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
-```
-
-No reabrir Users exact lifecycle.
+Full consumer integration permanece UNVERIFIED.

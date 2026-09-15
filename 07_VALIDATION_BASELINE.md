@@ -6,130 +6,94 @@ Estado: **CURRENT**
 
 Qualification y tests son evidencia de propiedades.
 
-No reinterpretar un FAIL histórico como fallo vigente sin revisar su adjudicación.
+No reinterpretar un FAIL histórico como fallo vigente sin revisar su checkpoint y adjudicación.
 
 No declarar GREEN global cuando sólo existe qualification scoped.
 
-Un hito puede quedar CLOSED/VERIFIED dentro de su frontera aunque una suite mayor tenga fallos adjudicados a contratos preexistentes y fuera de alcance; esos fallos deben quedar explícitamente BLOCKED/OPEN, no ocultos.
-
-## Checkpoint actual
+## Checkpoint actual de este cierre
 
 ```text
-moragaga/atlanticus@384a68fe8fa42263623c95d1d132af2ca54574c8
-parent: b2254450b4543d2422ca8580357b9054b515cd6e
+moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+parent: 1302fefdf046b1cef7beed594e832f9a7a181a06
 ```
 
-`atlanticus:main` fue verificado read-only apuntando exactamente a ese commit.
-
-## Users exact Manager lifecycle
+## Manager generic Source/Projection cutover
 
 Estado:
 
 ```text
-USERS-EXACT-MANAGER-LIFECYCLE
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Propiedades verificadas por implementación + qualification scoped:
+Propiedades verificadas por implementación inspeccionada:
 
-- módulo Users no declara `workflow_service`;
-- validation separada y canónica;
-- exact Source read;
-- exact Source publication;
-- exact Projection status;
-- exact Projection target/execution;
-- exact Source History list/read;
-- History preview canónico;
-- History release cargada como trabajo local sobre BASE current;
-- `UsersManagerWorkflowAdapter` removido;
-- no `SourceReleaseId -> str` shim;
-- no `HistoryPage -> RevisionHistoryEntry` adapter;
-- product/commented mirrors equivalentes en el alcance modificado.
+- `ManagerModule` expone una sola familia genérica de servicios;
+- no contiene `workflow_service`;
+- no contiene campos `exact_source_*`;
+- no contiene `exact_projection_service`;
+- Manager Source usa `SourceSnapshot`, `SourceReleaseRef`, `HistoryPage` y `PublishResult`;
+- Manager Projection consume `ProjectionStatus`, `ProjectionTarget` y `ProjectionExecutionResult` de `projection/core`;
+- `project(...)` recibe `ProjectionTarget`;
+- no hay reconstrucción revision→target;
+- publication usa `expected_source_snapshot`;
+- conflicto se determina por release identity;
+- token de concurrencia fresco se conserva cuando la release no cambió;
+- History read debe devolver la release solicitada;
+- workspace schema vigente es `2`;
+- la ruta exact/legacy anterior fue removida del Manager;
+- archivos `exact_*` del Manager fueron eliminados.
 
-## Qualification observada del cierre
+## Qualification observada
 
-Reportada en workspace real:
-
-```text
-Manager + Users Configuration + users-manager focused suite   238 passed
-ADA full suite                                                56 passed
-ADA full suite                                                4 failed
-```
-
-Los 4 failures ADA fueron adjudicados a adapters legacy no-Users:
+Ejecutada por el usuario en el workspace real después de aplicar el cutover:
 
 ```text
-KpiConfigurationManagerWorkflowAdapter
-KpiDefinitionManagerWorkflowAdapter
-ToolConfigurationManagerWorkflowAdapter
-NavigationManagerWorkflowAdapter
+web/capabilities/manager
+54 passed
+0 failed
 ```
 
-Síntomas verificados:
+Esta suite es la evidencia funcional vigente del cierre.
 
-- `_projection(...)` intenta construir `ProjectionExecutionResult(source_revision=...)`;
-- Manager vigente exige `ProjectionExecutionResult.target`;
-- adapters legacy exponen `project(expected_source_revision: str)` en vez de `project(ProjectionTarget)`;
-- `ConfigurationLifecycleWorkflow` vigente exige `get_current_projection_target()`.
+## Evidencia histórica que NO sustituye current
 
-Por tanto:
+Los siguientes conteos pertenecen a checkpoints anteriores:
 
 ```text
-Users exact lifecycle qualification     GREEN / VERIFIED
-ADA full suite                          NOT GREEN
-ADA global blocker                      LEGACY PROJECTION CONTRACT ALIGNMENT
+238 passed
+56 passed / 4 failed
 ```
 
-No corregir esos adapters dentro del hito Users ya cerrado.
-
-## Historial de qualification preservado
-
-Continúan válidos como evidencia histórica, sin sustituir current checkpoint:
-
-- Source Core/Local/Blob;
-- Projection Core;
-- Users Cosmos Projection;
-- Manager root exact-target;
-- Profiles extraction/baseline;
-- UCS-1;
-- Admin Composition Backend;
-- Manager Exact-Source Boundary;
-- Users Admin Draft Baseline;
-- Users Manager Exact-Source Composition;
-- Admin UI Draft Cutover.
-
-Sus conteos históricos deben consultarse en commits/documentación de cada hito; no mezclarlos con la qualification de `384a68fe...`.
+Pueden conservarse en ledger histórico, pero no describen `59fcd3e...`.
 
 ## Lo que current checkpoint NO demuestra
 
 UNVERIFIED:
 
-- full Web suite completa en `384a68fe...`;
-- full ADA suite GREEN;
+- full Web suite;
+- full ADA suite;
+- consumidores Navigation/Tools/KPI Configuration/KPI Definition ya alineados;
+- suites de esos consumidores contra la nueva API;
 - Docker E2E;
-- constructor/composition root externo real que inyecta `users_profiles_administration`;
-- constructor/composition root externo real que inyecta `users_exact_projection`;
-- qualification visual browser productiva del History exacto, salvo evidencia separada;
-- Python 3.14.7 qualification del checkpoint;
-- CI remoto adicional.
+- CI remoto adicional;
+- qualification global Python 3.14.7/Trixie;
+- ausencia total de residuos legacy fuera de `web/capabilities/manager`.
 
-## Python baseline
+## Regla para consumidores
 
-Decisión Project:
+Cada consumer cutover debe producir su propia evidence set:
 
 ```text
-Python 3.14.7
-python:3.14.7-slim-trixie
+consumer implementation inspected
+consumer tests GREEN
+relevant composition tests GREEN
+forbidden legacy scan scoped
+no adapters/shims/aliases
 ```
 
-El repositorio aún contiene paquetes Web con `requires-python ==3.14.2`.
+No cerrar el consumer siguiente por inferencia desde los `54 passed` de Manager.
 
-No presentar el cierre actual como qualification del baseline final 3.14.7.
-
-## Git / CI
+## Git
 
 Git continúa READ ONLY para el asistente salvo autorización explícita.
-
-No se afirma CI remoto adicional para `384a68fe...`.
-
-La evidencia funcional citada proviene del workspace real reportado por el usuario y de inspección read-only de `atlanticus:main`.

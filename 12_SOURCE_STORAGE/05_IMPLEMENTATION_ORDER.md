@@ -5,103 +5,56 @@ Estado: **CURRENT PLAN**
 ## Checkpoint
 
 ```text
-SOURCE-1A.1                       Core + Local                  CLOSED / VERIFIED
-SOURCE-1A.2                       Blob                          CLOSED / VERIFIED
-Projection                        Exact-release Core            CLOSED / VERIFIED
-USERS-CANONICAL-PROJECTION-2      Users/Cosmos provider         CLOSED / VERIFIED
-MANAGER-ROOT-CANONICAL-CUTOVER    Root Projection transport     CLOSED / VERIFIED
-USERS-EXACT-MANAGER-LIFECYCLE     Users Manager consumer        CLOSED / VERIFIED
+SOURCE-1A.1                         Core + Local                  CLOSED / VERIFIED
+SOURCE-1A.2                         Blob                          CLOSED / VERIFIED
+Projection                          Exact-release Core            CLOSED / VERIFIED
+USERS-CANONICAL-PROJECTION-2        Users/Cosmos provider         CLOSED / VERIFIED
+MANAGER-GENERIC-SOURCE-PROJECTION   Generic Manager handoff       CLOSED / VERIFIED
 ```
 
-## Orden cerrado
+## Orden cerrado relevante
 
-1. Source audit por dominio — CLOSED.
-2. Functional Source manifest — CLOSED.
-3. Release Model — CLOSED.
-4. `SourceStore` — CLOSED.
-5. Concurrency/current promotion — CLOSED.
-6. Local provider — CLOSED.
-7. Core + Local qualification — CLOSED.
-8. Blob provider + Azurite qualification — CLOSED.
-9. Projection exact-release Core — CLOSED.
-10. Users canonical Projection/Cosmos — CLOSED.
-11. Manager root exact-target transport — CLOSED.
-12. Users Manager exact Source/Projection/History lifecycle — CLOSED.
+1. Source Core.
+2. Local provider.
+3. Blob provider.
+4. Projection exact-release Core.
+5. Domain providers cerrados en sus propios hitos.
+6. Manager generic Source/Projection handoff.
 
-## Step 12 — Users Manager exact lifecycle
+## Manager generic handoff
 
-Current:
+CURRENT:
 
 ```text
-validate        EXACT
-read            EXACT
-publish         EXACT
-status          EXACT
-project         EXACT
-history         EXACT
-legacy workflow NONE
+validate          generic
+read Source       generic
+publish Source    generic
+status            projection/core
+project           ProjectionTarget
+history           source/core
+workspace         SourceSnapshot BASE
+legacy route      NONE
+exact route       NONE
 ```
 
-Esto cierra el consumer Manager Users, no todos los consumers legacy Users del repositorio.
+No existe dual contract.
 
-## Próximas fronteras de Source/Projection
+## Próximas fronteras
 
-### Users runtime exact provenance
+Cada consumer en incremento independiente:
 
 ```text
-USERS-RUNTIME-EXACT-RELEASE-PROVENANCE
-PLANNED
+Step N+1  Navigation Manager consumer
+Step N+2  Tools Manager consumer
+Step N+3  KPI Configuration Manager consumer
+Step N+4  KPI Definition Manager consumer
+Step N+5  Other real consumers discovered in atlanticus:main
+Step N+6  Global consumer qualification
 ```
 
-- reemplazar provenance runtime legacy;
-- no equiparar `UsersConfigurationBundle.revision` con `SourceReleaseId`;
-- no introducir shim release/string;
-- conservar CAS/ETag del writer runtime.
+## Regla por consumer
 
-### Users runtime canonical cutover
-
-```text
-USERS-RUNTIME-CANONICAL-CUTOVER
-PLANNED
-```
-
-### Consumer migrations restantes
-
-PLANNED:
-
-- Navigation administrative migration;
-- otros consumers Users legacy fuera del Manager ya migrado;
-- Tools/KPI/KPI Definitions cuando corresponda.
-
-## Blocker transversal actualmente visible
-
-El full ADA suite expone un gap del contrato Projection legacy en:
-
-- Navigation;
-- Tools;
-- KPI;
-- KPI Definitions.
-
-Ese frente es:
-
-```text
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
-PLANNED / NEXT PROJECT FOCUS
-```
-
-No forma parte de Source Core ni reabre Users exact lifecycle.
-
-## Legacy retirement
-
-Sólo después de demostrar ausencia de consumers productivos:
-
-- retirar bindings Source legacy;
-- retirar contracts legacy;
-- retirar SharePoint/Power Automate donde corresponda.
-
-## Regla de reemplazo
-
-Cuando un incremento sustituya implementación existente, entregar:
+Entregar:
 
 ```text
 DELETE
@@ -110,11 +63,18 @@ MODIFY/REPLACE
 GATES AFTER DELETE
 ```
 
-No dejar legacy temporal por defecto.
+y demostrar:
 
-## Regla de UI
+- implementación real localizada;
+- contrato genérico directo;
+- cero adapters/shims/aliases;
+- tests scoped GREEN.
 
-No diseñar UI antes de congelar el contrato backend que consume.
+## Legacy retirement
+
+No borrar contratos de otros dominios por inferencia.
+
+Retirar únicamente cuando el consumer correspondiente esté localizado y cerrado.
 
 ## Regla de chat/checkpoint
 
@@ -123,4 +83,6 @@ Cuando un step queda CLOSED / VERIFIED:
 1. actualizar canonical;
 2. validar;
 3. cerrar el foco;
-4. abrir chat nuevo para el siguiente step.
+4. abrir chat nuevo para el siguiente consumer.
+
+No mezclar varios consumers en el mismo chat.

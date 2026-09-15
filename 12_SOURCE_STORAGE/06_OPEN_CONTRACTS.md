@@ -1,6 +1,6 @@
 # Source Storage — Open Contracts
 
-Estado: **IN PROGRESS — POST USERS MANAGER EXACT LIFECYCLE**
+Estado: **IN PROGRESS — POST MANAGER GENERIC CUTOVER**
 
 ## Core Source — CLOSED
 
@@ -21,19 +21,6 @@ Congelado:
 13. integrity.
 14. same-content republish puede crear nueva release.
 
-## Blob — CLOSED
-
-Congelado:
-
-- `StorageClient` compuesto externamente;
-- ETag privado al provider;
-- `ConcurrencyToken` provider-neutral;
-- first publish create-only;
-- updates condicionales;
-- ACK recovery;
-- Local/Blob semantics equivalentes;
-- retention/cleanup fuera de `SourceStore`.
-
 ## Projection Handoff — CLOSED
 
 Congelado:
@@ -46,96 +33,65 @@ Congelado:
 - failure no revierte Source;
 - `ProjectionStore.get_active/replace_active`.
 
-## Users canonical Projection — CLOSED
+## Manager generic consumer boundary — CLOSED
 
-CURRENT payload:
-
-```text
-UsersProfilesConfiguration
-```
-
-La formulación histórica `ProjectionStore[UsersConfigurationCatalog]` queda SUPERSEDED.
-
-Provider Cosmos conserva:
-
-- exact provenance;
-- schema `2` write;
-- schema `1` historical read;
-- ETag/CAS;
-- same-target idempotency.
-
-## Manager exact consumer — CLOSED para Users
-
-Users Manager actual usa:
+Manager usa:
 
 ```text
 DraftValidationWorkflow
+SourceReaderWorkflow
+SourcePublicationWorkflow
+SourceHistoryWorkflow
+ProjectionStatus
+ProjectionTarget
+ProjectionExecutionResult
+```
+
+No usa:
+
+```text
+ConfigurationLifecycleWorkflow
 ExactSourceReaderWorkflow
 ExactSourcePublicationWorkflow
 ExactSourceHistoryWorkflow
 ExactProjectionWorkflow
+expected_source_revision
 ```
 
-No usa legacy lifecycle service.
+`ManagerModule` no posee campos legacy/exact alternativos.
 
-History usa:
+## OPEN — Manager consumers
+
+Cada uno debe migrarse directamente al contrato genérico:
 
 ```text
-HistoryPage
-SourceReleaseRef
+Navigation        PLANNED / NEXT
+Tools             PLANNED
+KPI Configuration PLANNED
+KPI Definition    PLANNED
 ```
 
-Status/Projection usa modelos `projection/core`.
+No crear compatibilidad en Manager para acelerar estos consumers.
 
-`UsersManagerWorkflowAdapter` está removido.
-
-## OPEN — Users runtime
-
-- canonical runtime cutover;
-- exact-release provenance en `users.runtime`;
-- definir campos durable exactos antes de consumidores;
-- no introducir shim release/string.
-
-## OPEN — non-Users ADA legacy Projection alignment
-
-Full ADA current expone cuatro adapters incompatibles con el contrato Manager vigente:
-
-- Navigation;
-- Tools;
-- KPI;
-- KPI Definitions.
-
-Foco recomendado:
+## BLOCKED — global qualification
 
 ```text
-ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED
 ```
 
-No convertir automáticamente esos dominios a exact-source si no existe requisito. El problema inmediato es Projection target/result.
-
-## OPEN — consumer migrations
-
-- Navigation administrative migration;
-- consumers Users legacy fuera del Manager exacto;
-- otros domains/providers según ownership real;
-- validar consumers antes de borrar legacy.
-
-## OPEN — resource topology
-
-- physical contract canonical Users Projection store;
-- environment provisioning/validation;
-- composition root físico cuando corresponda.
-
-## OPEN — operation
-
-- retention;
-- orphan GC;
-- valores productivos de deployment.
+hasta cerrar los consumers y ejecutar suites integradas.
 
 ## UNVERIFIED
 
-- external runtime assembly de Users exact Projection;
-- external runtime assembly de Users Profiles Administration;
-- Docker E2E completo;
-- full Web suite current checkpoint;
-- Python 3.14.7 qualification current checkpoint.
+- full Web suite en `59fcd3e...`;
+- full ADA suite en `59fcd3e...`;
+- consumer integration;
+- Docker E2E;
+- CI remoto;
+- Python 3.14.7 qualification global;
+- scan global de legacy fuera de Manager.
+
+## Otros open contracts
+
+Los contratos abiertos de Users runtime, resource topology, retention y otros dominios permanecen en sus documentos especializados. Este cierre no los revalida ni modifica.
