@@ -239,6 +239,34 @@ Semántica:
 
 La precondición de publicación es el `SourceSnapshot` exacto.
 
+## Canonical Users Admin Web
+
+CURRENT desde `d23bff...`:
+
+```text
+Users admin active path
+├── canonical_layout.py
+├── canonical_callbacks.py
+├── UsersAdminWebContext.administration
+│   └── UsersProfilesAdministrationService
+├── CATALOG_STORE_ID
+│   └── UsersProfilesConfiguration document
+└── DRAFT_BASIS_STORE_ID
+    └── UsersProfilesAdminDraft schema 2
+```
+
+Reglas:
+- UI edits operan sobre el payload canónico, no `UsersConfigurationCatalog`;
+- browser draft incompatible/schema 1 se descarta y se reconstruye clean desde Source current;
+- no existe adapter browser draft legacy→schema 2;
+- save local preserva exact `SourceSnapshot` mediante `with_configuration(...)`;
+- save local no publica Source;
+- layout usa `dcc.Store(memory)`; no declara IndexedDB global implementado;
+- import legacy de archivo es compatibilidad explícita de entrada: decode legacy → split canónico → local draft sobre la BASE existente;
+- legacy Web files pueden permanecer físicamente hasta cleanup, pero no son el active export/registration path.
+
+Profile delete mantiene el contrato backend de replacement explícito. La UI actual evita borrar un Profile referenciado en vez de implementar todavía la UX de replacement.
+
 ## Manager exact-source publication boundary
 
 Manager incorpora un protocolo opt-in:
@@ -295,25 +323,33 @@ Manager no adquiere dependencia de Users y Users Configuration no adquiere depen
 
 ## Productive host boundary
 
-El host ADA Configuration Manager todavía registra el adapter legacy:
+El host ADA tiene ahora una frontera partida intencionalmente:
 
 ```text
-UsersManagerWorkflowAdapter
+Users Admin Web
+    → UsersProfilesAdministrationService
+    → payload/draft canónico
+
+Manager Users workflow registration
+    → UsersManagerWorkflowAdapter
+    → contrato legacy
 ```
 
-y ese adapter todavía consume:
-- `UsersConfigurationCatalog`;
-- `publish_draft(... expected_source_revision: str | None)`.
+`ConfigurationManagerDependencies` exige `users_profiles_administration` para construir el editor Users canónico.
 
-Por tanto, la composition exact-source está implementada, pero el cutover productivo del servicio Users en Manager permanece PLANNED.
+El registro productivo de publicación Users todavía no usa `UsersManagerExactSourceWorkflow`.
+
+No se identificó dentro de `atlanticus` el constructor productivo externo de `ConfigurationManagerDependencies`; el wiring físico de `users_profiles_administration` permanece UNVERIFIED.
+
+El próximo cutover debe cerrar la publication/service boundary sin adaptar el payload canónico de vuelta a `UsersConfigurationCatalog`.
 
 ## Legacy administrative boundary
 
-`UsersConfigurationCatalog` permanece en el camino administrativo productivo legacy mientras callbacks/layout/store y workflow registration no hayan migrado.
+`UsersConfigurationCatalog` ya no es el contrato del editor Users activo.
 
-El nuevo backend canónico no debe adaptarse de vuelta al aggregate legacy.
+Permanece legacy donde todavía hay consumidores, incluyendo el workflow productivo de Manager y history preview asociado.
 
-La compatibilidad durable histórica no justifica un adapter de authoring mixto.
+La compatibilidad durable/import histórica no justifica un adapter de authoring canónico→legacy.
 
 ## Pending / Guest
 
@@ -378,19 +414,21 @@ Si una solución raíz reemplaza un contrato anterior, hacer cutover limpio:
 - sin re-exports legacy nuevos;
 - sin ownership duplicado.
 
-La compatibilidad de lectura durable histórica necesaria para replay exact-release no se considera shim temporal.
+La compatibilidad de lectura durable/import histórica necesaria no se considera shim temporal cuando permanece explícitamente separada del authoring canónico.
 
 ## Fronteras futuras
 
 No están cerradas todavía:
-- callbacks/layout/browser draft cutover de Users admin;
 - cutover productivo del workflow Users hacia exact-source en Manager;
+- verificación del wiring físico externo de `users_profiles_administration`;
+- UX de replacement para Profile referenciado;
 - runtime canonical cutover Users;
 - exact-release provenance en `users.runtime`;
 - eliminación legacy;
 - resource topology físico de canonical Users Projection;
 - Root physical configuration;
-- Local/John/Jane runtime contract.
+- Local/John/Jane runtime contract;
+- Python 3.14.7 global migration.
 
 No crear Profiles Source/Projection independiente sin requisito nuevo de lifecycle/release propio.
 

@@ -14,7 +14,7 @@ Estado: **CURRENT**
 | Connectivity es dual-use y no adquiere ownership funcional | CURRENT |
 | Definir contratos antes que consumidores | CURRENT |
 | Cutover raíz limpio, sin shim/legacy temporal nuevo | CURRENT |
-| Read compatibility durable histórica puede preservarse para exact-release replay | CURRENT REFINEMENT |
+| Read/import compatibility histórica puede preservarse si no redefine el authoring canónico | CURRENT REFINEMENT |
 
 ## Storage / Users durable
 
@@ -113,11 +113,32 @@ Estado: **CURRENT**
 | Draft schema `1` no se migra mediante parser/adapter | FROZEN CLEAN CUTOVER |
 | Administrator no se elimina | FROZEN / IMPLEMENTED + VALIDATED |
 | Profile edit preserva key | FROZEN / IMPLEMENTED + VALIDATED |
-| Profile referenciado requiere replacement explícito antes de delete | FROZEN / IMPLEMENTED + VALIDATED |
-| Reassign + delete ocurre como una sola transformación | FROZEN / IMPLEMENTED + VALIDATED |
+| Profile referenciado requiere replacement explícito para delete backend | FROZEN / IMPLEMENTED + VALIDATED |
+| Reassign + delete backend ocurre como una sola transformación | FROZEN / IMPLEMENTED + VALIDATED |
 | Alta Managed canónica parte de `PendingUserRecord` | FROZEN / IMPLEMENTED + VALIDATED |
 | Identidad `(issuer, subject_id)` de Managed existente es inmutable | FROZEN / IMPLEMENTED + VALIDATED |
 | Users admin publish usa exact `SourceSnapshot`, `ConcurrencyToken` y `basis_release` | FROZEN / IMPLEMENTED + VALIDATED |
+
+## Users Admin Web
+
+| Decisión | Estado |
+|---|---|
+| Active Users admin layout/callbacks usan `UsersProfilesConfiguration` | CURRENT / IMPLEMENTED + VALIDATED |
+| Active Users admin context depende de `UsersProfilesAdministrationService` | CURRENT / IMPLEMENTED + VALIDATED |
+| Active browser draft usa `UsersProfilesAdminDraft` schema 2 | CURRENT / IMPLEMENTED + VALIDATED |
+| Browser draft legacy/schema 1 se convierte a schema 2 | SUPERSEDED / FORBIDDEN |
+| Browser draft incompatible se descarta y se crea clean desde Source current | FROZEN / IMPLEMENTED + VALIDATED |
+| Save local usa `basis.with_configuration(...)` y no publica Source | FROZEN / IMPLEMENTED + VALIDATED |
+| `dcc.Store(memory)` en Users admin equivale a IndexedDB global Manager | SUPERSEDED / FALSE |
+| Import file legacy puede decodificarse y transformarse explícitamente a canonical payload | CURRENT COMPATIBILITY / IMPLEMENTED |
+| Compatibilidad de import legacy equivale a migración de browser draft | SUPERSEDED / FALSE |
+| Administrator editor usa operación canónica dedicada | CURRENT / IMPLEMENTED + VALIDATED |
+| Profile create/edit usa operaciones canónicas | CURRENT / IMPLEMENTED + VALIDATED |
+| UI actual evita delete de Profile referenciado | CURRENT / IMPLEMENTED + VALIDATED |
+| UX para elegir `replacement_profile_key` al borrar Profile referenciado | OPEN / PLANNED |
+| Managed create desde UI parte de Pending y revalida pending actual | CURRENT / IMPLEMENTED + VALIDATED |
+| Managed edit preserva identidad | CURRENT / IMPLEMENTED + VALIDATED |
+| Active Users admin editor reconstruye `UsersConfigurationCatalog` | SUPERSEDED |
 
 ## Manager
 
@@ -161,15 +182,27 @@ Estado: **CURRENT**
 | Productive ADA Users workflow ya usa exact-source | PLANNED / NOT YET IMPLEMENTED |
 | Productive host todavía registra `UsersManagerWorkflowAdapter` legacy | CURRENT LEGACY |
 
+## Productive ADA composition
+
+| Decisión | Estado |
+|---|---|
+| Users admin Web context recibe `users_profiles_administration` | CURRENT / IMPLEMENTED + SCOPED VALIDATION |
+| `ConfigurationManagerDependencies` exige `UsersProfilesAdministrationService` para Users UI | CURRENT / IMPLEMENTED |
+| Constructor físico/productivo de esa dependencia dentro de `atlanticus` | UNVERIFIED / NOT FOUND |
+| Service registration productivo Users cambia en el mismo hito UI | SUPERSEDED / SEPARATE INCREMENT |
+| Manager productive exact-source cutover | PLANNED / NEXT CANDIDATE |
+
 ## Legacy Users Configuration
 
 | Decisión | Estado |
 |---|---|
-| `UsersConfigurationCatalog` sigue existiendo en camino administrativo productivo legacy | CURRENT LEGACY / NOT CANONICAL WRITE CONTRACT |
+| `UsersConfigurationCatalog` sigue siendo el payload del editor Users activo | SUPERSEDED BY ADMIN-UI-DRAFT-CUTOVER |
+| `UsersConfigurationCatalog` sigue existiendo para consumidores legacy | CURRENT LEGACY / NOT CANONICAL WRITE CONTRACT |
 | Shape `administrator_* / guest_* / profiles / users` como contrato canónico nuevo | SUPERSEDED BY UCS-1 |
 | No adaptar nuevo admin payload canónico de vuelta a `UsersConfigurationCatalog` | FROZEN |
-| Migración de callbacks/layout/browser store | PLANNED / NEXT |
+| Migración de callbacks/layout/browser store | CLOSED / VERIFIED / CURRENT |
 | Productive exact-source service cutover | PLANNED |
+| History preview Users legacy | CURRENT LEGACY |
 | Eliminación legacy | BLOCKED |
 
 ## Pending / Guest / Administrator
@@ -208,6 +241,18 @@ Estado: **CURRENT**
 | `create_users_module(runtime, profiles)` | SUPERSEDED |
 | `create_users_module(runtime)` | CURRENT / IMPLEMENTED + VALIDATED |
 
+## Qualification / packaging
+
+| Decisión / hallazgo | Estado |
+|---|---|
+| Web workspace `uv lock --check` en `d23bff...` | VERIFIED / GREEN |
+| Full Web suite en `d23bff...` | VERIFIED / 587 passed, 7 skipped |
+| Python 3.14.7 qualification de `d23bff...` | BLOCKED / UNVERIFIED |
+| Runtime usado para cierre `d23bff...` | VERIFIED / Python 3.14.2 |
+| ADA lock Manager `0.3.14` vs source actual `0.3.15` | VERIFIED DRIFT / OPEN |
+| ADA lock Users Configuration `0.1.6` vs source actual `0.1.9` | VERIFIED DRIFT / OPEN |
+| Corregir adapters ADA legacy para Manager 0.3.15 dentro del UI cutover | SUPERSEDED / OUT OF SCOPE |
+
 ## Status de hitos
 
 ```text
@@ -219,24 +264,23 @@ ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
 MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
+ADMIN-UI-DRAFT-CUTOVER                        CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-DOMAIN-SEPARATION              IN PROGRESS
 USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
-ADMIN-UI-DRAFT-CUTOVER                        PLANNED / NEXT
-USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED / NEXT CANDIDATE
 USERS-RUNTIME-CANONICAL-CUTOVER               PLANNED
 USERS-RUNTIME-EXACT-RELEASE-PROVENANCE        PLANNED
 USERS-ADMIN-CANONICAL-MIGRATION               PLANNED
+DOMAIN-LEGACY-DELETION                        BLOCKED
 ```
 
-## Refinamientos / superseded de este cierre
+## Refinamientos / superseded
 
 1. “Draft canónico schema 1 con sólo `revision`”
    → `SUPERSEDED`: schema 2 agrega `base_payload_revision` y semántica clean/dirty/rebase.
 
 2. “USERS-MANAGER-EXACT-SOURCE-WIRING” como un único hito binario
-   → `REFINED` en dos fronteras:
-   - adapter/composition exact-source: CLOSED;
-   - productive host cutover: PLANNED.
+   → `REFINED` en adapter/composition exact-source CLOSED y productive host cutover PLANNED.
 
 3. “El adapter exact-source debe vivir dentro de Users o Manager”
    → `SUPERSEDED`: vive en `web/compositions/users-manager`.
@@ -250,12 +294,24 @@ USERS-ADMIN-CANONICAL-MIGRATION               PLANNED
 6. “`compositions/` apareció con Users↔Manager”
    → `SUPERSEDED`: `navigation-activity` ya era una composition preexistente.
 
+7. “El UI cutover y el service cutover exact-source deben hacerse juntos”
+   → `SUPERSEDED / REFINED`: son incrementos separados; el UI cutover quedó cerrado primero.
+
+8. “Un browser draft schema 1 debe convertirse al schema 2”
+   → `SUPERSEDED / FORBIDDEN`: se descarta y se crea base limpia desde Source current.
+
+9. “Cerrar UI cutover exige implementar UX de replacement al borrar Profile referenciado”
+   → `REFINED`: el backend exige replacement; la UI actual bloquea ese delete y la UX de replacement permanece OPEN.
+
+10. “Import legacy y browser draft legacy son la misma migración”
+    → `SUPERSEDED`: import file legacy tiene compatibilidad explícita; browser draft schema 1 no se migra.
+
 ## Siguiente decisión de ejecución
 
-Único foco recomendado:
+Único foco recomendado para el siguiente chat:
 
 ```text
-ADMIN-UI-DRAFT-CUTOVER
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
 ```
 
-No mezclar en ese incremento runtime provenance, Python migration, Root physical configuration ni legacy deletion global.
+Primero debate/diseño y verificación del host real. No mezclar runtime provenance, Python migration, Root physical configuration, Navigation migration ni legacy deletion global.

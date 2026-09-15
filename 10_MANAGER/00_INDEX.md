@@ -1,12 +1,12 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED / USERS EXACT-SOURCE COMPOSITION CLOSED**
+Estado: **CURRENT / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED / USERS EXACT-SOURCE COMPOSITION CLOSED / USERS ADMIN UI CUTOVER CLOSED**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
 | `01_APPLICATION_BOUNDARY.md` | Manager como aplicación/capability independiente y ownership de header/shell. | CURRENT |
 | `02_NAVIGATION_AND_HOME.md` | Home `/manager`, sidebar, registry y navegación administrativa. | CURRENT |
-| `03_WORKFLOW_AND_SESSION.md` | Workflow, sesión, BASE/SOURCE/WORKSPACE, exact-source y estado del cutover Users. | CURRENT |
+| `03_WORKFLOW_AND_SESSION.md` | Workflow, sesión, BASE/SOURCE/WORKSPACE, exact-source, Users admin UI schema 2 y estado del productive cutover. | CURRENT |
 | `04_TOOL_CONFIGURATION.md` | Herramienta, Component/Subcomponent, KPI y alarmas. | FROZEN/CURRENT |
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection exact-release y estado de migraciones consumidoras. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Qué debe probarse automáticamente y qué queda en qualification visual. | CURRENT POLICY |
@@ -40,15 +40,31 @@ CLOSED / VERIFIED / CURRENT
 moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
 ```
 
-## Límite
+Users admin UI draft cutover:
 
-La composition exact-source Users existe y está validada, pero el host ADA productivo todavía registra `UsersManagerWorkflowAdapter` legacy.
+```text
+ADMIN-UI-DRAFT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+moragaga/atlanticus@d23bff025ab899367a8da1178dde5ab50806fe47
+```
+
+## Límite productivo actual
+
+El editor Users activo ya usa `UsersProfilesConfiguration` + `UsersProfilesAdminDraft` schema 2 y `UsersProfilesAdministrationService`.
+
+El host ADA productivo todavía registra `UsersManagerWorkflowAdapter` legacy para el workflow Manager Users.
 
 Por tanto:
 
 ```text
 USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
-PLANNED
+PLANNED / NEXT CANDIDATE
 ```
 
 No implica que todos los modelos administrativos legacy basados en `source_revision: str` hayan sido eliminados.
+
+## Qualification caveat
+
+El lock de `ada-configuration-manager` está desalineado respecto de los sources actuales de Manager y Users Configuration. La composition Users del hito fue calificada con overlay efímero, pero la full ADA suite contra Manager actual no está GREEN/VERIFIED.
+
+No resolver ese drift silenciosamente ni mezclar adapters no relacionados dentro del siguiente incremento Users.

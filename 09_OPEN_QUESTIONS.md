@@ -29,9 +29,17 @@ Ya no están OPEN:
 - mutabilidad de identidad de Managed;
 - contrato genérico Manager exact-source;
 - semántica local clean/dirty/rebase del draft canónico;
-- ubicación del adapter exact-source Users↔Manager;
-- dirección de dependencias del adapter exact-source;
-- si la composition exact-source debe rebasar el draft.
+- ubicación/dirección de dependencias del adapter exact-source Users↔Manager;
+- si la composition exact-source debe rebasar el draft;
+- migración de active callbacks/layout/store Users al payload canónico;
+- política ante browser draft schema 1/incompatible: descartar y crear clean desde current Source;
+- Profile create/edit sobre `ProfilesConfiguration` dentro de `UsersProfilesConfiguration`;
+- Administrator editor canónico;
+- Managed add desde Pending y Managed edit con identidad inmutable;
+- save/load local schema 2;
+- dirty revision local del editor;
+- eliminación de `UsersConfigurationCatalog` del active editor path;
+- import file legacy: decode explícito + split a canonical payload sin migrar browser draft.
 
 Estados:
 
@@ -40,36 +48,46 @@ ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
 MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
+ADMIN-UI-DRAFT-CUTOVER                        CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
 ```
 
-### OPEN — siguiente frontera administrativa
-
-1. `ADMIN-UI-DRAFT-CUTOVER`: migrar callbacks/layout/store productivo al nuevo contrato.
-2. Definir comportamiento UI exacto cuando exista en browser un draft legacy incompatible con schema 2; no crear adapter legacy→nuevo.
-3. Migrar Profile editor para operar sobre `ProfilesConfiguration` dentro de `UsersProfilesConfiguration`.
-4. Migrar Administrator editor a la operación canónica dedicada.
-5. Migrar Profile delete para solicitar replacement explícito cuando existan referencias.
-6. Migrar User editor para alta desde Pending y actualización con identidad inmutable.
-7. Migrar save/load browser draft a `UsersProfilesAdminDraft` schema 2.
-8. Usar `revision/base_payload_revision` para dirty/clean local.
-9. Eliminar del camino UI activo la reconstrucción de `UsersConfigurationCatalog`, sin borrar aún contratos legacy con consumidores.
-10. Auditar preview/import/history UI porque pueden asumir payload legacy.
-
 ### OPEN — productive Manager exact-source cutover
 
-11. `USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER`.
-12. Reemplazar el service registration productivo `UsersManagerWorkflowAdapter` sólo cuando el payload/UI canónico esté listo.
-13. Migrar publication action productiva a `ManagerProjectionCoordinator.publish_draft_exact(...)`.
-14. Decidir presentation UI/audit de la nueva release sin volver a introducir `source_revision` como identidad exacta.
-15. Confirmar si el host productivo necesita además contratos legacy en el mismo objeto o si debe hacer cutover limpio.
-16. `USERS-ADMIN-CANONICAL-MIGRATION`: completar migración una vez UI + productive Manager cutover estén cerrados.
-17. Destino final de `UsersAdministrationService` legacy.
-18. Destino final de `UsersConfigurationBundle` y contracts legacy.
-19. Destino de `FileUsersProjectionProfileCatalog` dentro del cutover de consumidores.
-20. Legacy deletion Users — BLOCKED hasta demostrar ausencia de consumidores legacy.
-21. Resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`.
-22. Composition root productivo del canonical Users Projection store.
+1. `USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER`.
+2. Reemplazar el service registration productivo `UsersManagerWorkflowAdapter` para publication exact-source sin adaptar el payload canónico a `UsersConfigurationCatalog`.
+3. Migrar publication action productiva a `ManagerProjectionCoordinator.publish_draft_exact(...)`.
+4. Definir qué contrato lifecycle legacy debe coexistir con `ExactSourcePublicationWorkflow` para validate/project/history durante el cutover.
+5. Verificar si el mismo service object debe satisfacer ambos contratos o si el host debe registrar superficies separadas.
+6. Confirmar cómo el Manager productivo consume el draft schema 2 y exact `SourceSnapshot`; no asumir compatibilidad con `ManagerDraft` schema 1.
+7. Decidir presentation UI/audit de la nueva release sin reintroducir `source_revision` como identidad exacta.
+8. Verificar el constructor/wiring productivo real de `ConfigurationManagerDependencies.users_profiles_administration`; no fue localizado dentro de `atlanticus`.
+9. `USERS-ADMIN-CANONICAL-MIGRATION`: completar migración una vez UI + productive Manager cutover estén cerrados.
+10. Destino final de `UsersAdministrationService` legacy.
+11. Destino final de `UsersConfigurationBundle` y contracts legacy.
+12. Destino de `FileUsersProjectionProfileCatalog` dentro del cutover de consumidores.
+13. Legacy deletion Users — BLOCKED hasta demostrar ausencia de consumidores legacy.
+14. Resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`.
+15. Composition root productivo del canonical Users Projection store.
+
+### OPEN — Users admin UI residual
+
+16. UX explícita para elegir `replacement_profile_key` al borrar un Profile referenciado. El backend contract ya está CLOSED; la UI actual simplemente evita ese delete.
+17. History preview Users sigue legacy; decidir su cutover/retirada dentro de la migración administrativa correspondiente.
+18. Validar visualmente el nuevo UI canónico en browser productivo si aún no existe qualification visual registrada.
+
+### OPEN — ADA host packaging / Manager contract alignment
+
+19. Resolver/adjudicar el drift del lock de `ada-configuration-manager`:
+
+```text
+atlanticus-web-manager             lock 0.3.14 / source 0.3.15
+atlanticus-web-users-configuration lock 0.1.6  / source 0.1.9
+```
+
+20. Determinar el mínimo cambio necesario para que el host pueda calificarse con el Manager vigente sin arrastrar silenciosamente KPI/Navigation/Tools al incremento Users.
+21. Cinco failures observados con overlay Manager 0.3.15 corresponden a adapters ADA legacy con contrato anterior de Projection; decidir frontera antes de modificar.
+22. Reejecutar full ADA suite sólo cuando el entorno/contratos estén coherentes; último full overlay observado no fue GREEN y no se volvió a correr después del fix de mirror.
 
 ### Runtime
 
@@ -174,6 +192,8 @@ OPEN:
 53. ADA Generic artifact tooling;
 54. final Web distribution contract.
 
+Python qualification del checkpoint `d23bff...` en 3.14.7 permanece BLOCKED porque el intérprete no estaba disponible localmente; el cierre se calificó con 3.14.2.
+
 ## Manager / Login
 
 OPEN:
@@ -216,16 +236,18 @@ OPEN:
 Único foco recomendado:
 
 ```text
-ADMIN-UI-DRAFT-CUTOVER  PLANNED / NEXT
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
+PLANNED / NEXT CANDIDATE
 ```
 
+El primer paso del siguiente chat es debate/auditoría del host actual. Si cerrar Users obliga a migrar adapters no relacionados de KPI/Navigation/Tools, no ampliar alcance silenciosamente: marcar el bloqueo y separar frontera.
+
 No mezclarlo con:
-- productive exact-source service cutover;
 - runtime canonical cutover;
 - runtime exact-release provenance;
 - Root physical configuration;
 - Navigation migration;
-- Python 3.14.7;
+- Python 3.14.7 global migration;
 - Manager IndexedDB general;
 - ADA Access;
 - legacy cleanup general.

@@ -1,6 +1,6 @@
 # Manager — Workflow and Session
 
-Estado: **CURRENT CONTRACT / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED / USERS EXACT-SOURCE COMPOSITION CLOSED**
+Estado: **CURRENT CONTRACT / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED / USERS EXACT-SOURCE COMPOSITION CLOSED / USERS ADMIN UI CUTOVER CLOSED**
 
 ## Flujo conceptual
 
@@ -39,7 +39,8 @@ root Projection action cutover                 CLOSED / VERIFIED / CURRENT
 generic exact-source boundary                  CLOSED / VERIFIED / CURRENT
 Users admin draft baseline semantics           CLOSED / VERIFIED / CURRENT
 Users exact-source composition adapter         CLOSED / VERIFIED / CURRENT
-Users productive exact-source service cutover  PLANNED
+Users admin UI draft cutover                   CLOSED / VERIFIED / CURRENT
+Users productive exact-source service cutover  PLANNED / NEXT CANDIDATE
 legacy publication workflows                   CURRENT
 browser persistence global                     PLANNED
 ```
@@ -186,6 +187,39 @@ Manager                     Users Configuration
    └── compositions/users-manager ─┘
 ```
 
+## Users Admin UI draft cutover
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@d23bff025ab899367a8da1178dde5ab50806fe47
+```
+
+Active Users admin UI:
+
+```text
+UsersAdminWebContext
+    administration: UsersProfilesAdministrationService
+
+CATALOG_STORE_ID
+    UsersProfilesConfiguration document
+
+DRAFT_BASIS_STORE_ID
+    UsersProfilesAdminDraft schema 2
+```
+
+Session invariants CURRENT para Users:
+- load sin draft recuperable → `administration.create_draft(owner)` desde Source current;
+- load de draft schema 2 válido y mismo owner → recupera draft;
+- draft legacy/incompatible → no convierte; descarta y crea clean desde Source current;
+- edit local modifica payload pero preserva BASE + exact `SourceSnapshot`;
+- save draft = `basis.with_configuration(configuration)`;
+- save local escribe draft/saved/basis stores, no Source;
+- import legacy file transforma payload a canonical sobre la BASE existente;
+- revision local sigue sin ser Source identity.
+
+El layout usa `dcc.Store(storage_type="memory")`; IndexedDB general sigue PLANNED.
+
 ## Productive service cutover
 
 No está cerrado.
@@ -196,18 +230,45 @@ El host ADA Configuration Manager todavía registra:
 UsersManagerWorkflowAdapter(dependencies.users)
 ```
 
-El adapter productivo vigente usa:
-- `UsersConfigurationCatalog`;
-- `publish_draft(payload, expected_source_revision: str | None)`.
+El editor Users, en cambio, ya recibe:
 
-Por tanto:
+```text
+UsersProfilesAdministrationService
+```
+
+mediante `ConfigurationManagerDependencies.users_profiles_administration`.
+
+Por tanto existe una frontera transitoria intencional:
+
+```text
+UI authoring Users       canonical schema 2
+Manager Users workflow   legacy registration
+```
+
+No confundir “UI canónico” ni “composition exact-source disponible” con “publication action productiva migrada”.
+
+Estado:
 
 ```text
 USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
-PLANNED
+PLANNED / NEXT CANDIDATE
 ```
 
-No confundir “composition adapter disponible” con “publication action productiva migrada”.
+## Gap a verificar en el siguiente foco
+
+VERIFIED:
+- el workflow productivo Users registrado sigue legacy;
+- Manager actual `0.3.15` exige `ProjectionTarget` en su lifecycle projection contract;
+- adapters ADA observados todavía muestran incompatibilidades al ejecutar full suite con overlay Manager actual;
+- lock ADA resuelve Manager `0.3.14` mientras el source inspeccionado es `0.3.15`;
+- lock ADA resuelve Users Configuration `0.1.6` mientras el source inspeccionado es `0.1.9`.
+
+INFERRED / TO VERIFY:
+- el draft schema 2 compartido puede ser incompatible con callbacks legacy que todavía esperen `ManagerDraft` schema 1; verificar código activo antes de modificar.
+
+UNVERIFIED:
+- constructor físico externo que provee `users_profiles_administration` al host productivo;
+- full ADA suite GREEN con Manager actual después de una alineación limpia de dependencies/contracts.
 
 ## Qué permanece legacy
 
@@ -226,7 +287,7 @@ Esos strings:
 
 ## Session
 
-Invariantes:
+Invariantes generales:
 - primera visita hidrata desde Source cuando no existe workspace recuperable;
 - navegación interna reutiliza working state;
 - paginación/filtro local no relee Source;
@@ -254,7 +315,7 @@ ProjectionStore
 
 IndexedDB general permanece PLANNED.
 
-Un dominio puede migrar su draft store actual al contrato canónico sin declarar implementado el WORKSPACE IndexedDB global.
+El Users admin UI ya usa el contrato canónico en stores memory; esto no declara implementado IndexedDB global.
 
 ## Draft / Workspace
 

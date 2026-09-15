@@ -3,10 +3,10 @@
 Estado: **CURRENT EXECUTION CHECKPOINT**
 
 Corte de implementación:
-`moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98`.
+`moragaga/atlanticus@d23bff025ab899367a8da1178dde5ab50806fe47`.
 
 Parent inmediato:
-`moragaga/atlanticus@567e1a12c862b46dfd7f4ec75c3be750c95bbd54`.
+`moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98`.
 
 ## Resumen de estado
 
@@ -27,25 +27,22 @@ ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
 MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
+ADMIN-UI-DRAFT-CUTOVER                        CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-DOMAIN-SEPARATION              IN PROGRESS
 USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
-ADMIN-UI-DRAFT-CUTOVER                        PLANNED / NEXT
-USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED / NEXT CANDIDATE
 USERS-RUNTIME-CANONICAL-CUTOVER               PLANNED
 USERS-RUNTIME-EXACT-RELEASE-PROVENANCE        PLANNED
 USERS-ADMIN-CANONICAL-MIGRATION               PLANNED
 NAV-CONSUMER-MIGRATION-B                      PLANNED
+DOMAIN-LEGACY-DELETION                        BLOCKED
 ```
 
 ## Plataforma genérica
 
 Atlanticus mantiene fronteras separadas para backend jobs, connectivity, operational data, Web capabilities, Source/Projection y scopes/aplicaciones.
 
-`backend/` representa backend jobs y capacidades propias de esos jobs.
-
-La lógica Python server-side cuya responsabilidad es Web pertenece a `web/`.
-
-Connectivity es dual-use y no adquiere ownership funcional de sus consumidores.
+`backend/` representa backend jobs y capacidades propias de esos jobs. La lógica Python server-side cuya responsabilidad es Web pertenece a `web/`. Connectivity es dual-use y no adquiere ownership funcional de sus consumidores.
 
 ## Storage Topology y Users durable
 
@@ -155,7 +152,7 @@ Ownership CURRENT:
 
 ## Admin composition backend
 
-El camino backend canónico opera directamente sobre `UsersProfilesConfiguration`.
+El backend canónico opera directamente sobre `UsersProfilesConfiguration`.
 
 Contratos CURRENT:
 - `UsersProfilesAdminState`;
@@ -189,8 +186,6 @@ Semántica local congelada:
 - revisión local no es `SourceReleaseId`, `content_hash` ni `ConcurrencyToken`;
 - parser schema 2 no acepta schema 1 ni shape legacy.
 
-La UI/browser store productiva todavía no usa este contrato.
-
 ### Operaciones administrativas canónicas
 
 Administrator:
@@ -204,8 +199,8 @@ Profiles funcionales:
 - edición preserva key;
 - Administrator no se edita mediante operación genérica;
 - eliminar Profile no referenciado es válido;
-- eliminar Profile referenciado requiere `replacement_profile_key`;
-- reasignación + eliminación ocurre en una sola transformación;
+- eliminar Profile referenciado requiere `replacement_profile_key` en el backend;
+- reasignación + eliminación ocurre en una sola transformación backend;
 - la regla incluye Users disabled.
 
 Managed Users:
@@ -229,6 +224,50 @@ Pending:
 - usa `expected_source_snapshot.concurrency_token` como precondición;
 - para publication normal usa la `release_ref` del snapshot esperado como `basis_release`;
 - delega en `UsersSourceService.publish_configuration(...)`.
+
+## Admin UI draft cutover
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@d23bff025ab899367a8da1178dde5ab50806fe47
+```
+
+Estado:
+
+```text
+ADMIN-UI-DRAFT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+El camino Web activo de Users Configuration usa:
+
+```text
+canonical_layout.py
+canonical_callbacks.py
+UsersAdminWebContext.administration: UsersProfilesAdministrationService
+UsersProfilesConfiguration
+UsersProfilesAdminDraft schema 2
+```
+
+Invariantes de UI CURRENT:
+- `CATALOG_STORE_ID` contiene `UsersProfilesConfiguration.to_document()`;
+- `DRAFT_BASIS_STORE_ID` conserva el draft/basis schema 2 en memoria;
+- el editor revision usa `build_users_profiles_admin_revision(...)`;
+- guardar draft usa `basis.with_configuration(configuration)` y persiste el mismo documento schema 2 en draft/saved/basis stores;
+- guardar draft no publica Source;
+- schema 1/browser draft incompatible no se convierte: se descarta y se crea una base limpia desde Source current, con aviso visible;
+- Administrator usa la operación canónica dedicada;
+- Profile create/edit usa operaciones canónicas;
+- un Profile referenciado no se elimina desde la UI actual; la UX de replacement explícito permanece OPEN;
+- Managed edit preserva identidad;
+- alta nueva parte de Pending y revalida que la identidad siga pendiente;
+- import de archivo legacy se decodifica explícitamente y se transforma al contrato canónico dentro de la BASE actual; esto es compatibilidad de import, no migración de browser draft;
+- el active UI no reconstruye `UsersConfigurationCatalog` para editar/guardar.
+
+`canonical_layout.py` usa `dcc.Store(storage_type="memory")`; este hito no implementa IndexedDB global de Manager.
+
+Los archivos legacy Web pueden seguir físicamente presentes hasta el cleanup global, pero ya no son el path exportado/registrado activo para el editor Users.
 
 ## Manager exact-source boundary
 
@@ -255,12 +294,6 @@ ExactSourcePublicationWorkflow
 La garantía CAS final sigue perteneciendo a Source/workflow.
 
 ## Users ↔ Manager exact-source composition
-
-Checkpoint:
-
-```text
-moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
-```
 
 Implementado en:
 
@@ -292,51 +325,56 @@ Manager                 Users Configuration
 
 Manager no depende de Users y Users Configuration no depende de Manager.
 
-### Límite importante
+## Productive host boundary
 
-El composition root productivo ADA todavía registra:
+El cutover UI no equivale al cutover productivo de Manager.
+
+El host ADA conserva el registro legacy para Users:
 
 ```text
 UsersManagerWorkflowAdapter(dependencies.users)
 ```
 
-Ese adapter:
-- usa `UsersConfigurationCatalog`;
-- usa `publish_draft(... expected_source_revision: str | None)`;
-- sigue siendo legacy.
+Ese adapter sigue asociado al contrato legacy de `UsersConfigurationCatalog` / `expected_source_revision: str | None`.
+
+El composition root de ADA ahora exige además:
+
+```text
+users_profiles_administration: UsersProfilesAdministrationService
+```
+
+y construye `UsersAdminWebContext(administration=...)` para el editor canónico.
+
+No se identificó en `atlanticus` un constructor productivo de `ConfigurationManagerDependencies`; la inyección física externa de `users_profiles_administration` permanece UNVERIFIED.
 
 Por tanto:
 
 ```text
 USERS-MANAGER-EXACT-SOURCE-COMPOSITION         CLOSED / VERIFIED / CURRENT
+ADMIN-UI-DRAFT-CUTOVER                         CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER  PLANNED
 ```
 
 No afirmar que el Manager productivo de Users ya publica mediante `publish_draft_exact(...)`.
 
-## Web compositions
-
-`web/compositions` no nació con este hito.
-
-`navigation-activity` ya existía y conecta Navigation con el pequeño contrato `ActivityRouteResolver` de Users Activity.
-
-Ownership:
-- Users Activity posee tracking de actividad del actor;
-- Navigation posee definición de rutas;
-- `navigation-activity` adapta una definición Navigation a route keys de Activity;
-- la composición no transfiere ownership.
-
-El patrón se reutiliza para `users-manager` porque la integración necesita conocer ambas capabilities sin invertir sus dependencias.
-
-No usar `compositions/` como cajón genérico: sólo cuando dos capabilities independientes necesitan un binding explícito que ninguna debe poseer.
-
 ## Legacy administrative configuration
 
-El aggregate histórico `UsersConfigurationCatalog`, `UsersAdministrationService`, `UsersConfigurationBundle`, contracts y callbacks legacy siguen presentes para consumidores no migrados.
+`UsersConfigurationCatalog`, `UsersAdministrationService`, `UsersConfigurationBundle` y contratos legacy siguen presentes para consumidores no migrados.
 
-Su shape no es el contrato canónico nuevo de Source/Projection ni el payload del nuevo backend admin composition.
+Refinamiento CURRENT:
+- ya no son el contrato del editor Users activo;
+- `UsersManagerWorkflowAdapter` productivo sigue legacy;
+- `build_users_history_preview` sigue ligado al camino legacy;
+- el import de archivo legacy conserva compatibilidad explícita de lectura y transforma al payload canónico;
+- la compatibilidad durable histórica no justifica un adapter de authoring canónico→legacy.
 
-La compatibilidad v1 durable es lectura histórica, no shim runtime.
+## Web compositions
+
+`navigation-activity` ya existía y conecta Navigation con `ActivityRouteResolver` de Users Activity.
+
+`users-manager` reutiliza el patrón sólo porque la integración necesita conocer Manager y Users Configuration sin invertir dependencias.
+
+No usar `compositions/` como cajón genérico.
 
 ## Pending / Guest
 
@@ -371,34 +409,59 @@ Local, John y Jane quedan fuera de Profiles semánticos.
 
 Su contrato runtime/ownership final permanece OPEN.
 
-## Qualification de los checkpoints recientes
+## Qualification del cierre `d23bff...`
 
-### Draft baseline semantics — `567e1a12...`
-
-Qualification reportada por el usuario:
+Qualification reportada/ejecutada en el workspace real:
 
 ```text
-focused tests        19 passed
-Ruff                  GREEN
-full Web suite        580 passed, 7 skipped
-Python runtime        3.14.7
+Users focal pytest                         15 passed
+Users Ruff                                 GREEN
+ADA composition + mirror scoped pytest     5 passed
+ADA scoped Ruff                            GREEN
+full Web suite                             587 passed, 7 skipped
+full Web Ruff                              GREEN
+web uv lock --check                        GREEN (75 packages)
+git diff --check                           GREEN
+Python runtime usado                       3.14.2
 ```
 
-### Users Manager exact-source composition — `7ffebdbb...`
-
-Qualification reportada por el usuario:
-
-```text
-uv lock --check                         GREEN
-composition focused tests              7 passed
-Ruff composition src/tests             GREEN
-full Web suite                          587 passed, 7 skipped
-git diff --check                        GREEN
-```
-
-`atlanticus:main` fue verificado apuntando a `7ffebdbb...`.
+`atlanticus:main` fue verificado read-only apuntando exactamente a `d23bff...`.
 
 No se afirma CI remoto adicional.
+
+### Qualification ADA host — conflicto de packaging/contratos
+
+VERIFIED:
+- `ada-configuration-manager` lock resuelve `atlanticus-web-manager 0.3.14` y `atlanticus-web-users-configuration 0.1.6`;
+- los sources actuales inspeccionados son Manager `0.3.15` y Users Configuration `0.1.9`;
+- el entorno frozen falló al importar `atlanticus.web.projection` por el drift Manager lock/source;
+- existía un editable residual local `ada-web-tool-configuration-editor 0.2.0` que interceptaba `ada.web.configuration`; se eliminó del `.venv` local y el import correcto quedó restaurado;
+- con overlay efímero de Manager/Users actuales, `tests/test_composition.py` pasó `4/4`;
+- después de actualizar mirrors del incremento, `test_commented_mirror.py + test_composition.py` pasó `5/5`.
+
+La suite ADA completa con overlay actual produjo antes del fix de mirror:
+
+```text
+54 passed
+6 failed
+```
+
+Un failure era el mirror de este incremento y quedó corregido/verificado en la suite scoped posterior.
+
+Los otros cinco failures exponen adapters ADA legacy que no satisfacen el contrato vigente de Manager `0.3.15` (`ProjectionTarget` / `ProjectionExecutionResult.target`). La suite completa no se volvió a ejecutar después del fix de mirror, por lo que el conteo final global ADA permanece UNVERIFIED.
+
+No corregir esos adapters dentro de `ADMIN-UI-DRAFT-CUTOVER`.
+
+## Python baseline
+
+El Project mantiene decidido Python `3.14.7` + `python:3.14.7-slim-trixie`.
+
+En este cierre:
+- `uv python find 3.14.7` no encontró intérprete local;
+- runtime disponible/usado fue Python `3.14.2`;
+- varios `pyproject.toml` actuales todavía declaran `==3.14.2`.
+
+Por tanto, qualification de este checkpoint bajo Python `3.14.7` permanece BLOCKED / UNVERIFIED y la migración global no forma parte de este hito.
 
 ## Frontera Users / Profiles completa
 
@@ -419,29 +482,33 @@ Cerrado:
 - backend admin composition sobre `UsersProfilesConfiguration`;
 - draft backend con exact `SourceSnapshot`;
 - baseline local `revision/base_payload_revision`;
-- delete/reassign atómico;
+- delete/reassign backend atómico;
 - creación Managed desde Pending;
 - Manager exact-source opt-in boundary;
-- adapter/composition exact-source Users↔Manager.
+- adapter/composition exact-source Users↔Manager;
+- callbacks/layout/store administrativo activo sobre schema 2 / `UsersProfilesConfiguration`.
 
 Permanece fuera:
-- callbacks/layout/store administrativo productivo canónico;
-- registro productivo del exact-source workflow Users en el Manager host;
+- productive exact-source service registration/publication en Manager;
+- UX de replacement para delete de Profile referenciado;
+- wiring físico externo de `users_profiles_administration`;
 - runtime canonical cutover;
 - exact-release provenance en `users.runtime`;
 - eliminación legacy;
 - resource topology físico canonical Users Projection;
 - configuración física Root;
-- contrato final Local/John/Jane.
+- contrato final Local/John/Jane;
+- migración Python 3.14.7.
 
 ## Siguiente frontera recomendada
 
-Un único foco:
+Un único foco de debate/diseño:
 
 ```text
-ADMIN-UI-DRAFT-CUTOVER  PLANNED / NEXT
+USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
+PLANNED / NEXT CANDIDATE
 ```
 
-Objetivo: migrar callbacks, layout y browser draft store de Users Configuration al `UsersProfilesAdminDraft` schema 2 / `UsersProfilesConfiguration`, sin mezclar todavía runtime/provenance ni eliminación legacy global.
+Antes de implementar, verificar dentro de ese foco la compatibilidad real del host ADA con Manager actual, el registro de servicios, el consumo del draft schema 2 y la inyección productiva de `UsersProfilesAdministrationService`.
 
-El productivo exact-source service cutover permanece como incremento separado posterior.
+No mezclar runtime/provenance, Python migration, Root physical config, Navigation migration ni legacy cleanup global.
