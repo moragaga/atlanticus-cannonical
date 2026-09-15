@@ -1,12 +1,8 @@
 # Manager — Source Blob Handoff
 
-Estado: **SOURCE IMPLEMENTED / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED / USERS EXACT-SOURCE COMPOSITION CLOSED / CONSUMER MIGRATION IN PROGRESS**
+Estado: **SOURCE IMPLEMENTED / USERS EXACT MANAGER LIFECYCLE CLOSED / CONSUMER MIGRATION IN PROGRESS**
 
-Fuente histórica:
-`Atlanticus_ADA_Upgrade_Source_Blob_Trabajo_Pendiente.docx`
-(10-09-2026)
-
-## Cambio
+## Source productivo
 
 Source productivo disponible:
 
@@ -16,33 +12,32 @@ Azure Blob Storage
 
 Local conserva semántica equivalente de desarrollo/QA.
 
-Projection genérica usa handoff exact-release.
+SharePoint/Power Automate permanecen sólo donde existan consumidores legacy.
 
-SharePoint y Power Automate permanecen sólo donde existan consumidores legacy.
+## Source Core
 
-## Estado Source
+Source Core cubre:
 
-Implementado y validado:
+- `SourceKey`;
+- `SourceReleaseId`;
+- `SourceReleaseRef`;
+- immutable releases;
+- manifest;
+- `SourceStore`;
+- current/concurrency;
+- History;
+- exact reads;
+- integrity verification.
 
-```text
-Source Core
-Local Source
-Blob Source
-Projection exact-release Core
-Manager root Projection exact-target transport
-Manager exact-source publication boundary
-Users Manager exact-source composition adapter
-```
+Blob cubre manifest como commit point, create-only first publish, conditional write, `ConcurrencyToken` opaco, recovery e integridad.
 
-Source Core cubre release identity, release granularity, manifest, `SourceStore`, concurrency/current, History, exact reads e integrity verification.
-
-Blob cubre manifest como commit point, create-only first publish, conditional write, `ConcurrencyToken` opaco, releases inmutables, recovery e integridad.
-
-## Historial
+## History
 
 Cada publicación Source es snapshot completo, autocontenido e inmutable.
 
 `SourceReleaseId` no equivale a `content_hash`.
+
+History durable contiene publicaciones reales, no autosaves.
 
 ## Restore
 
@@ -50,11 +45,13 @@ Restore publica una nueva release.
 
 Nunca repunta current directamente a una release histórica.
 
+Manager Users implementa este principio cargando el payload histórico como trabajo local sobre BASE current.
+
 ## No-op publish
 
 `SourceStore.publish(...)` válido crea una nueva publicación.
 
-Si UI desea no-op funcional debe decidirlo antes de invocar Source.
+Si una UI desea no-op funcional debe decidirlo antes de invocar Source.
 
 ## Concurrencia
 
@@ -62,7 +59,7 @@ Backend aplica la precondición autoritativa con `ConcurrencyToken`.
 
 No existe `force=True`.
 
-`basis_release` preserva la base/provenance del trabajo según el contrato de publication.
+`basis_release` preserva base/provenance según el contrato de publication.
 
 ## Source -> Projection
 
@@ -73,100 +70,103 @@ ProjectionTarget =
     SourceReleaseRef
 ```
 
-`project(target)` lee release exacta, no consulta current durante ejecución y conserva provenance exacto.
+`project(target)` lee la release exacta, no consulta current durante ejecución y conserva provenance exacto.
 
-## Manager checkpoints
+## Manager exact adoption
 
-Root Projection:
-
-```text
-MANAGER-ROOT-CANONICAL-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-Generic exact-source:
+Manager CURRENT expone:
 
 ```text
-MANAGER-EXACT-SOURCE-BOUNDARY
-CLOSED / VERIFIED / CURRENT
-moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
+ExactSourceReaderWorkflow
+ExactSourcePublicationWorkflow
+ExactSourceHistoryWorkflow
+ExactProjectionWorkflow
 ```
 
-Users exact-source composition:
-
-```text
-USERS-MANAGER-EXACT-SOURCE-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
-```
-
-Manager no convierte `SourceReleaseRef`, `ConcurrencyToken` ni `SourceSnapshot` a `source_revision: str`.
+No convierte `SourceReleaseRef`, `ConcurrencyToken`, `SourceSnapshot` ni `HistoryPage` a contratos legacy de revisión textual.
 
 ## Users checkpoint
 
 Users Configuration implementa:
+
 - Source codec/service;
 - History y exact reads;
-- Source multi-resource Users+Profiles;
+- multi-resource Users+Profiles release;
 - canonical payload `UsersProfilesConfiguration`;
 - exact Source→Projection service;
 - Cosmos Projection schema `2` con lectura histórica schema `1`;
-- provenance canónico en Projection;
+- exact provenance en Projection;
 - CAS/idempotencia exact-target.
 
-Admin backend implementa:
-- `UsersProfilesAdminDraft` schema `2`;
-- `base_payload_revision`;
-- clean/dirty/rebase local;
-- `UsersProfilesAdministrationService`;
-- exact `SourceSnapshot`;
-- publication con `ConcurrencyToken` + `basis_release`;
-- Profile delete/reassign;
-- Managed creation desde Pending.
+Users Manager implementa:
 
-Users↔Manager composition implementa:
-- `UsersManagerExactSourceWorkflow`;
-- strict canonical payload parse;
-- actor provider;
-- exact publication delegation;
-- typed `ExactSourcePublicationResult`;
-- audit timestamp desde release publicada.
+- canonical draft validation;
+- exact Source reader;
+- exact Source publication;
+- exact Projection status/target/project;
+- exact History list/read;
+- canonical History preview;
+- History load como local work.
+
+Host ADA:
+
+- no registra Users lifecycle legacy;
+- registra servicios exactos separados;
+- recibe Projection ya compuesta;
+- no exporta `UsersManagerWorkflowAdapter`.
 
 Estado:
 
 ```text
-USERS-CANONICAL-SOURCE-1                      CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2                  CLOSED / VERIFIED / CURRENT
-ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
-MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
-USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
+USERS-EXACT-MANAGER-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
 ```
+
+## Exact History handoff
+
+```text
+SourceStore.query_history(...)
+        ↓
+HistoryPage
+        ↓
+UsersProfilesAdministrationService
+        ↓
+UsersManagerExactSourceHistoryWorkflow
+        ↓
+ManagerProjectionCoordinator
+        ↓
+preview / local workspace
+```
+
+La identidad se conserva como `SourceReleaseRef`.
+
+No hay `SourceReleaseId -> revision` shim.
 
 ## Consumer migration todavía pendiente
 
-No implementado productivamente:
-- callbacks/layout/browser store canónico;
-- registro del exact-source Users workflow en el host ADA;
-- publication action productiva mediante `publish_draft_exact(...)`;
-- runtime provenance exact-release;
-- legacy deletion;
-- resource topology físico canonical Users Projection.
+Fuera del Manager Users ya migrado:
 
-El host ADA todavía usa `UsersManagerWorkflowAdapter` legacy.
+- Navigation/Tools/KPI/KPI Definitions Projection contract alignment;
+- runtime canonical Users cutover;
+- runtime exact-release provenance;
+- otros consumidores administrativos legacy;
+- resource topology físico canonical Users Projection;
+- legacy deletion global;
+- browser IndexedDB global;
+- retiro efectivo SharePoint/Power Automate por consumidor.
 
-No existe contrato vigente que permita tratar `UsersConfigurationBundle.revision` como `SourceReleaseId`.
+## Qualification caveat
 
-## Pendiente
+Current checkpoint:
 
-Fuera de Source/Projection Core y boundaries cerrados:
-- `ADMIN-UI-DRAFT-CUTOVER`;
-- `USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER`;
-- retention/cleanup policy;
-- provenance exact-release de `users.runtime`;
-- migraciones administrativas Navigation;
-- browser WORKSPACE/IndexedDB global;
-- retiro efectivo de SharePoint/Power Automate por consumidor;
-- eliminación legacy sólo después de validar consumidores;
-- orchestration multi-capability cuando exista requisito real.
+```text
+384a68fe8fa42263623c95d1d132af2ca54574c8
+```
+
+Focused Users/Manager suite: `238 passed`.
+
+Full ADA: `56 passed / 4 failed`.
+
+Los failures restantes pertenecen a adapters Projection legacy no-Users y no reabren el Source/History/Projection exacto de Users.
+
+Docker E2E y wiring físico externo permanecen UNVERIFIED.

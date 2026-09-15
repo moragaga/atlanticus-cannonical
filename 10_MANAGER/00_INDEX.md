@@ -1,70 +1,106 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT / ROOT PROJECTION CUTOVER CLOSED / EXACT-SOURCE BOUNDARY CLOSED / USERS EXACT-SOURCE COMPOSITION CLOSED / USERS ADMIN UI CUTOVER CLOSED**
+Estado: **CURRENT / USERS EXACT MANAGER LIFECYCLE CLOSED**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_APPLICATION_BOUNDARY.md` | Manager como aplicación/capability independiente y ownership de header/shell. | CURRENT |
+| `01_APPLICATION_BOUNDARY.md` | Manager como aplicación/capability independiente y ownership de shell. | CURRENT |
 | `02_NAVIGATION_AND_HOME.md` | Home `/manager`, sidebar, registry y navegación administrativa. | CURRENT |
-| `03_WORKFLOW_AND_SESSION.md` | Workflow, sesión, BASE/SOURCE/WORKSPACE, exact-source, Users admin UI schema 2 y estado del productive cutover. | CURRENT |
+| `03_WORKFLOW_AND_SESSION.md` | BASE/SOURCE/WORKSPACE, exact capabilities, Users lifecycle exacto, History y legacy residual. | CURRENT |
 | `04_TOOL_CONFIGURATION.md` | Herramienta, Component/Subcomponent, KPI y alarmas. | FROZEN/CURRENT |
-| `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection exact-release y estado de migraciones consumidoras. | CURRENT |
-| `06_TESTING_BOUNDARY.md` | Qué debe probarse automáticamente y qué queda en qualification visual. | CURRENT POLICY |
-| `07_SOURCE_LEDGER.md` | Fuentes de decisión y checkpoints de implementación inspeccionados. | AUDIT LEDGER |
+| `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection exact-release y adopción por Manager/Users. | CURRENT |
+| `06_TESTING_BOUNDARY.md` | Testing contractual vs qualification visual. | CURRENT POLICY |
+| `07_SOURCE_LEDGER.md` | Fuentes/checkpoints/evidencia del Manager actual. | AUDIT LEDGER |
 | `08_BOOTSTRAP_AND_ACCESS.md` | Primera instalación, bypass y acceso pre-Manager. | CURRENT DIRECTION |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos por Component, popover JS y warmup. | CONTRACT DESIGN |
 
-## Checkpoints
+## Checkpoint CURRENT
 
-Root Projection:
+```text
+moragaga/atlanticus@384a68fe8fa42263623c95d1d132af2ca54574c8
+parent: b2254450b4543d2422ca8580357b9054b515cd6e
+```
+
+## Checkpoints preservados
 
 ```text
 MANAGER-ROOT-CANONICAL-CUTOVER
 CLOSED / VERIFIED / CURRENT
-moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
-```
 
-Generic exact-source publication boundary:
-
-```text
 MANAGER-EXACT-SOURCE-BOUNDARY
 CLOSED / VERIFIED / CURRENT
-moragaga/atlanticus@9342769a626c39d1f7f860f81e051e2ef1300620
-```
 
-Users exact-source composition adapter:
-
-```text
 USERS-MANAGER-EXACT-SOURCE-COMPOSITION
 CLOSED / VERIFIED / CURRENT
-moragaga/atlanticus@7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98
-```
 
-Users admin UI draft cutover:
-
-```text
 ADMIN-UI-DRAFT-CUTOVER
 CLOSED / VERIFIED / CURRENT
-moragaga/atlanticus@d23bff025ab899367a8da1178dde5ab50806fe47
+
+MANAGER-EXACT-PROJECTION-BOUNDARY
+CLOSED / VERIFIED / CURRENT
+
+USERS-EXACT-PROJECTION-STATUS-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-EXACT-SOURCE-HISTORY-BOUNDARY
+CLOSED / VERIFIED / CURRENT
+
+USERS-EXACT-SOURCE-HISTORY-HOST-UI-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-EXACT-MANAGER-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Límite productivo actual
-
-El editor Users activo ya usa `UsersProfilesConfiguration` + `UsersProfilesAdminDraft` schema 2 y `UsersProfilesAdministrationService`.
-
-El host ADA productivo todavía registra `UsersManagerWorkflowAdapter` legacy para el workflow Manager Users.
-
-Por tanto:
+## Users module CURRENT
 
 ```text
-USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
-PLANNED / NEXT CANDIDATE
+workflow_service               None
+draft_validation_service       exact/canonical
+exact_source_reader_service    exact
+exact_source_history_service   exact
+exact_source_workflow_service  exact
+exact_projection_service       exact
 ```
 
-No implica que todos los modelos administrativos legacy basados en `source_revision: str` hayan sido eliminados.
+Lifecycle:
 
-## Qualification caveat
+```text
+validate        EXACT
+read            EXACT
+publish         EXACT
+status          EXACT
+project         EXACT
+history list    EXACT
+history read    EXACT
+history preview EXACT
+history -> work EXACT
+```
 
-El lock de `ada-configuration-manager` está desalineado respecto de los sources actuales de Manager y Users Configuration. La composition Users del hito fue calificada con overlay efímero, pero la full ADA suite contra Manager actual no está GREEN/VERIFIED.
+`UsersManagerWorkflowAdapter` ya no forma parte del host ni de su API pública.
 
-No resolver ese drift silenciosamente ni mezclar adapters no relacionados dentro del siguiente incremento Users.
+## Límite legacy actual
+
+Navigation, Tools, KPI y KPI Definitions siguen usando adapters legacy ADA.
+
+El full ADA suite actual no está GREEN por una desalineación Projection de esos adapters con Manager vigente.
+
+Estado:
+
+```text
+ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
+PLANNED / NEXT
+```
+
+No resolver esos fallos reintroduciendo legacy en Users.
+
+## Qualification
+
+```text
+focused Manager + Users Configuration + users-manager   238 passed
+full ADA                                                56 passed / 4 failed
+```
+
+Los cuatro failures fueron adjudicados al frente Projection legacy no-Users.
+
+Full Web suite current checkpoint, Docker E2E, Python 3.14.7 y CI remoto permanecen UNVERIFIED.

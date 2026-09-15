@@ -10,19 +10,19 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Último checkpoint de implementación verificado para este cierre:
-  `d23bff025ab899367a8da1178dde5ab50806fe47`
+  `384a68fe8fa42263623c95d1d132af2ca54574c8`
 - Fecha del checkpoint:
-  `2026-09-15T13:09:28Z`
+  `2026-09-15T17:15:17Z`
 - Parent inmediato verificado:
-  `7ffebdbb0b70e41c6f0bd903cc7f27dbd3a05d98`
+  `b2254450b4543d2422ca8580357b9054b515cd6e`
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint canonical inspeccionado antes de este reemplazo:
-  `25e1f1bee4548ed7a7c35d2d1ed9a252c51b5397`
-- Contiene el estado vigente, contratos, fronteras, roadmap y decisiones activas del Project.
+  `b58a6c8f0f7631de6789adaee4b913b197be8806`
+- Contiene estado vigente, contratos, fronteras, roadmap y decisiones activas del Project.
 
 `atlanticus-cannonical:main` reemplaza a `atlanticus-decisions` como autoridad documental vigente.
 
@@ -30,9 +30,7 @@ Estado: **CURRENT**
 
 `moragaga/atlanticus-decisions` es **HISTORICAL**.
 
-Puede utilizarse para rationale histórico, qualification previa, rastreo de decisiones anteriores y evidencia de cómo se llegó a un contrato.
-
-No puede utilizarse por sí solo para contradecir o reemplazar el estado vigente de `atlanticus-cannonical:main`.
+Puede usarse para rationale, qualification previa y rastreo histórico. No puede por sí solo contradecir o reemplazar `atlanticus-cannonical:main`.
 
 ## Jerarquía
 
@@ -48,6 +46,7 @@ No puede utilizarse por sí solo para contradecir o reemplazar el estado vigente
 Si `atlanticus:main` y canonical se contradicen, no resolver silenciosamente.
 
 Clasificar explícitamente como corresponda:
+
 - `VERIFIED`
 - `INFERRED`
 - `ASSUMED`

@@ -2,85 +2,49 @@
 
 Estado: **CLOSED / VERIFIED / CURRENT**
 
-Projection trabaja sobre un release Source concreto.
+Projection trabaja sobre una Source release concreta.
 
-No lee un `latest` mutable durante la ejecución de una proyección.
+No lee un `latest` mutable durante ejecución.
 
 ## Target exacto
 
-El target ejecutable queda congelado como:
-
 ```text
-SourceKey + SourceReleaseRef
+ProjectionTarget =
+    SourceKey
+    +
+    SourceReleaseRef
 ```
 
-`SourceReleaseRef` conserva la referencia resoluble exacta de la publicación.
+`SourceReleaseRef` conserva referencia resoluble exacta.
 
-`SourceReleaseId` sigue siendo la identidad de la publicación y no equivale a `content_hash`.
+`SourceReleaseId` identifica publicación y no equivale a `content_hash`.
 
 ## Selección vs ejecución
 
-Observar Source current y ejecutar Projection son operaciones distintas.
+Selección puede observar Source current.
 
-La selección de un target puede consultar:
-
-```text
-SourceStore.get_current(source_key)
-```
-
-La ejecución:
+Ejecución:
 
 ```text
 project(target)
 ```
 
-resuelve exclusivamente:
+resuelve exactamente la release del target y no relee current para sustituirla.
 
-```text
-SourceStore.read_release(
-    target.source_key,
-    target.source_release,
-)
-```
-
-`project(target)` no vuelve a consultar Source current antes ni después de persistir la Projection.
-
-## Source avanza durante Projection
-
-Ejemplo:
-
-```text
-target seleccionado = V48
-Source current       = V49
-Projection ejecutada = V48
-```
-
-La ejecución de V48 sigue siendo válida.
-
-Después de completarla:
-
-```text
-alignment = OUTDATED
-```
-
-No se convierte un éxito exact-release en fallo sólo porque Source haya avanzado.
+Source puede avanzar durante ejecución sin invalidar una Projection exacta ya iniciada.
 
 ## Provenance durable
 
-La Projection activa identifica explícitamente:
+Projection activa conserva:
 
 - `source_key`;
 - `source_release_id`;
 - `source_published_at_utc`;
 - `projected_at_utc`.
 
-`source_release_id` identifica inequívocamente qué publicación Source representa la Projection.
+CURRENT/OUTDATED compara release identity, nunca content hash.
 
-`source_published_at_utc` permite reconstruir el `SourceReleaseRef` sin consultar un current mutable.
-
-## Estado observable
-
-Alignment durable:
+## Alignment
 
 ```text
 NEVER_PROJECTED
@@ -95,168 +59,116 @@ SUCCESS
 FAILED
 ```
 
-Son dimensiones distintas.
-
-Ejemplo:
-
-```text
-Projection activa = V47
-Source current     = V48
-Attempt Project(V48) = FAILED
-```
-
-Resultado:
-
-```text
-alignment = OUTDATED
-attempt   = FAILED
-```
-
-`FAILED` no reemplaza ni borra el estado de la última Projection exitosa.
-
-## Regla CURRENT / OUTDATED
-
-La comparación se hace por identidad de publicación:
-
-```text
-projected.source_release_id == source.current.release_id
-```
-
-Nunca por `content_hash`.
-
-Dos releases Source con el mismo contenido siguen siendo publicaciones distintas.
-
-## Fallo y retry
-
-Si Projection falla:
-
-- Source release queda intacto;
-- Source history no se reescribe;
-- la última Projection exitosa permanece como referencia activa del dominio;
-- el intento fallido conserva el target exacto;
-- puede reintentarse ese mismo target;
-- el retry no requiere republish de Source.
+Failure no reemplaza la última Projection exitosa.
 
 ## Projection Store Core
 
-El contrato Core expone:
+Core expone:
 
 ```text
 get_active(source_key)
 replace_active(projection)
 ```
 
-Core modela una Projection activa por `SourceKey`.
+No define history genérico ni failure journal durable.
 
-No se introduce en este hito:
+## Users CURRENT payload
 
-- history genérico de Projection;
-- failure journal durable genérico;
-- generations/manifests de Projection;
-- codec de dominio genérico.
+La evidencia temprana de Users/Cosmos usó un aggregate anterior.
 
-La atomicidad/durabilidad concreta de `replace_active` debe ser satisfecha por cada provider concreto y validarse en su incremento correspondiente.
+Ese payload fue SUPERSEDED por UCS-1.
 
-## Boundary
-
-Projection Core:
-
-- depende del contrato Source;
-- no conoce paths físicos Source;
-- no conoce Blob URLs;
-- no conoce ETags;
-- no determina Source current desde Cosmos;
-- no pertenece a Navigation Configuration;
-- no implementa lógica específica de un dominio consumidor.
-
-El payload proyectado pertenece al dominio consumidor.
-
-## Evidencia de cierre Core
-
-Implementación:
+Contrato CURRENT:
 
 ```text
-web/capabilities/projection/core
+ProjectionStore[UsersProfilesConfiguration]
+ProjectionRecord[UsersProfilesConfiguration]
 ```
 
-Package:
+`CosmosUsersConfigurationProjectionStore`:
+
+- escribe schema `2`;
+- puede leer schema `1` histórico;
+- usa create-only first write;
+- reemplazo por ETag/CAS;
+- no blind upsert;
+- same exact target + same payload es idempotente;
+- target histórico explícito puede activarse;
+- no infiere ordering por release id/timestamps.
+
+## Manager root exact-target
+
+CLOSED:
+
+- `get_current_projection_target()`;
+- `project(ProjectionTarget)`;
+- result conserva exact target;
+- callback selecciona current server-side;
+- browser no aporta identidad ejecutable.
+
+## Manager exact Projection boundary
+
+Manager además posee:
 
 ```text
-atlanticus-web-projection==0.1.0
+ExactProjectionWorkflow
+    get_status()
+    get_current_projection_target()
+    project(target)
 ```
 
-Baseline implementado:
+El status es `projection/core.ProjectionStatus`, no un adapter al modelo legacy.
+
+Manager presentation deriva state desde:
 
 ```text
-moragaga/atlanticus@5b383a3ff4dcbb2cc15f55df4819ebf9e61e63b4
+source_current_release
+projected_source_release
+alignment
 ```
 
-Gates ejecutados en workspace real:
+No inventa audit/projection revision.
 
-- 15 tests Projection GREEN;
-- suite Web global: 327 passed, 7 skipped;
-- Ruff Projection GREEN;
-- Ruff format Projection GREEN.
+## Users exact Projection adoption
 
-## Evidencia domain/provider posterior — Users Cosmos
-
-`USERS-CANONICAL-PROJECTION-2` cerró un provider concreto que satisface el contrato Core:
+CURRENT:
 
 ```text
-ProjectionStore[UsersConfigurationCatalog]
-→ CosmosUsersConfigurationProjectionStore
+UsersManagerExactProjectionWorkflow
+    SourceProjectionService[UsersProfilesConfiguration]
+    + SourceKey
 ```
 
-Checkpoint:
+El workflow:
+
+- obtiene exact status;
+- selecciona target current;
+- valida source key del target;
+- proyecta exactamente el target.
+
+ADA recibe esa capability ya compuesta mediante `users_exact_projection`.
+
+## Qualification actual
+
+Current implementation checkpoint:
 
 ```text
-moragaga/atlanticus@139ee93a118e51f66c3d585f00235f212a2475c1
+384a68fe8fa42263623c95d1d132af2ca54574c8
 ```
 
-Contrato verificado:
-- first active write create-only;
-- reemplazo mediante ETag/CAS;
-- nunca blind upsert;
-- same exact release + same payload = retry idempotente;
-- same `SourceReleaseId` con metadata o payload incompatible = invariant failure;
-- conflicto concurrente same-target converge;
-- conflicto concurrente different-target falla explícitamente;
-- no se infiere ordering por release ID ni `projected_at_utc`;
-- target histórico exacto puede activarse explícitamente.
+Users exact Projection status/host está CLOSED/VERIFIED/CURRENT.
 
-Esta evidencia es específica de Users/Cosmos y no congela la estrategia de providers de otros dominios.
-
-## Evidencia consumer posterior — Manager root Projection
-
-`MANAGER-ROOT-CANONICAL-CUTOVER` cerró el transporte root exact-target en:
-
-```text
-moragaga/atlanticus@5fd2858c4bd19c8f9cc416e0996162cb7a3f8c06
-```
-
-Quedó validado que:
-- el workflow root expone `get_current_projection_target()`;
-- `project(...)` recibe `ProjectionTarget`;
-- `ProjectionExecutionResult` conserva el target exacto;
-- el coordinator transporta un target explícito sin releer current;
-- la UI selecciona current server-side y no toma la identidad ejecutable desde browser state;
-- un target histórico explícito no es reemplazado por current;
-- el signal del Project expone identidad exact-release.
-
-La formulación anterior “Manager BASE/SOURCE/WORKSPACE/PROJECTION cutover” queda refinada: este cierre cubre la frontera Projection del root productivo. Los contratos administrativos de publicación/workspace que todavía usan revisiones textuales permanecen separados.
+Los failures ADA restantes pertenecen a legacy adapters no-Users y no contradicen el handoff exacto Users.
 
 ## Fuera de este cierre
 
-Permanecen abiertos:
+OPEN:
 
-- provenance exact-release de `users.runtime`;
-- migración de consumidores administrativos Navigation/Users y otros;
-- otros providers Projection concretos cuando sean necesarios;
-- Projection planner/orchestration multi-capability;
-- derived resolutions;
-- idempotencia provider/domain-level de otros providers;
-- retention/GC operacional;
-- browser WORKSPACE/IndexedDB del Manager;
-- eliminación de contracts legacy una vez que no queden consumidores.
-
-El cierre de Projection Handoff, Users/Cosmos y Manager root exact-target no implica cerrar esas capas.
+- `users.runtime` exact provenance;
+- runtime canonical cutover;
+- legacy Projection alignment Navigation/Tools/KPI/KPI Definitions;
+- otros providers/domain consumers;
+- orchestration multi-capability;
+- retention/GC;
+- resource topology físico Users Projection;
+- browser IndexedDB global.

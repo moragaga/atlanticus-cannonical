@@ -15,6 +15,7 @@ El núcleo genérico de Atlanticus no depende de ADA.
 ### Platform
 
 Capacidades transversales:
+
 - backend;
 - connectivity;
 - integrations;
@@ -42,7 +43,7 @@ Projection genérica exact-release pertenece a:
 web/capabilities/projection/core
 ```
 
-La administración de un dominio puede exponer un workflow exact-source opt-in sin reemplazar de una vez todos los workflows legacy.
+Las capabilities exactas se declaran de forma independiente en cada `ManagerModule`. Una capability migrada no necesita un lifecycle legacy monolítico.
 
 ### Operational Data
 
@@ -83,11 +84,28 @@ Projection representa un `SourceReleaseRef` concreto.
 
 Source current nunca se determina desde Cosmos.
 
+## Exact capability composition en Manager
+
+Manager puede resolver por separado:
+
+```text
+DraftValidationWorkflow
+ExactSourceReaderWorkflow
+ExactSourcePublicationWorkflow
+ExactSourceHistoryWorkflow
+ExactProjectionWorkflow
+```
+
+`workflow_service` legacy sólo es obligatorio para módulos que todavía usan `ConfigurationLifecycleWorkflow`.
+
+No existe fallback silencioso desde una capability exacta declarada hacia un servicio legacy.
+
 ## Web Capability Composition
 
 Las capabilities mantienen ownership separado y dependencias explícitas.
 
 Una composition se justifica cuando:
+
 - capability A debe seguir siendo reusable sin B;
 - capability B debe seguir siendo reusable sin A;
 - el binding necesita conocer ambas;
@@ -108,14 +126,33 @@ Users Activity
 ```
 
 Ownership:
-- Navigation posee la definición de rutas;
-- Users Activity posee sesiones, page views, active time y route activity;
-- `navigation-activity` traduce rutas Navigation a `ActivityRoute`/route keys;
-- Identity aporta contexto del actor, pero no posee el historial de actividad.
 
-### Profiles / Users
+- Navigation posee definición de rutas;
+- Users Activity posee sesiones/page views/active time;
+- composition traduce rutas a activity route keys;
+- Identity aporta actor, no ownership del historial.
 
-Arquitectura CURRENT:
+### Composition Users ↔ Manager
+
+```text
+Manager                         Users Configuration
+   ↑                                   ↑
+   └──── web/compositions/users-manager ┘
+```
+
+La composition expone bindings explícitos para:
+
+- validation;
+- Source read;
+- Source publication;
+- Source History;
+- Projection.
+
+Manager no depende de Users.
+
+Users Configuration no depende de Manager.
+
+## Profiles / Users
 
 ```text
 Profiles
@@ -125,15 +162,15 @@ Users
 ```
 
 Contratos:
+
 - Profiles vive en `web/capabilities/profiles/core`;
 - Profiles no depende de Users;
 - Profiles no depende de ADA;
 - Users puede consumir Profiles;
 - cross-capability validation pertenece a una frontera que ve ambos contratos;
-- `atlanticus.web.users.profiles` no existe como namespace productivo;
-- no existe shim del namespace anterior.
+- no existe shim del namespace anterior `atlanticus.web.users.profiles`.
 
-### Profiles semántico
+## Profiles semántico
 
 Profiles core modela exclusivamente Profiles funcionales explícitos.
 
@@ -144,42 +181,7 @@ ProfileCatalog()
 
 No posee semántica especial de Root, Guest/Pending, Local ni John/Jane.
 
-Administrator es un Profile funcional ordinario.
-
-### Profiles durable configuration
-
-`ProfilesConfiguration` es el contrato durable Profiles-owned actual.
-
-No implica `profiles.runtime` ni Source/Projection independiente de Profiles.
-
-### Users durable configuration
-
-`UsersConfiguration` es el contrato durable Users-owned actual.
-
-Posee invariantes exclusivamente Users:
-- ids únicos;
-- emails no nulos únicos;
-- identidades únicas.
-
-No posee el catálogo de Profiles.
-
-### Composition contract Users + Profiles
-
-```text
-UsersConfiguration
-        +
-ProfilesConfiguration
-        ↓
-UsersProfilesConfiguration
-```
-
-`UsersProfilesConfiguration`:
-- exige Administrator explícito;
-- rechaza `guest` y `local` como Profiles funcionales;
-- exige que todo `UserConfiguration.profile_key` resuelva en Profiles;
-- aplica la regla también a Users disabled.
-
-Esta composición no transfiere ownership de Profiles a Users.
+Administrator es Profile funcional explícito.
 
 ## Canonical Users Source
 
@@ -194,11 +196,13 @@ SourceReleaseRef
 No existe segundo coordinator ni reloj independiente de Profiles.
 
 Escritura nueva:
+
 - Users schema `2`;
 - Profiles resource schema `1`;
 - `published_by` permanece en Users.
 
 Lectura histórica:
+
 - Users source schema `1` permanece soportado;
 - aggregate legacy se normaliza;
 - no se vuelve a escribir schema `1`.
@@ -228,160 +232,140 @@ UsersProfilesAdminDraft
 ```
 
 Semántica:
-- `revision` identifica el payload local actual;
-- `base_payload_revision` identifica la BASE local;
-- draft recién creado queda limpio;
-- `with_configuration(...)` preserva BASE y `SourceSnapshot`;
-- `rebase(...)` adopta un nuevo exact `SourceSnapshot` y convierte la revisión actual en nueva BASE;
+
+- local revision identifica payload local;
+- base revision identifica BASE local;
+- create nace clean;
+- edit preserva BASE y exact Source snapshot;
+- rebase adopta exact Source snapshot nuevo;
 - local revision no es release identity;
-- schema vigente del draft = `2`;
-- no existe parser legacy/schema 1 para el draft canónico.
+- draft schema vigente = `2`;
+- no existe parser legacy schema `1` para el draft canónico.
 
-La precondición de publicación es el `SourceSnapshot` exacto.
+## Manager exact workspace
 
-## Canonical Users Admin Web
+`ManagerWorkspace` conserva:
 
-CURRENT desde `d23bff...`:
+- owner;
+- payload local;
+- exact `SourceSnapshot` como BASE;
+- local revision;
+- base payload revision.
 
-```text
-Users admin active path
-├── canonical_layout.py
-├── canonical_callbacks.py
-├── UsersAdminWebContext.administration
-│   └── UsersProfilesAdministrationService
-├── CATALOG_STORE_ID
-│   └── UsersProfilesConfiguration document
-└── DRAFT_BASIS_STORE_ID
-    └── UsersProfilesAdminDraft schema 2
-```
+El exact workspace controller:
 
-Reglas:
-- UI edits operan sobre el payload canónico, no `UsersConfigurationCatalog`;
-- browser draft incompatible/schema 1 se descarta y se reconstruye clean desde Source current;
-- no existe adapter browser draft legacy→schema 2;
-- save local preserva exact `SourceSnapshot` mediante `with_configuration(...)`;
-- save local no publica Source;
-- layout usa `dcc.Store(memory)`; no declara IndexedDB global implementado;
-- import legacy de archivo es compatibilidad explícita de entrada: decode legacy → split canónico → local draft sobre la BASE existente;
-- legacy Web files pueden permanecer físicamente hasta cleanup, pero no son el active export/registration path.
+- carga Source current por `ExactSourceReaderWorkflow`;
+- valida payload por `DraftValidationWorkflow`;
+- verifica contra exact Source snapshot;
+- publica por `ExactSourcePublicationWorkflow`;
+- rebasa sólo después de publicación exitosa.
 
-Profile delete mantiene el contrato backend de replacement explícito. La UI actual evita borrar un Profile referenciado en vez de implementar todavía la UX de replacement.
+No usa `source_revision: str` como identidad del Source exacto.
 
-## Manager exact-source publication boundary
+## Exact Projection
 
-Manager incorpora un protocolo opt-in:
+Contrato:
 
 ```text
-ExactSourcePublicationWorkflow
-├── get_source_snapshot() -> SourceSnapshot
-└── publish_draft_exact(
-       payload,
-       expected_source_snapshot
-   ) -> ExactSourcePublicationResult
+ExactProjectionWorkflow
+    get_status() -> ProjectionStatus
+    get_current_projection_target() -> ProjectionTarget | None
+    project(ProjectionTarget) -> ProjectionExecutionResult
 ```
 
-`ExactSourcePublicationResult` conserva `PublishResult` tipado.
-
-`ManagerProjectionCoordinator` transporta el snapshot exacto y detecta stale source sin reinterpretar strings legacy.
-
-El protocolo:
-- convive con `ConfigurationLifecycleWorkflow`;
-- no redefine `source_revision: str`;
-- no crea segundo coordinator.
-
-## Composition Users ↔ Manager exact-source
-
-CURRENT:
+`ProjectionStatus` es el modelo de `projection/core`:
 
 ```text
-Manager                     Users Configuration
-   ↑                               ↑
-   └── compositions/users-manager ─┘
+alignment
+source_current_release
+projected_source_release
 ```
 
-`UsersManagerExactSourceWorkflow` es el adapter de integración exact-source.
+Manager no inventa audit actor, projection revision ni timestamps ausentes del core.
 
-Responsabilidades:
-- delegar `get_source_snapshot()`;
-- parsear payload con `UsersProfilesConfiguration.from_document(...)`;
-- obtener actor mediante `UsersAuditActorProvider`;
-- delegar publication exacta al backend Users;
-- devolver `ExactSourcePublicationResult`;
-- audit timestamp = timestamp de la release publicada.
+## Exact History
 
-No posee:
-- draft/session;
-- `rebase`;
-- Projection execution;
-- Dash/UI;
-- IndexedDB;
-- registro de servicios del host.
-
-La composition depende de Manager + Source + Users Configuration.
-
-Manager no adquiere dependencia de Users y Users Configuration no adquiere dependencia de Manager.
-
-## Productive host boundary
-
-El host ADA tiene ahora una frontera partida intencionalmente:
+Contrato:
 
 ```text
-Users Admin Web
-    → UsersProfilesAdministrationService
-    → payload/draft canónico
-
-Manager Users workflow registration
-    → UsersManagerWorkflowAdapter
-    → contrato legacy
+ExactSourceHistoryWorkflow
+    list_history_exact(limit) -> HistoryPage
+    load_history_release_exact(SourceReleaseRef) -> ExactSourceHistoryReadResult
 ```
 
-`ConfigurationManagerDependencies` exige `users_profiles_administration` para construir el editor Users canónico.
+Invariantes:
 
-El registro productivo de publicación Users todavía no usa `UsersManagerExactSourceWorkflow`.
+- History lista publicaciones Source, no autosaves;
+- `SourceReleaseRef` se conserva completo;
+- no se convierte a `RevisionHistoryEntry`;
+- no se crea alias textual de release;
+- lectura exacta debe devolver la misma identidad solicitada.
 
-No se identificó dentro de `atlanticus` el constructor productivo externo de `ConfigurationManagerDependencies`; el wiring físico de `users_profiles_administration` permanece UNVERIFIED.
+History y status son capabilities separadas: fallo/ausencia de History no convierte un status exacto válido en unavailable.
 
-El próximo cutover debe cerrar la publication/service boundary sin adaptar el payload canónico de vuelta a `UsersConfigurationCatalog`.
+## Historical release -> WORKSPACE
+
+Una release histórica no repunta current.
+
+```text
+historical payload
+      ↓
+local workspace on current BASE
+      ↓
+dirty local work
+      ↓
+validate → verify → publish
+      ↓
+new Source release
+```
+
+Si todavía no existe workspace, Manager carga Source current para establecer BASE y después aplica el payload histórico.
+
+## Productive Users host
+
+CURRENT en ADA Configuration Manager:
+
+```text
+Users ManagerModule
+├── workflow_service = None
+├── draft_validation_service
+├── exact_source_reader_service
+├── exact_source_history_service
+├── exact_source_workflow_service
+└── exact_projection_service
+```
+
+ADA registra las capabilities exactas Users por separado.
+
+Projection llega ya compuesta mediante `ConfigurationManagerDependencies.users_exact_projection`; ADA no extrae SourceStore/ProjectionStore privados.
+
+`UsersManagerWorkflowAdapter` fue retirado.
 
 ## Legacy administrative boundary
 
-`UsersConfigurationCatalog` ya no es el contrato del editor Users activo.
+Legacy permanece sólo donde existan consumidores no migrados.
 
-Permanece legacy donde todavía hay consumidores, incluyendo el workflow productivo de Manager y history preview asociado.
+Para Users Manager:
 
-La compatibilidad durable/import histórica no justifica un adapter de authoring canónico→legacy.
+- authoring activo no usa `UsersConfigurationCatalog`;
+- publication no usa lifecycle legacy;
+- status no usa `Manager ProjectionStatus` legacy;
+- projection no usa adapter legacy;
+- History preview no usa catálogo legacy.
 
-## Pending / Guest
+No crear adapters exact→legacy para preservar APIs no publicadas.
 
-Pending pertenece a Users y no depende de `ProfileCatalog`.
+Navigation/Tools/KPI/KPI Definitions siguen teniendo adapters legacy que deben alinearse en un frente separado.
 
-Guest:
-- no es Profile runtime;
-- no es Profile funcional configurable;
-- no aparece como durable field en escritura Source nueva.
+## Pending / Guest / Root
 
-## Root bootstrap
+Pending pertenece a Users.
 
-Root pertenece a Identity/bootstrap y no se materializa como User/Profile.
+Guest no es Profile runtime ni Profile funcional configurable.
 
-## Local development identities
+Root pertenece a Identity/bootstrap y no se materializa como Managed User/Profile.
 
-Local/John/Jane quedan fuera de Profiles.
-
-Su representación runtime final permanece abierta.
-
-## Service Registry ownership
-
-Una capability sólo registra servicios que le pertenecen.
-
-CURRENT:
-
-```text
-create_users_module(runtime)
-→ USERS_RUNTIME_SERVICE_KEY
-```
-
-Users no publica ProfileCatalog mediante service key propio.
+Local/John/Jane quedan fuera de Profiles; su representación runtime final sigue OPEN.
 
 ## Storage Resource Topology
 
@@ -389,19 +373,7 @@ Users no publica ProfileCatalog mediante service key propio.
 
 No se crea `profiles.runtime` por inferencia.
 
-El resource topology físico de `CosmosUsersConfigurationProjectionStore` continúa OPEN.
-
-## Source / Projection exact-release
-
-Contrato:
-
-```text
-ProjectionTarget = SourceKey + SourceReleaseRef
-```
-
-`project(target)` lee release exacta, no relee current y conserva release identity.
-
-No introducir adaptadores `SourceReleaseId <-> str`.
+El resource topology físico del canonical Users Projection store continúa OPEN.
 
 ## Principio de implementación
 
@@ -409,31 +381,28 @@ Definir contratos antes que consumidores.
 
 Backend antes que frontend cuando el contrato pertenece al backend.
 
-Si una solución raíz reemplaza un contrato anterior, hacer cutover limpio:
+Si una solución raíz reemplaza un contrato anterior:
+
+- cutover limpio;
 - sin shims temporales;
 - sin re-exports legacy nuevos;
 - sin ownership duplicado.
 
-La compatibilidad de lectura durable/import histórica necesaria no se considera shim temporal cuando permanece explícitamente separada del authoring canónico.
+Read/import compatibility histórica durable puede permanecer cuando está explícitamente separada del authoring canónico.
 
 ## Fronteras futuras
 
-No están cerradas todavía:
-- cutover productivo del workflow Users hacia exact-source en Manager;
-- verificación del wiring físico externo de `users_profiles_administration`;
-- UX de replacement para Profile referenciado;
-- runtime canonical cutover Users;
+OPEN / PLANNED:
+
+- ADA legacy Projection contract alignment;
+- wiring físico externo y Docker E2E;
+- Profile replacement UX;
+- Users runtime canonical cutover;
 - exact-release provenance en `users.runtime`;
 - eliminación legacy;
-- resource topology físico de canonical Users Projection;
+- resource topology físico canonical Users Projection;
 - Root physical configuration;
 - Local/John/Jane runtime contract;
 - Python 3.14.7 global migration.
 
 No crear Profiles Source/Projection independiente sin requisito nuevo de lifecycle/release propio.
-
-## Alarm Engine
-
-Alarm conserva sus fronteras e invariantes cerrados.
-
-No reabrir Alarm para resolver Users/Profiles/Identity.

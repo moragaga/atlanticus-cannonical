@@ -13,26 +13,8 @@ Estado: **CURRENT**
 | Server-side Python con responsabilidad Web pertenece a `web/` | CURRENT |
 | Connectivity es dual-use y no adquiere ownership funcional | CURRENT |
 | Definir contratos antes que consumidores | CURRENT |
-| Cutover raíz limpio, sin shim/legacy temporal nuevo | CURRENT |
-| Read/import compatibility histórica puede preservarse si no redefine el authoring canónico | CURRENT REFINEMENT |
-
-## Storage / Users durable
-
-| Decisión | Estado |
-|---|---|
-| Web Storage Topology vive en `web/capabilities/storage/topology` | CURRENT / IMPLEMENTED + VALIDATED |
-| `StorageResourceContract` es neutral, sin secretos/SDK/I/O | FROZEN |
-| `users.runtime` es el único recurso durable runtime Users confirmado | FROZEN |
-| `users.runtime` usa Cosmos, physical `users-runtime`, partition `/id`, TTL `None` | FROZEN |
-| Pending y Managed comparten `users.runtime` | FROZEN |
-| Users runtime durable data no expira automáticamente por TTL | FROZEN |
-| `CosmosUsersRuntimeStore` implementa runtime store + pending reader | FROZEN |
-| `observe()` es create-only + conflict reread, nunca blind upsert | FROZEN |
-| Managed writer es snapshot-level separado de runtime reader/store | FROZEN |
-| Pending→Resolved conserva id/partition | FROZEN |
-| Managed removal = disabled + retired, no delete | FROZEN |
-| Re-add restaura `managed_state=present` | FROZEN |
-| Managed updates usan ETag/CAS | FROZEN |
+| Cutover raíz limpio; no crear shims legacy temporales nuevos | CURRENT |
+| Read/import compatibility histórica puede preservarse separada del authoring canónico | CURRENT REFINEMENT |
 
 ## Source / Projection
 
@@ -41,277 +23,185 @@ Estado: **CURRENT**
 | Source genérico pertenece a `web/capabilities/source` | CURRENT |
 | Projection exact-release pertenece a `web/capabilities/projection/core` | CURRENT |
 | Release identity != content hash | FROZEN |
-| Dos releases pueden compartir content hash | FROZEN |
 | Source current nunca lo determina Cosmos | FROZEN |
 | Projection target = `SourceKey + SourceReleaseRef` | FROZEN |
 | `project(target)` no relee current | FROZEN |
 | `CURRENT / OUTDATED` compara release identity | FROZEN |
 | Retry conserva exact target | FROZEN |
-| `UsersConfigurationBundle.revision` no equivale a `SourceReleaseId` | FROZEN |
 | No introducir shim `SourceReleaseId <-> str` | FROZEN |
+| Restore publica una nueva release; no repunta current | FROZEN |
 
-## Profiles ownership
+## Users / Profiles ownership
 
 | Decisión | Estado |
 |---|---|
-| Profiles core vive en `web/capabilities/profiles/core` | CURRENT |
 | Profiles no depende de Users | FROZEN OWNERSHIP |
 | Users depende one-way de Profiles | FROZEN OWNERSHIP |
-| Profiles no depende de ADA Access | FROZEN OWNERSHIP |
-| `atlanticus.web.users.profiles` está eliminado sin shim | FROZEN CUTOVER |
-| `ProfileCatalog` sólo contiene Profiles explícitos | FROZEN / IMPLEMENTED + VALIDATED |
-| `ProfileCatalog()` significa catálogo vacío | FROZEN / IMPLEMENTED + VALIDATED |
-| Profiles core no reserva Local/Admin/Guest/Root como system profiles | FROZEN / IMPLEMENTED + VALIDATED |
-| `ProfilesConfiguration` es el contrato durable Profiles-owned | FROZEN / IMPLEMENTED + VALIDATED |
-| `ProfilesConfiguration` no implica Source/Projection independiente | FROZEN FOR CURRENT BASELINE |
+| `ProfilesConfiguration` es contrato durable Profiles-owned | FROZEN |
+| `UsersConfiguration` contiene sólo Managed Users | FROZEN |
+| `UsersProfilesConfiguration` es composición canónica cross-contract | FROZEN |
+| Administrator es Profile explícito | FROZEN |
+| `guest` y `local` no son Profiles funcionales configurables | FROZEN |
+| Todo Managed User debe referenciar Profile existente | FROZEN |
 | No inferir `profiles.runtime` | FROZEN |
 
-## Users canonical contract
+## Canonical Users Source / Projection
 
 | Decisión | Estado |
 |---|---|
-| `UsersConfiguration` contiene sólo Managed Users | FROZEN / IMPLEMENTED + VALIDATED |
-| Users own uniqueness: id, non-null email, `(issuer, subject_id)` | FROZEN / IMPLEMENTED + VALIDATED |
-| `UsersProfilesConfiguration` es la composición canónica cross-contract | FROZEN / IMPLEMENTED + VALIDATED |
-| Cross-contract exige Administrator explícito | FROZEN / IMPLEMENTED + VALIDATED |
-| `guest` y `local` no pueden configurarse como Profiles funcionales | FROZEN / IMPLEMENTED + VALIDATED |
-| Todo Managed User, enabled o disabled, debe referenciar un Profile existente | FROZEN / IMPLEMENTED + VALIDATED |
-| Orphan references se rechazan en la composición canónica | CLOSED / IMPLEMENTED + VALIDATED |
-
-## Canonical Source / Projection split
-
-| Decisión | Estado |
-|---|---|
-| Una exact Source release contiene Users + Profiles del mismo snapshot | FROZEN / IMPLEMENTED + VALIDATED |
+| Una exact Source release contiene Users + Profiles del mismo snapshot | FROZEN |
 | Resource Users = `users/configuration.json.gz` | FROZEN |
 | Resource Profiles = `profiles/configuration.json.gz` | FROZEN |
-| Users Source write schema = `2` | CURRENT / IMPLEMENTED + VALIDATED |
-| Profiles resource write schema = `1` | CURRENT / IMPLEMENTED + VALIDATED |
-| `published_by` permanece en resource Users | CURRENT |
-| No crear segundo Source/coordinator para Profiles | FROZEN FOR CURRENT BASELINE |
-| Source Users schema `1` se puede leer y normalizar | FROZEN COMPATIBILITY |
-| Nuevas publicaciones no escriben schema Users `1` | FROZEN |
-| `ProjectionRecord[UsersConfigurationCatalog]` como payload canónico | SUPERSEDED BY UCS-1 |
-| `ProjectionRecord[UsersProfilesConfiguration]` es payload canónico vigente | FROZEN / IMPLEMENTED + VALIDATED |
-| Cosmos Users configuration projection write schema = `2` | CURRENT / IMPLEMENTED + VALIDATED |
+| Users Source write schema = `2` | CURRENT |
+| Profiles resource write schema = `1` | CURRENT |
+| Source Users schema `1` puede leerse/normalizarse | FROZEN COMPATIBILITY |
+| Nuevas publicaciones no escriben Users schema `1` | FROZEN |
+| Projection payload canónico = `UsersProfilesConfiguration` | FROZEN / CURRENT |
+| Cosmos projection write schema = `2` | CURRENT |
 
 ## Admin composition
 
 | Decisión | Estado |
 |---|---|
-| Payload de authoring canónico = `UsersProfilesConfiguration` | FROZEN / IMPLEMENTED + VALIDATED |
-| No crear aggregate admin durable mixto nuevo | FROZEN |
-| `UsersProfilesAdminDraft` conserva exact `SourceSnapshot` | FROZEN / IMPLEMENTED + VALIDATED |
-| Draft `revision` = SHA-256 del payload canónico actual | FROZEN / IMPLEMENTED + VALIDATED |
-| Draft `base_payload_revision` conserva la BASE local | FROZEN / IMPLEMENTED + VALIDATED |
-| Draft creado nace limpio (`revision == base_payload_revision`) | FROZEN / IMPLEMENTED + VALIDATED |
-| `has_local_changes` depende de revisiones locales, no de Source | FROZEN / IMPLEMENTED + VALIDATED |
-| `with_configuration(...)` preserva BASE + exact Source snapshot | FROZEN / IMPLEMENTED + VALIDATED |
-| `rebase(...)` adopta snapshot exacto nuevo y hace current revision = BASE | FROZEN / IMPLEMENTED + VALIDATED |
-| Draft local revision no equivale a `SourceReleaseId`, `content_hash` ni token | FROZEN |
-| Draft document schema vigente = `2` | CURRENT / IMPLEMENTED + VALIDATED |
-| Draft schema `1` no se migra mediante parser/adapter | FROZEN CLEAN CUTOVER |
-| Administrator no se elimina | FROZEN / IMPLEMENTED + VALIDATED |
-| Profile edit preserva key | FROZEN / IMPLEMENTED + VALIDATED |
-| Profile referenciado requiere replacement explícito para delete backend | FROZEN / IMPLEMENTED + VALIDATED |
-| Reassign + delete backend ocurre como una sola transformación | FROZEN / IMPLEMENTED + VALIDATED |
-| Alta Managed canónica parte de `PendingUserRecord` | FROZEN / IMPLEMENTED + VALIDATED |
-| Identidad `(issuer, subject_id)` de Managed existente es inmutable | FROZEN / IMPLEMENTED + VALIDATED |
-| Users admin publish usa exact `SourceSnapshot`, `ConcurrencyToken` y `basis_release` | FROZEN / IMPLEMENTED + VALIDATED |
+| Payload de authoring canónico = `UsersProfilesConfiguration` | FROZEN |
+| `UsersProfilesAdminDraft` conserva exact `SourceSnapshot` | FROZEN |
+| Draft schema vigente = `2` | CURRENT |
+| Draft schema `1` no se adapta | FROZEN CLEAN CUTOVER |
+| Local revision no equivale a release/hash/token | FROZEN |
+| Profile referenciado exige replacement explícito en backend | FROZEN |
+| Managed create canónico parte de Pending | FROZEN |
+| Identidad Managed existente es inmutable | FROZEN |
 
-## Users Admin Web
+## Manager exact-source / exact-projection
 
 | Decisión | Estado |
 |---|---|
-| Active Users admin layout/callbacks usan `UsersProfilesConfiguration` | CURRENT / IMPLEMENTED + VALIDATED |
-| Active Users admin context depende de `UsersProfilesAdministrationService` | CURRENT / IMPLEMENTED + VALIDATED |
-| Active browser draft usa `UsersProfilesAdminDraft` schema 2 | CURRENT / IMPLEMENTED + VALIDATED |
-| Browser draft legacy/schema 1 se convierte a schema 2 | SUPERSEDED / FORBIDDEN |
-| Browser draft incompatible se descarta y se crea clean desde Source current | FROZEN / IMPLEMENTED + VALIDATED |
-| Save local usa `basis.with_configuration(...)` y no publica Source | FROZEN / IMPLEMENTED + VALIDATED |
-| `dcc.Store(memory)` en Users admin equivale a IndexedDB global Manager | SUPERSEDED / FALSE |
-| Import file legacy puede decodificarse y transformarse explícitamente a canonical payload | CURRENT COMPATIBILITY / IMPLEMENTED |
-| Compatibilidad de import legacy equivale a migración de browser draft | SUPERSEDED / FALSE |
-| Administrator editor usa operación canónica dedicada | CURRENT / IMPLEMENTED + VALIDATED |
-| Profile create/edit usa operaciones canónicas | CURRENT / IMPLEMENTED + VALIDATED |
-| UI actual evita delete de Profile referenciado | CURRENT / IMPLEMENTED + VALIDATED |
-| UX para elegir `replacement_profile_key` al borrar Profile referenciado | OPEN / PLANNED |
-| Managed create desde UI parte de Pending y revalida pending actual | CURRENT / IMPLEMENTED + VALIDATED |
-| Managed edit preserva identidad | CURRENT / IMPLEMENTED + VALIDATED |
-| Active Users admin editor reconstruye `UsersConfigurationCatalog` | SUPERSEDED |
-
-## Manager
-
-| Decisión | Estado |
-|---|---|
-| Manager posee shell administrativo propio | CURRENT |
-| ADA Generic posee shell operacional | CURRENT |
-| Manager root Project usa `ProjectionTarget` exacto | FROZEN / IMPLEMENTED + VALIDATED |
-| Browser state no es autoridad de target ejecutable | FROZEN |
-| Manager publication/verification/history textual no se reinterpretan como release identity | FROZEN |
-| `ExactSourcePublicationWorkflow` es extensión opt-in separada del workflow legacy | FROZEN / IMPLEMENTED + VALIDATED |
-| Exact-source workflow expone `SourceSnapshot`, no `source_revision: str` | FROZEN / IMPLEMENTED + VALIDATED |
-| `ExactSourcePublicationResult` conserva `PublishResult` tipado | FROZEN / IMPLEMENTED + VALIDATED |
-| Coordinator exact-source compara snapshot completo antes de publicar | FROZEN / IMPLEMENTED + VALIDATED |
+| Exact Source read, publication, history y Projection son capabilities independientes | FROZEN / IMPLEMENTED |
+| Un `ManagerModule` exacto puede tener `workflow_service=None` | FROZEN / IMPLEMENTED |
+| No fallback silencioso exact→legacy | FROZEN |
+| `ExactSourceReaderWorkflow` devuelve `ExactSourceReadResult` | FROZEN |
+| `ExactSourcePublicationWorkflow` usa exact `SourceSnapshot` | FROZEN |
+| `ExactSourceHistoryWorkflow` usa `HistoryPage` + `SourceReleaseRef` | FROZEN |
+| `ExactProjectionWorkflow` usa status/target/result de `projection/core` | FROZEN |
+| Status exacto no se adapta a `Manager ProjectionStatus` legacy | FROZEN |
+| Exact History no se adapta a `RevisionHistoryEntry` | FROZEN |
+| History y status son fallos/capabilities separados | FROZEN |
 | CAS autoritativo permanece en Source/workflow | FROZEN |
-| Workflows legacy no están obligados a implementar exact-source | FROZEN COMPATIBILITY |
 
-## Web compositions
-
-| Decisión | Estado |
-|---|---|
-| Cross-capability binding puede vivir en `web/compositions` cuando ninguna capability debe poseer la otra | CURRENT |
-| `navigation-activity` conecta Navigation con `ActivityRouteResolver`; Activity sigue siendo owner del tracking | CURRENT / PREEXISTING |
-| `users-manager` conecta Users Configuration con el protocolo exact-source de Manager | CURRENT / IMPLEMENTED + VALIDATED |
-| Manager no depende de Users por el wiring exact-source | FROZEN OWNERSHIP |
-| Users Configuration no depende de Manager por el wiring exact-source | FROZEN OWNERSHIP |
-| `UsersManagerExactSourceWorkflow` no posee draft, UI, projection ni service registration del host | FROZEN |
-| `compositions/` no es un cajón general ni una capa obligatoria | FROZEN DIRECTION |
-
-## Users ↔ Manager exact-source
+## Users exact Manager lifecycle
 
 | Decisión | Estado |
 |---|---|
-| Adapter/composition exact-source Users↔Manager | CLOSED / VERIFIED / CURRENT |
-| Payload del adapter se revalida con `UsersProfilesConfiguration.from_document(...)` | FROZEN / IMPLEMENTED + VALIDATED |
-| Actor se obtiene mediante `UsersAuditActorProvider` | FROZEN / IMPLEMENTED + VALIDATED |
-| Audit timestamp usa la release confirmada por Source | FROZEN / IMPLEMENTED + VALIDATED |
-| Adapter retorna `ExactSourcePublicationResult` | FROZEN / IMPLEMENTED + VALIDATED |
-| Adapter hace `rebase()` del draft | SUPERSEDED / FORBIDDEN |
-| Adapter registra por sí mismo servicios del host | SUPERSEDED / FORBIDDEN |
-| Productive ADA Users workflow ya usa exact-source | PLANNED / NOT YET IMPLEMENTED |
-| Productive host todavía registra `UsersManagerWorkflowAdapter` legacy | CURRENT LEGACY |
+| Users Manager validation exacta/canónica | CLOSED / VERIFIED / CURRENT |
+| Users Source read exacto | CLOSED / VERIFIED / CURRENT |
+| Users Source publication exacta | CLOSED / VERIFIED / CURRENT |
+| Users Projection status exacto | CLOSED / VERIFIED / CURRENT |
+| Users Projection exact-target | CLOSED / VERIFIED / CURRENT |
+| Users Source History list/read exactos | CLOSED / VERIFIED / CURRENT |
+| Users History preview canónico | CLOSED / VERIFIED / CURRENT |
+| Historical release se carga como trabajo local sobre BASE current | FROZEN / IMPLEMENTED |
+| `UsersManagerWorkflowAdapter` productivo | SUPERSEDED / REMOVED |
+| `workflow_service` legacy para Users | SUPERSEDED / NONE |
+| Productive Users exact-source cutover como hito pendiente | SUPERSEDED BY FULL EXACT LIFECYCLE |
+
+## Historical load semantics
+
+| Decisión | Estado |
+|---|---|
+| Abrir una release histórica repunta Source current | SUPERSEDED / FORBIDDEN |
+| Historical load conserva current BASE | FROZEN |
+| Historical load crea local dirty work | FROZEN |
+| Publicar luego del historical load crea nueva release | FROZEN |
+| Source release histórica se identifica con `release_id` string aislado | SUPERSEDED / FORBIDDEN |
+| Dash transporta release id + published timestamp para reconstruir `SourceReleaseRef` | CURRENT |
 
 ## Productive ADA composition
 
 | Decisión | Estado |
 |---|---|
-| Users admin Web context recibe `users_profiles_administration` | CURRENT / IMPLEMENTED + SCOPED VALIDATION |
-| `ConfigurationManagerDependencies` exige `UsersProfilesAdministrationService` para Users UI | CURRENT / IMPLEMENTED |
-| Constructor físico/productivo de esa dependencia dentro de `atlanticus` | UNVERIFIED / NOT FOUND |
-| Service registration productivo Users cambia en el mismo hito UI | SUPERSEDED / SEPARATE INCREMENT |
-| Manager productive exact-source cutover | PLANNED / NEXT CANDIDATE |
-
-## Legacy Users Configuration
-
-| Decisión | Estado |
-|---|---|
-| `UsersConfigurationCatalog` sigue siendo el payload del editor Users activo | SUPERSEDED BY ADMIN-UI-DRAFT-CUTOVER |
-| `UsersConfigurationCatalog` sigue existiendo para consumidores legacy | CURRENT LEGACY / NOT CANONICAL WRITE CONTRACT |
-| Shape `administrator_* / guest_* / profiles / users` como contrato canónico nuevo | SUPERSEDED BY UCS-1 |
-| No adaptar nuevo admin payload canónico de vuelta a `UsersConfigurationCatalog` | FROZEN |
-| Migración de callbacks/layout/browser store | CLOSED / VERIFIED / CURRENT |
-| Productive exact-source service cutover | PLANNED |
-| History preview Users legacy | CURRENT LEGACY |
-| Eliminación legacy | BLOCKED |
-
-## Pending / Guest / Administrator
-
-| Decisión | Estado |
-|---|---|
-| Pending pertenece a Users, no Profiles | FROZEN / IMPLEMENTED + VALIDATED |
-| Pending `EffectiveUser.profile is None` | FROZEN / IMPLEMENTED + VALIDATED |
-| Guest no es Profile runtime ni Profile durable funcional nuevo | FROZEN / IMPLEMENTED + VALIDATED |
-| Administrator es Profile funcional normal y explícito | FROZEN / IMPLEMENTED + VALIDATED |
-| Managed Users referencian Profile funcional por `profile_key` | FROZEN / IMPLEMENTED + VALIDATED |
-
-## Root bootstrap
-
-| Decisión | Estado |
-|---|---|
-| Root pertenece a Identity/bootstrap, no Profiles | FROZEN / IMPLEMENTED + VALIDATED |
-| Root no es Managed User ni Profile | FROZEN / IMPLEMENTED + VALIDATED |
-| Root match = exact `issuer + subject_id` con policy enabled | FROZEN / IMPLEMENTED + VALIDATED |
-| Fuente física Root policy y Entra claim mapping | OPEN / UNVERIFIED |
-
-## Local / John / Jane
-
-| Decisión | Estado |
-|---|---|
-| Local/John/Jane no son Profiles funcionales | FROZEN BOUNDARY |
-| No reintroducirlos como system `ProfileDefinition` | FROZEN |
-| Contrato runtime/ownership final | OPEN |
-
-## Service composition
-
-| Decisión | Estado |
-|---|---|
-| Users WebModule registra sólo servicios Users | FROZEN / IMPLEMENTED + VALIDATED |
-| `PROFILE_CATALOG_SERVICE_KEY = "atlanticus.web.users.profiles"` | SUPERSEDED / REMOVED |
-| `create_users_module(runtime, profiles)` | SUPERSEDED |
-| `create_users_module(runtime)` | CURRENT / IMPLEMENTED + VALIDATED |
+| Users admin recibe `UsersProfilesAdministrationService` | CURRENT |
+| Users exact Projection se inyecta como `ExactProjectionWorkflow` ya compuesto | CURRENT |
+| ADA registra validation/read/history/publication exactos Users | CURRENT |
+| ADA recompone stores privados de Users Projection | SUPERSEDED / FORBIDDEN |
+| ADA exporta `UsersManagerWorkflowAdapter` | SUPERSEDED / REMOVED |
+| Navigation/Tools/KPI legacy adapters permanecen otro frente | CURRENT LEGACY / OPEN |
 
 ## Qualification / packaging
 
-| Decisión / hallazgo | Estado |
+| Hallazgo | Estado |
 |---|---|
-| Web workspace `uv lock --check` en `d23bff...` | VERIFIED / GREEN |
-| Full Web suite en `d23bff...` | VERIFIED / 587 passed, 7 skipped |
-| Python 3.14.7 qualification de `d23bff...` | BLOCKED / UNVERIFIED |
-| Runtime usado para cierre `d23bff...` | VERIFIED / Python 3.14.2 |
-| ADA lock Manager `0.3.14` vs source actual `0.3.15` | VERIFIED DRIFT / OPEN |
-| ADA lock Users Configuration `0.1.6` vs source actual `0.1.9` | VERIFIED DRIFT / OPEN |
-| Corregir adapters ADA legacy para Manager 0.3.15 dentro del UI cutover | SUPERSEDED / OUT OF SCOPE |
+| Current implementation checkpoint | VERIFIED / `384a68fe8fa42263623c95d1d132af2ca54574c8` |
+| Focused Manager + Users Configuration + users-manager suite | VERIFIED / 238 passed |
+| ADA full suite | VERIFIED / 56 passed, 4 failed |
+| Los 4 failures ADA pertenecen a Users | SUPERSEDED / FALSE |
+| Los 4 failures ADA pertenecen a legacy Projection adapters no-Users | VERIFIED / BLOCKER FOR GLOBAL ADA GREEN |
+| Full Web suite en current checkpoint | UNVERIFIED |
+| Docker E2E | UNVERIFIED |
+| Python 3.14.7 qualification current checkpoint | UNVERIFIED |
+| CI remoto adicional | UNVERIFIED |
 
 ## Status de hitos
 
 ```text
-PROFILES-DOMAIN-EXTRACTION                    CLOSED / VERIFIED / CURRENT
-PROFILES-BASELINE-SEMANTICS                   CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION                     CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT                CLOSED / VERIFIED / CURRENT
-ADMIN-COMPOSITION-BACKEND                     CLOSED / VERIFIED / CURRENT
-MANAGER-EXACT-SOURCE-BOUNDARY                 CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-ADMIN-DRAFT-BASELINE-SEMANTICS CLOSED / VERIFIED / CURRENT
-USERS-MANAGER-EXACT-SOURCE-COMPOSITION        CLOSED / VERIFIED / CURRENT
-ADMIN-UI-DRAFT-CUTOVER                        CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-DOMAIN-SEPARATION              IN PROGRESS
-USERS-PROFILES-ADMIN-COMPOSITION              IN PROGRESS
-USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER PLANNED / NEXT CANDIDATE
+MANAGER-EXACT-SOURCE-WORKSPACE-CAPABILITIES   CLOSED / VERIFIED / CURRENT
+USERS-EXACT-SOURCE-PRODUCTIVE-HOST-CUTOVER    CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-ONLY-MODULE-CONTRACT             CLOSED / VERIFIED / CURRENT
+MANAGER-EXACT-PROJECTION-BOUNDARY              CLOSED / VERIFIED / CURRENT
+USERS-EXACT-PROJECTION-COMPOSITION             CLOSED / VERIFIED / CURRENT
+USERS-EXACT-PROJECTION-HOST-CUTOVER            CLOSED / VERIFIED / CURRENT
+USERS-EXACT-PROJECTION-STATUS-CUTOVER          CLOSED / VERIFIED / CURRENT
+USERS-EXACT-SOURCE-HISTORY-BOUNDARY            CLOSED / VERIFIED / CURRENT
+USERS-EXACT-SOURCE-HISTORY-HOST-UI-CUTOVER    CLOSED / VERIFIED / CURRENT
+USERS-EXACT-MANAGER-LIFECYCLE                 CLOSED / VERIFIED / CURRENT
+
+ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT       PLANNED / NEXT
 USERS-RUNTIME-CANONICAL-CUTOVER               PLANNED
 USERS-RUNTIME-EXACT-RELEASE-PROVENANCE        PLANNED
-USERS-ADMIN-CANONICAL-MIGRATION               PLANNED
 DOMAIN-LEGACY-DELETION                        BLOCKED
 ```
 
 ## Refinamientos / superseded
 
-1. “Draft canónico schema 1 con sólo `revision`”
-   → `SUPERSEDED`: schema 2 agrega `base_payload_revision` y semántica clean/dirty/rebase.
+1. “Users exact-source productivo todavía requiere `UsersManagerWorkflowAdapter`”
+   → `SUPERSEDED`: el adapter fue eliminado; Users no declara lifecycle legacy.
 
-2. “USERS-MANAGER-EXACT-SOURCE-WIRING” como un único hito binario
-   → `REFINED` en adapter/composition exact-source CLOSED y productive host cutover PLANNED.
+2. “Exact status debe traducirse al `ProjectionStatus` legacy de Manager”
+   → `SUPERSEDED / FORBIDDEN`: Manager presenta el status de `projection/core`.
 
-3. “El adapter exact-source debe vivir dentro de Users o Manager”
-   → `SUPERSEDED`: vive en `web/compositions/users-manager`.
+3. “History exacto debe convertirse a `RevisionHistoryEntry`”
+   → `SUPERSEDED / FORBIDDEN`: `HistoryPage` y `SourceReleaseRef` se preservan.
 
-4. “El workflow exact-source debería rebasar el draft”
-   → `SUPERSEDED`: caller/session posee el draft y hace rebase después del éxito.
+4. “History release puede identificarse sólo por un string revision”
+   → `SUPERSEDED`: la lectura exacta usa `SourceReleaseRef`.
 
-5. “Users exact-source ya está productivamente conectado porque existe el adapter”
-   → `SUPERSEDED`: el host ADA todavía registra `UsersManagerWorkflowAdapter` legacy.
+5. “History preview Users sigue legacy”
+   → `SUPERSEDED`: preview parsea `UsersProfilesConfiguration`.
 
-6. “`compositions/` apareció con Users↔Manager”
-   → `SUPERSEDED`: `navigation-activity` ya era una composition preexistente.
+6. “Cargar History debe restaurar/repoint current”
+   → `SUPERSEDED`: sólo carga payload como trabajo local sobre BASE current.
 
-7. “El UI cutover y el service cutover exact-source deben hacerse juntos”
-   → `SUPERSEDED / REFINED`: son incrementos separados; el UI cutover quedó cerrado primero.
+7. “Status y History deben cargarse/fallar como una unidad”
+   → `REFINED`: History no degrada un status exacto válido.
 
-8. “Un browser draft schema 1 debe convertirse al schema 2”
-   → `SUPERSEDED / FORBIDDEN`: se descarta y se crea base limpia desde Source current.
+8. “El siguiente foco es USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER”
+   → `SUPERSEDED`: el lifecycle Users quedó exacto de punta a punta.
 
-9. “Cerrar UI cutover exige implementar UX de replacement al borrar Profile referenciado”
-   → `REFINED`: el backend exige replacement; la UI actual bloquea ese delete y la UX de replacement permanece OPEN.
-
-10. “Import legacy y browser draft legacy son la misma migración”
-    → `SUPERSEDED`: import file legacy tiene compatibilidad explícita; browser draft schema 1 no se migra.
+9. “Los failures ADA actuales bloquean el cierre Users”
+   → `REFINED`: bloquean GREEN global ADA, pero pertenecen a Projection legacy no-Users.
 
 ## Siguiente decisión de ejecución
 
-Único foco recomendado para el siguiente chat:
+Único foco recomendado:
 
 ```text
-USERS-MANAGER-PRODUCTIVE-EXACT-SOURCE-CUTOVER
+ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT
 ```
 
-Primero debate/diseño y verificación del host real. No mezclar runtime provenance, Python migration, Root physical configuration, Navigation migration ni legacy deletion global.
+Alinear exclusivamente:
+
+- Navigation;
+- Tools;
+- KPI;
+- KPI Definitions.
+
+No reabrir Users exact lifecycle.
