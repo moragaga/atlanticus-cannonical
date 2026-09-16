@@ -29,3 +29,47 @@ Key final adjustments:
 - Atlanticus University added for isolated real teaching cases.
 
 From this baseline forward, architecture changes require a concrete implementation finding or product need.
+
+## Execution refinement — 2026-09-16
+
+Concrete implementation of KPI Configuration established a real semantic projection dependency that refines one Baseline 1.0 statement.
+
+Historical formulation:
+
+```text
+base projections independent; derived resolutions carry actual dependencies
+```
+
+Refined CURRENT rule:
+
+```text
+no artificial bootstrap dependencies
+exact ProjectionTarget.dependencies when a projection has a real semantic dependency
+derived resolutions remain for genuinely derived composition
+```
+
+Verified implemented case:
+
+```text
+Tool ProjectionTarget
+    ↓
+KPI Configuration ProjectionTarget.dependencies
+```
+
+This refinement does not introduce a global projection order or a new coordinator.
+
+It also does not change ownership:
+
+```text
+Tools             → scopes/ada
+KPI Configuration → scopes/ada
+KPI Definition    → scopes/ada
+```
+
+These ADA-specific capabilities consume generic Atlanticus infrastructure without becoming generic core capabilities.
+
+Checkpoint establishing the KPI Configuration cutover:
+
+```text
+moragaga/atlanticus@4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
+```

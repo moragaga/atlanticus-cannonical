@@ -53,15 +53,6 @@ Una capability ADA-specific puede consumir Source/Projection/Manager genéricos 
 7. ejecutar regression/qualification final
 ```
 
-FORBIDDEN:
-
-```text
-mantener legacy para que el consumer siga importando
-crear adapters para sostener composición temporal
-reintroducir schemas/revisions anteriores como fallback
-convertir una capability ADA-specific en core genérico sin necesidad real
-```
-
 ## Source / Projection
 
 | Decisión | Estado |
@@ -71,6 +62,8 @@ convertir una capability ADA-specific en core genérico sin necesidad real
 | Release identity != content hash | FROZEN |
 | Source current nunca lo determina Cosmos | FROZEN |
 | Projection target = `SourceKey + SourceReleaseRef + dependencies` | FROZEN |
+| Projection dependencies son exact `ProjectionTarget` | FROZEN / IMPLEMENTED |
+| dependencies se normalizan determinísticamente por `source_key` | FROZEN / IMPLEMENTED |
 | `project(target)` no relee current | FROZEN |
 | CURRENT/OUTDATED compara exact target | FROZEN |
 | Retry conserva exact target | FROZEN |
@@ -148,47 +141,70 @@ convertir una capability ADA-specific en core genérico sin necesidad real
 | Tool domain semantics permanecen ADA-specific | FROZEN |
 | Tool Source consume `atlanticus.web.source` directamente | IMPLEMENTED / VERIFIED / CURRENT |
 | Tool Projection consume `atlanticus.web.projection` directamente | IMPLEMENTED / VERIFIED / CURRENT |
-| `ToolSourceService` | CURRENT |
-| `ToolProjectionBuilder` | CURRENT |
-| `SourceProjectionService[ToolConfiguration]` | CURRENT |
 | private Tool lifecycle contracts | SUPERSEDED / REMOVED |
-| `ToolLifecycleServices` | SUPERSEDED / REMOVED FROM TOOLS |
-| `ToolConfigurationSourceSnapshot` | SUPERSEDED / REMOVED |
-| `ToolConfigurationProjectionSnapshot` | SUPERSEDED / REMOVED |
-| `ToolConfigurationProjectionRepository` | SUPERSEDED / REMOVED |
 | `expected_source_revision` in Tool domain | SUPERSEDED / REMOVED |
 | private Tool projection revision | SUPERSEDED / REMOVED |
-| mantener Configuration Manager ejecutable durante este cutover | SUPERSEDED |
 | crear adapter/alias para el consumer antiguo | FORBIDDEN |
 
-## KPI Configuration — siguiente frontera
+## KPI Configuration
 
 | Decisión | Estado |
 |---|---|
-| ownership permanece `scopes/ada/web/kpis/configuration` | FROZEN |
-| usar Tools CURRENT como referencia estructural, no copiar semántica | FROZEN |
-| migrar Source a contrato genérico | PLANNED / NEXT |
-| migrar Projection a contrato genérico | PLANNED / NEXT |
-| conservar dependencia semántica en Tool Projection | FROZEN |
-| representar identidad de dependencia mediante contrato genérico de Projection | FROZEN |
-| conservar `tool_projection_revision` como identidad privada | SUPERSEDED |
-| tocar Manager durante este incremento | FORBIDDEN |
+| ownership permanece `scopes/ada/web/kpis/configuration` | FROZEN / CURRENT |
+| dominio permanece ADA-specific | FROZEN |
+| Source consume contrato genérico | IMPLEMENTED / VERIFIED / CURRENT |
+| Projection consume contrato genérico | IMPLEMENTED / VERIFIED / CURRENT |
+| `KpiSourceService` | CURRENT |
+| `KpiProjectionBuilder` | CURRENT |
+| `SourceProjectionService[KpiConfiguration]` | CURRENT |
+| dependencia semántica en Tool Projection | FROZEN / IMPLEMENTED |
+| dependencia exacta usa `ProjectionTarget.dependencies` | FROZEN / IMPLEMENTED |
+| `KpiDestinationCatalog` conserva semántica sin revision privada | FROZEN / IMPLEMENTED |
+| procedencia Tool usa `KpiDestinationCatalogSnapshot.projection_target` | FROZEN / IMPLEMENTED |
+| `tool_projection_revision` como identidad privada | SUPERSEDED / REMOVED |
+| private KPI Source/Projection lifecycle | SUPERSEDED / REMOVED |
+| `expected_source_revision` | SUPERSEDED / REMOVED |
+| revision → `ProjectionTarget` reconstruction | SUPERSEDED / REMOVED |
+| tocar Manager durante este incremento | FORBIDDEN / NOT DONE |
 
-## KPI Definition
+## KPI Definition — siguiente frontera
 
 | Decisión | Estado |
 |---|---|
 | ownership permanece `scopes/ada/web/kpis/definition` | FROZEN |
-| cutover Source/Projection | PLANNED |
+| cutover Source/Projection | PLANNED / NEXT |
 | dependencia en KPI Configuration debe conservarse semánticamente | FROZEN |
+| identidad de dependencia final usa contrato genérico Projection | FROZEN |
 | revision string privada como identidad final | SUPERSEDED |
+| copiar implementación KPI Configuration sin inspección | FORBIDDEN |
+
+## Projection orchestration — refinamiento
+
+No existe un orden global rígido de todas las proyecciones.
+
+La afirmación anterior de que toda base projection debe ser independiente queda refinada:
+
+```text
+independent when there is no real semantic dependency
+exact ProjectionTarget.dependencies when a real dependency exists
+```
+
+KPI Configuration es el caso implementado:
+
+```text
+exact Tool ProjectionTarget
+    ↓
+KPI Configuration ProjectionTarget.dependencies
+```
+
+Una derived resolution sigue siendo válida para materializaciones realmente derivadas, pero no sustituye una dependencia que forma parte de la identidad exacta de una projection.
 
 ## Estrategia de Configuration Manager
 
 ```text
 Tools Source/Projection                    CLOSED / CURRENT
-KPI Configuration Source/Projection       PLANNED / NEXT
-KPI Definition Source/Projection          PLANNED
+KPI Configuration Source/Projection       CLOSED / CURRENT
+KPI Definition Source/Projection          PLANNED / NEXT
 ADA Configuration Manager final cutover   BLOCKED
 Global regression                         BLOCKED
 ```
@@ -197,40 +213,58 @@ No introducir parches temporales en el consumer.
 
 ## Decisiones reemplazadas o refinadas
 
-1. `TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER` como siguiente incremento directo.
-   → **REFINED**: primero se migró el contrato interno Source/Projection de Tools; Manager se corta al final.
-
-2. Mantener la composición ejecutable durante cada migración de dominio.
+1. Mantener la composición ejecutable durante cada migración de dominio.
    → **SUPERSEDED**.
 
-3. Crear una composición Manager dentro del paquete Tools durante su cutover.
-   → **SUPERSEDED**.
-
-4. Generalizar Tools por usar infraestructura genérica.
+2. Crear adapters/shims para sostener contratos legacy durante el cutover.
    → **SUPERSEDED / FORBIDDEN**.
 
-5. Preservar private revision strings para dependencias KPI.
-   → **SUPERSEDED**; usar identidad genérica de Projection.
+3. Generalizar una capability ADA-specific por usar infraestructura genérica.
+   → **SUPERSEDED / FORBIDDEN**.
+
+4. Preservar private revision strings para dependencias KPI.
+   → **SUPERSEDED**; la identidad exacta usa `ProjectionTarget`.
+
+5. Tratar KPI Configuration Projection como base projection independiente de Tool Projection y resolver Tool + KPI sólo downstream.
+   → **REFINED / SUPERSEDED PARA KPI CONFIGURATION**; la dependencia exacta Tool forma parte del target KPI Configuration.
 
 ## Qualification observada
 
 | Hallazgo | Estado |
 |---|---|
-| checkpoint Tools publicado | VERIFIED / `27c2e4beed125fe379881048f0df5fbe3ff6cb1a` |
-| Tool Source/Projection code | VERIFIED / CURRENT |
-| tests CURRENT de Tool Source/Projection existen | VERIFIED |
-| ejecución scoped posterior al cutover | UNVERIFIED |
-| CI remoto del commit | UNVERIFIED / no status observado |
+| checkpoint KPI Configuration publicado | VERIFIED / `4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe` |
+| KPI Source/Projection code | VERIFIED / CURRENT |
+| legacy KPI files removed | VERIFIED |
+| Ruff scoped KPI Configuration | VERIFIED / PASS |
+| pytest scoped KPI Configuration | VERIFIED / 45 passed |
+| legacy token scan scoped | VERIFIED / 0 matches |
+| `git diff --check` previo a publicación | VERIFIED / PASS |
+| CI remoto del commit | UNVERIFIED |
 | full ADA regression | BLOCKED |
-| KPI Configuration | PLANNED / NEXT |
-| KPI Definition | PLANNED |
+| KPI Definition | PLANNED / NEXT |
 | Python 3.14.7 global | UNVERIFIED |
+
+## Conflicto abierto de Python metadata
+
+Decisión global:
+
+```text
+Python 3.14.7
+```
+
+KPI Configuration publicado:
+
+```text
+requires-python = "==3.14.2"
+```
+
+No resolver silenciosamente dentro del cutover KPI Definition.
 
 ## Siguiente foco único
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-No tocar Manager final ni KPI Definition en el mismo incremento.
+No tocar Manager final ni abrir limpieza transversal de Python en el mismo incremento.

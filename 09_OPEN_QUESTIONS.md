@@ -48,20 +48,87 @@ TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Ya no están OPEN dentro del dominio Tools:
+Tools sigue siendo ADA-specific bajo `scopes/ada/web/tools`.
+
+## CLOSED — KPI Configuration Source/Projection
 
 ```text
-ToolLifecycleServices
-ToolConfigurationSourceSnapshot
-ToolConfigurationProjectionSnapshot
-ToolConfigurationProjectionRepository
-ToolConfigurationPublisher
-ToolConfigurationSource
-expected_source_revision
-private projection revision identity
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Tools sigue siendo ADA-specific bajo `scopes/ada/web/tools`.
+Ya no están OPEN dentro de KPI Configuration:
+
+```text
+private Source/Projection lifecycle
+private source revision identity
+private projection revision identity
+tool_projection_revision as dependency identity
+expected_source_revision
+revision -> ProjectionTarget reconstruction
+compatibility adapters/shims/aliases
+```
+
+KPI Configuration sigue siendo ADA-specific bajo:
+
+```text
+scopes/ada/web/kpis/configuration
+```
+
+Su dependencia exacta en Tool Projection usa `ProjectionTarget.dependencies`.
+
+## OPEN — KPI Definition Source/Projection
+
+```text
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+PLANNED / NEXT
+```
+
+Preguntas permitidas en el siguiente chat:
+
+1. ¿Qué contratos Source/Projection privados existen realmente en `scopes/ada/web/kpis/definition`?
+2. ¿Qué archivos implementan authoring, Source, Projection y validación?
+3. ¿Cómo consume hoy KPI Configuration Projection?
+4. ¿Qué revision strings privadas existen y qué semántica representan?
+5. ¿Cómo expresar la dependencia exacta usando `ProjectionTarget` sin perder semántica?
+6. ¿Qué tests prueban comportamiento CURRENT y cuáles existen sólo para legacy?
+7. ¿Qué consumer queda temporalmente desalineado después del cutover raíz?
+
+No tocar Manager durante este incremento.
+
+## OPEN — concrete KPI destination provider composition
+
+```text
+UNVERIFIED
+```
+
+El contrato `KpiDestinationCatalogProvider` está definido y el dominio no importa Tools directamente.
+
+Este cierre no verificó la composition root productiva concreta que suministra `KpiDestinationCatalogSnapshot`.
+
+No inventarla ni moverla al dominio KPI Configuration.
+
+## OPEN — Python package metadata alignment
+
+Canonical fija:
+
+```text
+Python 3.14.7
+```
+
+KPI Configuration publicado declara:
+
+```text
+requires-python = "==3.14.2"
+```
+
+Estado:
+
+```text
+PLANNED / UNVERIFIED
+```
+
+No mezclar esta limpieza con KPI Definition salvo bloqueo real de qualification.
 
 ## OPEN — Tools scoped qualification
 
@@ -69,45 +136,7 @@ Tools sigue siendo ADA-specific bajo `scopes/ada/web/tools`.
 PLANNED / UNVERIFIED
 ```
 
-Los tests CURRENT existen, pero este cierre no aporta resultado de ejecución.
-
-## OPEN — KPI Configuration Source/Projection
-
-```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-PLANNED / NEXT
-```
-
-Preguntas permitidas en el siguiente chat:
-
-1. ¿Qué contratos Source/Projection privados siguen existiendo exactamente en `scopes/ada/web/kpis/configuration`?
-2. ¿Qué archivos implementan authoring, Source, Projection y validación?
-3. ¿Cómo se obtiene hoy la autoridad/destination catalog desde Tool Projection?
-4. ¿Dónde se usa `tool_projection_revision` y qué invariantes representa realmente?
-5. ¿Cómo expresar esa dependencia usando `ProjectionTarget`/dependencies sin perder semántica?
-6. ¿Qué tests legacy deben eliminarse y qué comportamiento CURRENT debe preservarse?
-
-No tocar Manager durante este incremento.
-
-## OPEN — KPI Definition Source/Projection
-
-```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-PLANNED
-```
-
-No analizar junto con KPI Configuration salvo para identificar una frontera contractual que KPI Configuration deba exponer.
-
-## OPEN — Tools Manager consumer
-
-```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
-PLANNED
-```
-
-`ada-configuration-manager` todavía importa `ToolLifecycleServices` y define `ToolConfigurationManagerWorkflowAdapter`.
-
-No corregirlo con compatibilidad dentro de Tools.
+Permanece sin evidencia nueva dentro de este cierre.
 
 ## BLOCKED — ADA Configuration Manager final cutover
 
@@ -116,12 +145,13 @@ ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
 BLOCKED
 ```
 
-Bloqueado por:
+Bloqueado ahora por:
 
 ```text
-KPI Configuration Source/Projection not migrated
 KPI Definition Source/Projection not migrated
 ```
+
+KPI Configuration ya no es blocker.
 
 ## BLOCKED — Global regression
 
@@ -134,18 +164,18 @@ Ejecutar después del cutover final del Configuration Manager.
 
 ## UNVERIFIED
 
-- Tools scoped pytest/Ruff;
 - full ADA suite;
 - Docker E2E;
-- CI remoto;
+- CI remoto del checkpoint KPI Configuration;
 - Python 3.14.7/Trixie global;
-- provider físico final de Tool Source/Projection;
-- necesidad real de migración operacional de datos Tool antiguos.
+- provider físico/composition final de KPI destination snapshots;
+- necesidad real de migración operacional de datos KPI históricos;
+- KPI Definition CURRENT hasta inspección específica.
 
 ## Siguiente foco
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 ```
 
 Fuentes obligatorias:

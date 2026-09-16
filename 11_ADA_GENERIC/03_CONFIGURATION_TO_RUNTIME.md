@@ -34,43 +34,65 @@ Alarm visual state
 
 ```text
 Tool Source/Projection
-CLOSED / CURRENT
+CLOSED / VERIFIED / CURRENT
 
 KPI Configuration Source/Projection
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 
 KPI Definition Source/Projection
-PLANNED
+PLANNED / NEXT
 ```
+
+## Ownership ADA
+
+Tools, KPI Configuration y KPI Definition permanecen bajo `scopes/ada` porque sus semánticas son ADA-specific.
+
+El uso de Source/Projection genéricos no cambia ese ownership.
 
 ## Tool CURRENT
 
-Tools permanece ADA-specific pero usa directamente:
+Tools usa directamente contratos genéricos Source/Projection y no mantiene private Tool lifecycle/revision identity.
+
+## KPI Configuration CURRENT
+
+KPI Configuration usa directamente:
 
 ```text
 SourceStore
 SourceSnapshot
 SourceReleaseRef
 ProjectionTarget
-ProjectionStore[ToolConfiguration]
-SourceProjectionService[ToolConfiguration]
+ProjectionStore[KpiConfiguration]
+SourceProjectionService[KpiConfiguration]
 ```
 
-No existe private Tool lifecycle/revision identity en el contrato CURRENT.
+La frontera Tool→KPI Configuration transporta:
+
+```text
+KpiDestinationCatalogSnapshot
+├── projection_target   exact Tool ProjectionTarget
+└── catalog             semantic destination catalog
+```
 
 ## Dependencias entre projections
 
 La dependencia semántica no desaparece al migrar contratos.
 
+CURRENT:
+
 ```text
 KPI Configuration Projection
     depends on exact Tool Projection target
+```
 
+NEXT / FROZEN DIRECTION:
+
+```text
 KPI Definition Projection
     depends on exact KPI Configuration Projection target
 ```
 
-La identidad final debe usar `ProjectionTarget`/dependencies genéricos.
+La identidad final usa `ProjectionTarget`/dependencies genéricos.
 
 No usar como identidad final:
 
@@ -112,9 +134,9 @@ Las alarmas se proyectan sobre identidad estructural y pueden coexistir con dato
 Cada dominio Configuration se migra a su contrato final antes de cortar el consumer Manager.
 
 ```text
-Tools
-→ KPI Configuration
-→ KPI Definition
+Tools              CLOSED
+→ KPI Configuration CLOSED
+→ KPI Definition    NEXT
 → ADA Configuration Manager
 → regression
 ```

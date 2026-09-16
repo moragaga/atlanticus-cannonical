@@ -29,10 +29,16 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+moragaga/atlanticus@4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
 
-Ese checkpoint contiene el clean cutover de Tools Configuration hacia Source/Projection genéricos.
+Parent inmediato:
+
+```text
+27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+```
+
+Ese checkpoint contiene el clean cutover de KPI Configuration hacia Source/Projection genéricos.
 
 ## Estado de hitos
 
@@ -58,14 +64,11 @@ CLOSED / VERIFIED
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-TOOLS-SCOPED-QUALIFICATION
-PLANNED / UNVERIFIED
-
 KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 
 KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-PLANNED
+PLANNED / NEXT
 
 ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
 BLOCKED
@@ -74,85 +77,102 @@ MANAGER-CONSUMER-GLOBAL-QUALIFICATION
 BLOCKED
 ```
 
-## Tools clean cutover
+## KPI Configuration clean cutover
 
-Tools permanece ADA-specific:
+KPI Configuration permanece ADA-specific:
 
 ```text
-scopes/ada/web/tools
+scopes/ada/web/kpis/configuration
 ```
 
-Removido de Tool Configuration CURRENT:
+Usar Source/Projection genéricos no cambia su ownership ni convierte el scope ADA en core Atlanticus.
+
+Contrato CURRENT:
 
 ```text
-contracts.py
-lifecycle.py
-projection.py
-services.py
-source.py
-ToolLifecycle*
-ToolConfigurationSourceSnapshot
-ToolConfigurationProjectionSnapshot
-expected_source_revision / expected_revision domain contracts
-private projection revision identity
-```
-
-Reemplazo CURRENT:
-
-```text
-ToolSourceService
+KpiSourceService
 SourceStore
 SourceSnapshot
 SourceReleaseRef
 PublishRequest / PublishResult
-ToolProjectionBuilder
+KpiProjectionBuilder
 ProjectionTarget
-ProjectionStore[ToolConfiguration]
-SourceProjectionService[ToolConfiguration]
+ProjectionStore[KpiConfiguration]
+SourceProjectionService[KpiConfiguration]
+KpiDestinationCatalogSnapshot
 ```
 
-El consumer Manager todavía no fue migrado y no debe sostenerse con compatibilidad temporal.
+La KPI Configuration Projection depende del `ProjectionTarget` exacto de Tool Projection.
 
-## Regla vigente
+Removido del contrato CURRENT:
 
 ```text
-LEGACY                          REMOVE
-ADAPTERS / SHIMS / ALIASES     FORBIDDEN
-DOBLE CONTRATO                  FORBIDDEN
-OLD SCHEMAS IN RUNTIME CODE     FORBIDDEN
-revision -> ProjectionTarget    REMOVE
-expected_source_revision        REMOVE
+private Source/Projection lifecycle
+private source revision identity
+private projection revision identity
+tool_projection_revision as dependency identity
+expected_source_revision
+revision -> ProjectionTarget reconstruction
+compatibility adapters / shims / aliases
 ```
 
-## Qualification
+## Qualification observada
 
-La evidencia de qualification global publicada sigue correspondiendo al cierre anterior de Users.
-
-Para `27c2e4be...`:
+Para el cutover KPI Configuration:
 
 ```text
-Tools contract/code inspection
-VERIFIED
+uv lock
+PASS
 
-Tools scoped test execution
-UNVERIFIED
+uv sync --group dev
+PASS
 
-full ADA / final Manager regression
-PLANNED AFTER CONFIGURATION CUTOVERS
+uv run ruff check src tests
+PASS
+
+uv run pytest
+45 passed
+
+git diff --check
+PASS
+
+legacy token scan over src/commented/tests
+0 matches after generated build/cache cleanup
 ```
+
+El checkpoint publicado fue inspeccionado después de esa qualification local.
+
+CI remoto, full ADA regression y Docker E2E permanecen UNVERIFIED.
+
+## Conflicto abierto de baseline Python
+
+La decisión canónica global permanece:
+
+```text
+Python 3.14.7
+```
+
+El `pyproject.toml` publicado de KPI Configuration todavía declara:
+
+```text
+requires-python = "==3.14.2"
+```
+
+No se corrige dentro de este cierre ni se mezcla con KPI Definition.
 
 ## Siguiente foco único
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-Usar Tools CURRENT como referencia estructural. No tocar Manager, KPI Definition, Command Center ni Operational Data en el mismo incremento.
+Primero inspección y diseño sobre la implementación CURRENT. No tocar todavía el Configuration Manager final, Command Center, Operational Data ni otros frentes.
 
 Atajos:
 
 - Manager → `10_MANAGER/00_INDEX.md`
+- ADA Configuration → Runtime → `11_ADA_GENERIC/03_CONFIGURATION_TO_RUNTIME.md`
 - Validation → `07_VALIDATION_BASELINE.md`
 - Roadmap → `08_ROADMAP.md`
 - Open items → `09_OPEN_QUESTIONS.md`

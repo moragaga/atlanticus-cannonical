@@ -104,6 +104,10 @@ Projection representa un `SourceReleaseRef` concreto mediante `ProjectionTarget`
 
 Source current nunca se determina desde Cosmos.
 
+`ProjectionTarget.dependencies` representa dependencias semánticas exactas entre projections cuando existen realmente.
+
+No existe un orden global obligatorio de todas las proyecciones.
+
 ## Contrato único de Manager
 
 Cada `ManagerModule` declara:
@@ -163,8 +167,6 @@ Reglas:
 
 ## Navigation CURRENT
 
-Navigation es consumidor directo del contrato genérico.
-
 ```text
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
@@ -172,14 +174,10 @@ CLOSED / VERIFIED / CURRENT
 
 ## Users CURRENT
 
-Users Manager consume directamente el contrato genérico.
-
 ```text
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
-
-Su clean cutover y removal de legacy están cerrados.
 
 ## Tools CURRENT
 
@@ -189,27 +187,47 @@ Ownership:
 scopes/ada/web/tools
 ```
 
-Tool Configuration conserva semántica ADA y consume infraestructura genérica:
+Tool Configuration conserva semántica ADA y consume infraestructura genérica Source/Projection.
 
 ```text
-ToolSourceService
-    ↓ SourceStore / SourceSnapshot / SourceReleaseRef
-
-ToolProjectionBuilder
-    ↓ ProjectionTarget / ProjectionStore[ToolConfiguration]
-
-SourceProjectionService[ToolConfiguration]
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-No forman parte del contrato Tools CURRENT:
+## KPI Configuration CURRENT
+
+Ownership:
 
 ```text
-ToolLifecycleServices
-ToolConfigurationSourceSnapshot
-ToolConfigurationProjectionSnapshot
-ToolConfigurationProjectionRepository
-expected_source_revision
+scopes/ada/web/kpis/configuration
+```
+
+KPI Configuration conserva semántica ADA y consume directamente Source/Projection genéricos.
+
+```text
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+Dependencia exacta:
+
+```text
+Tool ProjectionTarget
+        ↓ dependency
+KPI Configuration ProjectionTarget
+```
+
+El catálogo de destinos conserva semántica de dominio; la procedencia exacta de Tool se transporta en `KpiDestinationCatalogSnapshot.projection_target`.
+
+No forman parte del contrato CURRENT:
+
+```text
+private KPI lifecycle
+private source revision identity
 private projection revision identity
+tool_projection_revision as dependency identity
+expected_source_revision
+revision -> ProjectionTarget reconstruction
 ```
 
 ## Consumer cutover strategy CURRENT
@@ -222,21 +240,21 @@ Orden:
 
 ```text
 Tools Source/Projection                    CLOSED / CURRENT
-KPI Configuration Source/Projection       PLANNED / NEXT
-KPI Definition Source/Projection          PLANNED
+KPI Configuration Source/Projection       CLOSED / CURRENT
+KPI Definition Source/Projection          PLANNED / NEXT
 ADA Configuration Manager final cutover   BLOCKED
 Global regression                         BLOCKED
 ```
 
 ## KPI dependency semantics
 
-KPI Configuration depende semánticamente de Tool Projection.
+KPI Configuration depende semánticamente del exact Tool Projection target.
 
 KPI Definition depende semánticamente de KPI Configuration Projection.
 
-Las identidades de estas dependencias deben usar el contrato genérico de Projection (`ProjectionTarget` y sus dependencies), no revision strings privadas.
+Las identidades de estas dependencias usan el contrato genérico de Projection (`ProjectionTarget` y `dependencies`), no revision strings privadas.
 
-La forma exacta se implementa incrementalmente en cada dominio, sin crear arquitectura paralela.
+No confundir una dependencia semántica real con un orden artificial de bootstrap.
 
 ## Reglas congeladas
 
@@ -249,4 +267,4 @@ expected_source_revision    REMOVE
 private projection revision identity REMOVE
 ```
 
-No reabrir Manager core, Navigation, Users ni Tools para resolver el siguiente consumer.
+No reabrir Manager core, Navigation, Users, Tools ni KPI Configuration para resolver el siguiente consumer.

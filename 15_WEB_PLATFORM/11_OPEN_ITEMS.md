@@ -44,14 +44,6 @@ USERS-CONTRACT-SEPARATION          CLOSED / VERIFIED / CURRENT
 UCS-1 CANONICAL-CONTRACT-SPLIT     CLOSED / VERIFIED / CURRENT
 ```
 
-Ya no están OPEN:
-- ownership durable Profiles vs Users;
-- destino canónico de `administrator_*`;
-- destino canónico de `guest_*`;
-- payload Projection que reemplaza `UsersConfigurationCatalog`;
-- orphan validation;
-- necesidad de una Projection independiente de Profiles para este baseline.
-
 Permanecen OPEN/BLOCKED:
 
 19. `USERS-PROFILES-ADMIN-COMPOSITION`.
@@ -80,13 +72,21 @@ Permanecen OPEN/BLOCKED:
 
 ## Projection orchestration
 
-36. Freeze projection dependency contract sólo si múltiples projections realmente lo requieren.
-37. Freeze deterministic ordering cuando exista esa necesidad.
-38. Definir retry/resume.
-39. Definir rollback/no-op semantics.
+36. Projection dependency contract — **CLOSED / VERIFIED / CURRENT**: `ProjectionTarget.dependencies` transporta exact targets.
+37. Deterministic dependency ordering — **CLOSED / VERIFIED / CURRENT**: normalization por `source_key` en `ProjectionTarget`.
+38. Definir retry/resume donde todavía no esté cubierto por contracts CURRENT.
+39. Definir rollback/no-op semantics donde exista una necesidad real no cubierta.
 40. Mantener Source Release identity en consumers pendientes.
 
-UCS-1 no crea un segundo coordinator ni un release clock independiente de Profiles.
+KPI Configuration demuestra una dependencia real CURRENT:
+
+```text
+Tool ProjectionTarget
+    ↓
+KPI Configuration ProjectionTarget.dependencies
+```
+
+Esto no crea un coordinator global ni impone orden artificial a projections independientes.
 
 ## Deployment
 

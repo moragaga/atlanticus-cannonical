@@ -13,7 +13,7 @@ No inventar un PASS cuando no existe resultado de ejecución observado.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+moragaga/atlanticus@4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
 
 ## Hitos contractuales
@@ -39,11 +39,14 @@ CLOSED / VERIFIED
 
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## Evidencia anterior conservada — Users
 
-La última qualification global documentada antes de Tools permanece:
+La qualification global documentada anterior permanece atribuida únicamente a su checkpoint correspondiente:
 
 ```text
 ruff scoped
@@ -56,88 +59,105 @@ full Web pytest
 545 passed
 7 skipped
 0 failed
-
-git diff --check HEAD^..HEAD
-PASS
-
-git status --short
-CLEAN
 ```
 
-Esa evidencia corresponde al checkpoint anterior y no debe atribuirse a `27c2e4be...`.
-
-## Tools — evidencia CURRENT
-
-VERIFIED por inspección del commit:
-
-```text
-private Tool lifecycle files removed
-private Tool source/projection snapshots removed
-ToolSourceService added
-ToolProjectionBuilder added
-SourceProjectionService[ToolConfiguration] used
-new CURRENT tests added:
-  test_source_release.py
-  test_source_projection.py
-legacy-only tests removed
-```
+No trasladar esa evidencia a checkpoints posteriores.
 
 ## Tools — ejecución
 
+La implementación Tools Source/Projection permanece CLOSED / VERIFIED / CURRENT por inspección.
+
+Su ejecución scoped posterior a su cutover continúa UNVERIFIED en esta documentación.
+
+## KPI Configuration — evidencia observada
+
+Qualification local ejecutada sobre el árbol que luego fue integrado:
+
 ```text
-uv run pytest scoped
-UNVERIFIED
+uv lock
+PASS
 
-Ruff scoped
-UNVERIFIED
+uv sync --group dev
+PASS
 
-CI remoto
-UNVERIFIED / no status observado
+uv run ruff check src tests
+PASS
+
+uv run pytest
+45 passed
+
+git diff --check
+PASS
 ```
 
-No declarar PASS hasta observar ejecución real.
-
-## Política de tests vigente
+Después de limpiar `.pytest_cache` y `build`, la búsqueda scoped en:
 
 ```text
-DO
-- fijar contrato final;
-- eliminar legacy;
-- eliminar/reemplazar tests del contrato eliminado;
-- escribir tests del comportamiento CURRENT;
-- ejecutar qualification en la frontera acordada;
-- ejecutar regression global después del cutover final de Configuration Manager.
-
-DO NOT
-- conservar adapters para salvar tests;
-- mantener consumers viejos funcionando mediante aliases;
-- adaptar producción al contrato retirado;
-- considerar la existencia de tests como equivalente a haberlos ejecutado.
+src
+commented
+tests
 ```
 
-## Criterio contractual de Tools
+para los tokens legacy acordados devolvió:
 
 ```text
-one Source contract
-one Projection contract
+0 matches
+```
+
+Tokens verificados:
+
+```text
+tool_projection_revision
+source_revision
+projection_revision
+expected_source_revision
+build_kpi_configuration_digest
+KpiConfigurationSourceDocument
+KpiConfigurationProjectionWorkflow
+```
+
+El shell de qualification mostró Python 3.14.7.
+
+## KPI Configuration — inspección publicada
+
+Checkpoint CURRENT:
+
+```text
+4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
+```
+
+Verificado por inspección:
+
+```text
+KpiSourceService added/current
+KpiProjectionBuilder added/current
+generic Source dependency added
+generic Projection dependency added
+private lifecycle/source/projection files removed
+legacy-only tests removed
+current tests present
+```
+
+## Criterio contractual de KPI Configuration
+
+```text
+one generic Source contract
+one generic Projection contract
+exact Tool ProjectionTarget dependency
 zero private lifecycle contract
-zero Tool source revision identity
+zero source revision identity
 zero private projection revision identity
+zero tool_projection_revision dependency identity
 zero revision -> ProjectionTarget reconstruction
-zero compatibility adapters inside Tools
-Tool domain semantics preserved
+zero compatibility adapters inside KPI Configuration
+ADA ownership preserved
 ```
 
-Resultado por inspección:
+Resultado:
 
 ```text
 IMPLEMENTED / VERIFIED IN MAIN
-```
-
-Resultado de ejecución:
-
-```text
-UNVERIFIED
+SCOPED LOCAL QUALIFICATION / PASS
 ```
 
 ## Regresión final de Configuration
@@ -145,7 +165,6 @@ UNVERIFIED
 Se difiere hasta completar:
 
 ```text
-KPI Configuration Source/Projection
 KPI Definition Source/Projection
 ADA Configuration Manager final cutover
 ```
@@ -154,15 +173,24 @@ Luego ejecutar la regression completa y adjudicar sólo fallos del contrato fina
 
 ## UNVERIFIED
 
-- Tools scoped pytest;
-- Tools scoped Ruff;
+- Tools scoped pytest/Ruff posterior a su propio cutover;
 - full ADA suite;
 - final Configuration Manager runtime;
 - Docker E2E;
-- CI remoto;
+- CI remoto de `4c7f8aa8...`;
 - Python 3.14.7/Trixie global;
-- KPI Configuration;
+- concrete production provider composition para KPI destinations;
 - KPI Definition.
+
+## Conflicto de metadata Python
+
+El runtime observado en qualification fue Python 3.14.7, pero el `pyproject.toml` publicado de KPI Configuration todavía contiene:
+
+```text
+requires-python = "==3.14.2"
+```
+
+No considerar este conflicto resuelto por el hecho de que la suite haya pasado.
 
 ## Git
 

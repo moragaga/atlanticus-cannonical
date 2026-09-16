@@ -1,12 +1,22 @@
 # Web Platform — Projection Orchestration
 
-Estado: **CURRENT / BASELINE 1.0**
+Estado: **CURRENT / BASELINE 1.0 REFINED BY IMPLEMENTATION**
 
 ## Regla principal
 
 No existe un orden global rígido entre todas las proyecciones.
 
-La configuración Source ya está consolidada por dominio y cada **base projection** debe poder materializarse de manera independiente.
+Una projection no debe depender de otra sólo para imponer un orden de bootstrap.
+
+Cuando existe una dependencia semántica real que forma parte de la identidad exacta de la projection, se declara mediante:
+
+```text
+ProjectionTarget.dependencies
+```
+
+## Base projections sin dependencia
+
+Pueden materializarse de forma independiente cuando su contrato no requiere otra projection.
 
 Ejemplos:
 
@@ -14,17 +24,37 @@ Ejemplos:
 Users Source      → Users Projection
 Navigation Source → Navigation Projection
 Tools Source      → Tool Projection
-KPI Source        → KPI Projection
-Alarm Source      → Alarm Configuration Projection
 ```
 
-Estas proyecciones base no deben depender unas de otras sólo para imponer un orden de bootstrap.
+## Projections con dependencia semántica real
 
-## Donde sí existen dependencias
+KPI Configuration es el caso CURRENT implementado:
 
-Después de las base projections pueden existir **resoluciones derivadas** que consumen dos o más proyecciones ya materializadas.
+```text
+Tool ProjectionTarget
+        ↓ exact dependency
+KPI Configuration ProjectionTarget
+```
 
-Ejemplos:
+La KPI Configuration Projection no relee simplemente el Tool CURRENT durante la ejecución.
+
+El target seleccionado conserva el Tool ProjectionTarget exacto. Si el snapshot Tool disponible cambia antes de construir KPI Configuration, la ejecución falla en vez de proyectar contra una dependencia diferente.
+
+Dirección congelada para el siguiente dominio:
+
+```text
+KPI Configuration ProjectionTarget
+        ↓ exact dependency
+KPI Definition ProjectionTarget
+```
+
+La implementación concreta de KPI Definition permanece PLANNED / NEXT y debe inspeccionarse antes de editar.
+
+## Derived resolutions
+
+Las resoluciones derivadas siguen siendo válidas cuando consumen projections ya materializadas para construir una vista o materialización que no forma parte de la identidad de una de esas projections.
+
+Ejemplos existentes de dirección arquitectónica:
 
 ```text
 Users Projection
@@ -42,52 +72,20 @@ Alarm Configuration Projection
 Resolved Alarm Configuration
 ```
 
-```text
-Tool Projection
-      +
-KPI Configuration Projection
-      ↓
-KPI Destination / Runtime Resolution
-```
+No mover una dependencia semántica real a una derived resolution sólo para mantener artificialmente independientes las base projections.
 
-La dependencia pertenece a la resolución derivada, no a la base projection.
+## Identidad y ordering
 
-## Dos fases
+`ProjectionTarget.dependencies`:
 
-### Phase A — Base Projections
+- contiene `ProjectionTarget` completos;
+- prohíbe dependencia sobre el mismo `source_key`;
+- prohíbe source keys duplicadas;
+- se normaliza de forma determinista por `source_key`.
 
-Características:
-
-- independientes;
-- idempotentes;
-- ejecutables en cualquier orden;
-- no escriben en otra Source;
-- publican su propio estado/revisión.
-
-El bootstrap puede ejecutarlas secuencialmente por simplicidad, pero el orden no representa una dependencia semántica.
-
-### Phase B — Derived Resolutions
-
-Características:
-
-- declaran dependencias reales;
-- sólo se ejecutan cuando sus inputs están READY;
-- producen materialización/resolución derivada;
-- nunca escriben de regreso a las authorities base.
+La dependencia no se representa con revision strings privadas.
 
 ## Evitar ciclos
-
-El modelo queda:
-
-```text
-SOURCE
-  ↓
-BASE PROJECTION
-  ↓
-DERIVED RESOLUTION
-  ↓
-RUNTIME / CONSUMER
-```
 
 Nunca:
 
@@ -100,43 +98,35 @@ Projection A
 
 Si aparece ese ciclo, la frontera está mal definida.
 
-## Bootstrap UI
+## Bootstrap / Manager
 
-La página de Login/Bootstrap muestra:
+La UI o el coordinator pueden decidir cuándo ofrecer/ejecutar acciones, pero no inventan la identidad de dependencia.
 
-- Source histories/releases disponibles;
-- estado de cada base projection;
-- estado de cada derived resolution;
-- última revisión proyectada;
-- error/bloqueo;
-- acción de project/reproject.
-
-La UI no decide dependencies.
-
-## Ejemplo de estado
-
-```text
-BASE
-✓ Users
-✓ Navigation
-✓ Tools
-✓ KPI Configuration
-✓ Alarm Configuration
-
-DERIVED
-✓ Navigation/Profile Resolution
-→ KPI Runtime Resolution
-○ Alarm Resolution — waiting Tool revision
-```
+La dependencia pertenece al `ProjectionTarget` del dominio correspondiente.
 
 ## Idempotencia
 
-Reproyectar el mismo Source release debe producir:
-
-```text
-same effective projection
-```
-
-o un no-op equivalente.
+Reproyectar el mismo exact target debe conservar la misma identidad efectiva o producir un no-op equivalente según el contrato Projection CURRENT.
 
 No crear revisiones funcionales artificiales sólo por ejecutar Project nuevamente.
+
+## Refinamiento de Baseline 1.0
+
+La formulación histórica:
+
+```text
+all base projections are independent
+real dependencies only exist in derived resolutions
+```
+
+queda SUPERSEDED como regla universal.
+
+La regla CURRENT es:
+
+```text
+no artificial bootstrap dependencies
++
+exact ProjectionTarget.dependencies for real semantic projection dependencies
++
+derived resolutions only for genuinely derived composition
+```

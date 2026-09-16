@@ -7,16 +7,14 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada y verificada por inspección:
 
 ```text
-moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+moragaga/atlanticus@4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
 
 Parent inmediato:
 
 ```text
-a065f45c55a527c96ce333705465487e95f0a737
+27c2e4beed125fe379881048f0df5fbe3ff6cb1a
 ```
-
-No se dispone en este cierre de evidencia para afirmar working tree limpio ni ejecución de qualification scoped posterior al commit.
 
 ## Estado resumido
 
@@ -27,105 +25,42 @@ USERS-MANAGER-GENERIC-CONTRACT-CUTOVER             CLOSED / VERIFIED / CURRENT
 USERS-CLEAN-CUTOVER-COMPLETION                     CLOSED / VERIFIED / CURRENT
 USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL        CLOSED / VERIFIED / CURRENT
 PROJECTION-CORE-STALE-TEST-ALIGNMENT               CLOSED / VERIFIED
-
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER             CLOSED / VERIFIED / CURRENT
-TOOLS-SCOPED-QUALIFICATION                          PLANNED / UNVERIFIED
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
-
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER       PLANNED / NEXT
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER   PLANNED
-ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER             BLOCKED
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION               BLOCKED
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER            CLOSED / VERIFIED / CURRENT
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER       CLOSED / VERIFIED / CURRENT
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER   PLANNED / NEXT
+ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER            BLOCKED
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
 ```
 
 ## VERIFIED
 
-### Manager
+### Ownership ADA
 
-Contrato vigente:
+Tools, KPI Configuration y KPI Definition son capacidades ADA-specific bajo `scopes/ada`.
 
-```text
-ManagerModule
-├── source_key
-├── source_service
-├── source_reader_service
-├── projection_service
-├── draft_validation_service
-└── source_history_service | None
-```
+Consumir infraestructura genérica Atlanticus no mueve automáticamente una capability hacia `web/capabilities`.
 
-No forman parte de la frontera CURRENT:
+KPI Configuration permanece en:
 
 ```text
-workflow_service
-ExactSource*
-ExactProjection* como frontera Manager
-expected_source_revision
-revision -> ProjectionTarget reconstruction
+scopes/ada/web/kpis/configuration
 ```
 
-### Navigation
-
-Navigation consume directamente Source/Projection/Manager genéricos.
+### KPI Configuration Source CURRENT
 
 ```text
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+KpiSourceCodec
+KpiSourcePayload
+KpiSourceRelease
+KpiSourceService
+SourceStore
+SourceSnapshot
+SourceReleaseRef
+PublishRequest
+PublishResult
+HistoryQuery
+HistoryPage
 ```
-
-### Users
-
-Users consume directamente el contrato Manager genérico y su clean cutover permanece cerrado.
-
-```text
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-CLEAN-CUTOVER-COMPLETION
-CLOSED / VERIFIED / CURRENT
-
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-CLOSED / VERIFIED / CURRENT
-```
-
-### Tools ownership
-
-Tools permanece bajo:
-
-```text
-scopes/ada/web/tools
-```
-
-Es ADA-specific. El cutover no trasladó su dominio a `web/capabilities`.
-
-### Tools domain semantics
-
-El commit `27c2e4be...` no modifica `models.py` ni `operational.py` de Tool Configuration.
-
-Se preservan:
-
-```text
-ToolConfiguration
-Tool Structure
-Component / Subcomponent
-Tool kind
-Operational scope
-Source consumption
-Operational participation
-Branding
-ADA operational validation
-```
-
-### Tool Source CURRENT
-
-```text
-ToolSourceCodec
-ToolSourcePayload
-ToolSourceRelease
-ToolSourceService
-```
-
-Consume modelos y store de `atlanticus.web.source` directamente.
 
 Publication usa:
 
@@ -134,23 +69,44 @@ expected_concurrency_token
 basis_release
 ```
 
-No usa revision string de dominio.
+No usa `expected_source_revision` ni una revision string de dominio como identidad Source.
 
-### Tool Projection CURRENT
+### KPI Configuration Projection CURRENT
 
 ```text
-ToolProjectionBuilder
-create_tool_projection_service(...)
-ProjectionStore[ToolConfiguration]
-SourceProjectionService[ToolConfiguration]
+KpiProjectionBuilder
+create_kpi_projection_service(...)
+ProjectionStore[KpiConfiguration]
+SourceProjectionService[KpiConfiguration]
 ProjectionTarget
 ```
 
-El builder valida la configuración publicada mediante `validate_ada_operational_tool_configuration(...)`.
+La selección de target incorpora exactamente una dependencia Tool mediante `ProjectionTarget.dependencies`.
 
-No existe una identidad paralela privada de Projection dentro del contrato CURRENT de Tools.
+Durante `project(target)`, el builder vuelve a cargar el snapshot de destinos y exige igualdad exacta con la dependencia Tool seleccionada. Si Tool cambió entre selección y ejecución, la proyección falla en lugar de usar silenciosamente el Tool más nuevo.
 
-### Legacy removido de Tools Configuration
+### Destination boundary CURRENT
+
+```text
+KpiDestination
+KpiDestinationCatalog
+KpiDestinationCatalogSnapshot
+KpiDestinationCatalogProvider
+```
+
+`KpiDestinationCatalog` conserva semántica de dominio.
+
+La procedencia temporal pertenece a:
+
+```text
+KpiDestinationCatalogSnapshot.projection_target
+```
+
+No existe `tool_projection_revision` como identidad privada CURRENT.
+
+### Legacy removido de KPI Configuration
+
+Removidos de producción y mirror comentado:
 
 ```text
 contracts.py
@@ -160,92 +116,130 @@ services.py
 source.py
 ```
 
-La fachada pública ya no exporta la familia `ToolLifecycle*`, snapshots privados ni helpers de revision legacy.
+Removidos tests legacy:
 
-### Desalineación deliberada del consumer
+```text
+test_projection.py
+test_services.py
+test_source.py
+```
 
-`ada-configuration-manager` todavía importa `ToolLifecycleServices` y define `ToolConfigurationManagerWorkflowAdapter` con `expected_source_revision`.
+No quedan en `src`, `commented` ni `tests` los tokens legacy buscados durante el cierre:
 
-Esa desalineación es CURRENT y temporal.
+```text
+tool_projection_revision
+source_revision
+projection_revision
+expected_source_revision
+build_kpi_configuration_digest
+KpiConfigurationSourceDocument
+KpiConfigurationProjectionWorkflow
+```
 
-No se debe reparar desde Tools.
+### Qualification local observada
+
+```text
+Python runtime shown by shell: 3.14.7
+uv lock: PASS
+uv sync --group dev: PASS
+uv run ruff check src tests: PASS
+uv run pytest: 45 passed
+git diff --check: PASS
+legacy token scan: 0 matches after build/cache cleanup
+```
+
+El commit publicado `4c7f8aa8...` fue inspeccionado después y contiene el cutover.
 
 ## INFERRED
 
-Tools CURRENT demuestra el patrón mínimo de infraestructura que debe usarse como referencia para KPI Configuration:
+El patrón CURRENT para KPI Definition debe reutilizar los contratos genéricos Source/Projection donde corresponda, preservando sus semánticas propias y su ownership ADA.
 
-```text
-ADA-specific domain
-→ generic Source
-→ generic Projection
-```
-
-No demuestra que KPI Configuration pueda copiarse sin considerar su dependencia semántica en Tool Projection.
+Esto no autoriza copiar KPI Configuration ciegamente ni asumir rutas, schemas, providers o consumers de KPI Definition sin inspeccionar su implementación CURRENT.
 
 ## ASSUMED
 
 No se asume:
 
-- `SourceKey` final de composición para Tools;
-- provider físico final de Tool Source/Projection;
-- necesidad de migración de datos Tool históricos;
-- working tree limpio;
-- suite Tools ejecutada;
-- Configuration Manager ejecutable antes del cutover final.
+- composición física final que suministra `KpiDestinationCatalogProvider` en producción;
+- estado actual interno de KPI Definition antes de inspeccionarlo;
+- necesidad de migración operacional de datos KPI históricos;
+- full ADA regression;
+- Docker E2E;
+- CI remoto;
+- que el pin Python de todos los packages ya esté alineado con el baseline global.
 
 ## PROPOSED / NEXT
 
 Único foco siguiente:
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+PLANNED / NEXT
 ```
 
-Regla de diseño ya fijada:
-
-```text
-KPI Configuration ownership remains ADA
-Tool dependency is preserved
-private tool_projection_revision identity is removed
-exact dependency identity uses generic ProjectionTarget semantics
-Manager is not repaired in this increment
-```
+Primera etapa solamente: debate y diseño contra `atlanticus:main` y canonical CURRENT.
 
 ## SUPERSEDED
 
 ```text
-Tools Manager consumer must stay runnable during Tool cutover
-SUPERSEDED
+KPI Configuration Source/Projection private lifecycle
+SUPERSEDED / REMOVED
 
-add adapters/shims to preserve old Tool lifecycle
+private revision strings as Source/Projection/dependency identity
+SUPERSEDED / REMOVED
+
+base KPI Configuration Projection is independent of Tool Projection
+SUPERSEDED / REFINED
+
+compatibility adapters/shims to preserve KPI legacy
 SUPERSEDED / FORBIDDEN
 
-move Tools into generic Atlanticus core because it uses generic infrastructure
+move KPI Configuration into generic core because it consumes generic infrastructure
 SUPERSEDED / FORBIDDEN
-
-private revision strings as Projection identity
-SUPERSEDED
 ```
 
-## UNVERIFIED
+La regla refinada es:
 
-- `uv run pytest` scoped de Tools después de `27c2e4be...`;
-- Ruff scoped de Tools después de `27c2e4be...`;
+```text
+no global rigid projection order
++
+real semantic projection dependencies are represented by ProjectionTarget.dependencies
+```
+
+KPI Configuration tiene una dependencia real y exacta en Tool Projection.
+
+## UNVERIFIED / OPEN
+
+- KPI Definition Source/Projection cutover;
+- concrete production composition/provider wiring for KPI destination snapshots;
 - full ADA suite;
 - final Configuration Manager regression;
 - Docker E2E;
-- CI remoto para `27c2e4be...`;
-- Python 3.14.7/Trixie global;
-- providers físicos finales de Tool Source/Projection;
-- datos Tool históricos que requieran migración operacional;
-- KPI Configuration cutover;
-- KPI Definition cutover.
+- CI remoto del checkpoint `4c7f8aa8...`;
+- Python 3.14.7/Trixie global qualification;
+- alignment del `requires-python` de KPI Configuration con el baseline global.
+
+## Conflicto de baseline Python
+
+Canonical fija:
+
+```text
+Python 3.14.7
+```
+
+La implementación publicada de KPI Configuration todavía declara:
+
+```text
+requires-python = "==3.14.2"
+```
+
+Esto queda OPEN y fuera del foco KPI Definition salvo que impida ejecutar su qualification.
 
 ## Siguiente frontera
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-No mezclar Manager final, KPI Definition, Command Center, Operational Data ni rediseño de Manager core.
+No mezclar Configuration Manager final, Python baseline cleanup, Command Center, Operational Data ni rediseño de Projection core.

@@ -46,12 +46,32 @@ La Web puede existir sin datos/backend.
 
 ## Projection model
 
+No existe un orden global obligatorio entre todas las proyecciones.
+
+Regla CURRENT refinada por implementación:
+
 ```text
-independent base projections
-→ derived resolutions only when real dependencies exist
+projection without real semantic dependency
+→ independent target
+
+projection with real semantic dependency
+→ exact ProjectionTarget.dependencies
+
+genuinely derived composition
+→ derived resolution
 ```
 
-No existe un orden global obligatorio de todas las proyecciones.
+No crear dependencies sólo para imponer orden de bootstrap.
+
+KPI Configuration demuestra un caso real CURRENT:
+
+```text
+Tool ProjectionTarget
+    ↓ exact dependency
+KPI Configuration ProjectionTarget
+```
+
+La formulación original de Baseline 1.0 sobre independencia de base projections queda refinada por este caso concreto; no se introduce un coordinator global.
 
 ## Manager
 
