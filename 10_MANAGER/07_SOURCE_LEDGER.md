@@ -12,13 +12,13 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
+moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
 ```
 
 Parent inmediato:
 
 ```text
-ec9bd35455b8221180b3f15740b58e34766f6112
+a065f45c55a527c96ce333705465487e95f0a737
 ```
 
 ## Manager core
@@ -39,22 +39,6 @@ draft_validation_service
 source_history_service | None
 ```
 
-Source:
-
-```text
-SourceReaderWorkflow
-SourcePublicationWorkflow
-SourceHistoryWorkflow
-```
-
-Projection:
-
-```text
-ProjectionStatus
-ProjectionTarget
-ProjectionExecutionResult
-```
-
 ## Navigation
 
 ```text
@@ -62,40 +46,12 @@ NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Sin doble contrato ni adapters de transición.
-
-## Users Manager
+## Users
 
 ```text
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-No deben reaparecer:
-
-```text
-ExactSource*
-ExactProjection*
-expected_source_revision
-revision -> ProjectionTarget reconstruction
-```
-
-## Users Configuration clean cutover
-
-Publicado en `a065f45c55a527c96ce333705465487e95f0a737`.
-
-Removido:
-
-```text
-schema_v1.py
-decode_users_profiles_schema_v1(...)
-Source schema-v1 fallback
-Projection schema-v1 fallback
-```
-
-Resultado:
-
-```text
 USERS-CLEAN-CUTOVER-COMPLETION
 CLOSED / VERIFIED / CURRENT
 
@@ -103,79 +59,97 @@ USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
 CLOSED / VERIFIED / CURRENT
 ```
 
-## Qualification de cierre
+## Tools Source/Projection
+
+Publicado en `27c2e4beed125fe379881048f0df5fbe3ff6cb1a`.
 
 ```text
-ruff scoped
-PASS
-
-pytest scoped
-99 passed
-
-forbidden scan sobre código CURRENT
-PASS / zero matches
-
-full Web pytest
-545 passed
-7 skipped
-0 failed
-
-git diff --check HEAD^..HEAD
-PASS
-
-git status --short
-CLEAN
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
+
+Agregado:
+
+```text
+source_release.py
+source_projection.py
+ToolSourceService
+ToolProjectionBuilder
+create_tool_projection_service(...)
+```
+
+Consume directamente:
+
+```text
+atlanticus.web.source
+atlanticus.web.projection
+```
+
+Removido del paquete Tools Configuration CURRENT:
+
+```text
+contracts.py
+lifecycle.py
+projection.py
+services.py
+source.py
+ToolLifecycle*
+private Source snapshot/revision contract
+private Projection snapshot/revision contract
+```
+
+## Desalineación temporal conocida
+
+`ada-configuration-manager` todavía contiene:
+
+```text
+ToolLifecycleServices import
+ToolConfigurationManagerWorkflowAdapter
+expected_source_revision
+```
+
+No es un motivo para reintroducir legacy en Tools.
+
+Se resolverá en el cutover final del consumer.
+
+## Qualification
+
+Para Tools:
+
+```text
+CURRENT tests added
+VERIFIED
+
+scoped execution result
+UNVERIFIED
+
+CI remote status
+UNVERIFIED
+```
+
+No atribuir a este checkpoint los resultados de qualification global del cierre Users.
 
 ## Decisión refinada
 
-El clean cutover no admite excepciones para compatibilidad histórica permanente.
+La transición entre dominios no requiere que `ada-configuration-manager` permanezca ejecutable.
 
 ```text
-OLD SCHEMA READERS IN CURRENT RUNTIME
-FORBIDDEN
+DOMAIN FINAL CONTRACT FIRST
+CONSUMER CUTOVER LAST
+NO TEMPORARY COMPATIBILITY
 ```
-
-Si existe migración real de datos persistidos, debe ser una operación explícita separada y respaldada por evidencia del entorno.
-
-## Projection core stale test
-
-```text
-PROJECTION-CORE-STALE-TEST-ALIGNMENT
-CLOSED / VERIFIED
-```
-
-Producción CURRENT valida:
-
-```text
-projection.target == requested target
-```
-
-No se reabre desde este cierre.
-
-## Conflictos documentales resueltos por este reemplazo
-
-El canonical anterior todavía describía:
-
-```text
-Users clean cutover PLANNED / NEXT
-Users legacy contract removal IN PROGRESS
-schema v1 compatibility PRESENT
-```
-
-Eso quedó desactualizado frente a `atlanticus:main@a065f45c...` y la qualification final.
 
 ## Historical decisions
 
 `atlanticus-decisions` continúa HISTORICAL.
 
-No puede reintroducir schemas/adapters legacy ni reemplazar el contrato CURRENT.
+La regla histórica inspeccionada de Manager mantiene que el workflow es genérico y la configuración concreta pertenece al dominio. Eso es consistente con Tools CURRENT.
 
 ## Próxima frontera
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-No mezclar KPI.
+No mezclar Manager final ni KPI Definition.

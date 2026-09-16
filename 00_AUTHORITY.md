@@ -10,18 +10,18 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Último checkpoint verificado para este cierre:
-  `a065f45c55a527c96ce333705465487e95f0a737`
+  `27c2e4beed125fe379881048f0df5fbe3ff6cb1a`
 - Parent inmediato:
-  `ec9bd35455b8221180b3f15740b58e34766f6112`
+  `a065f45c55a527c96ce333705465487e95f0a737`
 - Alcance:
-  `USERS-CLEAN-CUTOVER-COMPLETION`
+  `TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER`
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `4b3d11974f9bbf26b72872ab43d83f1e966a5811`
+  `11bb50752b319bab40ab57f68fe1ae6299c71c41`
 - Contiene estado vigente, contratos, fronteras, roadmap y decisiones activas.
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a `atlanticus:main`.
@@ -85,13 +85,20 @@ CLOSED / VERIFIED / CURRENT
 
 USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
 CLOSED / VERIFIED / CURRENT
+
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
+
+Tools conserva ownership ADA bajo `scopes/ada/web/tools` y consume directamente Source/Projection genéricos.
+
+El consumer `ada-configuration-manager` puede permanecer temporalmente desalineado. No crear compatibilidad dentro de Tools para sostenerlo.
 
 Único foco siguiente:
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-Primero inspeccionar Tools real y contrastarlo con Manager CURRENT. No asumir cambios antes de verificar desviaciones.
+Inspeccionar únicamente KPI Configuration CURRENT y contrastarlo contra el patrón Tools publicado. No tocar Manager ni KPI Definition en el mismo incremento.

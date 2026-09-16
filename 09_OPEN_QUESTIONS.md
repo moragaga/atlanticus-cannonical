@@ -28,16 +28,12 @@ NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## CLOSED — Users Manager consumer
+## CLOSED — Users
 
 ```text
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-## CLOSED — Users clean cutover
-
-```text
 USERS-CLEAN-CUTOVER-COMPLETION
 CLOSED / VERIFIED / CURRENT
 
@@ -45,95 +41,111 @@ USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
 CLOSED / VERIFIED / CURRENT
 ```
 
-Ya no están OPEN:
+## CLOSED — Tools Source/Projection
 
 ```text
-schema_v1.py
-decode_users_profiles_schema_v1(...)
-schema-v1 read compatibility in Source
-schema-v1 read compatibility in Projection
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-La adjudicación `REMOVE` fue implementada y verificada.
-
-Si existiera necesidad real de migrar datos viejos, sería un trabajo operacional explícito y separado, sujeto a evidencia real.
-
-## OPEN — Tools consumer
+Ya no están OPEN dentro del dominio Tools:
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+ToolLifecycleServices
+ToolConfigurationSourceSnapshot
+ToolConfigurationProjectionSnapshot
+ToolConfigurationProjectionRepository
+ToolConfigurationPublisher
+ToolConfigurationSource
+expected_source_revision
+private projection revision identity
+```
+
+Tools sigue siendo ADA-specific bajo `scopes/ada/web/tools`.
+
+## OPEN — Tools scoped qualification
+
+```text
+PLANNED / UNVERIFIED
+```
+
+Los tests CURRENT existen, pero este cierre no aporta resultado de ejecución.
+
+## OPEN — KPI Configuration Source/Projection
+
+```text
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-Sigue OPEN porque durante este cierre no se inspeccionaron ownership, rutas, contratos Source/Projection ni composición Manager de Tools.
+Preguntas permitidas en el siguiente chat:
 
-Preguntas permitidas:
+1. ¿Qué contratos Source/Projection privados siguen existiendo exactamente en `scopes/ada/web/kpis/configuration`?
+2. ¿Qué archivos implementan authoring, Source, Projection y validación?
+3. ¿Cómo se obtiene hoy la autoridad/destination catalog desde Tool Projection?
+4. ¿Dónde se usa `tool_projection_revision` y qué invariantes representa realmente?
+5. ¿Cómo expresar esa dependencia usando `ProjectionTarget`/dependencies sin perder semántica?
+6. ¿Qué tests legacy deben eliminarse y qué comportamiento CURRENT debe preservarse?
 
-1. ¿Dónde vive exactamente Tools en la implementación CURRENT?
-2. ¿Qué contratos Source/Projection usa?
-3. ¿Cómo construye su `ManagerModule`?
-4. ¿Existe alguno de los elementos Manager SUPERSEDED?
-5. ¿Hay desviación real o ya cumple el contrato genérico?
-6. Si hay desviación, ¿cuál es el incremento mínimo y verificable?
+No tocar Manager durante este incremento.
 
-No asumir respuestas antes de inspeccionar `atlanticus:main`.
-
-## OPEN — KPI Configuration consumer
+## OPEN — KPI Definition Source/Projection
 
 ```text
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED
 ```
 
-No analizar junto con Tools.
+No analizar junto con KPI Configuration salvo para identificar una frontera contractual que KPI Configuration deba exponer.
 
-## OPEN — KPI Definition consumer
+## OPEN — Tools Manager consumer
 
 ```text
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
-No analizar junto con Tools.
+`ada-configuration-manager` todavía importa `ToolLifecycleServices` y define `ToolConfigurationManagerWorkflowAdapter`.
 
-## Qualification
+No corregirlo con compatibilidad dentro de Tools.
 
-Users cerró con:
+## BLOCKED — ADA Configuration Manager final cutover
 
 ```text
-ruff scoped
-PASS
-
-pytest scoped
-99 passed
-
-full Web pytest
-545 passed
-7 skipped
-0 failed
-
-git diff --check HEAD^..HEAD
-PASS
-
-working tree
-CLEAN
+ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
+BLOCKED
 ```
+
+Bloqueado por:
+
+```text
+KPI Configuration Source/Projection not migrated
+KPI Definition Source/Projection not migrated
+```
+
+## BLOCKED — Global regression
+
+```text
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED
+```
+
+Ejecutar después del cutover final del Configuration Manager.
 
 ## UNVERIFIED
 
+- Tools scoped pytest/Ruff;
 - full ADA suite;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- Tools consumer;
-- KPI Configuration consumer;
-- KPI Definition consumer;
-- existencia de datos históricos schema v1 que requieran migración operacional.
+- provider físico final de Tool Source/Projection;
+- necesidad real de migración operacional de datos Tool antiguos.
 
 ## Siguiente foco
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 ```
 
 Fuentes obligatorias:

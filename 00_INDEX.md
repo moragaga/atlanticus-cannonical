@@ -15,7 +15,7 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items vigentes. | CURRENT |
 | `10_MANAGER/` | Manager genérico, Source/Projection y consumers administrativos. | CURRENT |
-| `11_ADA_GENERIC/` | ADA Generic y orden de Tools. | CURRENT DIRECTION |
+| `11_ADA_GENERIC/` | ADA Generic, ownership ADA y cadena Tool → KPI → runtime. | CURRENT DIRECTION |
 | `12_SOURCE_STORAGE/` | Source/Projection exact-release y storage. | IN PROGRESS |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
 | `14_ADA_COMMAND_CENTER/` | Command Center y Alarm ownership. | CURRENT DIRECTION |
@@ -29,10 +29,10 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
+moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
 ```
 
-Ese checkpoint contiene el cierre del clean cutover de Users.
+Ese checkpoint contiene el clean cutover de Tools Configuration hacia Source/Projection genéricos.
 
 ## Estado de hitos
 
@@ -55,69 +55,100 @@ CLOSED / VERIFIED / CURRENT
 PROJECTION-CORE-STALE-TEST-ALIGNMENT
 CLOSED / VERIFIED
 
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+TOOLS-SCOPED-QUALIFICATION
+PLANNED / UNVERIFIED
+
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED
 
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
-PLANNED
+ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
+BLOCKED
+
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED
 ```
 
-## Users clean cutover
+## Tools clean cutover
 
-Removido del runtime CURRENT:
+Tools permanece ADA-specific:
 
 ```text
-schema_v1.py
-decode_users_profiles_schema_v1(...)
-Source schema-v1 read branch
-Projection schema-v1 read branch
-tests dedicados a preservar lectura schema v1
+scopes/ada/web/tools
 ```
 
-Regla vigente:
+Removido de Tool Configuration CURRENT:
+
+```text
+contracts.py
+lifecycle.py
+projection.py
+services.py
+source.py
+ToolLifecycle*
+ToolConfigurationSourceSnapshot
+ToolConfigurationProjectionSnapshot
+expected_source_revision / expected_revision domain contracts
+private projection revision identity
+```
+
+Reemplazo CURRENT:
+
+```text
+ToolSourceService
+SourceStore
+SourceSnapshot
+SourceReleaseRef
+PublishRequest / PublishResult
+ToolProjectionBuilder
+ProjectionTarget
+ProjectionStore[ToolConfiguration]
+SourceProjectionService[ToolConfiguration]
+```
+
+El consumer Manager todavía no fue migrado y no debe sostenerse con compatibilidad temporal.
+
+## Regla vigente
 
 ```text
 LEGACY                          REMOVE
 ADAPTERS / SHIMS / ALIASES     FORBIDDEN
 DOBLE CONTRATO                  FORBIDDEN
 OLD SCHEMAS IN RUNTIME CODE     FORBIDDEN
+revision -> ProjectionTarget    REMOVE
+expected_source_revision        REMOVE
 ```
 
-## Qualification de cierre
+## Qualification
+
+La evidencia de qualification global publicada sigue correspondiendo al cierre anterior de Users.
+
+Para `27c2e4be...`:
 
 ```text
-ruff scoped
-PASS
+Tools contract/code inspection
+VERIFIED
 
-pytest scoped
-99 passed
+Tools scoped test execution
+UNVERIFIED
 
-forbidden scan sobre código CURRENT
-PASS / zero matches
-
-full Web pytest
-545 passed
-7 skipped
-0 failed
-
-git diff --check HEAD^..HEAD
-PASS
-
-git status --short
-CLEAN
+full ADA / final Manager regression
+PLANNED AFTER CONFIGURATION CUTOVERS
 ```
 
 ## Siguiente foco único
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-No asumir que Tools requiere los mismos cambios que Users.
+Usar Tools CURRENT como referencia estructural. No tocar Manager, KPI Definition, Command Center ni Operational Data en el mismo incremento.
 
 Atajos:
 

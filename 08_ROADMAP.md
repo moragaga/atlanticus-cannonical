@@ -4,16 +4,16 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 
 ## Regla
 
-Cerrar verticalmente capacidades integrables.
+Cerrar contratos raíz de forma limpia y luego integrar consumers.
 
 Un solo foco por incremento.
 
-No conservar legacy por conveniencia de tests.
+No conservar legacy para mantener consumers o tests anteriores funcionando.
 
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
+moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
 ```
 
 ## Hitos cerrados
@@ -36,95 +36,107 @@ CLOSED / VERIFIED / CURRENT
 
 PROJECTION-CORE-STALE-TEST-ALIGNMENT
 CLOSED / VERIFIED
+
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Users closure
+## Tools closure
 
-El clean cutover removió la compatibilidad schema v1 que bloqueaba el cierre.
-
-No permanecen en runtime CURRENT:
+Tools continúa en:
 
 ```text
-schema_v1.py
-decode_users_profiles_schema_v1(...)
-Source schema-v1 fallback
-Projection schema-v1 fallback
+scopes/ada/web/tools
 ```
 
-Qualification posterior:
+El dominio no fue generalizado.
+
+Su infraestructura CURRENT usa:
 
 ```text
-ruff scoped
-PASS
-
-pytest scoped
-99 passed
-
-forbidden scan
-PASS / zero matches sobre código CURRENT
-
-full Web pytest
-545 passed
-7 skipped
-0 failed
-
-git diff --check HEAD^..HEAD
-PASS
-
-working tree
-CLEAN
+ToolSourceService
+SourceStore
+SourceSnapshot
+SourceReleaseRef
+ToolProjectionBuilder
+ProjectionTarget
+ProjectionStore[ToolConfiguration]
+SourceProjectionService[ToolConfiguration]
 ```
+
+El lifecycle/source/projection privado anterior fue removido del paquete Tools.
+
+`ada-configuration-manager` permanece temporalmente desalineado y no debe repararse con compatibilidad.
 
 ## Siguiente foco único
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
 Secuencia:
 
-1. inspeccionar ownership y rutas reales de Tools;
-2. identificar contratos Source/Projection y composición Manager actuales;
-3. contrastar contra `ManagerModule` CURRENT;
-4. clasificar cualquier diferencia;
-5. recomendar una opción concreta;
-6. implementar sólo después de consenso;
-7. ejecutar qualification scoped y global cuando corresponda.
+1. inspeccionar únicamente `scopes/ada/web/kpis/configuration`;
+2. identificar contratos Source/Projection privados CURRENT;
+3. identificar exactamente cómo consume Tool Projection;
+4. preservar semántica KPI y ownership ADA;
+5. sustituir identidad revision-oriented por contratos Source/Projection genéricos;
+6. representar dependencia Tool mediante identidad genérica de Projection;
+7. eliminar legacy del dominio;
+8. no tocar todavía `ada-configuration-manager`;
+9. no abrir KPI Definition en el mismo incremento.
 
-No asumir que Tools requiere arquitectura especial ni copiar mecánicamente el cambio de Users.
+Usar Tools CURRENT como patrón estructural, no como plantilla ciega.
 
-## Después de Tools
+## Después de KPI Configuration
 
 ```text
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
-PLANNED
-
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED
 ```
 
-No abrirlos junto con Tools.
-
-## Qualification global vigente
+Después:
 
 ```text
-545 passed
-7 skipped
-0 failed
+ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
+BLOCKED until KPI domains are migrated
 ```
+
+Después:
+
+```text
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED until final Manager cutover
+```
+
+## Qualification
+
+Para Tools:
+
+```text
+contract/code inspection
+VERIFIED
+
+scoped test execution
+UNVERIFIED
+```
+
+La regresión global se ejecutará después del cutover final del Configuration Manager.
 
 ## No mezclar en el siguiente chat
 
-- KPI Configuration;
 - KPI Definition;
+- final Configuration Manager cutover;
 - Python migration;
 - Docker E2E general;
-- ADA-specific work;
-- rediseño de Manager core.
+- Command Center;
+- Operational Data;
+- rediseño de Manager core;
+- parches para imports legacy del consumer.
 
 Único foco:
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 ```

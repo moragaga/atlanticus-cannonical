@@ -2,30 +2,90 @@
 
 Estado: **AUDIT LEDGER**
 
-## Decisiones
+## Autoridad vigente
+
+```text
+Implementation
+moragaga/atlanticus:main
+
+Current inspected checkpoint
+27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+
+Canonical
+moragaga/atlanticus-cannonical:main
+
+Historical
+moragaga/atlanticus-decisions:main
+```
+
+## Referencias históricas
+
+Entre las fuentes históricas existentes:
 
 - `Atlanticus_ADA_Autoridad_Tool_KPI_Render_Alarmas_2026-09-01.docx`
 - `Atlanticus_ADA_Composition_Incremento_2026-09-01.docx`
 - `Atlanticus_Materializacion_Runtime_Aplicacion_y_Plan_Continuidad_2026-09-01.docx`
 - `Atlanticus_WEB-COMPOSITION-001_Contrato_Composicion_Modular_2026-09-01.docx`
-- Manager decisions relacionadas con Tool Configuration.
-- Alarm B.1/B.2 decisions.
+- `ATLANTICUS_MANAGER_GLOBAL_RULES_2026-09-02.md`
+- Alarm decisions indicadas por canonical cuando corresponda.
 
-## Implementación inspeccionada
+Estas fuentes son HISTORICAL y no reemplazan implementación/canonical CURRENT.
 
-- `scopes/ada/web/application/ada-generic-application`
-- `scopes/ada/web/application/ada-configuration-manager`
-- `scopes/ada/web/*`
-- `scopes/operational-data/sources`
-- `scopes/operational-data/producers`
+## Implementación relevante inspeccionada
+
+```text
+scopes/ada/web/tools/configuration
+scopes/ada/web/application/ada-configuration-manager
+web/capabilities/source/core
+web/capabilities/projection/core
+```
+
+## Tools checkpoint
+
+`27c2e4be...` publica:
+
+```text
+ToolSourceService
+ToolSourceCodec
+ToolSourceRelease
+ToolProjectionBuilder
+create_tool_projection_service(...)
+```
+
+Y elimina del dominio Tools el lifecycle/source/projection privado anterior.
+
+## Ownership confirmado
+
+Tools sigue siendo ADA-specific:
+
+```text
+scopes/ada/web/tools
+```
+
+El uso de Source/Projection genéricos no mueve la capability al core Atlanticus.
+
+## Desalineación temporal del consumer
+
+`ada-configuration-manager` todavía referencia el contrato Tool anterior.
+
+No se crea compatibilidad para resolverlo anticipadamente.
+
+El cutover del consumer se hará después de migrar KPI Configuration y KPI Definition.
 
 ## Regla
 
-Los documentos históricos orientan intención.
+Cuando histórico, canonical e implementación difieren:
 
-`atlanticus:main` confirma implementación.
+- `atlanticus:main` define realidad implementada;
+- canonical define contrato/estado vigente y debe actualizarse;
+- historical puede explicar rationale;
+- no reintroducir código removido por una referencia histórica.
 
-Cuando difieren:
-- registrar estado objetivo;
-- registrar estado implementado;
-- no declarar feature terminada por aparecer en un documento.
+## Siguiente frontera
+
+```text
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+PLANNED / NEXT
+```
+
+Usar Tools CURRENT como referencia estructural y verificar primero el código KPI real.

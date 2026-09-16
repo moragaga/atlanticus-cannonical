@@ -8,15 +8,15 @@ Qualification y tests son evidencia de propiedades del contrato CURRENT.
 
 No son autoridad para conservar contratos, schemas o adapters SUPERSEDED.
 
-No declarar un cutover CLOSED sólo porque la suite está GREEN.
+No inventar un PASS cuando no existe resultado de ejecución observado.
 
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
+moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
 ```
 
-## Hitos
+## Hitos contractuales
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
@@ -36,13 +36,18 @@ CLOSED / VERIFIED / CURRENT
 
 PROJECTION-CORE-STALE-TEST-ALIGNMENT
 CLOSED / VERIFIED
+
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Evidencia final de Users
+## Evidencia anterior conservada — Users
+
+La última qualification global documentada antes de Tools permanece:
 
 ```text
 ruff scoped
-All checks passed!
+PASS
 
 pytest scoped
 99 passed
@@ -59,40 +64,38 @@ git status --short
 CLEAN
 ```
 
-## Forbidden scan
+Esa evidencia corresponde al checkpoint anterior y no debe atribuirse a `27c2e4be...`.
 
-Lista de control:
+## Tools — evidencia CURRENT
 
-```text
-schema_v1
-decode_users_profiles_schema_v1
-expected_source_revision
-UsersConfigurationCatalog
-UserProfileConfiguration
-split_legacy_users_configuration_catalog
-```
-
-Resultado sobre código CURRENT:
+VERIFIED por inspección del commit:
 
 ```text
-PASS / zero matches
+private Tool lifecycle files removed
+private Tool source/projection snapshots removed
+ToolSourceService added
+ToolProjectionBuilder added
+SourceProjectionService[ToolConfiguration] used
+new CURRENT tests added:
+  test_source_release.py
+  test_source_projection.py
+legacy-only tests removed
 ```
 
-Los matches observados inicialmente para `expected_source_revision` estaban sólo bajo `build/` generado de Manager y no pertenecían al source CURRENT.
-
-## Clean cutover implementado
-
-Removido:
+## Tools — ejecución
 
 ```text
-schema_v1.py
-decode_users_profiles_schema_v1(...)
-Source schema-v1 read branch
-Projection schema-v1 read branch
-tests cuyo propósito era preservar lectura schema v1
+uv run pytest scoped
+UNVERIFIED
+
+Ruff scoped
+UNVERIFIED
+
+CI remoto
+UNVERIFIED / no status observado
 ```
 
-Los tests CURRENT rechazan versiones no vigentes donde corresponde.
+No declarar PASS hasta observar ejecución real.
 
 ## Política de tests vigente
 
@@ -101,43 +104,65 @@ DO
 - fijar contrato final;
 - eliminar legacy;
 - eliminar/reemplazar tests del contrato eliminado;
-- luego ejecutar tests;
-- corregir sólo desalineaciones del contrato final.
+- escribir tests del comportamiento CURRENT;
+- ejecutar qualification en la frontera acordada;
+- ejecutar regression global después del cutover final de Configuration Manager.
 
 DO NOT
 - conservar adapters para salvar tests;
-- agregar fallback schema viejo para salvar tests;
+- mantener consumers viejos funcionando mediante aliases;
 - adaptar producción al contrato retirado;
-- considerar GREEN como criterio suficiente de arquitectura.
+- considerar la existencia de tests como equivalente a haberlos ejecutado.
 ```
 
-## Criterio de aceptación de Users
+## Criterio contractual de Tools
 
 ```text
-one valid route
-zero legacy runtime schemas
-zero adapters/shims/aliases
+one Source contract
+one Projection contract
+zero private lifecycle contract
+zero Tool source revision identity
+zero private projection revision identity
 zero revision -> ProjectionTarget reconstruction
-zero expected_source_revision
-tests validate only CURRENT behavior
+zero compatibility adapters inside Tools
+Tool domain semantics preserved
 ```
 
-Resultado:
+Resultado por inspección:
 
 ```text
-ACCEPTED
-CLOSED / VERIFIED / CURRENT
+IMPLEMENTED / VERIFIED IN MAIN
 ```
+
+Resultado de ejecución:
+
+```text
+UNVERIFIED
+```
+
+## Regresión final de Configuration
+
+Se difiere hasta completar:
+
+```text
+KPI Configuration Source/Projection
+KPI Definition Source/Projection
+ADA Configuration Manager final cutover
+```
+
+Luego ejecutar la regression completa y adjudicar sólo fallos del contrato final.
 
 ## UNVERIFIED
 
+- Tools scoped pytest;
+- Tools scoped Ruff;
 - full ADA suite;
+- final Configuration Manager runtime;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- Tools consumer;
-- KPI Configuration consumer;
-- KPI Definition consumer.
+- KPI Configuration;
+- KPI Definition.
 
 ## Git
 

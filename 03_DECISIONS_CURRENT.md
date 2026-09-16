@@ -16,6 +16,7 @@ Estado: **CURRENT**
 | Cutover raíz limpio | CURRENT |
 | No crear shims/adapters/aliases temporales para legacy | FROZEN |
 | Tests no son autoridad sobre contratos SUPERSEDED | FROZEN |
+| Un consumer puede quedar temporalmente roto mientras se migran contratos raíz | FROZEN |
 
 ## Regla universal de cutover
 
@@ -33,34 +34,32 @@ OLD SCHEMA READERS IN CURRENT RUNTIME
 FORBIDDEN
 
 CONTRATO FINAL
-Generic Atlanticus contract only
+Generic Atlanticus infrastructure contract where applicable
 ```
 
-Una pieza no deja de ser compatibilidad por ser read-only, privada, interna al codec, usada para historia durable o necesaria para mantener tests existentes.
+Usar infraestructura genérica no cambia automáticamente ownership de dominio.
 
-Si su única responsabilidad es entender un contrato/schema eliminado, pertenece al legado y debe removerse del runtime CURRENT.
-
-Una migración histórica necesaria debe ser una operación explícita y acotada, no compatibilidad permanente embebida en producción.
+Una capability ADA-specific puede consumir Source/Projection/Manager genéricos y permanecer bajo `scopes/ada`.
 
 ## Orden obligatorio de migración y validación
 
 ```text
-1. definir/fijar contrato final
-2. migrar implementación
-3. eliminar legacy
+1. fijar contrato final del dominio
+2. migrar implementación del dominio
+3. eliminar legacy del dominio
 4. eliminar tests cuyo único propósito sea preservar legacy
-5. ejecutar qualification scoped
-6. ejecutar qualification global
-7. adjudicar únicamente desalineaciones del contrato final
+5. continuar con el siguiente dominio si el consumer final todavía depende de contratos no migrados
+6. cortar el consumer final una sola vez
+7. ejecutar regression/qualification final
 ```
 
 FORBIDDEN:
 
 ```text
-mantener legacy para hacer pasar tests
-crear adapters para no romper tests
-reintroducir schemas anteriores como fallback
-declarar CLOSED sólo porque pytest está GREEN
+mantener legacy para que el consumer siga importando
+crear adapters para sostener composición temporal
+reintroducir schemas/revisions anteriores como fallback
+convertir una capability ADA-specific en core genérico sin necesidad real
 ```
 
 ## Source / Projection
@@ -71,14 +70,15 @@ declarar CLOSED sólo porque pytest está GREEN
 | Projection exact-release pertenece a `web/capabilities/projection/core` | CURRENT |
 | Release identity != content hash | FROZEN |
 | Source current nunca lo determina Cosmos | FROZEN |
-| Projection target = `SourceKey + SourceReleaseRef` | FROZEN |
+| Projection target = `SourceKey + SourceReleaseRef + dependencies` | FROZEN |
 | `project(target)` no relee current | FROZEN |
-| CURRENT/OUTDATED compara release identity | FROZEN |
+| CURRENT/OUTDATED compara exact target | FROZEN |
 | Retry conserva exact target | FROZEN |
 | No introducir shim `SourceReleaseId <-> str` | FROZEN |
 | Restore publica una nueva release; no repunta current | FROZEN |
 | No reconstruir `ProjectionTarget` desde revision | FROZEN |
 | `expected_source_revision` | SUPERSEDED / REMOVED |
+| private projection revision identity | SUPERSEDED |
 
 ## Manager generic contract
 
@@ -93,10 +93,6 @@ declarar CLOSED sólo porque pytest está GREEN
 | `workflow_service` legacy | SUPERSEDED |
 | campos `exact_source_*` | SUPERSEDED |
 | `exact_projection_service` | SUPERSEDED |
-| `ExactSourceReaderWorkflow` | SUPERSEDED |
-| `ExactSourcePublicationWorkflow` | SUPERSEDED |
-| `ExactSourceHistoryWorkflow` | SUPERSEDED |
-| `ExactProjectionWorkflow` como frontera Manager | SUPERSEDED |
 | doble routing exact/legacy | FORBIDDEN |
 | adapters/shims/aliases para conservar contrato anterior | FORBIDDEN |
 
@@ -105,7 +101,7 @@ declarar CLOSED sólo porque pytest está GREEN
 | Decisión | Estado |
 |---|---|
 | Source BASE = `SourceSnapshot` | FROZEN |
-| Publication recibe `expected_source_snapshot` | FROZEN |
+| Publication recibe snapshot/concurrency semantics genéricas | FROZEN |
 | conflicto se determina por release identity | FROZEN |
 | cambio aislado de concurrency token no implica nueva release | FROZEN |
 | History usa `HistoryPage` + `SourceReleaseRef` | FROZEN |
@@ -121,17 +117,6 @@ declarar CLOSED sólo porque pytest está GREEN
 | `ProjectionExecutionResult.target` conserva target ejecutado | FROZEN |
 | target con `source_key` distinto al módulo es inválido | FROZEN |
 | no existe Manager Projection model legacy paralelo | FROZEN |
-
-## Manager Workspace
-
-| Decisión | Estado |
-|---|---|
-| workspace conserva `SourceSnapshot` | FROZEN |
-| local revision identifica payload local | FROZEN |
-| local revision != Source release identity | FROZEN |
-| parser de schema anterior no se adapta | FROZEN CLEAN CUTOVER |
-| historical load conserva current BASE | FROZEN |
-| publicar después crea nueva Source release | FROZEN |
 
 ## Navigation
 
@@ -149,60 +134,103 @@ declarar CLOSED sólo porque pytest está GREEN
 |---|---|
 | Users Manager consume contrato genérico Manager | IMPLEMENTED / VERIFIED / CURRENT |
 | `UsersProfilesConfiguration` es aggregate CURRENT | CURRENT |
-| `UsersConfigurationCatalog` como authoring paralelo | SUPERSEDED / REMOVED |
-| `UserProfileConfiguration` paralelo | SUPERSEDED / REMOVED |
-| `expected_source_revision` | SUPERSEDED / REMOVED |
-| `projection_source_revision` | SUPERSEDED / REMOVED |
-| schema v1 reader dentro de runtime | SUPERSEDED / REMOVED |
-| `decode_users_profiles_schema_v1(...)` | SUPERSEDED / REMOVED |
+| contracts/schema legacy paralelos | SUPERSEDED / REMOVED |
 | adapters permanentes para historia durable | FORBIDDEN |
 | migración histórica, si existe necesidad real | EXPLICIT ONE-OFF OPERATION ONLY |
 | `USERS-CLEAN-CUTOVER-COMPLETION` | CLOSED / VERIFIED / CURRENT |
 | `USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL` | CLOSED / VERIFIED / CURRENT |
 
+## Tools
+
+| Decisión | Estado |
+|---|---|
+| Tools ownership permanece `scopes/ada/web/tools` | FROZEN / CURRENT |
+| Tool domain semantics permanecen ADA-specific | FROZEN |
+| Tool Source consume `atlanticus.web.source` directamente | IMPLEMENTED / VERIFIED / CURRENT |
+| Tool Projection consume `atlanticus.web.projection` directamente | IMPLEMENTED / VERIFIED / CURRENT |
+| `ToolSourceService` | CURRENT |
+| `ToolProjectionBuilder` | CURRENT |
+| `SourceProjectionService[ToolConfiguration]` | CURRENT |
+| private Tool lifecycle contracts | SUPERSEDED / REMOVED |
+| `ToolLifecycleServices` | SUPERSEDED / REMOVED FROM TOOLS |
+| `ToolConfigurationSourceSnapshot` | SUPERSEDED / REMOVED |
+| `ToolConfigurationProjectionSnapshot` | SUPERSEDED / REMOVED |
+| `ToolConfigurationProjectionRepository` | SUPERSEDED / REMOVED |
+| `expected_source_revision` in Tool domain | SUPERSEDED / REMOVED |
+| private Tool projection revision | SUPERSEDED / REMOVED |
+| mantener Configuration Manager ejecutable durante este cutover | SUPERSEDED |
+| crear adapter/alias para el consumer antiguo | FORBIDDEN |
+
+## KPI Configuration — siguiente frontera
+
+| Decisión | Estado |
+|---|---|
+| ownership permanece `scopes/ada/web/kpis/configuration` | FROZEN |
+| usar Tools CURRENT como referencia estructural, no copiar semántica | FROZEN |
+| migrar Source a contrato genérico | PLANNED / NEXT |
+| migrar Projection a contrato genérico | PLANNED / NEXT |
+| conservar dependencia semántica en Tool Projection | FROZEN |
+| representar identidad de dependencia mediante contrato genérico de Projection | FROZEN |
+| conservar `tool_projection_revision` como identidad privada | SUPERSEDED |
+| tocar Manager durante este incremento | FORBIDDEN |
+
+## KPI Definition
+
+| Decisión | Estado |
+|---|---|
+| ownership permanece `scopes/ada/web/kpis/definition` | FROZEN |
+| cutover Source/Projection | PLANNED |
+| dependencia en KPI Configuration debe conservarse semánticamente | FROZEN |
+| revision string privada como identidad final | SUPERSEDED |
+
+## Estrategia de Configuration Manager
+
+```text
+Tools Source/Projection                    CLOSED / CURRENT
+KPI Configuration Source/Projection       PLANNED / NEXT
+KPI Definition Source/Projection          PLANNED
+ADA Configuration Manager final cutover   BLOCKED
+Global regression                         BLOCKED
+```
+
+No introducir parches temporales en el consumer.
+
 ## Decisiones reemplazadas o refinadas
 
-1. `USERS-MANAGER-ALIGNMENT-VALIDATION` era sólo análisis.
-   → **REFINED**: Users Manager fue alineado al contrato genérico.
+1. `TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER` como siguiente incremento directo.
+   → **REFINED**: primero se migró el contrato interno Source/Projection de Tools; Manager se corta al final.
 
-2. Conservar schema-v1 read compatibility para historia durable.
-   → **SUPERSEDED / REMOVED**.
-
-3. Declarar Users CLOSED sólo por suite GREEN.
+2. Mantener la composición ejecutable durante cada migración de dominio.
    → **SUPERSEDED**.
 
-4. Preservar lectura vieja porque existían tests.
+3. Crear una composición Manager dentro del paquete Tools durante su cutover.
    → **SUPERSEDED**.
 
-5. Usar qualification para decidir qué legacy conservar.
-   → **REFINED**: primero clean cutover; luego qualification del estado final.
+4. Generalizar Tools por usar infraestructura genérica.
+   → **SUPERSEDED / FORBIDDEN**.
 
-6. Abrir Tools/KPI antes de cerrar Users.
-   → **SUPERSEDED**. El prerequisito Users ya está satisfecho.
+5. Preservar private revision strings para dependencias KPI.
+   → **SUPERSEDED**; usar identidad genérica de Projection.
 
 ## Qualification observada
 
 | Hallazgo | Estado |
 |---|---|
-| checkpoint publicado | VERIFIED / `a065f45c55a527c96ce333705465487e95f0a737` |
-| Users scoped Ruff | VERIFIED / PASS |
-| Users scoped tests | VERIFIED / 99 passed |
-| Full Web | VERIFIED / 545 passed, 7 skipped |
-| `git diff --check HEAD^..HEAD` | VERIFIED / PASS |
-| working tree final | VERIFIED / CLEAN |
-| forbidden scan sobre código CURRENT | VERIFIED / zero matches para lista inspeccionada |
-| schema-v1 compatibility residue | VERIFIED / REMOVED |
-| Tools consumer | UNVERIFIED / PLANNED NEXT |
-| KPI Configuration consumer | UNVERIFIED / PLANNED |
-| KPI Definition consumer | UNVERIFIED / PLANNED |
-| Docker E2E | UNVERIFIED |
+| checkpoint Tools publicado | VERIFIED / `27c2e4beed125fe379881048f0df5fbe3ff6cb1a` |
+| Tool Source/Projection code | VERIFIED / CURRENT |
+| tests CURRENT de Tool Source/Projection existen | VERIFIED |
+| ejecución scoped posterior al cutover | UNVERIFIED |
+| CI remoto del commit | UNVERIFIED / no status observado |
+| full ADA regression | BLOCKED |
+| KPI Configuration | PLANNED / NEXT |
+| KPI Definition | PLANNED |
 | Python 3.14.7 global | UNVERIFIED |
 
 ## Siguiente foco único
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-No inferir que Tools necesita el mismo cutover que Users.
+No tocar Manager final ni KPI Definition en el mismo incremento.

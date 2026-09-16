@@ -1,18 +1,19 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **FROZEN SEMANTICS + INTEGRATION IN PROGRESS**
+Estado: **FROZEN SEMANTICS + GENERIC CONTRACT MIGRATION IN PROGRESS**
 
 ## Cadena de autoridad
 
-La cadena funcional recuperada es:
+La cadena funcional es:
 
-Tool Configuration
+```text
+Tool Configuration Source
     ↓
 Tool Projection
     ↓
 KPI Destination Catalog
     ↓
-KPI Configuration
+KPI Configuration Source
     ↓
 KPI Configuration Projection
     ├── Delivery policy
@@ -20,11 +21,66 @@ KPI Configuration Projection
             ↓
 KPI Definition Authority
             ↓
-KPI Definition
+KPI Definition Source
+            ↓
+KPI Definition Projection
             ↓
 Operational Render
             ↓
 Alarm visual state
+```
+
+## Estado de contratos
+
+```text
+Tool Source/Projection
+CLOSED / CURRENT
+
+KPI Configuration Source/Projection
+PLANNED / NEXT
+
+KPI Definition Source/Projection
+PLANNED
+```
+
+## Tool CURRENT
+
+Tools permanece ADA-specific pero usa directamente:
+
+```text
+SourceStore
+SourceSnapshot
+SourceReleaseRef
+ProjectionTarget
+ProjectionStore[ToolConfiguration]
+SourceProjectionService[ToolConfiguration]
+```
+
+No existe private Tool lifecycle/revision identity en el contrato CURRENT.
+
+## Dependencias entre projections
+
+La dependencia semántica no desaparece al migrar contratos.
+
+```text
+KPI Configuration Projection
+    depends on exact Tool Projection target
+
+KPI Definition Projection
+    depends on exact KPI Configuration Projection target
+```
+
+La identidad final debe usar `ProjectionTarget`/dependencies genéricos.
+
+No usar como identidad final:
+
+```text
+tool_projection_revision
+kpi_configuration_revision
+other private revision strings
+```
+
+Las propiedades de dominio que no sean identidad Projection se preservan cuando estén justificadas por semántica real.
 
 ## Regla maestra
 
@@ -51,23 +107,23 @@ Data granularity != visual alarm granularity.
 
 Las alarmas se proyectan sobre identidad estructural y pueden coexistir con dato vacío.
 
-## Integración vertical
+## Estrategia de cutover
 
-Cada nueva capacidad debe cerrar su cadena:
+Cada dominio Configuration se migra a su contrato final antes de cortar el consumer Manager.
 
-contrato/backend
-→ authority/source
-→ materialización/projection
-→ Alarm/KPI cuando corresponda
-→ Web consumer
-→ E2E
+```text
+Tools
+→ KPI Configuration
+→ KPI Definition
+→ ADA Configuration Manager
+→ regression
+```
 
-No desarrollar todos los frentes horizontalmente y unirlos al final.
-
+No introducir adapters/shims para mantener el consumer ejecutable entre etapas.
 
 ## Handoff hacia Command Center
 
-Tool Configuration tiene dos consumidores distintos:
+Tool Configuration tiene consumidores distintos:
 
 ```text
 Tool Configuration
@@ -77,4 +133,4 @@ Tool Configuration
 
 Command Center no modifica Tool Configuration.
 
-Alarm Engine devuelve estado operacional que ADA Generic consume visualmente.
+Este frente no se abre durante los cutovers KPI actuales.

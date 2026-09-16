@@ -10,6 +10,24 @@ ADA consume Atlanticus.
 
 El núcleo genérico de Atlanticus no depende de ADA.
 
+## Ownership y scopes
+
+`scopes/` contiene composiciones y capacidades específicas de un producto/proyecto cuando corresponde.
+
+Una capability bajo `scopes/ada` puede consumir infraestructura genérica Atlanticus sin transferir su ownership al core genérico.
+
+Regla CURRENT:
+
+```text
+Atlanticus generic infrastructure
+    Source / Projection / Manager / Navigation / Users / Profiles / ...
+
+ADA-specific capabilities
+    Tools / KPI Configuration / KPI Definition / future Access / ...
+```
+
+No generalizar una capability sólo porque reutiliza contratos genéricos.
+
 ## Planos principales
 
 ### Platform
@@ -45,13 +63,15 @@ web/capabilities/projection/core
 
 Manager consume estos contratos genéricos directamente. No mantiene una arquitectura paralela `legacy` vs `exact`.
 
+Los dominios ADA-specific consumen estos contratos sin moverse al core.
+
 ### Operational Data
 
 Operational Data conserva ownership separado para sources, producers, processes, planner y materialization.
 
 ### ADA Runtime
 
-ADA Generic compone la experiencia operacional y consume capacidades Atlanticus.
+ADA Generic compone la experiencia operacional y consume capacidades Atlanticus y contratos ADA-specific ya resueltos.
 
 ADA-specific authorization puede consumir/extender contratos genéricos, pero no convertirse en dependencia del core Atlanticus.
 
@@ -80,7 +100,7 @@ Source     = Local | Blob
 Projection = Local | Cosmos | provider equivalente
 ```
 
-Projection representa un `SourceReleaseRef` concreto.
+Projection representa un `SourceReleaseRef` concreto mediante `ProjectionTarget`.
 
 Source current nunca se determina desde Cosmos.
 
@@ -139,58 +159,86 @@ Reglas:
 - local revision identifica payload local;
 - Source release identity permanece en `SourceSnapshot`;
 - concurrency token no se convierte en release identity;
-- schema vigente = `2`;
-- no hay parser/shim legacy para workspace anterior.
+- no reconstruir `ProjectionTarget` desde revision.
 
 ## Navigation CURRENT
 
-Navigation ya es consumidor directo del contrato genérico.
-
-Fronteras:
+Navigation es consumidor directo del contrato genérico.
 
 ```text
-web/capabilities/navigation/core
-    dominio/runtime reusable
-
-web/capabilities/navigation/configuration
-    codec/source service
-    projection builder
-    editor/domain validation
-    web editor payload integration
-
-web/capabilities/navigation/projection-local
-    ProjectionStore local
-
-web/capabilities/navigation/projection-cosmos
-    ProjectionStore Cosmos
-
-web/compositions/navigation-manager
-    binding explícito Navigation <-> Manager
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Local:
+## Users CURRENT
+
+Users Manager consume directamente el contrato genérico.
 
 ```text
-LocalSourceStore
- -> NavigationSourceService
- -> Manager Source workflows
- -> SourceProjectionService
- -> LocalNavigationProjectionStore
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Azure:
+Su clean cutover y removal de legacy están cerrados.
+
+## Tools CURRENT
+
+Ownership:
 
 ```text
-BlobSourceStore
- -> NavigationSourceService
- -> Manager Source workflows
- -> SourceProjectionService
- -> CosmosNavigationProjectionStore
+scopes/ada/web/tools
 ```
 
-No existe `navigation/cosmos` como runtime store independiente porque Navigation no tiene una responsabilidad runtime equivalente a Users.
+Tool Configuration conserva semántica ADA y consume infraestructura genérica:
 
-## Reglas congeladas para Navigation
+```text
+ToolSourceService
+    ↓ SourceStore / SourceSnapshot / SourceReleaseRef
+
+ToolProjectionBuilder
+    ↓ ProjectionTarget / ProjectionStore[ToolConfiguration]
+
+SourceProjectionService[ToolConfiguration]
+```
+
+No forman parte del contrato Tools CURRENT:
+
+```text
+ToolLifecycleServices
+ToolConfigurationSourceSnapshot
+ToolConfigurationProjectionSnapshot
+ToolConfigurationProjectionRepository
+expected_source_revision
+private projection revision identity
+```
+
+## Consumer cutover strategy CURRENT
+
+Los dominios de Configuration se migran primero hasta su contrato final aunque el consumer `ada-configuration-manager` quede temporalmente desalineado.
+
+No crear compatibilidad para sostener el consumer durante la transición.
+
+Orden:
+
+```text
+Tools Source/Projection                    CLOSED / CURRENT
+KPI Configuration Source/Projection       PLANNED / NEXT
+KPI Definition Source/Projection          PLANNED
+ADA Configuration Manager final cutover   BLOCKED
+Global regression                         BLOCKED
+```
+
+## KPI dependency semantics
+
+KPI Configuration depende semánticamente de Tool Projection.
+
+KPI Definition depende semánticamente de KPI Configuration Projection.
+
+Las identidades de estas dependencias deben usar el contrato genérico de Projection (`ProjectionTarget` y sus dependencies), no revision strings privadas.
+
+La forma exacta se implementa incrementalmente en cada dominio, sin crear arquitectura paralela.
+
+## Reglas congeladas
 
 ```text
 LEGACY                      REMOVE
@@ -198,26 +246,7 @@ ADAPTERS / SHIMS / ALIASES FORBIDDEN
 DOBLE CONTRATO              FORBIDDEN
 revision -> ProjectionTarget reconstruction REMOVE
 expected_source_revision    REMOVE
+private projection revision identity REMOVE
 ```
 
-Navigation no recibe una arquitectura especial.
-
-## Consumer boundary
-
-El cierre de Navigation no demuestra alineación automática de otros consumers.
-
-`users-manager` presenta una desalineación observable con el contrato Manager CURRENT. Esa desalineación debe validarse como frente independiente antes de decidir su solución.
-
-Tools, KPI Configuration y KPI Definition conservan su estado anterior hasta inspección propia.
-
-## Fronteras futuras
-
-```text
-USERS-MANAGER-ALIGNMENT-VALIDATION                 PLANNED / NEXT
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER       PLANNED
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER   PLANNED
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
-```
-
-No reabrir Manager core ni Navigation para resolver otro consumer.
+No reabrir Manager core, Navigation, Users ni Tools para resolver el siguiente consumer.

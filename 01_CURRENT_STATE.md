@@ -4,19 +4,19 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ## Autoridad
 
-Implementación publicada y verificada:
+Implementación publicada y verificada por inspección:
 
 ```text
-moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
+moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
 ```
 
 Parent inmediato:
 
 ```text
-ec9bd35455b8221180b3f15740b58e34766f6112
+a065f45c55a527c96ce333705465487e95f0a737
 ```
 
-La qualification final terminó con working tree limpio.
+No se dispone en este cierre de evidencia para afirmar working tree limpio ni ejecución de qualification scoped posterior al commit.
 
 ## Estado resumido
 
@@ -28,9 +28,14 @@ USERS-CLEAN-CUTOVER-COMPLETION                     CLOSED / VERIFIED / CURRENT
 USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL        CLOSED / VERIFIED / CURRENT
 PROJECTION-CORE-STALE-TEST-ALIGNMENT               CLOSED / VERIFIED
 
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED / NEXT
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER        PLANNED
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER    PLANNED
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER             CLOSED / VERIFIED / CURRENT
+TOOLS-SCOPED-QUALIFICATION                          PLANNED / UNVERIFIED
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
+
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER       PLANNED / NEXT
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER   PLANNED
+ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER             BLOCKED
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION               BLOCKED
 ```
 
 ## VERIFIED
@@ -59,106 +64,188 @@ expected_source_revision
 revision -> ProjectionTarget reconstruction
 ```
 
+### Navigation
+
+Navigation consume directamente Source/Projection/Manager genéricos.
+
+```text
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
 ### Users
 
-`web/compositions/users-manager` consume Manager genérico.
-
-El checkpoint `a065f45c...` elimina la compatibilidad schema v1 que bloqueaba el cierre, incluyendo ambos `schema_v1.py` y los fallbacks Source/Projection.
-
-Familia CURRENT:
+Users consume directamente el contrato Manager genérico y su clean cutover permanece cerrado.
 
 ```text
-UsersConfiguration
-ProfilesConfiguration
-UsersProfilesConfiguration
-UsersSourceService
-SourceSnapshot
-SourceReleaseRef
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-CLEAN-CUTOVER-COMPLETION
+CLOSED / VERIFIED / CURRENT
+
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+CLOSED / VERIFIED / CURRENT
+```
+
+### Tools ownership
+
+Tools permanece bajo:
+
+```text
+scopes/ada/web/tools
+```
+
+Es ADA-specific. El cutover no trasladó su dominio a `web/capabilities`.
+
+### Tools domain semantics
+
+El commit `27c2e4be...` no modifica `models.py` ni `operational.py` de Tool Configuration.
+
+Se preservan:
+
+```text
+ToolConfiguration
+Tool Structure
+Component / Subcomponent
+Tool kind
+Operational scope
+Source consumption
+Operational participation
+Branding
+ADA operational validation
+```
+
+### Tool Source CURRENT
+
+```text
+ToolSourceCodec
+ToolSourcePayload
+ToolSourceRelease
+ToolSourceService
+```
+
+Consume modelos y store de `atlanticus.web.source` directamente.
+
+Publication usa:
+
+```text
+expected_concurrency_token
+basis_release
+```
+
+No usa revision string de dominio.
+
+### Tool Projection CURRENT
+
+```text
+ToolProjectionBuilder
+create_tool_projection_service(...)
+ProjectionStore[ToolConfiguration]
+SourceProjectionService[ToolConfiguration]
 ProjectionTarget
-ProjectionRecord
-ProjectionStore
-SourceProjectionService
 ```
 
-No se reintrodujo adapter, shim, alias ni segunda ruta runtime.
+El builder valida la configuración publicada mediante `validate_ada_operational_tool_configuration(...)`.
 
-### Qualification final
+No existe una identidad paralela privada de Projection dentro del contrato CURRENT de Tools.
+
+### Legacy removido de Tools Configuration
 
 ```text
-ruff scoped
-PASS
-
-pytest scoped
-99 passed
-
-forbidden scan sobre código CURRENT
-PASS / zero matches
-
-full Web pytest
-545 passed
-7 skipped
-0 failed
-
-git diff --check HEAD^..HEAD
-PASS
-
-git status --short
-CLEAN
+contracts.py
+lifecycle.py
+projection.py
+services.py
+source.py
 ```
+
+La fachada pública ya no exporta la familia `ToolLifecycle*`, snapshots privados ni helpers de revision legacy.
+
+### Desalineación deliberada del consumer
+
+`ada-configuration-manager` todavía importa `ToolLifecycleServices` y define `ToolConfigurationManagerWorkflowAdapter` con `expected_source_revision`.
+
+Esa desalineación es CURRENT y temporal.
+
+No se debe reparar desde Tools.
 
 ## INFERRED
 
-La qualification prueba coherencia del Web workspace con los tests CURRENT observados y con el clean cutover inspeccionado.
+Tools CURRENT demuestra el patrón mínimo de infraestructura que debe usarse como referencia para KPI Configuration:
 
-No prueba automáticamente ADA, Docker E2E, CI remoto, Python/Trixie global ni consumers no inspeccionados.
+```text
+ADA-specific domain
+→ generic Source
+→ generic Projection
+```
+
+No demuestra que KPI Configuration pueda copiarse sin considerar su dependencia semántica en Tool Projection.
 
 ## ASSUMED
 
-No se asume existencia de datos productivos schema v1.
+No se asume:
 
-No se diseñó migración histórica. Si aparece una necesidad real, debe verificarse desde datos/entorno autoritativo y resolverse como operación explícita separada.
+- `SourceKey` final de composición para Tools;
+- provider físico final de Tool Source/Projection;
+- necesidad de migración de datos Tool históricos;
+- working tree limpio;
+- suite Tools ejecutada;
+- Configuration Manager ejecutable antes del cutover final.
 
-## PROPOSED
+## PROPOSED / NEXT
 
 Único foco siguiente:
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 ```
 
-Primera etapa: inspección y diseño. No escribir código antes de verificar una desviación real.
+Regla de diseño ya fijada:
+
+```text
+KPI Configuration ownership remains ADA
+Tool dependency is preserved
+private tool_projection_revision identity is removed
+exact dependency identity uses generic ProjectionTarget semantics
+Manager is not repaired in this increment
+```
 
 ## SUPERSEDED
 
 ```text
-keep schema-v1 read compatibility for durable history
-SUPERSEDED / REMOVED
-
-Users is CLOSED because tests are green
+Tools Manager consumer must stay runnable during Tool cutover
 SUPERSEDED
 
-preserve old schemas to keep tests passing
+add adapters/shims to preserve old Tool lifecycle
+SUPERSEDED / FORBIDDEN
+
+move Tools into generic Atlanticus core because it uses generic infrastructure
+SUPERSEDED / FORBIDDEN
+
+private revision strings as Projection identity
 SUPERSEDED
 ```
 
-El cierre actual se basa en clean cutover publicado más qualification posterior.
-
 ## UNVERIFIED
 
+- `uv run pytest` scoped de Tools después de `27c2e4be...`;
+- Ruff scoped de Tools después de `27c2e4be...`;
 - full ADA suite;
+- final Configuration Manager regression;
 - Docker E2E;
-- CI remoto;
+- CI remoto para `27c2e4be...`;
 - Python 3.14.7/Trixie global;
-- Tools consumer;
-- KPI Configuration consumer;
-- KPI Definition consumer;
-- existencia de datos históricos schema v1 que requieran migración operacional.
+- providers físicos finales de Tool Source/Projection;
+- datos Tool históricos que requieran migración operacional;
+- KPI Configuration cutover;
+- KPI Definition cutover.
 
 ## Siguiente frontera
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 PLANNED / NEXT
 ```
 
-No mezclar KPI, Python migration, Docker E2E general, ADA-specific work ni rediseño de Manager core.
+No mezclar Manager final, KPI Definition, Command Center, Operational Data ni rediseño de Manager core.

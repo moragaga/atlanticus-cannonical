@@ -2,6 +2,16 @@
 
 Estado: **FROZEN/CURRENT**
 
+## Ownership
+
+Tool Configuration es ADA-specific y permanece en:
+
+```text
+scopes/ada/web/tools/configuration
+```
+
+Usa infraestructura genérica Atlanticus sin transferir ownership al core.
+
 ## Autoridad estructural
 
 Tool Configuration determina qué estructura existe.
@@ -80,3 +90,82 @@ Un Subcomponent puede:
 - alarm = CRITICAL.
 
 La alarma no determina existencia estructural.
+
+## Source CURRENT
+
+Checkpoint de implementación:
+
+```text
+moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+```
+
+Tool Configuration publica mediante:
+
+```text
+ToolSourceService
+SourceStore
+SourceSnapshot
+SourceReleaseRef
+PublishRequest
+PublishResult
+ConcurrencyToken
+HistoryPage
+```
+
+Recurso CURRENT:
+
+```text
+tools/configuration.json.gz
+```
+
+No existe Source identity de dominio basada en `revision`.
+
+## Projection CURRENT
+
+```text
+ToolProjectionBuilder
+ProjectionTarget
+ProjectionStore[ToolConfiguration]
+SourceProjectionService[ToolConfiguration]
+```
+
+El builder decodifica la release exacta y valida la configuración con la validación operacional ADA existente.
+
+No existe snapshot privado de Projection ni `projection_revision` privado como identidad paralela.
+
+## Legacy removido
+
+No forman parte del contrato Tool Configuration CURRENT:
+
+```text
+ToolLifecycleServices
+ToolAdministrationService
+ToolProjectionWorkflow
+ToolConfigurationSourceSnapshot
+ToolConfigurationProjectionSnapshot
+ToolConfigurationProjectionRepository
+ToolConfigurationPublisher
+ToolConfigurationSource
+expected_source_revision
+build_tool_configuration_projection_revision
+```
+
+No reintroducir aliases, adapters o shims.
+
+## Manager integration
+
+El `ada-configuration-manager` actual todavía referencia el contrato Tool anterior.
+
+Eso se resuelve en el cutover final del Configuration Manager después de migrar KPI Configuration y KPI Definition.
+
+No adaptar Tools para sostener temporalmente ese consumer.
+
+## Qualification
+
+Los tests CURRENT para Source/Projection existen en el repositorio.
+
+Su ejecución posterior al cutover permanece:
+
+```text
+UNVERIFIED
+```
