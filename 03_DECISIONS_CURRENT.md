@@ -13,7 +13,63 @@ Estado: **CURRENT**
 | Server-side Python con responsabilidad Web pertenece a `web/` | CURRENT |
 | Connectivity es dual-use y no adquiere ownership funcional | CURRENT |
 | Definir contratos antes que consumidores | CURRENT |
-| Cutover raíz limpio; no crear shims legacy temporales | CURRENT |
+| Cutover raíz limpio | CURRENT |
+| No crear shims/adapters/aliases temporales para legacy | FROZEN |
+| Tests no son autoridad sobre contratos SUPERSEDED | FROZEN |
+
+## Regla universal de cutover
+
+```text
+LEGACY
+REMOVE
+
+ADAPTERS / SHIMS / ALIASES
+FORBIDDEN
+
+DOBLE CONTRATO
+FORBIDDEN
+
+OLD SCHEMA READERS IN CURRENT RUNTIME
+FORBIDDEN
+
+CONTRATO FINAL
+Generic Atlanticus contract only
+```
+
+Una pieza no deja de ser compatibilidad por ser:
+
+- read-only;
+- privada;
+- interna al codec;
+- usada para historia durable;
+- necesaria para mantener tests existentes.
+
+Si su única responsabilidad es entender un contrato/schema eliminado, pertenece al legado y debe removerse del runtime CURRENT.
+
+Una migración histórica necesaria debe ser una operación explícita y acotada, no compatibilidad permanente embebida en producción.
+
+## Orden obligatorio de migración y validación
+
+```text
+1. definir/fijar contrato final
+2. migrar implementación
+3. eliminar legacy
+4. eliminar tests cuyo único propósito sea preservar legacy
+5. ejecutar qualification scoped
+6. ejecutar qualification global
+7. adjudicar únicamente desalineaciones del contrato final
+```
+
+FORBIDDEN:
+
+```text
+mantener legacy para hacer pasar tests
+crear adapters para no romper tests
+reintroducir schemas anteriores como fallback
+declarar CLOSED sólo porque pytest está GREEN
+```
+
+Los tests se corrigen cuando validan un contrato SUPERSEDED.
 
 ## Source / Projection
 
@@ -29,28 +85,28 @@ Estado: **CURRENT**
 | Retry conserva exact target | FROZEN |
 | No introducir shim `SourceReleaseId <-> str` | FROZEN |
 | Restore publica una nueva release; no repunta current | FROZEN |
+| No reconstruir `ProjectionTarget` desde revision | FROZEN |
+| `expected_source_revision` | SUPERSEDED / REMOVE |
 
 ## Manager generic contract
 
 | Decisión | Estado |
 |---|---|
 | Manager tiene un solo contrato Source/Projection genérico | FROZEN / IMPLEMENTED |
-| `ManagerModule` usa `source_service` | FROZEN / IMPLEMENTED |
-| `ManagerModule` usa `source_reader_service` | FROZEN / IMPLEMENTED |
-| `ManagerModule` usa `projection_service` | FROZEN / IMPLEMENTED |
-| `ManagerModule` usa `draft_validation_service` | FROZEN / IMPLEMENTED |
-| `source_history_service` es opcional | FROZEN / IMPLEMENTED |
-| `workflow_service` legacy | SUPERSEDED / REMOVED FROM CURRENT CONTRACT |
-| campos `exact_source_*` | SUPERSEDED / REMOVED |
-| `exact_projection_service` | SUPERSEDED / REMOVED |
-| `ExactSourceReaderWorkflow` | SUPERSEDED BY `SourceReaderWorkflow` |
-| `ExactSourcePublicationWorkflow` | SUPERSEDED BY `SourcePublicationWorkflow` |
-| `ExactSourceHistoryWorkflow` | SUPERSEDED BY `SourceHistoryWorkflow` |
+| `ManagerModule.source_service` | FROZEN / IMPLEMENTED |
+| `ManagerModule.source_reader_service` | FROZEN / IMPLEMENTED |
+| `ManagerModule.projection_service` | FROZEN / IMPLEMENTED |
+| `ManagerModule.draft_validation_service` | FROZEN / IMPLEMENTED |
+| `source_history_service` opcional | FROZEN / IMPLEMENTED |
+| `workflow_service` legacy | SUPERSEDED |
+| campos `exact_source_*` | SUPERSEDED |
+| `exact_projection_service` | SUPERSEDED |
+| `ExactSourceReaderWorkflow` | SUPERSEDED |
+| `ExactSourcePublicationWorkflow` | SUPERSEDED |
+| `ExactSourceHistoryWorkflow` | SUPERSEDED |
 | `ExactProjectionWorkflow` como frontera Manager | SUPERSEDED |
-| `ConfigurationLifecycleWorkflow` como contrato activo Manager | SUPERSEDED |
-| `resolve_exact_source_lifecycle` | SUPERSEDED / REMOVED |
 | doble routing exact/legacy | FORBIDDEN |
-| adapters/shims/aliases para conservar el contrato anterior | FORBIDDEN |
+| adapters/shims/aliases para conservar contrato anterior | FORBIDDEN |
 
 ## Manager Source invariants
 
@@ -60,19 +116,17 @@ Estado: **CURRENT**
 | Publication recibe `expected_source_snapshot` | FROZEN |
 | conflicto se determina por release identity | FROZEN |
 | cambio aislado de concurrency token no implica nueva release | FROZEN |
-| Manager pasa snapshot/token fresco al workflow si la release no cambió | FROZEN |
 | History usa `HistoryPage` + `SourceReleaseRef` | FROZEN |
-| History read debe devolver la release solicitada | FROZEN |
+| History read devuelve la release solicitada | FROZEN |
 | Source identity no se reduce a revision string | FROZEN |
 
 ## Manager Projection invariants
 
 | Decisión | Estado |
 |---|---|
-| `ProjectionTarget` llega completo al `project(...)` | FROZEN |
+| `ProjectionTarget` llega completo a `project(...)` | FROZEN |
 | Manager no reconstruye target desde revision | FROZEN |
-| `expected_source_revision` | SUPERSEDED / REMOVED |
-| `ProjectionExecutionResult.target` conserva el target ejecutado | FROZEN |
+| `ProjectionExecutionResult.target` conserva target ejecutado | FROZEN |
 | target con `source_key` distinto al módulo es inválido | FROZEN |
 | no existe Manager Projection model legacy paralelo | FROZEN |
 
@@ -80,89 +134,80 @@ Estado: **CURRENT**
 
 | Decisión | Estado |
 |---|---|
-| `ManagerWorkspace` schema = `2` | CURRENT |
 | workspace conserva `SourceSnapshot` | FROZEN |
 | local revision identifica payload local | FROZEN |
 | local revision != Source release identity | FROZEN |
-| parser schema anterior no se adapta | FROZEN CLEAN CUTOVER |
+| parser de schema anterior no se adapta | FROZEN CLEAN CUTOVER |
 | historical load conserva current BASE | FROZEN |
-| historical load crea local dirty work | FROZEN |
 | publicar después crea nueva Source release | FROZEN |
 
-## Navigation decisions
+## Navigation
 
 | Decisión | Estado |
 |---|---|
 | Navigation consume Manager genérico directamente | FROZEN / IMPLEMENTED |
 | Navigation no tiene arquitectura Manager especial | FROZEN |
-| Source local usa `LocalSourceStore` | IMPLEMENTED |
-| Source Azure usa `BlobSourceStore` | IMPLEMENTED |
-| Projection local usa `LocalNavigationProjectionStore` | IMPLEMENTED |
-| Projection Azure usa `CosmosNavigationProjectionStore` | IMPLEMENTED |
-| legacy adapters/configuration stores paralelos | SUPERSEDED / REMOVED |
-| `expected_source_revision` en Navigation | SUPERSEDED / REMOVED |
-| browser source revision ejecutable | SUPERSEDED / REMOVED |
+| legacy adapters/configuration stores | SUPERSEDED / REMOVED |
+| `expected_source_revision` | SUPERSEDED / REMOVED |
 | compatibility shims/aliases | FORBIDDEN |
 
-## Decisions superseded/refined
+## Users
 
-1. Navigation estaba `PLANNED / NEXT`.
-   → **SUPERSEDED**: `NAVIGATION-GENERIC-CONFIGURATION-CUTOVER` está `CLOSED / VERIFIED / CURRENT`.
+| Decisión | Estado |
+|---|---|
+| Users Manager consume contrato genérico Manager | IMPLEMENTED / VERIFIED |
+| `UsersProfilesConfiguration` es aggregate CURRENT | CURRENT |
+| `UsersConfigurationCatalog` como authoring paralelo | SUPERSEDED / REMOVE |
+| `UserProfileConfiguration` paralelo | SUPERSEDED / REMOVE |
+| `expected_source_revision` | SUPERSEDED / REMOVE |
+| `projection_source_revision` | SUPERSEDED / REMOVE |
+| schema v1 reader dentro de runtime | SUPERSEDED / REMOVE |
+| `decode_users_profiles_schema_v1(...)` | SUPERSEDED / REMOVE |
+| adapters permanentes para historia durable | FORBIDDEN |
+| migración histórica, si existe necesidad real | EXPLICIT ONE-OFF OPERATION ONLY |
 
-2. La migración de Navigation podía conservar adapters legacy durante transición.
-   → **SUPERSEDED / FORBIDDEN**: el cierre fue limpio, sin convivencia.
+## Decisions superseded/refined durante este cierre
 
-3. La qualification global podía esperarse inmediatamente después de Navigation.
-   → **REFINED**: la suite global reveló una desalineación preexistente en `users-manager`; no se adjudica ni corrige dentro del incremento de Navigation.
+1. `USERS-MANAGER-ALIGNMENT-VALIDATION` era sólo análisis.
+   → **REFINED**: el Manager consumer de Users fue alineado al contrato genérico.
 
-4. El siguiente paso podía asumirse como implementación de Users.
-   → **REFINED**: el siguiente paso es sólo `USERS-MANAGER-ALIGNMENT-VALIDATION`.
+2. Se propuso conservar schema-v1 read compatibility para historia durable.
+   → **SUPERSEDED**: viola el clean cutover. Debe eliminarse completamente del runtime CURRENT.
 
-5. Un fallo global posterior a Navigation implica regresión de Navigation.
-   → **SUPERSEDED AS ASSUMPTION**: la causalidad debe verificarse por checkpoint y archivos cambiados.
+3. Se consideró Users CLOSED cuando Ruff/pytest y scan nominal estaban verdes.
+   → **SUPERSEDED**: GREEN de tests no sustituye cumplimiento del contrato congelado.
 
-## Qualification
+4. Se usaron tests de schema viejo como razón para preservar lectura.
+   → **SUPERSEDED**: tests que sólo defienden legacy se eliminan o reescriben después del cutover.
+
+5. La qualification podía guiar qué legacy conservar.
+   → **REFINED**: primero se completa la migración; después qualification detecta desalineaciones del estado final.
+
+6. Tools/KPI podía abrirse inmediatamente tras suite Web GREEN.
+   → **REFINED**: primero cerrar `USERS-CLEAN-CUTOVER-COMPLETION`.
+
+## Qualification observada
 
 | Hallazgo | Estado |
 |---|---|
-| Current implementation checkpoint | VERIFIED / `d34cda3838a67907728b382e238f0178f9f1a64e` |
-| Parent | VERIFIED / `59fcd3ecc8f3441e64fbe0fc892b4467fa56f181` |
-| Navigation scoped Ruff | VERIFIED / PASS |
-| Navigation + Manager scoped tests | VERIFIED / `102 passed` |
-| Navigation forbidden legacy scan | VERIFIED / `0 results` |
-| `git diff --check` | VERIFIED / PASS |
-| `git diff --cached --check` | VERIFIED / PASS |
-| Full Web suite | BLOCKED DURING COLLECTION |
-| Users Manager alignment | VERIFIED MISALIGNMENT / SOLUTION UNVERIFIED |
+| baseline publicado inspeccionado | VERIFIED / `55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a` |
+| Users scoped Ruff local | VERIFIED / PASS |
+| Users scoped tests local | VERIFIED / 113 passed |
+| Full Web local | VERIFIED / 546 passed, 7 skipped |
+| `git diff --check` local | VERIFIED / PASS |
+| legacy-name exact scan ejecutado | VERIFIED / 0 matches para lista inspeccionada |
+| schema-v1 compatibility residue | VERIFIED / PRESENT / MUST REMOVE |
 | Tools consumer | UNVERIFIED |
 | KPI Configuration consumer | UNVERIFIED |
 | KPI Definition consumer | UNVERIFIED |
 | Docker E2E | UNVERIFIED |
-| Python 3.14.7 global qualification | UNVERIFIED |
+| Python 3.14.7 global | UNVERIFIED |
 
-## Status de hitos
-
-```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER          CLOSED / VERIFIED / CURRENT
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER          CLOSED / VERIFIED / CURRENT
-
-USERS-MANAGER-ALIGNMENT-VALIDATION                 PLANNED / NEXT
-
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER       PLANNED
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER   PLANNED
-
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
-```
-
-## Siguiente decisión de ejecución
-
-Único foco recomendado:
+## Siguiente foco único
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
+USERS-CLEAN-CUTOVER-COMPLETION
+PLANNED / NEXT
 ```
 
-Usar obligatoriamente `atlanticus:main` y `atlanticus-cannonical:main`.
-
-No decidir implementación antes de validar la desalineación.
+No abrir ningún otro consumer hasta cerrarlo.

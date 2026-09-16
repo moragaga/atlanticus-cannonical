@@ -5,18 +5,18 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | Archivo | Contenido | Estado |
 |---|---|---|
 | `00_AUTHORITY.md` | Autoridad de fuentes y conflictos. | CURRENT |
-| `01_CURRENT_STATE.md` | Estado implementado y objetivo. | CURRENT |
+| `01_CURRENT_STATE.md` | Estado implementado, validado y pendiente. | CURRENT |
 | `02_ARCHITECTURE.md` | Fronteras y dependencias. | CURRENT |
-| `03_DECISIONS_CURRENT.md` | Decisiones activas. | CURRENT |
+| `03_DECISIONS_CURRENT.md` | Decisiones activas y reglas de cutover. | CURRENT |
 | `04_ALARM_ENGINE/` | Alarm Engine + qualification/preservation. | CURRENT + PRESERVATION |
 | `05_ENGINEERING_BASELINE.md` | Baseline técnica. | CURRENT |
 | `06_OPERATING_MODEL.md` | Modelo operativo/deployment. | CURRENT |
-| `07_VALIDATION_BASELINE.md` | Evidencia de qualification. | CURRENT |
+| `07_VALIDATION_BASELINE.md` | Evidencia de qualification y adjudicación. | CURRENT |
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
-| `09_OPEN_QUESTIONS.md` | Open items no bloqueantes. | CURRENT |
-| `10_MANAGER/` | Manager genérico, workflow, Source/Projection y consumers administrativos. | CURRENT |
+| `09_OPEN_QUESTIONS.md` | Open items vigentes. | CURRENT |
+| `10_MANAGER/` | Manager genérico, Source/Projection y consumers administrativos. | CURRENT |
 | `11_ADA_GENERIC/` | ADA Generic y orden de Tools. | CURRENT DIRECTION |
-| `12_SOURCE_STORAGE/` | Source/Projection exact-release y handoff genérico a Manager. | IN PROGRESS |
+| `12_SOURCE_STORAGE/` | Source/Projection exact-release y storage. | IN PROGRESS |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
 | `14_ADA_COMMAND_CENTER/` | Command Center y Alarm ownership. | CURRENT DIRECTION |
 | `15_WEB_PLATFORM/` | Web platform, Activity, startup y projections. | CURRENT |
@@ -26,14 +26,19 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `ATLANTICUS_ENGINEERING_RULES.md` | Reglas de ingeniería. | CURRENT |
 | `BASELINE_CLOSURE.md` | Qué queda congelado y qué no. | CURRENT |
 
-## Checkpoint de implementación de este cierre
+## Autoridad de implementación en este cierre
+
+Publicado en `moragaga/atlanticus:main` al iniciar el incremento:
 
 ```text
-moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
-parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
 ```
 
-## Cambios canónicos principales
+Existe un working tree local posterior a ese checkpoint con el cutover de Users en progreso.
+
+Ese working tree **no es todavía autoridad publicada** y no debe describirse como CURRENT hasta que se elimine toda compatibilidad legacy y se publique un nuevo checkpoint.
+
+## Estado de hitos
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
@@ -42,26 +47,68 @@ CLOSED / VERIFIED / CURRENT
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-USERS-MANAGER-ALIGNMENT-VALIDATION
-PLANNED / NEXT
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+IN PROGRESS / NOT ACCEPTED YET
+
+PROJECTION-CORE-STALE-TEST-ALIGNMENT
+CLOSED / VERIFIED
 
 MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-BLOCKED
+VERIFIED GREEN ON CURRENT LOCAL WORKTREE
+546 passed / 7 skipped
 ```
 
-Navigation ya consume directamente el contrato genérico de Manager y usa providers separados para Source/Projection.
+## Razón por la que Users todavía no está CLOSED
 
-La suite Web global no está GREEN: queda bloqueada por una desalineación preexistente en `web/compositions/users-manager`, todavía no adjudicada a una solución.
+Durante el cutover local se introdujo compatibilidad permanente para schema v1:
+
+```text
+schema_v1.py
+decode_users_profiles_schema_v1(...)
+Source schema-v1 read branch
+Projection schema-v1 read branch
+```
+
+Esa compatibilidad viola la regla vigente del incremento:
+
+```text
+LEGACY                          REMOVE
+ADAPTERS / SHIMS / ALIASES     FORBIDDEN
+DOBLE CONTRATO                  FORBIDDEN
+OLD SCHEMAS IN RUNTIME CODE     REMOVE
+```
+
+Por tanto la suite GREEN no convierte el incremento en aceptable.
+
+## Regla de ejecución refinada
+
+Primero se completa la migración limpia y se elimina todo contrato/schema/adaptador anterior.
+
+Después se ejecuta qualification scoped y global.
+
+Los tests no justifican conservar comportamiento legacy.
+
+## Siguiente foco único
+
+```text
+USERS-CLEAN-CUTOVER-COMPLETION
+PLANNED / NEXT
+```
+
+Objetivo:
+
+- eliminar toda lectura/decodificación schema v1 introducida para compatibilidad;
+- eliminar tests dedicados exclusivamente a conservar schema v1;
+- comprobar que no queda ruta legacy, adapter, shim, alias o doble contrato;
+- sólo después ejecutar qualification completa;
+- no abrir Tools/KPI hasta cerrar Users.
 
 Atajos:
 
-- Alarmas → `04_ALARM_ENGINE/00_INDEX.md`
 - Manager → `10_MANAGER/00_INDEX.md`
-- ADA Generic → `11_ADA_GENERIC/00_INDEX.md`
-- Source/Blob → `12_SOURCE_STORAGE/00_INDEX.md`
-- ADA Web → `13_ADA_WEB/00_INDEX.md`
-- Command Center → `14_ADA_COMMAND_CENTER/00_INDEX.md`
-- Web Platform → `15_WEB_PLATFORM/00_INDEX.md`
-- KPI Recovery → `16_KPI_BACKEND_RECOVERY/00_INDEX.md`
-- Distribution/Tooling → `17_DISTRIBUTION_AND_TOOLING/00_INDEX.md`
-- University → `18_UNIVERSITY/00_INDEX.md`
+- Validation → `07_VALIDATION_BASELINE.md`
+- Roadmap → `08_ROADMAP.md`
+- Open items → `09_OPEN_QUESTIONS.md`

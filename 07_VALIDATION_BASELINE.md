@@ -4,145 +4,167 @@ Estado: **CURRENT**
 
 ## Regla
 
-Qualification y tests son evidencia de propiedades.
+Qualification y tests son evidencia de propiedades del contrato CURRENT.
 
-No reinterpretar un FAIL histórico como fallo vigente sin revisar su checkpoint y adjudicación.
+No son autoridad para conservar contratos, schemas o adapters SUPERSEDED.
 
-No declarar GREEN global cuando sólo existe qualification scoped.
+No declarar un cutover CLOSED sólo porque la suite está GREEN.
 
-## Checkpoint actual de este cierre
+## Autoridad de implementación
+
+Checkpoint publicado inspeccionado al iniciar este cierre:
 
 ```text
-moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
-parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
 ```
 
-## Manager generic Source/Projection
+Existe un working tree local posterior no publicado.
+
+## Hitos
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-Sus contratos permanecen congelados.
-
-## Navigation generic configuration cutover
-
-```text
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+IN PROGRESS
+
+PROJECTION-CORE-STALE-TEST-ALIGNMENT
+CLOSED / VERIFIED
 ```
 
-Propiedades verificadas:
+## Evidencia de Users observada
 
-- Navigation construye un `ManagerModule` con la familia genérica de servicios;
-- Source reader/publication/history comparten el workflow Navigation registrado;
-- Source local compone `LocalSourceStore`;
-- Source Azure compone `BlobSourceStore`;
-- Projection local compone `LocalNavigationProjectionStore`;
-- Projection Azure compone `CosmosNavigationProjectionStore`;
-- no existe `expected_source_revision`;
-- no existe `SOURCE_REVISION_STORE_ID`;
-- no existe reconstrucción revision→`ProjectionTarget`;
-- adapters/configuration stores legacy fueron eliminados;
-- no se introdujeron shims/aliases de compatibilidad.
-
-## Qualification observada
-
-Ejecutada por el usuario en el workspace real:
+Ejecutada por el usuario sobre el working tree local:
 
 ```text
-Python 3.14.2
-
 ruff scoped
 All checks passed!
 
 pytest scoped
-102 passed in 0.32s
-
-forbidden legacy scan
-0 results
+113 passed
 
 git diff --check
 PASS
-
-git diff --cached --check
-PASS
 ```
 
-`uv lock` resolvió 78 paquetes y reconoció los nuevos paquetes de Navigation.
-
-## Full Web suite
-
-Comando:
+Después de ajustar un test stale de Projection core:
 
 ```text
-cd web
-uv run pytest
+full Web pytest
+546 passed
+7 skipped
+0 failed
 ```
 
-Resultado:
+El ajuste fue sólo de expectativa textual del test:
 
 ```text
-BLOCKED DURING COLLECTION
-4 collection errors
+old expectation:
+Projection result source release does not match target
+
+CURRENT production:
+Projection result target does not match requested target
 ```
 
-Los cuatro errores visibles se originan al importar `web/compositions/users-manager`, inicialmente por:
+La producción compara el `ProjectionTarget` completo; no se cambió producción para satisfacer el test antiguo.
+
+## Scan legacy observado
+
+Se ejecutó un scan exacto sobre nombres conocidos del contrato revision-based y dio 0 matches.
+
+Ese scan **no incluía inicialmente la compatibilidad `schema_v1`**, por lo que no era suficiente para declarar clean cutover.
+
+## Hallazgo que invalida el cierre de Users
+
+VERIFIED en el working tree:
 
 ```text
-ExactSourceHistoryReadResult
+schema_v1.py
+decode_users_profiles_schema_v1(...)
+Source schema-v1 read branch
+Projection schema-v1 read branch
 ```
 
-que no existe en el Manager CURRENT.
-
-No hubo evidencia de fallo funcional de Navigation en esa ejecución porque la suite global no llegó a ejecutarse.
-
-## Adjudicación
-
-VERIFIED:
-
-- `users-manager` no fue modificado por el commit de Navigation;
-- la desalineación existía en el parent del commit actual;
-- `users-manager` conserva imports/contratos `Exact*`;
-- Manager CURRENT expone `SourceReadResult`, `SourceHistoryReadResult`, `SourcePublicationResult` y el Projection contract genérico.
-
-UNVERIFIED:
-
-- la solución exacta para Users;
-- si los archivos `exact_*` deben ser eliminados, renombrados o reemplazados por una composición distinta;
-- qualification global después de resolver Users.
-
-## Regla para el siguiente chat
-
-No implementar por inferencia desde el error.
-
-Primero:
+Adjudicación:
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
+semantic compatibility adapter
+SUPERSEDED / REMOVE
 ```
 
-Debe producir:
+Que sea read-only o histórico no altera la adjudicación.
+
+## Política de tests refinada
+
+Durante una migración raíz:
 
 ```text
-implementation inspected in atlanticus:main
-canonical intent inspected in atlanticus-cannonical:main
-exact mismatch enumerated
-current contract identified
-legacy/current ownership adjudicated
-implementation decision only after evidence
+DO
+- fijar contrato final;
+- eliminar legacy;
+- eliminar/reemplazar tests del contrato eliminado;
+- luego ejecutar tests;
+- corregir sólo desalineaciones del contrato final.
+
+DO NOT
+- conservar adapters para salvar tests;
+- agregar fallback schema viejo para salvar tests;
+- adaptar producción al contrato retirado;
+- considerar GREEN como criterio suficiente de arquitectura.
 ```
 
-## UNVERIFIED global
+Si al eliminar legacy la suite rompe, eso es evidencia a adjudicar **después** del cutover.
 
-- full Web GREEN;
+## Qualification requerida para cerrar Users
+
+Sólo después de eliminar toda compatibilidad schema v1:
+
+```text
+ruff scoped
+pytest scoped
+exact forbidden scan over all web
+full Web pytest
+git diff --check
+```
+
+Criterio de aceptación:
+
+```text
+one valid route
+zero legacy runtime schemas
+zero adapters/shims/aliases
+zero revision -> ProjectionTarget reconstruction
+zero expected_source_revision
+tests validate only CURRENT behavior
+```
+
+## Estado global
+
+La suite Web local está GREEN sobre el working tree actual:
+
+```text
+546 passed
+7 skipped
+```
+
+Pero el hito Users permanece `IN PROGRESS` porque el working tree todavía viola una decisión arquitectónica congelada.
+
+## UNVERIFIED
+
+- full Web GREEN después de remover schema v1;
 - full ADA suite;
 - Docker E2E;
-- CI remoto adicional;
+- CI remoto;
 - Python 3.14.7/Trixie global;
-- consumers Tools/KPI Configuration/KPI Definition.
+- Tools/KPI consumers.
 
 ## Git
 
-Git continúa READ ONLY para el asistente salvo autorización explícita.
+Git continúa SOLO LECTURA para el asistente.

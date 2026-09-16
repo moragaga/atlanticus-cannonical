@@ -4,24 +4,18 @@ Estado: **AUDIT LEDGER**
 
 ## Autoridad
 
-- `moragaga/atlanticus:main` = realidad implementada.
+- `moragaga/atlanticus:main` = realidad implementada publicada.
 - `moragaga/atlanticus-cannonical:main` = autoridad documental vigente.
 - `moragaga/atlanticus-decisions` = HISTORICAL.
+- Git permanece SOLO LECTURA para el asistente.
 
-Git permanece READ ONLY salvo autorización explícita.
-
-## Checkpoint actual
-
-```text
-moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
-parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
-```
-
-Canonical inspeccionado antes de este reemplazo:
+## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus-cannonical@dc7cbe626148c1b82cb2219c52cd99efafddc9d4
+moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
 ```
+
+Existe un working tree local posterior con cambios no publicados.
 
 ## Manager core
 
@@ -57,116 +51,134 @@ ProjectionTarget
 ProjectionExecutionResult
 ```
 
-Workspace:
-
-```text
-ManagerWorkspace schema 2
-BASE = SourceSnapshot
-```
-
-## Navigation change implemented
+## Navigation
 
 ```text
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Commit actual:
+Sin doble contrato ni adapters de transición.
+
+## Users Manager
+
+Durante este cierre se verificó y corrigió la composición `web/compositions/users-manager`.
+
+Resultado conceptual:
 
 ```text
-d34cda3838a67907728b382e238f0178f9f1a64e
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Diff reportado para el cierre:
+No deben reaparecer:
 
 ```text
-84 files changed
-2702 insertions
-4428 deletions
+ExactSource*
+ExactProjection*
+expected_source_revision
 ```
 
-El cambio:
+## Users Configuration working tree
 
-- elimina configuración/adapters legacy de Navigation;
-- crea `projection-local`;
-- crea `projection-cosmos`;
-- crea `navigation-manager`;
-- actualiza `navigation-configuration`;
-- actualiza workspace/lock.
+Se ejecutó un cutover amplio en el working tree local:
 
-## Qualification observada
+- remoción de services/contracts/bundle/projection revision-based;
+- remoción de adapters de configuración antiguos;
+- remoción de modelos `UsersConfigurationCatalog` / `UserProfileConfiguration`;
+- alineación a `UsersProfilesConfiguration`;
+- alineación de runtime projection al `ProjectionRecord` genérico;
+- remoción de revision→target.
+
+Qualification observada:
 
 ```text
-Python 3.14.2
 ruff scoped: PASS
-pytest scoped: 102 passed
-forbidden legacy scan: 0 results
+pytest scoped: 113 passed
 git diff --check: PASS
-git diff --cached --check: PASS
+full Web pytest: 546 passed, 7 skipped
 ```
 
-## Full suite finding
+## Error de implementación detectado antes del cierre
 
-`uv run pytest` global quedó bloqueado durante collection.
-
-Cuatro errores visibles nacieron al importar `web/compositions/users-manager`, inicialmente por `ExactSourceHistoryReadResult`.
-
-Inspección de `atlanticus:main` confirma que `users-manager` conserva:
+El cutover introdujo:
 
 ```text
-exact_history.py
-exact_source.py
-exact_projection.py
-workspace.py
+schema_v1.py
+decode_users_profiles_schema_v1(...)
+Source schema-v1 fallback
+Projection schema-v1 fallback
 ```
 
-y referencias `Exact*` incompatibles con el Manager CURRENT.
-
-## Causalidad
-
-VERIFIED:
-
-- el commit Navigation tiene parent `59fcd3e...`;
-- `users-manager` no forma parte del cambio Navigation;
-- la desalineación Users es preexistente;
-- Navigation no causó el bloqueo.
-
-## Canonical conflict de este cierre
-
-Antes de este reemplazo, canonical todavía marcaba:
+Adjudicación:
 
 ```text
-Navigation PLANNED / NEXT
-checkpoint 59fcd3e...
+SUPERSEDED / REMOVE
 ```
 
-Eso quedó desactualizado respecto de `atlanticus:main@d34cda3...`.
+Razón:
 
-Este reemplazo debe adjudicar el conflicto a favor de la implementación actual y marcar Navigation CLOSED/CURRENT.
+su única responsabilidad es comprender el schema anterior.
+
+Eso es un adapter de compatibilidad semántico aunque no use la palabra Adapter.
+
+## Decisión refinada
+
+El clean cutover no admite excepciones para compatibilidad histórica permanente.
+
+```text
+OLD SCHEMA READERS IN CURRENT RUNTIME
+FORBIDDEN
+```
+
+Si existe migración real de datos persistidos, debe ser una operación explícita separada.
+
+## Projection core stale test
+
+La full suite había quedado con un único test que esperaba un mensaje anterior.
+
+Producción CURRENT valida:
+
+```text
+projection.target == requested target
+```
+
+El test fue alineado con el contrato actual sin cambiar producción.
+
+Resultado posterior:
+
+```text
+546 passed
+7 skipped
+```
+
+## Conflictos documentales
+
+El canonical anterior todavía decía:
+
+```text
+Users Manager alignment PLANNED / NEXT
+global qualification BLOCKED during collection
+```
+
+Eso está desactualizado respecto de la evidencia de este cierre.
+
+A la vez, el working tree local de Users no puede declararse CURRENT porque:
+
+- no está publicado;
+- todavía contiene compatibilidad schema v1 prohibida.
 
 ## Historical decisions
 
-`atlanticus-decisions` permanece HISTORICAL.
+`atlanticus-decisions` no fue re-auditado exhaustivamente durante este cierre.
 
-No se realizó en este cierre una auditoría exhaustiva nueva del repositorio histórico.
-
-Por tanto:
-
-- no se identifica un nuevo conflicto histórico adicional como VERIFIED;
-- cualquier conflicto no documentado previamente permanece UNVERIFIED;
-- ninguna decisión histórica puede reintroducir contratos `Exact*` en Manager por encima de `atlanticus:main` + canonical CURRENT.
+No se le concede autoridad para reintroducir schemas/adapters legacy.
 
 ## Próxima frontera
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
+USERS-CLEAN-CUTOVER-COMPLETION
 PLANNED / NEXT
 ```
 
-Objetivo:
-
-- validar, no implementar;
-- usar obligatoriamente `atlanticus:main`;
-- usar obligatoriamente `atlanticus-cannonical:main`;
-- no reabrir Navigation;
-- no mezclar Tools/KPI.
+No mezclar Tools/KPI.

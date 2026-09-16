@@ -2,7 +2,7 @@
 
 Estado: **CANONICAL OPEN ITEMS**
 
-Los puntos aquí no reabren contratos ya CLOSED.
+Los puntos aquí no reabren contratos CLOSED.
 
 ## CLOSED — Manager generic core
 
@@ -13,17 +13,13 @@ CLOSED / VERIFIED / CURRENT
 
 No están OPEN:
 
-- dual routing exact/legacy;
+- doble routing exact/legacy;
 - `workflow_service` como lifecycle Manager;
-- `ExactSourceReaderWorkflow`;
-- `ExactSourcePublicationWorkflow`;
-- `ExactSourceHistoryWorkflow`;
+- `ExactSource*` como frontera Manager;
 - `ExactProjectionWorkflow` como frontera Manager;
 - `expected_source_revision`;
 - reconstruction revision→`ProjectionTarget`;
-- `resolve_exact_source_lifecycle`;
-- archivos `exact_*` dentro de Manager;
-- schema workspace anterior al cutover.
+- shims/adapters de compatibilidad Manager.
 
 ## CLOSED — Navigation
 
@@ -32,44 +28,60 @@ NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-No están OPEN para Navigation:
+No reabrir Navigation para resolver Users.
 
-- ubicación de Source local/Azure;
-- ubicación de Projection local/Cosmos;
-- adapter legacy;
-- coexistencia de contratos;
-- source revision browser ejecutable;
-- reconstruction revision→target;
-- `expected_source_revision`.
-
-Navigation no debe reabrirse para resolver Users.
-
-## OPEN — Users Manager alignment
+## CLOSED — Users Manager consumer
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+La composition de Users consume el contrato genérico Manager.
+
+## OPEN — Users clean cutover completion
+
+```text
+USERS-CLEAN-CUTOVER-COMPLETION
 PLANNED / NEXT
 ```
 
-VERIFIED mismatch:
+VERIFIED problema:
 
-- `users-manager` conserva `exact_history.py`;
-- conserva `exact_source.py`;
-- conserva `exact_projection.py`;
-- `workspace.py` importa/usa `ExactSourceReadResult`;
-- esos contratos `Exact*` ya no existen en Manager CURRENT;
-- la full Web suite queda bloqueada durante collection.
+```text
+schema_v1.py
+decode_users_profiles_schema_v1(...)
+schema-v1 read compatibility in Source
+schema-v1 read compatibility in Projection
+```
 
-OPEN:
+Adjudicación ya decidida:
 
-1. verificar todos los imports/exports afectados;
-2. revisar composición y tests de Users;
-3. contrastar contra `atlanticus-cannonical:main`;
-4. determinar si la intención canónica de Users ya está documentada;
-5. definir el contrato final sólo con evidencia;
-6. decidir después el alcance de implementación.
+```text
+REMOVE
+```
 
-No asumir que la solución es simplemente borrar `exact_*`.
+No está OPEN decidir si conservarlo.
+
+Está OPEN únicamente ejecutar su eliminación y verificar consecuencias del contrato final.
+
+### Preguntas operativas permitidas
+
+1. ¿En qué archivos exactos queda todavía interpretación de schema viejo?
+2. ¿Qué tests existen únicamente para esa compatibilidad?
+3. ¿Qué otros símbolos/fallbacks equivalentes no fueron incluidos en el scan anterior?
+4. ¿La suite CURRENT queda verde después de eliminar todo legacy?
+5. Si falla, ¿el fallo pertenece al contrato final o a una expectativa SUPERSEDED?
+
+### No son preguntas abiertas
+
+- si schema v1 debe conservarse;
+- si una lectura read-only merece excepción;
+- si historia durable justifica fallback permanente;
+- si hay que agregar adapter/shim;
+- si los tests obligan a conservar comportamiento viejo.
+
+Todo eso está decidido: **NO**.
 
 ## OPEN — Tools consumer
 
@@ -94,34 +106,31 @@ KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
-## BLOCKED — qualification global
+## Qualification
+
+La full Web suite local llegó a:
 
 ```text
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-BLOCKED
+546 passed
+7 skipped
 ```
 
-Motivo inmediato:
-
-- Navigation scoped está GREEN;
-- full Web se detiene en collection por `users-manager`;
-- causalidad de Navigation descartada;
-- solución Users todavía no adjudicada.
+pero debe repetirse después del clean cutover final.
 
 ## UNVERIFIED
 
-- full Web GREEN en `d34cda3...`;
+- absence total de old schema readers después del próximo incremento;
+- full Web GREEN post-cleanup;
 - full ADA suite;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- impacto de Tools/KPI hasta inspección;
-- auditoría exhaustiva de `atlanticus-decisions`.
+- impacto de Tools/KPI.
 
 ## Siguiente foco
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
+USERS-CLEAN-CUTOVER-COMPLETION
 ```
 
 Fuentes obligatorias:
@@ -130,3 +139,5 @@ Fuentes obligatorias:
 moragaga/atlanticus:main
 moragaga/atlanticus-cannonical:main
 ```
+
+Git sólo lectura para el asistente.

@@ -2,35 +2,48 @@
 
 Estado: **CURRENT EXECUTION CHECKPOINT**
 
-Corte de implementación verificado para este cierre:
+## Autoridad
+
+Implementación publicada al inicio de este cierre:
 
 ```text
-moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
-parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
 ```
 
-Este documento actualiza únicamente el estado cambiado o revalidado durante el cierre de Navigation. Los dominios no inspeccionados conservan su estado canónico anterior y no se consideran revalidados por este checkpoint.
+El usuario mantiene un working tree local posterior con cambios no publicados.
 
-## Resumen del hito
+Por regla de autoridad:
+
+- `atlanticus:main` continúa siendo la realidad implementada publicada;
+- el working tree local es evidencia del incremento en progreso;
+- canonical no debe declarar como CURRENT un cambio local todavía no publicado.
+
+## Estado resumido
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER          CLOSED / VERIFIED / CURRENT
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER          CLOSED / VERIFIED / CURRENT
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER           CLOSED / VERIFIED / CURRENT
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER             CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER       SUPERSEDED BY CLOSED NAVIGATION CUTOVER NAME
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL        IN PROGRESS
+USERS-CLEAN-CUTOVER-COMPLETION                     PLANNED / NEXT
 
-USERS-MANAGER-ALIGNMENT-VALIDATION                 PLANNED / NEXT
+PROJECTION-CORE-STALE-TEST-ALIGNMENT               CLOSED / VERIFIED
 
 TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER       PLANNED
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER   PLANNED
-
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER        PLANNED
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER    PLANNED
 ```
 
-## Manager CURRENT
+## VERIFIED durante este hito
 
-El contrato genérico de Manager permanece congelado:
+### Manager / Users Manager
+
+`users-manager` fue alineado al contrato genérico de Manager.
+
+La ruta `Exact*` anterior dejó de ser la frontera de composición.
+
+El contrato vigente permanece:
 
 ```text
 ManagerModule
@@ -42,203 +55,158 @@ ManagerModule
 └── source_history_service | None
 ```
 
-No reintroducir:
+### Users Configuration local cutover
 
-```text
-workflow_service
-exact_source_reader_service
-exact_source_history_service
-exact_source_workflow_service
-exact_projection_service
-```
-
-## Navigation CURRENT
-
-Navigation quedó alineado directamente al contrato genérico.
-
-Composition CURRENT:
-
-```text
-web/compositions/navigation-manager
-```
-
-Source:
-
-```text
-Local
-LocalSourceStore
-    -> NavigationSourceService
-    -> generic Manager Source workflows
-
-Azure
-BlobSourceStore
-    -> NavigationSourceService
-    -> generic Manager Source workflows
-```
-
-Projection:
-
-```text
-Local
-LocalNavigationProjectionStore
-
-Azure
-CosmosNavigationProjectionStore
-```
-
-Manager services registrados:
-
-```text
-navigation.configuration.source
-navigation.configuration.projection
-navigation.configuration.validation
-```
-
-Un solo Source workflow atiende reader/publication/history.
-
-No existe una arquitectura especial de Manager para Navigation.
-
-## Navigation legacy removido
-
-Removida la arquitectura paralela de `web/capabilities/navigation/configuration` basada en:
+En el working tree local se eliminaron o reemplazaron piezas de la arquitectura revision-based, incluyendo:
 
 ```text
 bundle.py
 contracts.py
-projection.py
-requirements.py
 services.py
-adapters/
-```
-
-También fueron removidos sus mirrors y tests legacy asociados.
-
-No deben reintroducirse:
-
-```text
+projection.py
+runtime_projection.py
+validation.py
+configuration adapters legacy
+old web callbacks/layout
 expected_source_revision
-base_source_revision
-SOURCE_REVISION_STORE_ID
-NavigationConfigurationServices
-NavigationAdministrationService
-NavigationProjectionWorkflow
-compose_navigation_configuration_services
-NavigationConfigurationBundle
-NavigationConfigurationSourceDocument
-NavigationProjectionRepository
-NavigationConfigurationPublisher
-NavigationConfigurationSource
+base_source_revision executable contract
+projection_source_revision
+revision -> ProjectionTarget reconstruction
 ```
 
-`NavigationConfigurationSourceError` NO es legacy; permanece como error vigente de la frontera Source de Navigation.
-
-## Qualification de Navigation
-
-Ejecutado por el usuario sobre Python `3.14.2` después del cutover:
+También se removieron los modelos paralelos de authoring:
 
 ```text
-ruff scoped
-PASS
-
-pytest scoped
-102 passed
-0 failed
-
-forbidden legacy scan
-0 results
-
-git diff --check
-PASS
-
-git diff --cached --check
-PASS
+UsersConfigurationCatalog
+UserProfileConfiguration
 ```
 
-`uv lock` resolvió el workspace actualizado e incorporó:
+### Qualification observada
+
+Qualification scoped de Users:
 
 ```text
-atlanticus-web-composition-navigation-manager 0.1.0
-atlanticus-web-navigation-configuration 0.1.9
-atlanticus-web-navigation-projection-cosmos 0.1.0
-atlanticus-web-navigation-projection-local 0.1.0
+ruff: PASS
+pytest: 113 passed
+git diff --check: PASS
 ```
 
-## Global suite
-
-La ejecución global:
+Qualification global Web después de alinear un test stale de Projection core:
 
 ```text
-cd web
-uv run pytest
+pytest: 546 passed, 7 skipped
 ```
 
-no llegó a ejecutar la suite por errores de collection en `web/compositions/users-manager`.
+El test stale esperaba un mensaje anterior referido sólo a release; producción valida correctamente el `ProjectionTarget` completo.
 
-Primer error observado:
+## VERIFIED problema pendiente
+
+El mismo working tree introdujo compatibilidad permanente con un schema viejo:
 
 ```text
-ImportError:
-cannot import name 'ExactSourceHistoryReadResult'
-from 'atlanticus.web.manager'
+web/capabilities/users/configuration/.../schema_v1.py
+decode_users_profiles_schema_v1(...)
 ```
 
-El mismo origen bloqueó cuatro módulos de tests de `users-manager`.
+y branches de lectura schema v1 en Source/Projection.
 
-## Adjudicación del bloqueo Users
+Eso constituye compatibilidad legacy aunque:
 
-VERIFIED:
-
-- el problema no fue introducido por el commit de Navigation;
-- el commit `d34cda3...` sólo cambia el frente de Navigation respecto de su parent;
-- `users-manager` conserva archivos `exact_history.py`, `exact_source.py`, `exact_projection.py` y `workspace.py`;
-- esos archivos consumen nombres `Exact*` que el Manager CURRENT ya no expone.
-
-Todavía NO está decidido:
-
-- si todos esos archivos deben eliminarse;
-- cuál es el corte exacto de implementación;
-- si existe documentación canónica específica de Users que refine el contrato;
-- qué tests deben reemplazarse versus conservarse.
+- no se llame `Adapter`;
+- sea read-only;
+- ayude a leer historia durable;
+- mantenga los tests verdes.
 
 Por tanto:
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
-PLANNED / NEXT
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+IN PROGRESS
 ```
 
-No convertirlo todavía en un cutover implementativo.
+No está CLOSED.
 
-## OPEN relevante
+## DECIDED / FROZEN
 
-1. validar la desalineación de `users-manager` contra `atlanticus:main`;
-2. contrastarla con `atlanticus-cannonical:main`;
-3. identificar contrato final y archivos exactos;
-4. sólo después decidir si existe un incremento de implementación;
-5. Tools, KPI Configuration y KPI Definition permanecen fuera del próximo chat.
+```text
+LEGACY
+REMOVE
+
+ADAPTERS / SHIMS / ALIASES
+FORBIDDEN
+
+DOBLE CONTRATO
+FORBIDDEN
+
+OLD SCHEMAS IN RUNTIME CODE
+REMOVE
+
+expected_source_revision
+REMOVE
+
+revision -> ProjectionTarget reconstruction
+REMOVE
+
+CONTRATO FINAL
+Generic Atlanticus contract only
+```
+
+No se permite una excepción implícita para “durable history compatibility”.
+
+Si existe información real persistida en formato viejo, su migración debe resolverse explícitamente como operación de migración, no como código de compatibilidad permanente dentro del contrato CURRENT.
+
+## Refinamiento del orden de trabajo
+
+La secuencia vigente es:
+
+```text
+1. completar migración/cutover
+2. borrar legacy completamente
+3. borrar tests que sólo preservan legacy
+4. ejecutar qualification scoped
+5. ejecutar qualification global
+6. adjudicar desalineaciones reales restantes
+```
+
+No se modifica producción para hacer pasar tests que defienden contratos removidos.
+
+## SUPERSEDED
+
+Queda reemplazada la decisión introducida durante este chat de conservar schema-v1 read compatibility dentro del runtime.
+
+```text
+schema-v1 compatibility in CURRENT runtime
+SUPERSEDED / REMOVE
+```
+
+También queda reemplazada cualquier conclusión previa que marcara Users como CLOSED sólo porque la suite estaba GREEN.
+
+## INFERRED
+
+La suite GREEN demuestra consistencia del working tree con los tests existentes, pero **no demuestra cumplimiento arquitectónico** cuando esos tests aceptan o prueban compatibilidad expresamente prohibida.
+
+## ASSUMED
+
+Ninguno de los formatos schema v1 debe conservarse en runtime por defecto.
+
+Si existe una necesidad operacional real de migrar datos históricos, debe comprobarse desde datos/entorno autoritativo antes de diseñar una migración puntual.
 
 ## UNVERIFIED
 
-- full Web suite GREEN en `d34cda3...`;
+- eliminación completa de `schema_v1.py`;
+- eliminación de todos los branches schema v1;
+- ausencia total de old schema readers en el resto de `web`;
+- qualification global después de esa eliminación;
 - full ADA suite;
 - Docker E2E;
-- CI remoto adicional;
-- qualification global Python `3.14.7` / Trixie;
-- consumers Tools/KPI Configuration/KPI Definition;
-- auditoría exhaustiva de `atlanticus-decisions`.
+- CI remoto;
+- Python 3.14.7/Trixie global;
+- estado de Tools/KPI respecto del contrato Manager genérico.
 
 ## Siguiente frontera
 
 ```text
-NEXT
-USERS-MANAGER-ALIGNMENT-VALIDATION
+USERS-CLEAN-CUTOVER-COMPLETION
 ```
 
-Usar obligatoriamente:
-
-```text
-moragaga/atlanticus:main
-moragaga/atlanticus-cannonical:main
-```
-
-No reabrir Navigation.
+No abrir Tools/KPI hasta cerrarla.
