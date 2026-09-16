@@ -89,61 +89,70 @@ Estado: **CURRENT**
 | historical load crea local dirty work | FROZEN |
 | publicar después crea nueva Source release | FROZEN |
 
+## Navigation decisions
+
+| Decisión | Estado |
+|---|---|
+| Navigation consume Manager genérico directamente | FROZEN / IMPLEMENTED |
+| Navigation no tiene arquitectura Manager especial | FROZEN |
+| Source local usa `LocalSourceStore` | IMPLEMENTED |
+| Source Azure usa `BlobSourceStore` | IMPLEMENTED |
+| Projection local usa `LocalNavigationProjectionStore` | IMPLEMENTED |
+| Projection Azure usa `CosmosNavigationProjectionStore` | IMPLEMENTED |
+| legacy adapters/configuration stores paralelos | SUPERSEDED / REMOVED |
+| `expected_source_revision` en Navigation | SUPERSEDED / REMOVED |
+| browser source revision ejecutable | SUPERSEDED / REMOVED |
+| compatibility shims/aliases | FORBIDDEN |
+
 ## Decisions superseded/refined
 
-1. `ManagerModule` podía declarar un lifecycle legacy o capabilities exactas separadas.
-   → **SUPERSEDED**: existe un único contrato genérico.
+1. Navigation estaba `PLANNED / NEXT`.
+   → **SUPERSEDED**: `NAVIGATION-GENERIC-CONFIGURATION-CUTOVER` está `CLOSED / VERIFIED / CURRENT`.
 
-2. `workflow_service=None` distinguía un módulo exacto.
-   → **SUPERSEDED**: `workflow_service` ya no forma parte del contrato vigente.
+2. La migración de Navigation podía conservar adapters legacy durante transición.
+   → **SUPERSEDED / FORBIDDEN**: el cierre fue limpio, sin convivencia.
 
-3. `ExactSource*Workflow` era la frontera final.
-   → **SUPERSEDED**: los contratos finales son `Source*Workflow` genéricos.
+3. La qualification global podía esperarse inmediatamente después de Navigation.
+   → **REFINED**: la suite global reveló una desalineación preexistente en `users-manager`; no se adjudica ni corrige dentro del incremento de Navigation.
 
-4. `ExactProjectionWorkflow` era la frontera final.
-   → **SUPERSEDED**: Manager consume directamente el contrato genérico de Projection.
+4. El siguiente paso podía asumirse como implementación de Users.
+   → **REFINED**: el siguiente paso es sólo `USERS-MANAGER-ALIGNMENT-VALIDATION`.
 
-5. podían coexistir exact y legacy durante transición.
-   → **SUPERSEDED / FORBIDDEN**: no hay transición ni doble contrato.
-
-6. revision textual podía participar en selección/ejecución de Projection.
-   → **SUPERSEDED / FORBIDDEN**: `ProjectionTarget` completo es el único target ejecutable.
-
-7. `expected_source_revision`.
-   → **SUPERSEDED / REMOVED**: publication usa `SourceSnapshot`.
-
-8. la migración de los cuatro consumidores podía abordarse como un único incremento.
-   → **REFINED**: un chat/incremento por consumidor para conservar trazabilidad.
+5. Un fallo global posterior a Navigation implica regresión de Navigation.
+   → **SUPERSEDED AS ASSUMPTION**: la causalidad debe verificarse por checkpoint y archivos cambiados.
 
 ## Qualification
 
 | Hallazgo | Estado |
 |---|---|
-| Current implementation checkpoint | VERIFIED / `59fcd3ecc8f3441e64fbe0fc892b4467fa56f181` |
-| Parent | VERIFIED / `1302fefdf046b1cef7beed594e832f9a7a181a06` |
-| Manager capability suite | VERIFIED / `54 passed` |
-| Full Web suite en current checkpoint | UNVERIFIED |
-| Full ADA suite en current checkpoint | UNVERIFIED |
-| Navigation consumer contra contrato nuevo | UNVERIFIED |
-| Tools consumer contra contrato nuevo | UNVERIFIED |
-| KPI Configuration consumer contra contrato nuevo | UNVERIFIED |
-| KPI Definition consumer contra contrato nuevo | UNVERIFIED |
+| Current implementation checkpoint | VERIFIED / `d34cda3838a67907728b382e238f0178f9f1a64e` |
+| Parent | VERIFIED / `59fcd3ecc8f3441e64fbe0fc892b4467fa56f181` |
+| Navigation scoped Ruff | VERIFIED / PASS |
+| Navigation + Manager scoped tests | VERIFIED / `102 passed` |
+| Navigation forbidden legacy scan | VERIFIED / `0 results` |
+| `git diff --check` | VERIFIED / PASS |
+| `git diff --cached --check` | VERIFIED / PASS |
+| Full Web suite | BLOCKED DURING COLLECTION |
+| Users Manager alignment | VERIFIED MISALIGNMENT / SOLUTION UNVERIFIED |
+| Tools consumer | UNVERIFIED |
+| KPI Configuration consumer | UNVERIFIED |
+| KPI Definition consumer | UNVERIFIED |
 | Docker E2E | UNVERIFIED |
-| Python 3.14.7 qualification current checkpoint | UNVERIFIED |
-
-Los conteos anteriores `238 passed` y `56 passed / 4 failed` permanecen como evidencia histórica de otro checkpoint, no como qualification de `59fcd3e...`.
+| Python 3.14.7 global qualification | UNVERIFIED |
 
 ## Status de hitos
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER       CLOSED / VERIFIED / CURRENT
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER          CLOSED / VERIFIED / CURRENT
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER          CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER     PLANNED / NEXT
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER          PLANNED
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER     PLANNED
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER PLANNED
+USERS-MANAGER-ALIGNMENT-VALIDATION                 PLANNED / NEXT
 
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION            BLOCKED
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER       PLANNED
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER   PLANNED
+
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
 ```
 
 ## Siguiente decisión de ejecución
@@ -151,7 +160,9 @@ MANAGER-CONSUMER-GLOBAL-QUALIFICATION            BLOCKED
 Único foco recomendado:
 
 ```text
-NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
+USERS-MANAGER-ALIGNMENT-VALIDATION
 ```
 
-No mezclar Tools, KPI Configuration ni KPI Definition.
+Usar obligatoriamente `atlanticus:main` y `atlanticus-cannonical:main`.
+
+No decidir implementación antes de validar la desalineación.

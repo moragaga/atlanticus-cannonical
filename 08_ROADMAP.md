@@ -10,76 +10,73 @@ Cerrar verticalmente capacidades integrables y verificables.
 
 Mantener un foco por incremento.
 
-Para la fase actual del Manager:
+## Checkpoint actual
 
 ```text
-UN CHAT = UN CONSUMER = UN INCREMENTO CERRABLE
+moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
 ```
 
-## Checkpoint actual de este cierre
-
-```text
-moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
-```
-
-## Hito cerrado
+## Hitos cerrados
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Resultado:
+Navigation ya no pertenece a la lista de consumers pendientes.
+
+## Resultado Navigation
 
 - una sola ruta Source/Projection;
-- legacy Manager removido;
+- legacy Navigation Configuration removido;
 - adapters/shims/aliases de transición prohibidos;
 - `expected_source_revision` removido;
 - reconstruction revision→`ProjectionTarget` removida;
-- workspace genérico basado en `SourceSnapshot`;
-- Manager tests: `54 passed`.
+- Local Source + Local Projection implementado;
+- Blob Source + Cosmos Projection compuesto para Azure;
+- Ruff scoped PASS;
+- tests scoped `102 passed`;
+- forbidden legacy scan `0 results`.
 
-## Secuencia de consumers
+## Siguiente foco
 
-Cada componente debe cerrarse en chat separado.
+La suite global reveló una desalineación preexistente en `users-manager`.
 
-Orden recomendado:
+No se abre todavía un cutover de Users.
+
+Primero:
 
 ```text
-1. NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
-2. TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
-3. KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
-4. KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
-5. otros consumers reales encontrados en atlanticus:main
-6. MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+USERS-MANAGER-ALIGNMENT-VALIDATION
+PLANNED / NEXT
 ```
 
-No se presupone que todos requieran los mismos cambios.
+Objetivo:
 
-## Criterio de cierre por consumer
+1. inspeccionar `web/compositions/users-manager` en `atlanticus:main`;
+2. contrastar con el contrato Manager CURRENT;
+3. revisar canonical vigente;
+4. enumerar archivos y contratos desalineados;
+5. adjudicar qué es CURRENT, SUPERSEDED o legacy;
+6. decidir sólo después si existe un incremento de implementación.
 
-Cada chat debe:
+## Consumers todavía no revalidados
 
-1. localizar su implementación real en `atlanticus:main`;
-2. verificar cómo construye `ManagerModule`;
-3. verificar sus servicios Source/Projection;
-4. reemplazar directamente cualquier contrato anterior;
-5. eliminar adapters/shims/aliases;
-6. actualizar tests del comportamiento final;
-7. ejecutar qualification scoped;
-8. cerrar antes de abrir otro consumer.
+```text
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
 
-## No mezclar
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
 
-Durante cada consumer cutover no mezclar:
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
+```
 
-- otro consumer de Manager;
-- Python migration;
-- runtime provenance no relacionado;
-- Root/bootstrap físico;
-- legacy deletion global de otros dominios;
-- Docker E2E general;
-- rediseños visuales no contractuales.
+No se presupone que requieran los mismos cambios.
 
 ## Qualification global
 
@@ -88,8 +85,24 @@ MANAGER-CONSUMER-GLOBAL-QUALIFICATION
 BLOCKED
 ```
 
-Se desbloquea sólo cuando los consumers identificados estén cerrados.
+Bloqueo vigente:
 
-## Otros frentes
+```text
+users-manager stale Exact* contract
+solution not yet adjudicated
+```
 
-Los demás frentes del roadmap anterior continúan según sus documentos especializados y no fueron revalidados por este cierre.
+Después de resolver ese bloqueo y los consumers que correspondan, repetir qualification global.
+
+## No mezclar en el siguiente chat
+
+- Navigation;
+- Tools;
+- KPI Configuration;
+- KPI Definition;
+- Python migration;
+- Docker E2E general;
+- ADA-specific work;
+- rediseño de Manager core.
+
+Único foco: Users Manager alignment validation.

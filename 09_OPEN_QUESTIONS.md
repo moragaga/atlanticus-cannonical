@@ -4,11 +4,14 @@ Estado: **CANONICAL OPEN ITEMS**
 
 Los puntos aquí no reabren contratos ya CLOSED.
 
-## Manager generic core
+## CLOSED — Manager generic core
 
-### CLOSED
+```text
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
 
-Ya no están OPEN:
+No están OPEN:
 
 - dual routing exact/legacy;
 - `workflow_service` como lifecycle Manager;
@@ -22,31 +25,51 @@ Ya no están OPEN:
 - archivos `exact_*` dentro de Manager;
 - schema workspace anterior al cutover.
 
-Estado:
+## CLOSED — Navigation
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## OPEN — Navigation consumer
+No están OPEN para Navigation:
 
-Siguiente foco recomendado:
+- ubicación de Source local/Azure;
+- ubicación de Projection local/Cosmos;
+- adapter legacy;
+- coexistencia de contratos;
+- source revision browser ejecutable;
+- reconstruction revision→target;
+- `expected_source_revision`.
+
+Navigation no debe reabrirse para resolver Users.
+
+## OPEN — Users Manager alignment
 
 ```text
-NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
+USERS-MANAGER-ALIGNMENT-VALIDATION
 PLANNED / NEXT
 ```
 
+VERIFIED mismatch:
+
+- `users-manager` conserva `exact_history.py`;
+- conserva `exact_source.py`;
+- conserva `exact_projection.py`;
+- `workspace.py` importa/usa `ExactSourceReadResult`;
+- esos contratos `Exact*` ya no existen en Manager CURRENT;
+- la full Web suite queda bloqueada durante collection.
+
 OPEN:
 
-1. localizar todos los archivos Navigation que consumen Manager;
-2. verificar su `ManagerModule`;
-3. verificar Source reader/publication/history real;
-4. verificar Projection service real;
-5. eliminar cualquier dependencia del contrato anterior;
-6. ejecutar tests scoped;
-7. cerrar Navigation antes de abrir Tools.
+1. verificar todos los imports/exports afectados;
+2. revisar composición y tests de Users;
+3. contrastar contra `atlanticus-cannonical:main`;
+4. determinar si la intención canónica de Users ya está documentada;
+5. definir el contrato final sólo con evidencia;
+6. decidir después el alcance de implementación.
+
+No asumir que la solución es simplemente borrar `exact_*`.
 
 ## OPEN — Tools consumer
 
@@ -55,7 +78,7 @@ TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
-No analizar ni implementar en el chat de Navigation.
+No analizar junto con Users.
 
 ## OPEN — KPI Configuration consumer
 
@@ -64,22 +87,12 @@ KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
-No analizar ni implementar junto con Tools o KPI Definition.
-
 ## OPEN — KPI Definition consumer
 
 ```text
 KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
-
-Debe cerrarse como componente independiente.
-
-## OPEN — otros consumers
-
-Después de los cuatro nombres conocidos, realizar una búsqueda final en `atlanticus:main` para detectar otros `ManagerModule` o consumers del contrato anterior.
-
-No inventar consumers por nombres históricos.
 
 ## BLOCKED — qualification global
 
@@ -88,30 +101,32 @@ MANAGER-CONSUMER-GLOBAL-QUALIFICATION
 BLOCKED
 ```
 
-Motivo:
+Motivo inmediato:
 
-- Manager core está GREEN scoped;
-- consumers todavía no fueron verificados contra el contrato nuevo;
-- full Web/ADA no fue ejecutado en `59fcd3e...`.
+- Navigation scoped está GREEN;
+- full Web se detiene en collection por `users-manager`;
+- causalidad de Navigation descartada;
+- solución Users todavía no adjudicada.
 
 ## UNVERIFIED
 
-- full Web suite en `59fcd3e...`;
-- full ADA suite en `59fcd3e...`;
+- full Web GREEN en `d34cda3...`;
+- full ADA suite;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- ausencia total de legacy fuera de Manager;
-- impacto real del cutover en cada consumer hasta inspeccionarlo.
-
-## Otros open items históricos
-
-Los open items de otros dominios permanecen en sus documentos especializados y no fueron revalidados en este cierre.
+- impacto de Tools/KPI hasta inspección;
+- auditoría exhaustiva de `atlanticus-decisions`.
 
 ## Siguiente foco
 
 ```text
-NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
+USERS-MANAGER-ALIGNMENT-VALIDATION
 ```
 
-No mezclarlo con Tools, KPI Configuration, KPI Definition ni otros frentes.
+Fuentes obligatorias:
+
+```text
+moragaga/atlanticus:main
+moragaga/atlanticus-cannonical:main
+```

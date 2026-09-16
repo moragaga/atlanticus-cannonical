@@ -13,55 +13,27 @@ Git permanece READ ONLY salvo autorización explícita.
 ## Checkpoint actual
 
 ```text
-moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
-parent: 1302fefdf046b1cef7beed594e832f9a7a181a06
+moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
+parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
 ```
-
-GitHub confirma ese commit y parent.
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@d4681dc3d14b0233c857ca3870795368456c7bad
+moragaga/atlanticus-cannonical@dc7cbe626148c1b82cb2219c52cd99efafddc9d4
 ```
 
-## Cambio implementado
+## Manager core
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-El commit reemplaza el diseño de coexistencia exact/legacy por un contrato único.
-
-## Archivos legacy removidos de Manager
-
-Productivo:
+Contrato:
 
 ```text
-web/capabilities/manager/src/atlanticus/web/manager/exact_projection.py
-web/capabilities/manager/src/atlanticus/web/manager/exact_source.py
-web/capabilities/manager/src/atlanticus/web/manager/exact_workspace.py
-web/capabilities/manager/src/atlanticus/web/manager/web/exact_workspace.py
-```
-
-Espejo comentado equivalente:
-
-```text
-web/capabilities/manager/commented/atlanticus/web/manager/exact_projection.py
-web/capabilities/manager/commented/atlanticus/web/manager/exact_source.py
-web/capabilities/manager/commented/atlanticus/web/manager/exact_workspace.py
-web/capabilities/manager/commented/atlanticus/web/manager/web/exact_workspace.py
-```
-
-También fueron retirados tests cuyo contrato era la arquitectura anterior o estructura visual no contractual.
-
-## Contrato inspeccionado en main
-
-`ManagerModule` CURRENT:
-
-```text
-source_key
+ManagerModule
 source_service
 source_reader_service
 projection_service
@@ -69,7 +41,7 @@ draft_validation_service
 source_history_service | None
 ```
 
-Source CURRENT:
+Source:
 
 ```text
 SourceReaderWorkflow
@@ -77,7 +49,7 @@ SourcePublicationWorkflow
 SourceHistoryWorkflow
 ```
 
-Projection CURRENT:
+Projection:
 
 ```text
 ProjectionStatus
@@ -85,84 +57,116 @@ ProjectionTarget
 ProjectionExecutionResult
 ```
 
-Workspace CURRENT:
+Workspace:
 
 ```text
 ManagerWorkspace schema 2
 BASE = SourceSnapshot
 ```
 
-## Qualification observada
-
-Reportada por el usuario después de aplicar el cutover:
+## Navigation change implemented
 
 ```text
-web/capabilities/manager
-54 passed
-0 failed
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Evidence scope
+Commit actual:
+
+```text
+d34cda3838a67907728b382e238f0178f9f1a64e
+```
+
+Diff reportado para el cierre:
+
+```text
+84 files changed
+2702 insertions
+4428 deletions
+```
+
+El cambio:
+
+- elimina configuración/adapters legacy de Navigation;
+- crea `projection-local`;
+- crea `projection-cosmos`;
+- crea `navigation-manager`;
+- actualiza `navigation-configuration`;
+- actualiza workspace/lock.
+
+## Qualification observada
+
+```text
+Python 3.14.2
+ruff scoped: PASS
+pytest scoped: 102 passed
+forbidden legacy scan: 0 results
+git diff --check: PASS
+git diff --cached --check: PASS
+```
+
+## Full suite finding
+
+`uv run pytest` global quedó bloqueado durante collection.
+
+Cuatro errores visibles nacieron al importar `web/compositions/users-manager`, inicialmente por `ExactSourceHistoryReadResult`.
+
+Inspección de `atlanticus:main` confirma que `users-manager` conserva:
+
+```text
+exact_history.py
+exact_source.py
+exact_projection.py
+workspace.py
+```
+
+y referencias `Exact*` incompatibles con el Manager CURRENT.
+
+## Causalidad
 
 VERIFIED:
 
-- commit `59fcd3e...` existe en `atlanticus:main`;
-- parent `1302fefd...`;
-- Manager contract genérico;
-- eliminación de la ruta exact/legacy dentro de Manager;
-- Manager scoped tests GREEN.
+- el commit Navigation tiene parent `59fcd3e...`;
+- `users-manager` no forma parte del cambio Navigation;
+- la desalineación Users es preexistente;
+- Navigation no causó el bloqueo.
 
-UNVERIFIED:
+## Canonical conflict de este cierre
 
-- full Web suite;
-- full ADA suite;
-- Navigation consumer;
-- Tools consumer;
-- KPI Configuration consumer;
-- KPI Definition consumer;
-- Docker E2E;
-- Python 3.14.7 global;
-- CI remoto adicional.
-
-## Canonical conflict encontrado
-
-El canonical anterior todavía describía:
-
-- `workflow_service`;
-- `exact_source_*`;
-- `exact_projection_service`;
-- `ExactSource*Workflow`;
-- `ExactProjectionWorkflow`;
-- coexistencia exact/legacy;
-- `ADA-LEGACY-PROJECTION-CONTRACT-ALIGNMENT` como un único frente conjunto.
-
-Eso contradice el contrato implementado en `59fcd3e...`.
-
-Este reemplazo adjudica el conflicto a favor de `atlanticus:main`.
-
-## Decisions histórico
-
-Se inspeccionó `ATLANTICUS_MANAGER_GLOBAL_RULES_2026-09-02.md`.
-
-Sus reglas de aplicación — Manager genérico, Home real, registry como fuente única, separación configuration/workflow — son compatibles con el cutover.
-
-El documento usa “revisión” como concepto de UX/workflow, pero no define un contrato Source/Projection que obligue a conservar revision strings como identidad ejecutable.
-
-No se realizó auditoría exhaustiva de todos los archivos históricos de `atlanticus-decisions`; cualquier otro conflicto permanece UNVERIFIED y no bloquea este cierre.
-
-## Próximo ledger frontier
+Antes de este reemplazo, canonical todavía marcaba:
 
 ```text
-NAVIGATION-MANAGER-GENERIC-CONSUMER-CUTOVER
+Navigation PLANNED / NEXT
+checkpoint 59fcd3e...
+```
+
+Eso quedó desactualizado respecto de `atlanticus:main@d34cda3...`.
+
+Este reemplazo debe adjudicar el conflicto a favor de la implementación actual y marcar Navigation CLOSED/CURRENT.
+
+## Historical decisions
+
+`atlanticus-decisions` permanece HISTORICAL.
+
+No se realizó en este cierre una auditoría exhaustiva nueva del repositorio histórico.
+
+Por tanto:
+
+- no se identifica un nuevo conflicto histórico adicional como VERIFIED;
+- cualquier conflicto no documentado previamente permanece UNVERIFIED;
+- ninguna decisión histórica puede reintroducir contratos `Exact*` en Manager por encima de `atlanticus:main` + canonical CURRENT.
+
+## Próxima frontera
+
+```text
+USERS-MANAGER-ALIGNMENT-VALIDATION
 PLANNED / NEXT
 ```
 
-Después, en chats separados:
+Objetivo:
 
-```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
-KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
-KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
-```
-
-No reabrir Manager core.
+- validar, no implementar;
+- usar obligatoriamente `atlanticus:main`;
+- usar obligatoriamente `atlanticus-cannonical:main`;
+- no reabrir Navigation;
+- no mezclar Tools/KPI.

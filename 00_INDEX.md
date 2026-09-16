@@ -14,7 +14,7 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `07_VALIDATION_BASELINE.md` | Evidencia de qualification. | CURRENT |
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items no bloqueantes. | CURRENT |
-| `10_MANAGER/` | Manager genérico, workflow, Source/Projection y fronteras administrativas. | CURRENT |
+| `10_MANAGER/` | Manager genérico, workflow, Source/Projection y consumers administrativos. | CURRENT |
 | `11_ADA_GENERIC/` | ADA Generic y orden de Tools. | CURRENT DIRECTION |
 | `12_SOURCE_STORAGE/` | Source/Projection exact-release y handoff genérico a Manager. | IN PROGRESS |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
@@ -29,18 +29,29 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 ## Checkpoint de implementación de este cierre
 
 ```text
-moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
-parent: 1302fefdf046b1cef7beed594e832f9a7a181a06
+moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
+parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
 ```
 
-## Cambio canónico principal
+## Cambios canónicos principales
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-MANAGER-ALIGNMENT-VALIDATION
+PLANNED / NEXT
+
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED
 ```
 
-Manager ya no mantiene rutas `exact` y `legacy` paralelas.
+Navigation ya consume directamente el contrato genérico de Manager y usa providers separados para Source/Projection.
+
+La suite Web global no está GREEN: queda bloqueada por una desalineación preexistente en `web/compositions/users-manager`, todavía no adjudicada a una solución.
 
 Atajos:
 

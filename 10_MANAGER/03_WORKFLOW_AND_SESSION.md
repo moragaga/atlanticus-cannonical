@@ -4,8 +4,6 @@ Estado: **CURRENT CONTRACT / GENERIC CUTOVER CLOSED**
 
 ## Flujo conceptual
 
-Manager separa configuración editable y workflow administrativo.
-
 ```text
 WORKSPACE
 → validate
@@ -56,31 +54,22 @@ SourceReaderWorkflow
 
 SourcePublicationWorkflow
     get_source_snapshot() -> SourceSnapshot
-    publish_draft(
-        payload,
-        expected_source_snapshot,
-    ) -> SourcePublicationResult
+    publish_draft(payload, expected_source_snapshot) -> SourcePublicationResult
 
 SourceHistoryWorkflow
     list_history(limit) -> HistoryPage
-    load_history_release(
-        release_ref: SourceReleaseRef,
-    ) -> SourceHistoryReadResult
+    load_history_release(release_ref: SourceReleaseRef) -> SourceHistoryReadResult
 ```
 
 Invariantes:
 
-- `SourceReadResult` tiene payload exactamente cuando Source existe;
-- payload se copia defensivamente;
-- publication conserva `PublishResult`;
-- expected Source se transporta como `SourceSnapshot`;
-- History conserva `HistoryPage` y `SourceReleaseRef`;
-- History read debe devolver la misma release solicitada;
-- Source identity no se reduce a strings de revisión.
+- Source identity no se reduce a revision strings;
+- publication conserva `SourceSnapshot`;
+- conflicto se determina por release identity;
+- History conserva `SourceReleaseRef`;
+- History read devuelve la release solicitada.
 
 ## Projection contract
-
-Manager consume el servicio genérico de Projection:
 
 ```text
 get_status(source_key) -> ProjectionStatus
@@ -88,13 +77,7 @@ select_current_target(source_key) -> ProjectionTarget | None
 project(target: ProjectionTarget) -> ProjectionExecutionResult
 ```
 
-El coordinator:
-
-- valida autorización;
-- valida `SourceKey`;
-- transporta `ProjectionTarget` completo;
-- no reconstruye target desde una revision;
-- no adapta resultados a un modelo Manager paralelo.
+Manager no reconstruye target desde revision.
 
 ## Workspace
 
@@ -109,71 +92,22 @@ source_snapshot
 payload
 ```
 
-`revision` y `base_payload_revision` son identidad local del payload.
+`revision` y `base_payload_revision` son identidad local del payload, no Source release identity.
 
-No son Source release identity.
+## Navigation adoption
 
-## Source verification
+Navigation ya implementa el contrato anterior sin una segunda familia de workflows.
 
-`ManagerSourceVerification` conserva:
+Un mismo workflow Navigation satisface las superficies Source reader/publication/history y se registra con una única service key Source.
 
-```text
-workspace_revision
-base: SourceSnapshot
-source: SourceSnapshot
-checked_at_utc
-```
+Projection se registra directamente como servicio genérico.
 
-`matches` compara:
+Estado:
 
 ```text
-base.current == source.current
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
-
-Un cambio aislado del concurrency token no equivale a una nueva Source release.
-
-## Publication concurrency
-
-Antes de publicar:
-
-1. coordinator valida que `expected_source_snapshot.source_key` sea el del módulo;
-2. relee Source current;
-3. si cambió `current` release → conflict;
-4. si la release es la misma, usa el snapshot current fresco;
-5. el workflow recibe ese snapshot con el token actual;
-6. Source conserva el CAS autoritativo final.
-
-Si publication falla y una reread detecta cambio de release, Manager expone conflicto.
-
-## Lifecycle
-
-Existe una sola función de lifecycle:
-
-```text
-resolve_manager_lifecycle
-```
-
-`resolve_exact_source_lifecycle` fue removido.
-
-## History
-
-History es opcional por módulo.
-
-Cuando existe:
-
-- lista publicaciones Source reales;
-- conserva `SourceReleaseRef`;
-- preview no cambia current;
-- cargar historical reemplaza payload local;
-- BASE current se conserva;
-- validation y verification previas quedan inválidas;
-- volver a publicar crea una release nueva.
-
-## Projection selection
-
-El target actual se obtiene server-side desde el projection service.
-
-El browser no construye identidad ejecutable a partir de strings.
 
 ## Contrato removido
 
@@ -193,17 +127,30 @@ source_revision como identidad ejecutable
 revision -> ProjectionTarget reconstruction
 ```
 
-## Consumer boundary
+## Consumer mismatch observado
 
-Manager core no contiene excepciones especiales para Navigation, Tools, KPI Configuration o KPI Definition.
+`web/compositions/users-manager` todavía consume nombres `Exact*`.
 
-Cada consumer debe implementar/registrar el contrato genérico directamente.
+Esto contradice el contrato CURRENT de Manager, pero su solución no está decidida.
+
+```text
+USERS-MANAGER-ALIGNMENT-VALIDATION
+PLANNED / NEXT
+```
+
+No reabrir Manager core para resolverlo.
 
 ## Qualification
 
 ```text
-59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
-web/capabilities/manager: 54 passed
-```
+d34cda3838a67907728b382e238f0178f9f1a64e
 
-Full consumer integration permanece UNVERIFIED.
+Navigation + Manager scoped:
+102 passed
+
+Ruff scoped:
+PASS
+
+Full Web:
+BLOCKED DURING COLLECTION BY users-manager
+```

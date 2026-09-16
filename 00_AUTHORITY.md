@@ -10,18 +10,18 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Último checkpoint de implementación verificado para este cierre:
-  `59fcd3ecc8f3441e64fbe0fc892b4467fa56f181`
+  `d34cda3838a67907728b382e238f0178f9f1a64e`
 - Parent inmediato verificado:
-  `1302fefdf046b1cef7beed594e832f9a7a181a06`
+  `59fcd3ecc8f3441e64fbe0fc892b4467fa56f181`
 - Alcance del checkpoint de este cierre:
-  cutover genérico de `web/capabilities/manager`
+  `NAVIGATION-GENERIC-CONFIGURATION-CUTOVER`
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint canonical inspeccionado antes de este reemplazo:
-  `d4681dc3d14b0233c857ca3870795368456c7bad`
+  `dc7cbe626148c1b82cb2219c52cd99efafddc9d4`
 - Contiene estado vigente, contratos, fronteras, roadmap y decisiones activas del Project.
 
 `atlanticus-cannonical:main` es la autoridad documental vigente, subordinada a la realidad implementada de `atlanticus:main`.
@@ -68,6 +68,17 @@ No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorizació
 
 ## Regla de continuidad del Manager
 
-Después del cutover genérico de Manager, cada consumidor se cierra en un chat/incremento independiente.
+`MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER` está cerrado.
 
-No usar un chat para mezclar Navigation, Tools, KPI Configuration y KPI Definition.
+`NAVIGATION-GENERIC-CONFIGURATION-CUTOVER` está cerrado y CURRENT en `atlanticus:main`.
+
+El siguiente chat no debe reabrir Navigation ni asumir una solución para Users.
+
+Único foco siguiente:
+
+```text
+USERS-MANAGER-ALIGNMENT-VALIDATION
+PLANNED / NEXT
+```
+
+Objetivo: validar la desalineación ya observada entre `web/compositions/users-manager` y el contrato Manager CURRENT usando obligatoriamente `atlanticus:main` y `atlanticus-cannonical:main` antes de decidir cualquier implementación.

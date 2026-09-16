@@ -107,31 +107,16 @@ SourcePublicationWorkflow
 SourceHistoryWorkflow
 ```
 
-Todos transportan modelos de `source/core`:
-
-```text
-SourceSnapshot
-SourceReleaseRef
-HistoryPage
-PublishResult
-```
+Todos transportan modelos de `source/core`.
 
 ### Projection
 
-Manager consume el servicio de Projection mediante:
+Manager consume:
 
 ```text
 get_status(source_key)
 select_current_target(source_key)
 project(ProjectionTarget)
-```
-
-y conserva los modelos de `projection/core`:
-
-```text
-ProjectionStatus
-ProjectionTarget
-ProjectionExecutionResult
 ```
 
 No existe adapter Manager hacia una identidad textual de revisión.
@@ -157,87 +142,82 @@ Reglas:
 - schema vigente = `2`;
 - no hay parser/shim legacy para workspace anterior.
 
-## Concurrencia
+## Navigation CURRENT
 
-Antes de publicar:
+Navigation ya es consumidor directo del contrato genérico.
 
-1. Manager verifica que la release current siga siendo la misma observada por el workspace.
-2. Manager obtiene el snapshot current fresco.
-3. si sólo cambió el concurrency token, utiliza el token fresco;
-4. si cambió la release, falla como conflicto;
-5. Source conserva la precondición autoritativa final.
-
-No implementar merge automático sin contrato de dominio.
-
-## Historical release -> WORKSPACE
-
-Una release histórica no repunta current.
+Fronteras:
 
 ```text
-historical payload
-      ↓
-local workspace on current BASE
-      ↓
-dirty local work
-      ↓
-validate → verify → publish
-      ↓
-new Source release
+web/capabilities/navigation/core
+    dominio/runtime reusable
+
+web/capabilities/navigation/configuration
+    codec/source service
+    projection builder
+    editor/domain validation
+    web editor payload integration
+
+web/capabilities/navigation/projection-local
+    ProjectionStore local
+
+web/capabilities/navigation/projection-cosmos
+    ProjectionStore Cosmos
+
+web/compositions/navigation-manager
+    binding explícito Navigation <-> Manager
 ```
 
-History conserva `SourceReleaseRef`.
+Local:
 
-## Web Capability Composition
+```text
+LocalSourceStore
+ -> NavigationSourceService
+ -> Manager Source workflows
+ -> SourceProjectionService
+ -> LocalNavigationProjectionStore
+```
 
-Las capabilities mantienen ownership separado y dependencias explícitas.
+Azure:
 
-Una composition se justifica cuando:
+```text
+BlobSourceStore
+ -> NavigationSourceService
+ -> Manager Source workflows
+ -> SourceProjectionService
+ -> CosmosNavigationProjectionStore
+```
 
-- capability A debe seguir siendo reusable sin B;
-- capability B debe seguir siendo reusable sin A;
-- el binding necesita conocer ambas;
-- ninguna de las dos debe adquirir ownership de la otra.
+No existe `navigation/cosmos` como runtime store independiente porque Navigation no tiene una responsabilidad runtime equivalente a Users.
 
-No usar `web/compositions` como capa obligatoria ni como cajón general.
-
-## Consumers de Manager
-
-El core genérico ya está cerrado.
-
-Cada dominio consumidor debe alinearse directamente al contrato único.
-
-No crear arquitectura especial para:
-
-- Navigation;
-- Tools;
-- KPI Configuration;
-- KPI Definition.
-
-Si un consumidor sigue usando nombres/servicios legacy, se reemplaza de raíz.
-
-## Regla de reemplazo
-
-Cuando una solución raíz reemplaza el contrato anterior:
+## Reglas congeladas para Navigation
 
 ```text
 LEGACY                      REMOVE
-ADAPTERS / SHIMS / ALIASES  FORBIDDEN
+ADAPTERS / SHIMS / ALIASES FORBIDDEN
 DOBLE CONTRATO              FORBIDDEN
 revision -> ProjectionTarget reconstruction REMOVE
 expected_source_revision    REMOVE
 ```
 
-Compatibilidad durable histórica de un dominio sólo puede permanecer cuando sea un requisito explícito y esté separada del contrato activo.
+Navigation no recibe una arquitectura especial.
+
+## Consumer boundary
+
+El cierre de Navigation no demuestra alineación automática de otros consumers.
+
+`users-manager` presenta una desalineación observable con el contrato Manager CURRENT. Esa desalineación debe validarse como frente independiente antes de decidir su solución.
+
+Tools, KPI Configuration y KPI Definition conservan su estado anterior hasta inspección propia.
 
 ## Fronteras futuras
 
-OPEN / PLANNED:
+```text
+USERS-MANAGER-ALIGNMENT-VALIDATION                 PLANNED / NEXT
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER       PLANNED
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER   PLANNED
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
+```
 
-- consumer cutover Navigation;
-- consumer cutover Tools;
-- consumer cutover KPI Configuration;
-- consumer cutover KPI Definition;
-- qualification global posterior a esos cutovers;
-- demás frentes globales ya abiertos en sus documentos especializados.
-
-No reabrir el contrato core de Manager para resolver consumidores.
+No reabrir Manager core ni Navigation para resolver otro consumer.

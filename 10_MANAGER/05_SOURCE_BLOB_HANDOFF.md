@@ -1,6 +1,6 @@
 # Manager — Source Blob Handoff
 
-Estado: **SOURCE IMPLEMENTED / MANAGER GENERIC HANDOFF CLOSED / CONSUMER MIGRATION IN PROGRESS**
+Estado: **SOURCE IMPLEMENTED / MANAGER GENERIC HANDOFF CLOSED / NAVIGATION ADOPTION CLOSED**
 
 ## Source productivo
 
@@ -28,26 +28,6 @@ Source Core cubre:
 - History;
 - exact reads;
 - integrity verification.
-
-## History
-
-Cada publicación Source es snapshot completo, autocontenido e inmutable.
-
-`SourceReleaseId` no equivale a `content_hash`.
-
-History durable contiene publicaciones reales, no autosaves.
-
-## Restore
-
-Restore publica una nueva release.
-
-Nunca repunta current directamente a una release histórica.
-
-## Concurrencia
-
-Backend aplica la precondición autoritativa con `ConcurrencyToken`.
-
-Manager conserva `SourceSnapshot` hasta publication y relee current antes de invocar el workflow.
 
 ## Source -> Projection
 
@@ -78,56 +58,76 @@ select_current_target(source_key)
 project(ProjectionTarget)
 ```
 
-No convierte `SourceReleaseRef`, `ConcurrencyToken`, `SourceSnapshot`, `HistoryPage`, `ProjectionTarget` ni `ProjectionExecutionResult` a contratos legacy de revisión textual.
+No convierte identidad Source/Projection a contratos legacy de revisión textual.
 
-## Cutover
+## Navigation adoption
 
-Removido del contrato Manager:
+Navigation quedó cerrado sobre el handoff genérico.
+
+Local:
 
 ```text
-ExactSourceReaderWorkflow
-ExactSourcePublicationWorkflow
-ExactSourceHistoryWorkflow
-ExactProjectionWorkflow
-ConfigurationLifecycleWorkflow
-expected_source_revision
+LocalSourceStore
+ -> NavigationSourceService
+ -> generic Manager Source workflows
+
+LocalNavigationProjectionStore
+ <- SourceProjectionService
 ```
 
-No existe dual contract.
+Azure:
+
+```text
+BlobSourceStore
+ -> NavigationSourceService
+ -> generic Manager Source workflows
+
+CosmosNavigationProjectionStore
+ <- SourceProjectionService
+```
+
+No existen adapters Navigation para conservar los stores legacy eliminados.
+
+Estado:
+
+```text
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
 
 ## Consumers
 
 El handoff genérico de Manager está cerrado.
 
-La adopción de cada módulo consumidor permanece separada:
+Estado observado:
 
 ```text
-Navigation        PLANNED / NEXT
+Navigation        CLOSED / VERIFIED / CURRENT
+Users Manager     ALIGNMENT VALIDATION PLANNED / NEXT
 Tools             PLANNED
 KPI Configuration PLANNED
 KPI Definition    PLANNED
 ```
 
-No crear adapters para mantener el API Manager anterior.
+Users no se considera un consumer cerrado ni un cutover decidido: sólo existe una desalineación verificada que debe adjudicarse.
 
 ## Qualification caveat
 
 Current checkpoint:
 
 ```text
-59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+d34cda3838a67907728b382e238f0178f9f1a64e
 ```
 
-Manager scoped suite:
+Navigation + Manager scoped:
 
 ```text
-54 passed
+102 passed
 ```
 
 No se afirma:
 
 - full Web GREEN;
 - full ADA GREEN;
-- consumer suites GREEN;
 - Docker E2E;
 - Python 3.14.7 qualification global.

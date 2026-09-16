@@ -13,86 +13,135 @@ No declarar GREEN global cuando sólo existe qualification scoped.
 ## Checkpoint actual de este cierre
 
 ```text
-moragaga/atlanticus@59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
-parent: 1302fefdf046b1cef7beed594e832f9a7a181a06
+moragaga/atlanticus@d34cda3838a67907728b382e238f0178f9f1a64e
+parent: 59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
 ```
 
-## Manager generic Source/Projection cutover
-
-Estado:
+## Manager generic Source/Projection
 
 ```text
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Propiedades verificadas por implementación inspeccionada:
+Sus contratos permanecen congelados.
 
-- `ManagerModule` expone una sola familia genérica de servicios;
-- no contiene `workflow_service`;
-- no contiene campos `exact_source_*`;
-- no contiene `exact_projection_service`;
-- Manager Source usa `SourceSnapshot`, `SourceReleaseRef`, `HistoryPage` y `PublishResult`;
-- Manager Projection consume `ProjectionStatus`, `ProjectionTarget` y `ProjectionExecutionResult` de `projection/core`;
-- `project(...)` recibe `ProjectionTarget`;
-- no hay reconstrucción revision→target;
-- publication usa `expected_source_snapshot`;
-- conflicto se determina por release identity;
-- token de concurrencia fresco se conserva cuando la release no cambió;
-- History read debe devolver la release solicitada;
-- workspace schema vigente es `2`;
-- la ruta exact/legacy anterior fue removida del Manager;
-- archivos `exact_*` del Manager fueron eliminados.
+## Navigation generic configuration cutover
+
+```text
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+Propiedades verificadas:
+
+- Navigation construye un `ManagerModule` con la familia genérica de servicios;
+- Source reader/publication/history comparten el workflow Navigation registrado;
+- Source local compone `LocalSourceStore`;
+- Source Azure compone `BlobSourceStore`;
+- Projection local compone `LocalNavigationProjectionStore`;
+- Projection Azure compone `CosmosNavigationProjectionStore`;
+- no existe `expected_source_revision`;
+- no existe `SOURCE_REVISION_STORE_ID`;
+- no existe reconstrucción revision→`ProjectionTarget`;
+- adapters/configuration stores legacy fueron eliminados;
+- no se introdujeron shims/aliases de compatibilidad.
 
 ## Qualification observada
 
-Ejecutada por el usuario en el workspace real después de aplicar el cutover:
+Ejecutada por el usuario en el workspace real:
 
 ```text
-web/capabilities/manager
-54 passed
-0 failed
+Python 3.14.2
+
+ruff scoped
+All checks passed!
+
+pytest scoped
+102 passed in 0.32s
+
+forbidden legacy scan
+0 results
+
+git diff --check
+PASS
+
+git diff --cached --check
+PASS
 ```
 
-Esta suite es la evidencia funcional vigente del cierre.
+`uv lock` resolvió 78 paquetes y reconoció los nuevos paquetes de Navigation.
 
-## Evidencia histórica que NO sustituye current
+## Full Web suite
 
-Los siguientes conteos pertenecen a checkpoints anteriores:
+Comando:
 
 ```text
-238 passed
-56 passed / 4 failed
+cd web
+uv run pytest
 ```
 
-Pueden conservarse en ledger histórico, pero no describen `59fcd3e...`.
+Resultado:
 
-## Lo que current checkpoint NO demuestra
+```text
+BLOCKED DURING COLLECTION
+4 collection errors
+```
+
+Los cuatro errores visibles se originan al importar `web/compositions/users-manager`, inicialmente por:
+
+```text
+ExactSourceHistoryReadResult
+```
+
+que no existe en el Manager CURRENT.
+
+No hubo evidencia de fallo funcional de Navigation en esa ejecución porque la suite global no llegó a ejecutarse.
+
+## Adjudicación
+
+VERIFIED:
+
+- `users-manager` no fue modificado por el commit de Navigation;
+- la desalineación existía en el parent del commit actual;
+- `users-manager` conserva imports/contratos `Exact*`;
+- Manager CURRENT expone `SourceReadResult`, `SourceHistoryReadResult`, `SourcePublicationResult` y el Projection contract genérico.
 
 UNVERIFIED:
 
-- full Web suite;
-- full ADA suite;
-- consumidores Navigation/Tools/KPI Configuration/KPI Definition ya alineados;
-- suites de esos consumidores contra la nueva API;
-- Docker E2E;
-- CI remoto adicional;
-- qualification global Python 3.14.7/Trixie;
-- ausencia total de residuos legacy fuera de `web/capabilities/manager`.
+- la solución exacta para Users;
+- si los archivos `exact_*` deben ser eliminados, renombrados o reemplazados por una composición distinta;
+- qualification global después de resolver Users.
 
-## Regla para consumidores
+## Regla para el siguiente chat
 
-Cada consumer cutover debe producir su propia evidence set:
+No implementar por inferencia desde el error.
+
+Primero:
 
 ```text
-consumer implementation inspected
-consumer tests GREEN
-relevant composition tests GREEN
-forbidden legacy scan scoped
-no adapters/shims/aliases
+USERS-MANAGER-ALIGNMENT-VALIDATION
 ```
 
-No cerrar el consumer siguiente por inferencia desde los `54 passed` de Manager.
+Debe producir:
+
+```text
+implementation inspected in atlanticus:main
+canonical intent inspected in atlanticus-cannonical:main
+exact mismatch enumerated
+current contract identified
+legacy/current ownership adjudicated
+implementation decision only after evidence
+```
+
+## UNVERIFIED global
+
+- full Web GREEN;
+- full ADA suite;
+- Docker E2E;
+- CI remoto adicional;
+- Python 3.14.7/Trixie global;
+- consumers Tools/KPI Configuration/KPI Definition.
 
 ## Git
 
