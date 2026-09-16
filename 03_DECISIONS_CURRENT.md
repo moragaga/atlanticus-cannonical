@@ -78,6 +78,7 @@ Una capability ADA-specific puede consumir Source/Projection/Manager genéricos 
 | Decisión | Estado |
 |---|---|
 | Manager tiene un solo contrato Source/Projection genérico | FROZEN / IMPLEMENTED |
+| `ManagerModule.source_key` | FROZEN / IMPLEMENTED |
 | `ManagerModule.source_service` | FROZEN / IMPLEMENTED |
 | `ManagerModule.source_reader_service` | FROZEN / IMPLEMENTED |
 | `ManagerModule.projection_service` | FROZEN / IMPLEMENTED |
@@ -107,7 +108,6 @@ Una capability ADA-specific puede consumir Source/Projection/Manager genéricos 
 |---|---|
 | `ProjectionTarget` llega completo a `project(...)` | FROZEN |
 | Manager no reconstruye target desde revision | FROZEN |
-| `ProjectionExecutionResult.target` conserva target ejecutado | FROZEN |
 | target con `source_key` distinto al módulo es inválido | FROZEN |
 | no existe Manager Projection model legacy paralelo | FROZEN |
 
@@ -165,36 +165,50 @@ Una capability ADA-specific puede consumir Source/Projection/Manager genéricos 
 | private KPI Source/Projection lifecycle | SUPERSEDED / REMOVED |
 | `expected_source_revision` | SUPERSEDED / REMOVED |
 | revision → `ProjectionTarget` reconstruction | SUPERSEDED / REMOVED |
-| tocar Manager durante este incremento | FORBIDDEN / NOT DONE |
 
-## KPI Definition — siguiente frontera
+## KPI Definition
 
 | Decisión | Estado |
 |---|---|
-| ownership permanece `scopes/ada/web/kpis/definition` | FROZEN |
-| cutover Source/Projection | PLANNED / NEXT |
-| dependencia en KPI Configuration debe conservarse semánticamente | FROZEN |
-| identidad de dependencia final usa contrato genérico Projection | FROZEN |
-| revision string privada como identidad final | SUPERSEDED |
-| copiar implementación KPI Configuration sin inspección | FORBIDDEN |
+| ownership permanece `scopes/ada/web/kpis/definition` | FROZEN / CURRENT |
+| dominio permanece ADA-specific | FROZEN |
+| Source consume contrato genérico | IMPLEMENTED / VERIFIED / CURRENT |
+| Projection consume contrato genérico | IMPLEMENTED / VERIFIED / CURRENT |
+| `KpiDefinitionSourceService` | CURRENT |
+| `KpiDefinitionProjectionBuilder` | CURRENT |
+| `SourceProjectionService[KpiDefinitionCatalog]` | CURRENT |
+| dependencia semántica en KPI Configuration Projection | FROZEN / IMPLEMENTED |
+| dependencia exacta usa `ProjectionTarget.dependencies` | FROZEN / IMPLEMENTED |
+| exactamente una dependencia KPI Configuration | FROZEN / IMPLEMENTED |
+| Definition ausente para KPI configurado se materializa `MISSING` | FROZEN / IMPLEMENTED |
+| Definition huérfana para KPI no configurado invalida la proyección | FROZEN / IMPLEMENTED |
+| `KpiDefinitionAuthorityCatalog` / `KpiDefinitionAuthorityProvider` | SUPERSEDED / REMOVED |
+| `KpiDefinitionServices` / private lifecycle | SUPERSEDED / REMOVED |
+| `kpi_configuration_revision` como identidad privada | SUPERSEDED / REMOVED |
+| `expected_source_revision` | SUPERSEDED / REMOVED |
+| `build_kpi_definition_digest` como identidad Source/workspace | SUPERSEDED / REMOVED |
+| revision → `ProjectionTarget` reconstruction | SUPERSEDED / REMOVED |
+| adapters/aliases para sostener `ada-configuration-manager` antiguo | FORBIDDEN |
 
 ## Projection orchestration — refinamiento
 
 No existe un orden global rígido de todas las proyecciones.
 
-La afirmación anterior de que toda base projection debe ser independiente queda refinada:
+Regla CURRENT:
 
 ```text
 independent when there is no real semantic dependency
 exact ProjectionTarget.dependencies when a real dependency exists
 ```
 
-KPI Configuration es el caso implementado:
+Cadena implementada:
 
 ```text
-exact Tool ProjectionTarget
-    ↓
-KPI Configuration ProjectionTarget.dependencies
+Tool ProjectionTarget
+    ↓ exact dependency
+KPI Configuration ProjectionTarget
+    ↓ exact dependency
+KPI Definition ProjectionTarget
 ```
 
 Una derived resolution sigue siendo válida para materializaciones realmente derivadas, pero no sustituye una dependencia que forma parte de la identidad exacta de una projection.
@@ -202,14 +216,21 @@ Una derived resolution sigue siendo válida para materializaciones realmente der
 ## Estrategia de Configuration Manager
 
 ```text
+Users Manager contract                     CLOSED / CURRENT
+Navigation Manager contract                CLOSED / CURRENT
 Tools Source/Projection                    CLOSED / CURRENT
-KPI Configuration Source/Projection       CLOSED / CURRENT
-KPI Definition Source/Projection          PLANNED / NEXT
-ADA Configuration Manager final cutover   BLOCKED
-Global regression                         BLOCKED
+KPI Configuration Source/Projection        CLOSED / CURRENT
+KPI Definition Source/Projection           CLOSED / CURRENT
+ADA Configuration Manager final cutover    PLANNED / NEXT
+Global regression                          BLOCKED
+Web test contract cleanup                  PLANNED / AFTER MANAGER
 ```
 
-No introducir parches temporales en el consumer.
+Todos los contratos de dominio requeridos para el consumer final ya están disponibles.
+
+No introducir parches temporales en `ada-configuration-manager`.
+
+El siguiente incremento debe cortar el consumer completo al contrato Manager genérico CURRENT.
 
 ## Decisiones reemplazadas o refinadas
 
@@ -225,23 +246,31 @@ No introducir parches temporales en el consumer.
 4. Preservar private revision strings para dependencias KPI.
    → **SUPERSEDED**; la identidad exacta usa `ProjectionTarget`.
 
-5. Tratar KPI Configuration Projection como base projection independiente de Tool Projection y resolver Tool + KPI sólo downstream.
-   → **REFINED / SUPERSEDED PARA KPI CONFIGURATION**; la dependencia exacta Tool forma parte del target KPI Configuration.
+5. Tratar KPI Configuration Projection como independiente de Tool Projection.
+   → **REFINED / SUPERSEDED PARA KPI CONFIGURATION**; la dependencia Tool forma parte del target exacto.
+
+6. Modelar KPI Definition mediante un `KpiDefinitionAuthority` intermedio basado en revision/keys.
+   → **SUPERSEDED / REMOVED**; KPI Definition consume directamente la proyección tipada de KPI Configuration.
+
+7. Hacer un cutover específico sólo del consumer KPI Definition dentro de `ada-configuration-manager`.
+   → **SUPERSEDED / REFINED**; como todos los dominios Configuration ya están migrados, el próximo corte es el Configuration Manager completo.
+
+8. Mantener `ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER` bloqueado por KPI Definition.
+   → **SUPERSEDED**; KPI Definition está CLOSED y el consumer final queda `PLANNED / NEXT`.
 
 ## Qualification observada
 
 | Hallazgo | Estado |
 |---|---|
-| checkpoint KPI Configuration publicado | VERIFIED / `4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe` |
-| KPI Source/Projection code | VERIFIED / CURRENT |
-| legacy KPI files removed | VERIFIED |
-| Ruff scoped KPI Configuration | VERIFIED / PASS |
-| pytest scoped KPI Configuration | VERIFIED / 45 passed |
+| checkpoint KPI Definition publicado | VERIFIED / `ef3f0a44c5dcc14f8fcafe5bb36bb97865381924` |
+| KPI Definition Source/Projection code | VERIFIED / CURRENT |
+| legacy KPI Definition API removida del package CURRENT | VERIFIED |
+| Ruff scoped KPI Definition | VERIFIED / PASS |
+| pytest scoped KPI Definition | VERIFIED / 40 passed |
 | legacy token scan scoped | VERIFIED / 0 matches |
-| `git diff --check` previo a publicación | VERIFIED / PASS |
 | CI remoto del commit | UNVERIFIED |
 | full ADA regression | BLOCKED |
-| KPI Definition | PLANNED / NEXT |
+| Configuration Manager final cutover | PLANNED / NEXT |
 | Python 3.14.7 global | UNVERIFIED |
 
 ## Conflicto abierto de Python metadata
@@ -252,19 +281,20 @@ Decisión global:
 Python 3.14.7
 ```
 
-KPI Configuration publicado:
+Implementación publicada:
 
 ```text
-requires-python = "==3.14.2"
+KPI Configuration requires-python = "==3.14.2"
+KPI Definition    requires-python = "==3.14.2"
 ```
 
-No resolver silenciosamente dentro del cutover KPI Definition.
+No resolver silenciosamente dentro del Configuration Manager final.
 
 ## Siguiente foco único
 
 ```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 PLANNED / NEXT
 ```
 
-No tocar Manager final ni abrir limpieza transversal de Python en el mismo incremento.
+No reabrir dominios ya cerrados ni mezclar limpieza transversal de Python o tests Web en el mismo incremento.

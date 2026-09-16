@@ -10,21 +10,21 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Último checkpoint verificado para este cierre:
-  `27c2e4beed125fe379881048f0df5fbe3ff6cb1a`
+  `ef3f0a44c5dcc14f8fcafe5bb36bb97865381924`
 - Parent inmediato:
-  `a065f45c55a527c96ce333705465487e95f0a737`
-- Alcance:
-  `TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER`
+  `4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe`
+- Alcance cerrado por ese checkpoint:
+  `KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER`
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `11bb50752b319bab40ab57f68fe1ae6299c71c41`
+  `430a90529c99e69d16978f60d91aa86f819b851e`
 - Contiene estado vigente, contratos, fronteras, roadmap y decisiones activas.
 
-`atlanticus-cannonical:main` es autoridad documental vigente, subordinada a `atlanticus:main`.
+`atlanticus-cannonical:main` es autoridad documental vigente, subordinada a `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
 
 ## Referencias históricas
 
@@ -41,24 +41,30 @@ Puede aportar rationale y evidencia histórica. No puede contradecir o reemplaza
 5. Referencias históricas indicadas por el usuario.
 6. Memoria/historial conversacional: pista, nunca autoridad suficiente.
 
-## Conflictos
+## Clasificación obligatoria
 
-Si implementación y canonical se contradicen, no resolver silenciosamente.
+Distinguir hechos y decisiones con:
 
-Clasificar como corresponda:
+```text
+VERIFIED
+INFERRED
+ASSUMED
+PROPOSED
+UNVERIFIED
+```
 
-- `VERIFIED`
-- `INFERRED`
-- `ASSUMED`
-- `PROPOSED`
-- `UNVERIFIED`
-- `CURRENT`
-- `IN PROGRESS`
-- `PLANNED`
-- `SUPERSEDED`
-- `BLOCKED`
-- `CONFLICT`
-- `HISTORICAL`
+Y estado con:
+
+```text
+CURRENT
+IN PROGRESS
+PLANNED
+SUPERSEDED
+BLOCKED
+CLOSED
+```
+
+Si implementación y canonical se contradicen, exponer el conflicto y actualizar canonical; nunca retroceder implementación CURRENT para satisfacer documentación obsoleta.
 
 ## Git
 
@@ -66,7 +72,7 @@ Git es **READ ONLY** por defecto.
 
 No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización explícita.
 
-## Continuidad
+## Continuidad congelada
 
 No reabrir:
 
@@ -88,17 +94,23 @@ CLOSED / VERIFIED / CURRENT
 
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Tools conserva ownership ADA bajo `scopes/ada/web/tools` y consume directamente Source/Projection genéricos.
+Tools, KPI Configuration y KPI Definition conservan ownership ADA bajo `scopes/ada` y consumen directamente infraestructura Source/Projection genérica donde corresponde.
 
-El consumer `ada-configuration-manager` puede permanecer temporalmente desalineado. No crear compatibilidad dentro de Tools para sostenerlo.
+No reintroducir contratos legacy en esos dominios para sostener consumidores antiguos.
 
-Único foco siguiente:
+## Siguiente foco único
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 PLANNED / NEXT
 ```
 
-Inspeccionar únicamente KPI Configuration CURRENT y contrastarlo contra el patrón Tools publicado. No tocar Manager ni KPI Definition en el mismo incremento.
+El consumer `scopes/ada/web/application/ada-configuration-manager` permanece desalineado con contratos ya migrados. Debe cortarse una sola vez al contrato genérico CURRENT; no crear adapters, aliases, shims ni doble routing para conservar la arquitectura anterior.

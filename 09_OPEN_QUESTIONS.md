@@ -48,8 +48,6 @@ TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Tools sigue siendo ADA-specific bajo `scopes/ada/web/tools`.
-
 ## CLOSED — KPI Configuration Source/Projection
 
 ```text
@@ -57,44 +55,65 @@ KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Ya no están OPEN dentro de KPI Configuration:
+## CLOSED — KPI Definition Source/Projection
 
 ```text
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+Ya no están OPEN dentro de KPI Definition:
+
+```text
+KpiDefinitionAuthority bridge
 private Source/Projection lifecycle
 private source revision identity
 private projection revision identity
-tool_projection_revision as dependency identity
+kpi_configuration_revision as dependency identity
 expected_source_revision
 revision -> ProjectionTarget reconstruction
 compatibility adapters/shims/aliases
 ```
 
-KPI Configuration sigue siendo ADA-specific bajo:
+KPI Definition consume directamente la proyección tipada de KPI Configuration y su dependencia exacta usa `ProjectionTarget.dependencies`.
+
+## OPEN — ADA Configuration Manager final generic cutover
 
 ```text
-scopes/ada/web/kpis/configuration
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+PLANNED / NEXT
 ```
 
-Su dependencia exacta en Tool Projection usa `ProjectionTarget.dependencies`.
+Motivo:
 
-## OPEN — KPI Definition Source/Projection
+Todos los dominios Configuration requeridos ya están migrados, pero el consumer publicado todavía referencia contratos SUPERSEDED.
+
+Verificado en `main@ef3f0a44...`:
 
 ```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-PLANNED / NEXT
+KpiConfigurationServices
+KpiDefinitionServices
+KpiDefinitionAuthorityProvider
+ToolLifecycleServices
+ExactProjectionWorkflow
+NavigationConfigurationServices
+workflow_service
+exact_source_*
+expected_source_revision
+revision-string projection workflow adapters
 ```
 
 Preguntas permitidas en el siguiente chat:
 
-1. ¿Qué contratos Source/Projection privados existen realmente en `scopes/ada/web/kpis/definition`?
-2. ¿Qué archivos implementan authoring, Source, Projection y validación?
-3. ¿Cómo consume hoy KPI Configuration Projection?
-4. ¿Qué revision strings privadas existen y qué semántica representan?
-5. ¿Cómo expresar la dependencia exacta usando `ProjectionTarget` sin perder semántica?
-6. ¿Qué tests prueban comportamiento CURRENT y cuáles existen sólo para legacy?
-7. ¿Qué consumer queda temporalmente desalineado después del cutover raíz?
+1. ¿Cuál es la composición final exacta de services por módulo usando `ManagerModule` CURRENT?
+2. ¿Qué responsabilidades legítimas deben conservar `dependencies.py`, `composition.py`, `tools.py`, `kpis.py` y `kpi_definitions.py`?
+3. ¿Debe `workflows.py` desaparecer por completo o conservar únicamente workflows de composición que implementen contratos genéricos reales?
+4. ¿Qué uso de `kpi_authority.py` queda después de consumir directamente KPI Configuration Projection?
+5. ¿Qué tests prueban comportamiento final y cuáles sólo congelan adapters/contratos SUPERSEDED?
+6. ¿Qué dependencias/versiones del `pyproject.toml` deben alinearse con los packages CURRENT?
+7. ¿Existen consumers externos de `ada-configuration-manager` que deban ajustarse en el mismo incremento?
 
-No tocar Manager durante este incremento.
+No inventar las respuestas. Resolverlas contra código CURRENT antes de editar.
 
 ## OPEN — concrete KPI destination provider composition
 
@@ -102,11 +121,9 @@ No tocar Manager durante este incremento.
 UNVERIFIED
 ```
 
-El contrato `KpiDestinationCatalogProvider` está definido y el dominio no importa Tools directamente.
+El contrato de destino KPI existe, pero este cierre no adjudicó si la composición física actual del Configuration Manager es ya la definitiva o debe cambiar durante el cutover final.
 
-Este cierre no verificó la composition root productiva concreta que suministra `KpiDestinationCatalogSnapshot`.
-
-No inventarla ni moverla al dominio KPI Configuration.
+No mover esta responsabilidad al dominio KPI Configuration sin evidencia.
 
 ## OPEN — Python package metadata alignment
 
@@ -116,10 +133,11 @@ Canonical fija:
 Python 3.14.7
 ```
 
-KPI Configuration publicado declara:
+Implementación publicada declara:
 
 ```text
-requires-python = "==3.14.2"
+KPI Configuration requires-python ==3.14.2
+KPI Definition    requires-python ==3.14.2
 ```
 
 Estado:
@@ -128,7 +146,7 @@ Estado:
 PLANNED / UNVERIFIED
 ```
 
-No mezclar esta limpieza con KPI Definition salvo bloqueo real de qualification.
+No mezclar esta limpieza con el Configuration Manager final salvo bloqueo real de qualification.
 
 ## OPEN — Tools scoped qualification
 
@@ -138,21 +156,6 @@ PLANNED / UNVERIFIED
 
 Permanece sin evidencia nueva dentro de este cierre.
 
-## BLOCKED — ADA Configuration Manager final cutover
-
-```text
-ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
-BLOCKED
-```
-
-Bloqueado ahora por:
-
-```text
-KPI Definition Source/Projection not migrated
-```
-
-KPI Configuration ya no es blocker.
-
 ## BLOCKED — Global regression
 
 ```text
@@ -160,22 +163,35 @@ MANAGER-CONSUMER-GLOBAL-QUALIFICATION
 BLOCKED
 ```
 
-Ejecutar después del cutover final del Configuration Manager.
+Bloqueado hasta completar el cutover final de `ada-configuration-manager`.
+
+## PLANNED — Web test contract cleanup
+
+```text
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / AFTER MANAGER
+```
+
+Motivo:
+
+Existe intención explícita de revisar tests Web de existencia de funciones/clases, source-code string inspection, estructura interna y CSS visual. La política canónica ya prohíbe usar esos detalles como contrato general.
+
+No abrir este frente durante el cutover final salvo tests legacy directamente afectados por código removido.
 
 ## UNVERIFIED
 
-- full ADA suite;
+- final runtime del Configuration Manager genérico;
+- full ADA suite después de ese cutover;
 - Docker E2E;
-- CI remoto del checkpoint KPI Configuration;
+- CI remoto del checkpoint `ef3f0a44...`;
 - Python 3.14.7/Trixie global;
 - provider físico/composition final de KPI destination snapshots;
-- necesidad real de migración operacional de datos KPI históricos;
-- KPI Definition CURRENT hasta inspección específica.
+- necesidad real de migración operacional de datos KPI históricos.
 
 ## Siguiente foco
 
 ```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 ```
 
 Fuentes obligatorias:

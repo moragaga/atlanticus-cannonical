@@ -29,16 +29,16 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
+moragaga/atlanticus@ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
 ```
 
 Parent inmediato:
 
 ```text
-27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
 
-Ese checkpoint contiene el clean cutover de KPI Configuration hacia Source/Projection genéricos.
+Ese checkpoint contiene el clean cutover de KPI Definition hacia Source/Projection genéricos.
 
 ## Estado de hitos
 
@@ -68,76 +68,93 @@ KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 
-ADA-CONFIGURATION-MANAGER-FINAL-CUTOVER
-BLOCKED
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+PLANNED / NEXT
 
 MANAGER-CONSUMER-GLOBAL-QUALIFICATION
 BLOCKED
+
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / AFTER MANAGER
 ```
 
-## KPI Configuration clean cutover
+## KPI Definition clean cutover
 
-KPI Configuration permanece ADA-specific:
+KPI Definition permanece ADA-specific:
 
 ```text
-scopes/ada/web/kpis/configuration
+scopes/ada/web/kpis/definition
 ```
-
-Usar Source/Projection genéricos no cambia su ownership ni convierte el scope ADA en core Atlanticus.
 
 Contrato CURRENT:
 
 ```text
-KpiSourceService
+KpiDefinitionSourceService
+KpiDefinitionSourceCodec
+KpiDefinitionSourcePayload
+KpiDefinitionSourceRelease
 SourceStore
 SourceSnapshot
 SourceReleaseRef
-PublishRequest / PublishResult
-KpiProjectionBuilder
+KpiDefinitionProjectionBuilder
 ProjectionTarget
+ProjectionStore[KpiDefinitionCatalog]
+SourceProjectionService[KpiDefinitionCatalog]
 ProjectionStore[KpiConfiguration]
-SourceProjectionService[KpiConfiguration]
-KpiDestinationCatalogSnapshot
+KpiDefinitionCatalog
 ```
 
-La KPI Configuration Projection depende del `ProjectionTarget` exacto de Tool Projection.
+La KPI Definition Projection depende exactamente del `ProjectionTarget` activo de KPI Configuration y exige que ese target siga siendo el mismo al ejecutar la proyección.
+
+Semántica CURRENT:
+
+```text
+configured KPI + Definition     -> DEFINED
+configured KPI + no Definition  -> MISSING valid coverage
+Definition for non-configured KPI -> invalid projection
+missing KPI Configuration projection -> projection error
+```
 
 Removido del contrato CURRENT:
 
 ```text
+KpiDefinitionAuthorityCatalog
+KpiDefinitionAuthorityProvider
+KpiDefinitionServices
 private Source/Projection lifecycle
 private source revision identity
 private projection revision identity
-tool_projection_revision as dependency identity
+kpi_configuration_revision as dependency identity
 expected_source_revision
 revision -> ProjectionTarget reconstruction
+build_kpi_definition_digest as Source/workspace identity
 compatibility adapters / shims / aliases
 ```
 
 ## Qualification observada
 
-Para el cutover KPI Configuration:
+Para KPI Definition, antes de publicación:
 
 ```text
+Python shell
+3.14.7
+
 uv lock
 PASS
 
-uv sync --group dev
+uv sync --group dev --extra web
 PASS
 
 uv run ruff check src tests
 PASS
 
 uv run pytest
-45 passed
+40 passed
 
-git diff --check
-PASS
-
-legacy token scan over src/commented/tests
-0 matches after generated build/cache cleanup
+legacy token scan scoped over src/commented/tests
+0 matches
 ```
 
 El checkpoint publicado fue inspeccionado después de esa qualification local.
@@ -152,22 +169,22 @@ La decisión canónica global permanece:
 Python 3.14.7
 ```
 
-El `pyproject.toml` publicado de KPI Configuration todavía declara:
+KPI Configuration y KPI Definition publicados todavía declaran:
 
 ```text
 requires-python = "==3.14.2"
 ```
 
-No se corrige dentro de este cierre ni se mezcla con KPI Definition.
+La ejecución scoped de KPI Definition observó Python 3.14.7, pero eso no resuelve la metadata contractual.
 
 ## Siguiente foco único
 
 ```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 PLANNED / NEXT
 ```
 
-Primero inspección y diseño sobre la implementación CURRENT. No tocar todavía el Configuration Manager final, Command Center, Operational Data ni otros frentes.
+Todos los dominios Configuration relevantes ya tienen contrato Source/Projection final. El siguiente incremento debe cortar `ada-configuration-manager` completo al Manager genérico CURRENT en lugar de crear un cutover específico sólo para KPI Definition.
 
 Atajos:
 

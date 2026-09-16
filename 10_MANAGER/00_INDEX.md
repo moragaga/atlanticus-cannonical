@@ -1,6 +1,6 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT / GENERIC CORE + NAVIGATION + USERS CLOSED / ADA CONSUMERS MIGRATING**
+Estado: **CURRENT GENERIC CORE / DOMAIN CONTRACTS CLOSED / ADA CONFIGURATION CONSUMER NEXT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -35,26 +35,46 @@ exact_projection_service
 expected_source_revision
 ```
 
-## Consumers cerrados
+## Consumers/contratos cerrados
 
 ```text
-Navigation
+Navigation Manager adoption
 CLOSED / VERIFIED / CURRENT
 
 Users Manager composition
 CLOSED / VERIFIED / CURRENT
-```
 
-## Tools domain contract
+Tools Source/Projection
+CLOSED / VERIFIED / CURRENT
 
-```text
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+KPI Configuration Source/Projection
+CLOSED / VERIFIED / CURRENT
+
+KPI Definition Source/Projection
 CLOSED / VERIFIED / CURRENT
 ```
 
-Tools ya usa Source/Projection genéricos directamente, pero su consumer dentro de `ada-configuration-manager` aún no fue cortado.
+## Configuration Manager consumer mismatch
 
-Esto es intencional.
+`scopes/ada/web/application/ada-configuration-manager` todavía usa contratos anteriores.
+
+Verificado en el checkpoint CURRENT:
+
+```text
+workflow_service
+exact_source_*
+ExactProjectionWorkflow
+ToolLifecycleServices
+KpiConfigurationServices
+KpiDefinitionServices
+KpiDefinitionAuthorityProvider
+revision-string workflow adapters
+expected_source_revision
+```
+
+Además intenta importar nombres `create_users_manager_exact_source_*` que ya no forman parte del package Users Manager CURRENT.
+
+Esto no reabre Manager core ni los dominios cerrados.
 
 ## Regla de consumer adoption
 
@@ -70,18 +90,18 @@ revision -> ProjectionTarget reconstruction
 alias dentro del dominio para sostener imports viejos
 ```
 
-No es requisito mantener `ada-configuration-manager` ejecutable mientras sus dominios Source/Projection todavía se están migrando.
-
-## Frentes pendientes
+## Siguiente frontera
 
 ```text
-KPI Configuration Source/Projection       PLANNED / NEXT
-KPI Definition Source/Projection          PLANNED
-Tools Manager consumer                    PLANNED
-ADA Configuration Manager final cutover   BLOCKED
-Global regression                         BLOCKED
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+PLANNED / NEXT
 ```
 
-El próximo incremento no es un cambio de Manager.
+El objetivo es cortar el consumer completo una sola vez, no migrar Definition aisladamente dentro del Manager.
 
-Debe inspeccionar sólo KPI Configuration usando Tools CURRENT como referencia estructural.
+Después:
+
+```text
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION
+BLOCKED until final cutover
+```

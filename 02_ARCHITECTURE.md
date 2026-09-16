@@ -219,42 +219,73 @@ KPI Configuration ProjectionTarget
 
 El catálogo de destinos conserva semántica de dominio; la procedencia exacta de Tool se transporta en `KpiDestinationCatalogSnapshot.projection_target`.
 
-No forman parte del contrato CURRENT:
+## KPI Definition CURRENT
+
+Ownership:
 
 ```text
-private KPI lifecycle
-private source revision identity
-private projection revision identity
-tool_projection_revision as dependency identity
-expected_source_revision
-revision -> ProjectionTarget reconstruction
+scopes/ada/web/kpis/definition
 ```
 
-## Consumer cutover strategy CURRENT
-
-Los dominios de Configuration se migran primero hasta su contrato final aunque el consumer `ada-configuration-manager` quede temporalmente desalineado.
-
-No crear compatibilidad para sostener el consumer durante la transición.
-
-Orden:
+KPI Definition conserva semántica ADA y consume directamente Source/Projection genéricos.
 
 ```text
-Tools Source/Projection                    CLOSED / CURRENT
-KPI Configuration Source/Projection       CLOSED / CURRENT
-KPI Definition Source/Projection          PLANNED / NEXT
-ADA Configuration Manager final cutover   BLOCKED
-Global regression                         BLOCKED
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
+
+Dependencia exacta:
+
+```text
+KPI Configuration ProjectionTarget
+        ↓ dependency
+KPI Definition ProjectionTarget
+```
+
+`KpiDefinitionProjectionBuilder` consume `ProjectionStore[KpiConfiguration]` y exige exactamente una dependencia con el `SourceKey` de KPI Configuration.
+
+La proyección materializa `KpiDefinitionCatalog` y su cobertura `DEFINED` / `MISSING`.
+
+No existe `KpiDefinitionAuthority` como frontera intermedia CURRENT.
 
 ## KPI dependency semantics
 
-KPI Configuration depende semánticamente del exact Tool Projection target.
+Cadena CURRENT:
 
-KPI Definition depende semánticamente de KPI Configuration Projection.
+```text
+Tool ProjectionTarget
+        ↓ exact dependency
+KPI Configuration ProjectionTarget
+        ↓ exact dependency
+KPI Definition ProjectionTarget
+```
 
-Las identidades de estas dependencias usan el contrato genérico de Projection (`ProjectionTarget` y `dependencies`), no revision strings privadas.
+Las identidades de estas dependencias usan `ProjectionTarget` y `dependencies`, no revision strings privadas.
 
 No confundir una dependencia semántica real con un orden artificial de bootstrap.
+
+## Consumer cutover strategy CURRENT
+
+Los contratos de los dominios Configuration relevantes ya están migrados:
+
+```text
+Users                         CURRENT
+Navigation                    CURRENT
+Tools Source/Projection       CURRENT
+KPI Configuration             CURRENT
+KPI Definition                CURRENT
+```
+
+La siguiente frontera es el consumer final:
+
+```text
+ADA Configuration Manager final generic cutover
+PLANNED / NEXT
+```
+
+El `ada-configuration-manager` publicado todavía consume contratos anteriores y debe alinearse una sola vez al Manager genérico.
+
+No crear compatibilidad para sostener ese consumer durante el cutover.
 
 ## Reglas congeladas
 
@@ -267,4 +298,4 @@ expected_source_revision    REMOVE
 private projection revision identity REMOVE
 ```
 
-No reabrir Manager core, Navigation, Users, Tools ni KPI Configuration para resolver el siguiente consumer.
+No reabrir Manager core, Navigation, Users, Tools, KPI Configuration ni KPI Definition para resolver el consumer final.

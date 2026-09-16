@@ -1,34 +1,32 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **FROZEN SEMANTICS + GENERIC CONTRACT MIGRATION IN PROGRESS**
+Estado: **FROZEN SEMANTICS + CONFIGURATION CONTRACTS CURRENT**
 
 ## Cadena de autoridad
 
-La cadena funcional es:
+Cadena funcional CURRENT verificada para Configuration:
 
 ```text
 Tool Configuration Source
     ↓
 Tool Projection
-    ↓
-KPI Destination Catalog
-    ↓
+    ↓ exact ProjectionTarget dependency
 KPI Configuration Source
     ↓
 KPI Configuration Projection
-    ├── Delivery policy
-    └── KpiCatalog
-            ↓
-KPI Definition Authority
-            ↓
+    ↓ exact ProjectionTarget dependency
 KPI Definition Source
-            ↓
+    ↓
 KPI Definition Projection
-            ↓
+    ↓
 Operational Render
-            ↓
+    ↓
 Alarm visual state
 ```
+
+El catálogo de destinos KPI forma parte de la semántica de KPI Configuration, pero la identidad temporal de su dependencia Tool se transporta mediante el `ProjectionTarget` exacto de Tool.
+
+No existe `KpiDefinitionAuthority` como frontera CURRENT entre KPI Configuration y KPI Definition.
 
 ## Estado de contratos
 
@@ -40,7 +38,7 @@ KPI Configuration Source/Projection
 CLOSED / VERIFIED / CURRENT
 
 KPI Definition Source/Projection
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## Ownership ADA
@@ -66,43 +64,68 @@ ProjectionStore[KpiConfiguration]
 SourceProjectionService[KpiConfiguration]
 ```
 
-La frontera Tool→KPI Configuration transporta:
+Frontera exacta:
 
 ```text
-KpiDestinationCatalogSnapshot
-├── projection_target   exact Tool ProjectionTarget
-└── catalog             semantic destination catalog
+Tool ProjectionTarget
+    ↓
+KPI Configuration ProjectionTarget.dependencies
+```
+
+## KPI Definition CURRENT
+
+KPI Definition usa directamente:
+
+```text
+KpiDefinitionSourceService
+KpiDefinitionProjectionBuilder
+ProjectionStore[KpiDefinitionCatalog]
+ProjectionStore[KpiConfiguration]
+SourceProjectionService[KpiDefinitionCatalog]
+ProjectionTarget
+```
+
+Frontera exacta:
+
+```text
+KPI Configuration ProjectionTarget
+    ↓
+KPI Definition ProjectionTarget.dependencies
+```
+
+El builder exige exactamente una dependencia KPI Configuration y valida que la proyección activa siga correspondiendo al target seleccionado.
+
+Cobertura:
+
+```text
+configured KPI + Definition    -> DEFINED
+configured KPI without Definition -> MISSING
+Definition outside configured KPI set -> invalid projection
 ```
 
 ## Dependencias entre projections
 
-La dependencia semántica no desaparece al migrar contratos.
+La dependencia semántica no desaparece al usar contratos genéricos.
 
-CURRENT:
-
-```text
-KPI Configuration Projection
-    depends on exact Tool Projection target
-```
-
-NEXT / FROZEN DIRECTION:
+Cadena CURRENT:
 
 ```text
-KPI Definition Projection
-    depends on exact KPI Configuration Projection target
+Tool ProjectionTarget
+    ↓
+KPI Configuration ProjectionTarget
+    ↓
+KPI Definition ProjectionTarget
 ```
-
-La identidad final usa `ProjectionTarget`/dependencies genéricos.
 
 No usar como identidad final:
 
 ```text
 tool_projection_revision
 kpi_configuration_revision
+source_revision
+projection_revision
 other private revision strings
 ```
-
-Las propiedades de dominio que no sean identidad Projection se preservan cuando estén justificadas por semántica real.
 
 ## Regla maestra
 
@@ -131,17 +154,22 @@ Las alarmas se proyectan sobre identidad estructural y pueden coexistir con dato
 
 ## Estrategia de cutover
 
-Cada dominio Configuration se migra a su contrato final antes de cortar el consumer Manager.
+Los dominios Configuration ya alcanzaron contrato final:
 
 ```text
 Tools              CLOSED
 → KPI Configuration CLOSED
-→ KPI Definition    NEXT
-→ ADA Configuration Manager
-→ regression
+→ KPI Definition    CLOSED
 ```
 
-No introducir adapters/shims para mantener el consumer ejecutable entre etapas.
+Siguiente frontera:
+
+```text
+→ ADA Configuration Manager final generic cutover
+→ global regression
+```
+
+No introducir adapters/shims para mantener contratos de consumer antiguos.
 
 ## Handoff hacia Command Center
 
@@ -155,4 +183,4 @@ Tool Configuration
 
 Command Center no modifica Tool Configuration.
 
-Este frente no se abre durante los cutovers KPI actuales.
+Este frente no se abre durante el cutover final del Configuration Manager.

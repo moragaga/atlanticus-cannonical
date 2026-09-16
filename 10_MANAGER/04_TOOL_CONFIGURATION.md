@@ -93,12 +93,6 @@ La alarma no determina existencia estructural.
 
 ## Source CURRENT
 
-Checkpoint de implementación:
-
-```text
-moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
-```
-
 Tool Configuration publica mediante:
 
 ```text
@@ -154,17 +148,24 @@ No reintroducir aliases, adapters o shims.
 
 ## Manager integration
 
-El `ada-configuration-manager` actual todavía referencia el contrato Tool anterior.
+El `ada-configuration-manager` publicado todavía referencia `ToolLifecycleServices` y `ToolConfigurationManagerWorkflowAdapter`.
 
-Eso se resuelve en el cutover final del Configuration Manager después de migrar KPI Configuration y KPI Definition.
+KPI Configuration y KPI Definition ya completaron también sus cutovers Source/Projection. Por tanto ya no existe una dependencia de dominio pendiente que justifique postergar el consumer final.
 
-No adaptar Tools para sostener temporalmente ese consumer.
+Estado:
+
+```text
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+PLANNED / NEXT
+```
+
+El ajuste debe ocurrir en el consumer. No adaptar Tools para sostener el contrato antiguo.
 
 ## Qualification
 
 Los tests CURRENT para Source/Projection existen en el repositorio.
 
-Su ejecución posterior al cutover permanece:
+Su ejecución scoped posterior al cutover Tools permanece:
 
 ```text
 UNVERIFIED

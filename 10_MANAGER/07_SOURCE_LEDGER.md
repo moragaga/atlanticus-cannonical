@@ -12,13 +12,13 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus@27c2e4beed125fe379881048f0df5fbe3ff6cb1a
+moragaga/atlanticus@ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
 ```
 
 Parent inmediato:
 
 ```text
-a065f45c55a527c96ce333705465487e95f0a737
+4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
 
 ## Manager core
@@ -32,6 +32,7 @@ Contrato:
 
 ```text
 ManagerModule
+source_key
 source_service
 source_reader_service
 projection_service
@@ -61,77 +62,98 @@ CLOSED / VERIFIED / CURRENT
 
 ## Tools Source/Projection
 
-Publicado en `27c2e4beed125fe379881048f0df5fbe3ff6cb1a`.
-
 ```text
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Agregado:
+## KPI Configuration Source/Projection
+
+Publicado en:
 
 ```text
-source_release.py
-source_projection.py
-ToolSourceService
-ToolProjectionBuilder
-create_tool_projection_service(...)
+4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
 
-Consume directamente:
-
 ```text
-atlanticus.web.source
-atlanticus.web.projection
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Removido del paquete Tools Configuration CURRENT:
+Qualification scoped documentada:
 
 ```text
-contracts.py
-lifecycle.py
-projection.py
-services.py
-source.py
-ToolLifecycle*
-private Source snapshot/revision contract
-private Projection snapshot/revision contract
+Ruff PASS
+pytest 45 passed
+git diff --check PASS
+legacy token scan 0 matches
 ```
 
-## Desalineación temporal conocida
+## KPI Definition Source/Projection
 
-`ada-configuration-manager` todavía contiene:
+Publicado en:
 
 ```text
-ToolLifecycleServices import
-ToolConfigurationManagerWorkflowAdapter
+ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+```
+
+```text
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+CURRENT:
+
+```text
+KpiDefinitionSourceService
+KpiDefinitionProjectionBuilder
+KpiDefinitionCatalog
+exact KPI Configuration ProjectionTarget dependency
+```
+
+Removido del dominio:
+
+```text
+KpiDefinitionAuthorityCatalog
+KpiDefinitionAuthorityProvider
+KpiDefinitionServices
+private revision lifecycle
 expected_source_revision
+build_kpi_definition_digest as identity
 ```
 
-No es un motivo para reintroducir legacy en Tools.
-
-Se resolverá en el cutover final del consumer.
-
-## Qualification
-
-Para Tools:
+Qualification scoped documentada:
 
 ```text
-CURRENT tests added
-VERIFIED
-
-scoped execution result
-UNVERIFIED
-
-CI remote status
-UNVERIFIED
+Python shell 3.14.7
+uv lock PASS
+uv sync --group dev --extra web PASS
+Ruff PASS
+pytest 40 passed
+legacy token scan 0 matches
 ```
 
-No atribuir a este checkpoint los resultados de qualification global del cierre Users.
+## Desalineación CURRENT del consumer
 
-## Decisión refinada
+`ada-configuration-manager` todavía contiene imports y adapters del contrato anterior:
 
-La transición entre dominios no requiere que `ada-configuration-manager` permanezca ejecutable.
+```text
+ToolLifecycleServices
+KpiConfigurationServices
+KpiDefinitionServices
+KpiDefinitionAuthorityProvider
+ExactProjectionWorkflow
+workflow_service
+exact_source_*
+expected_source_revision
+revision-string workflow adapters
+```
+
+También importa nombres `create_users_manager_exact_source_*` que ya no forman parte de Users Manager CURRENT.
+
+No es motivo para reintroducir legacy en los dominios.
+
+## Regla
 
 ```text
 DOMAIN FINAL CONTRACT FIRST
@@ -139,17 +161,26 @@ CONSUMER CUTOVER LAST
 NO TEMPORARY COMPATIBILITY
 ```
 
-## Historical decisions
+Todos los dominios Configuration requeridos ya alcanzaron contrato final.
 
-`atlanticus-decisions` continúa HISTORICAL.
+## Qualification pendiente
 
-La regla histórica inspeccionada de Manager mantiene que el workflow es genérico y la configuración concreta pertenece al dominio. Eso es consistente con Tools CURRENT.
+```text
+ADA Configuration Manager final runtime
+UNVERIFIED
+
+full ADA regression after consumer cutover
+BLOCKED
+
+CI remote status for ef3f0a44...
+UNVERIFIED
+```
 
 ## Próxima frontera
 
 ```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 PLANNED / NEXT
 ```
 
-No mezclar Manager final ni KPI Definition.
+No mezclar cleanup transversal de tests Web ni Python metadata en ese incremento salvo bloqueo real.

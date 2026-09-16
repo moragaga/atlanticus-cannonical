@@ -71,17 +71,18 @@ Invariantes:
 
 ## Projection contract
 
-```text
-get_status(source_key) -> ProjectionStatus
-select_current_target(source_key) -> ProjectionTarget | None
-project(target: ProjectionTarget) -> ProjectionExecutionResult
-```
+Manager coordina Projection mediante el contrato genérico y transporta `ProjectionTarget` completo.
 
-Manager no reconstruye target desde revision.
+Invariantes:
+
+- Manager no reconstruye target desde revision;
+- `ProjectionTarget` conserva `SourceKey`, release exacta y dependencias;
+- un target de otro `source_key` es inválido para el módulo;
+- retry no cambia silenciosamente el target seleccionado.
 
 ## Workspace
 
-`ManagerWorkspace` schema `2`:
+`ManagerWorkspace` schema `2` conserva:
 
 ```text
 owner_subject_id
@@ -94,18 +95,38 @@ payload
 
 `revision` y `base_payload_revision` son identidad local del payload, no Source release identity.
 
+`build_workspace_revision(payload)` pertenece a esta identidad local. No sustituirlo por digest/revision privado del dominio.
+
 ## Navigation adoption
 
-Navigation ya implementa el contrato anterior sin una segunda familia de workflows.
-
-Un mismo workflow Navigation satisface las superficies Source reader/publication/history y se registra con una única service key Source.
-
-Projection se registra directamente como servicio genérico.
+Navigation implementa el contrato genérico sin una segunda familia de workflows.
 
 Estado:
 
 ```text
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+## Users adoption
+
+Users Manager composition también fue cortado al contrato genérico.
+
+Package CURRENT exporta:
+
+```text
+UsersManagerDraftValidationWorkflow
+UsersManagerSourceWorkflow
+create_users_manager_draft_validation_workflow
+create_users_manager_source_workflow
+```
+
+No exporta la familia anterior `create_users_manager_exact_source_*`.
+
+Estado:
+
+```text
+USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
@@ -127,30 +148,38 @@ source_revision como identidad ejecutable
 revision -> ProjectionTarget reconstruction
 ```
 
-## Consumer mismatch observado
+## Consumer mismatch CURRENT
 
-`web/compositions/users-manager` todavía consume nombres `Exact*`.
+`scopes/ada/web/application/ada-configuration-manager` todavía referencia la familia anterior.
 
-Esto contradice el contrato CURRENT de Manager, pero su solución no está decidida.
+Verificado:
 
 ```text
-USERS-MANAGER-ALIGNMENT-VALIDATION
+composition.py imports create_users_manager_exact_source_* names
+composition.py constructs ManagerModule with exact_source_* / workflow_service
+workflows.py translates revision-string lifecycles
+```
+
+Eso contradice el contrato Manager CURRENT y debe resolverse en el consumer, no reabriendo Manager core ni Users.
+
+## Siguiente frontera
+
+```text
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 PLANNED / NEXT
 ```
 
-No reabrir Manager core para resolverlo.
+No inventar una tercera familia de workflows. Componer directamente servicios que satisfagan los contratos genéricos CURRENT.
 
 ## Qualification
 
+La qualification del Manager core pertenece a sus checkpoints cerrados previos.
+
+Este cierre no ejecutó una regression final de `ada-configuration-manager` sobre `ef3f0a44...`.
+
+Estado:
+
 ```text
-d34cda3838a67907728b382e238f0178f9f1a64e
-
-Navigation + Manager scoped:
-102 passed
-
-Ruff scoped:
-PASS
-
-Full Web:
-BLOCKED DURING COLLECTION BY users-manager
+final Configuration Manager runtime
+UNVERIFIED / BLOCKED until consumer cutover
 ```
