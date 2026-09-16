@@ -36,13 +36,7 @@ CONTRATO FINAL
 Generic Atlanticus contract only
 ```
 
-Una pieza no deja de ser compatibilidad por ser:
-
-- read-only;
-- privada;
-- interna al codec;
-- usada para historia durable;
-- necesaria para mantener tests existentes.
+Una pieza no deja de ser compatibilidad por ser read-only, privada, interna al codec, usada para historia durable o necesaria para mantener tests existentes.
 
 Si su única responsabilidad es entender un contrato/schema eliminado, pertenece al legado y debe removerse del runtime CURRENT.
 
@@ -69,8 +63,6 @@ reintroducir schemas anteriores como fallback
 declarar CLOSED sólo porque pytest está GREEN
 ```
 
-Los tests se corrigen cuando validan un contrato SUPERSEDED.
-
 ## Source / Projection
 
 | Decisión | Estado |
@@ -86,7 +78,7 @@ Los tests se corrigen cuando validan un contrato SUPERSEDED.
 | No introducir shim `SourceReleaseId <-> str` | FROZEN |
 | Restore publica una nueva release; no repunta current | FROZEN |
 | No reconstruir `ProjectionTarget` desde revision | FROZEN |
-| `expected_source_revision` | SUPERSEDED / REMOVE |
+| `expected_source_revision` | SUPERSEDED / REMOVED |
 
 ## Manager generic contract
 
@@ -155,59 +147,62 @@ Los tests se corrigen cuando validan un contrato SUPERSEDED.
 
 | Decisión | Estado |
 |---|---|
-| Users Manager consume contrato genérico Manager | IMPLEMENTED / VERIFIED |
+| Users Manager consume contrato genérico Manager | IMPLEMENTED / VERIFIED / CURRENT |
 | `UsersProfilesConfiguration` es aggregate CURRENT | CURRENT |
-| `UsersConfigurationCatalog` como authoring paralelo | SUPERSEDED / REMOVE |
-| `UserProfileConfiguration` paralelo | SUPERSEDED / REMOVE |
-| `expected_source_revision` | SUPERSEDED / REMOVE |
-| `projection_source_revision` | SUPERSEDED / REMOVE |
-| schema v1 reader dentro de runtime | SUPERSEDED / REMOVE |
-| `decode_users_profiles_schema_v1(...)` | SUPERSEDED / REMOVE |
+| `UsersConfigurationCatalog` como authoring paralelo | SUPERSEDED / REMOVED |
+| `UserProfileConfiguration` paralelo | SUPERSEDED / REMOVED |
+| `expected_source_revision` | SUPERSEDED / REMOVED |
+| `projection_source_revision` | SUPERSEDED / REMOVED |
+| schema v1 reader dentro de runtime | SUPERSEDED / REMOVED |
+| `decode_users_profiles_schema_v1(...)` | SUPERSEDED / REMOVED |
 | adapters permanentes para historia durable | FORBIDDEN |
 | migración histórica, si existe necesidad real | EXPLICIT ONE-OFF OPERATION ONLY |
+| `USERS-CLEAN-CUTOVER-COMPLETION` | CLOSED / VERIFIED / CURRENT |
+| `USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL` | CLOSED / VERIFIED / CURRENT |
 
-## Decisions superseded/refined durante este cierre
+## Decisiones reemplazadas o refinadas
 
 1. `USERS-MANAGER-ALIGNMENT-VALIDATION` era sólo análisis.
-   → **REFINED**: el Manager consumer de Users fue alineado al contrato genérico.
+   → **REFINED**: Users Manager fue alineado al contrato genérico.
 
-2. Se propuso conservar schema-v1 read compatibility para historia durable.
-   → **SUPERSEDED**: viola el clean cutover. Debe eliminarse completamente del runtime CURRENT.
+2. Conservar schema-v1 read compatibility para historia durable.
+   → **SUPERSEDED / REMOVED**.
 
-3. Se consideró Users CLOSED cuando Ruff/pytest y scan nominal estaban verdes.
-   → **SUPERSEDED**: GREEN de tests no sustituye cumplimiento del contrato congelado.
+3. Declarar Users CLOSED sólo por suite GREEN.
+   → **SUPERSEDED**.
 
-4. Se usaron tests de schema viejo como razón para preservar lectura.
-   → **SUPERSEDED**: tests que sólo defienden legacy se eliminan o reescriben después del cutover.
+4. Preservar lectura vieja porque existían tests.
+   → **SUPERSEDED**.
 
-5. La qualification podía guiar qué legacy conservar.
-   → **REFINED**: primero se completa la migración; después qualification detecta desalineaciones del estado final.
+5. Usar qualification para decidir qué legacy conservar.
+   → **REFINED**: primero clean cutover; luego qualification del estado final.
 
-6. Tools/KPI podía abrirse inmediatamente tras suite Web GREEN.
-   → **REFINED**: primero cerrar `USERS-CLEAN-CUTOVER-COMPLETION`.
+6. Abrir Tools/KPI antes de cerrar Users.
+   → **SUPERSEDED**. El prerequisito Users ya está satisfecho.
 
 ## Qualification observada
 
 | Hallazgo | Estado |
 |---|---|
-| baseline publicado inspeccionado | VERIFIED / `55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a` |
-| Users scoped Ruff local | VERIFIED / PASS |
-| Users scoped tests local | VERIFIED / 113 passed |
-| Full Web local | VERIFIED / 546 passed, 7 skipped |
-| `git diff --check` local | VERIFIED / PASS |
-| legacy-name exact scan ejecutado | VERIFIED / 0 matches para lista inspeccionada |
-| schema-v1 compatibility residue | VERIFIED / PRESENT / MUST REMOVE |
-| Tools consumer | UNVERIFIED |
-| KPI Configuration consumer | UNVERIFIED |
-| KPI Definition consumer | UNVERIFIED |
+| checkpoint publicado | VERIFIED / `a065f45c55a527c96ce333705465487e95f0a737` |
+| Users scoped Ruff | VERIFIED / PASS |
+| Users scoped tests | VERIFIED / 99 passed |
+| Full Web | VERIFIED / 545 passed, 7 skipped |
+| `git diff --check HEAD^..HEAD` | VERIFIED / PASS |
+| working tree final | VERIFIED / CLEAN |
+| forbidden scan sobre código CURRENT | VERIFIED / zero matches para lista inspeccionada |
+| schema-v1 compatibility residue | VERIFIED / REMOVED |
+| Tools consumer | UNVERIFIED / PLANNED NEXT |
+| KPI Configuration consumer | UNVERIFIED / PLANNED |
+| KPI Definition consumer | UNVERIFIED / PLANNED |
 | Docker E2E | UNVERIFIED |
 | Python 3.14.7 global | UNVERIFIED |
 
 ## Siguiente foco único
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED / NEXT
 ```
 
-No abrir ningún otro consumer hasta cerrarlo.
+No inferir que Tools necesita el mismo cutover que Users.

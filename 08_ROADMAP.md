@@ -13,10 +13,8 @@ No conservar legacy por conveniencia de tests.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
+moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
 ```
-
-El cutover de Users se encuentra en un working tree local posterior todavía no publicable como CURRENT.
 
 ## Hitos cerrados
 
@@ -30,60 +28,75 @@ CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
+USERS-CLEAN-CUTOVER-COMPLETION
+CLOSED / VERIFIED / CURRENT
+
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+CLOSED / VERIFIED / CURRENT
+
 PROJECTION-CORE-STALE-TEST-ALIGNMENT
 CLOSED / VERIFIED
 ```
 
-## Hito en progreso
+## Users closure
 
-```text
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-IN PROGRESS
-```
+El clean cutover removió la compatibilidad schema v1 que bloqueaba el cierre.
 
-Se implementó una parte importante del cutover, pero el cierre fue invalidado al detectar compatibilidad schema v1 en runtime.
-
-## Decisión de clean cutover
-
-Todo lo siguiente debe desaparecer antes de cerrar Users:
+No permanecen en runtime CURRENT:
 
 ```text
 schema_v1.py
 decode_users_profiles_schema_v1(...)
 Source schema-v1 fallback
 Projection schema-v1 fallback
-tests dedicados únicamente a esos fallbacks
-cualquier adapter/shim/alias equivalente
 ```
 
-No se agrega una segunda ruta para mantener historia o tests.
+Qualification posterior:
+
+```text
+ruff scoped
+PASS
+
+pytest scoped
+99 passed
+
+forbidden scan
+PASS / zero matches sobre código CURRENT
+
+full Web pytest
+545 passed
+7 skipped
+0 failed
+
+git diff --check HEAD^..HEAD
+PASS
+
+working tree
+CLEAN
+```
 
 ## Siguiente foco único
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED / NEXT
 ```
 
 Secuencia:
 
-1. inspeccionar exactamente todos los lugares que todavía entienden schema/contrato viejo;
-2. eliminarlos;
-3. no agregar reemplazos de compatibilidad;
-4. corregir/eliminar tests que prueben exclusivamente legacy;
-5. ejecutar scan completo;
-6. ejecutar Ruff y pytest scoped;
-7. ejecutar full Web pytest;
-8. sólo entonces declarar Users CLOSED.
+1. inspeccionar ownership y rutas reales de Tools;
+2. identificar contratos Source/Projection y composición Manager actuales;
+3. contrastar contra `ManagerModule` CURRENT;
+4. clasificar cualquier diferencia;
+5. recomendar una opción concreta;
+6. implementar sólo después de consenso;
+7. ejecutar qualification scoped y global cuando corresponda.
 
-## Después de Users
+No asumir que Tools requiere arquitectura especial ni copiar mecánicamente el cambio de Users.
 
-Consumers pendientes:
+## Después de Tools
 
 ```text
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
-PLANNED
-
 KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 
@@ -91,26 +104,18 @@ KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
-No se presupone que requieran los mismos cambios.
+No abrirlos junto con Tools.
 
-No comenzar ninguno hasta cerrar Users.
-
-## Qualification global
-
-Observada en el working tree actual:
+## Qualification global vigente
 
 ```text
-546 passed
+545 passed
 7 skipped
+0 failed
 ```
-
-Esto prueba que el árbol actual es consistente con sus tests, pero **no cierra Users** mientras exista compatibilidad prohibida.
-
-La próxima qualification relevante es la posterior a la eliminación final de legacy.
 
 ## No mezclar en el siguiente chat
 
-- Tools;
 - KPI Configuration;
 - KPI Definition;
 - Python migration;
@@ -121,5 +126,5 @@ La próxima qualification relevante es la posterior a la eliminación final de l
 Único foco:
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 ```

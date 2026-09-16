@@ -28,8 +28,6 @@ NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-No reabrir Navigation para resolver Users.
-
 ## CLOSED — Users Manager consumer
 
 ```text
@@ -37,16 +35,17 @@ USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-La composition de Users consume el contrato genérico Manager.
-
-## OPEN — Users clean cutover completion
+## CLOSED — Users clean cutover
 
 ```text
 USERS-CLEAN-CUTOVER-COMPLETION
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
+
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+CLOSED / VERIFIED / CURRENT
 ```
 
-VERIFIED problema:
+Ya no están OPEN:
 
 ```text
 schema_v1.py
@@ -55,42 +54,29 @@ schema-v1 read compatibility in Source
 schema-v1 read compatibility in Projection
 ```
 
-Adjudicación ya decidida:
+La adjudicación `REMOVE` fue implementada y verificada.
 
-```text
-REMOVE
-```
-
-No está OPEN decidir si conservarlo.
-
-Está OPEN únicamente ejecutar su eliminación y verificar consecuencias del contrato final.
-
-### Preguntas operativas permitidas
-
-1. ¿En qué archivos exactos queda todavía interpretación de schema viejo?
-2. ¿Qué tests existen únicamente para esa compatibilidad?
-3. ¿Qué otros símbolos/fallbacks equivalentes no fueron incluidos en el scan anterior?
-4. ¿La suite CURRENT queda verde después de eliminar todo legacy?
-5. Si falla, ¿el fallo pertenece al contrato final o a una expectativa SUPERSEDED?
-
-### No son preguntas abiertas
-
-- si schema v1 debe conservarse;
-- si una lectura read-only merece excepción;
-- si historia durable justifica fallback permanente;
-- si hay que agregar adapter/shim;
-- si los tests obligan a conservar comportamiento viejo.
-
-Todo eso está decidido: **NO**.
+Si existiera necesidad real de migrar datos viejos, sería un trabajo operacional explícito y separado, sujeto a evidencia real.
 
 ## OPEN — Tools consumer
 
 ```text
 TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
-PLANNED
+PLANNED / NEXT
 ```
 
-No analizar junto con Users.
+Sigue OPEN porque durante este cierre no se inspeccionaron ownership, rutas, contratos Source/Projection ni composición Manager de Tools.
+
+Preguntas permitidas:
+
+1. ¿Dónde vive exactamente Tools en la implementación CURRENT?
+2. ¿Qué contratos Source/Projection usa?
+3. ¿Cómo construye su `ManagerModule`?
+4. ¿Existe alguno de los elementos Manager SUPERSEDED?
+5. ¿Hay desviación real o ya cumple el contrato genérico?
+6. Si hay desviación, ¿cuál es el incremento mínimo y verificable?
+
+No asumir respuestas antes de inspeccionar `atlanticus:main`.
 
 ## OPEN — KPI Configuration consumer
 
@@ -99,6 +85,8 @@ KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
+No analizar junto con Tools.
+
 ## OPEN — KPI Definition consumer
 
 ```text
@@ -106,31 +94,46 @@ KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED
 ```
 
+No analizar junto con Tools.
+
 ## Qualification
 
-La full Web suite local llegó a:
+Users cerró con:
 
 ```text
-546 passed
-7 skipped
-```
+ruff scoped
+PASS
 
-pero debe repetirse después del clean cutover final.
+pytest scoped
+99 passed
+
+full Web pytest
+545 passed
+7 skipped
+0 failed
+
+git diff --check HEAD^..HEAD
+PASS
+
+working tree
+CLEAN
+```
 
 ## UNVERIFIED
 
-- absence total de old schema readers después del próximo incremento;
-- full Web GREEN post-cleanup;
 - full ADA suite;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- impacto de Tools/KPI.
+- Tools consumer;
+- KPI Configuration consumer;
+- KPI Definition consumer;
+- existencia de datos históricos schema v1 que requieran migración operacional.
 
 ## Siguiente foco
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 ```
 
 Fuentes obligatorias:

@@ -26,17 +26,13 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 | `ATLANTICUS_ENGINEERING_RULES.md` | Reglas de ingeniería. | CURRENT |
 | `BASELINE_CLOSURE.md` | Qué queda congelado y qué no. | CURRENT |
 
-## Autoridad de implementación en este cierre
-
-Publicado en `moragaga/atlanticus:main` al iniciar el incremento:
+## Autoridad de implementación
 
 ```text
-55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
+moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
 ```
 
-Existe un working tree local posterior a ese checkpoint con el cutover de Users en progreso.
-
-Ese working tree **no es todavía autoridad publicada** y no debe describirse como CURRENT hasta que se elimine toda compatibilidad legacy y se publique un nuevo checkpoint.
+Ese checkpoint contiene el cierre del clean cutover de Users.
 
 ## Estado de hitos
 
@@ -50,61 +46,78 @@ CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
+USERS-CLEAN-CUTOVER-COMPLETION
+CLOSED / VERIFIED / CURRENT
+
 USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-IN PROGRESS / NOT ACCEPTED YET
+CLOSED / VERIFIED / CURRENT
 
 PROJECTION-CORE-STALE-TEST-ALIGNMENT
 CLOSED / VERIFIED
 
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-VERIFIED GREEN ON CURRENT LOCAL WORKTREE
-546 passed / 7 skipped
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED / NEXT
+
+KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
+
+KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED
 ```
 
-## Razón por la que Users todavía no está CLOSED
+## Users clean cutover
 
-Durante el cutover local se introdujo compatibilidad permanente para schema v1:
+Removido del runtime CURRENT:
 
 ```text
 schema_v1.py
 decode_users_profiles_schema_v1(...)
 Source schema-v1 read branch
 Projection schema-v1 read branch
+tests dedicados a preservar lectura schema v1
 ```
 
-Esa compatibilidad viola la regla vigente del incremento:
+Regla vigente:
 
 ```text
 LEGACY                          REMOVE
 ADAPTERS / SHIMS / ALIASES     FORBIDDEN
 DOBLE CONTRATO                  FORBIDDEN
-OLD SCHEMAS IN RUNTIME CODE     REMOVE
+OLD SCHEMAS IN RUNTIME CODE     FORBIDDEN
 ```
 
-Por tanto la suite GREEN no convierte el incremento en aceptable.
+## Qualification de cierre
 
-## Regla de ejecución refinada
+```text
+ruff scoped
+PASS
 
-Primero se completa la migración limpia y se elimina todo contrato/schema/adaptador anterior.
+pytest scoped
+99 passed
 
-Después se ejecuta qualification scoped y global.
+forbidden scan sobre código CURRENT
+PASS / zero matches
 
-Los tests no justifican conservar comportamiento legacy.
+full Web pytest
+545 passed
+7 skipped
+0 failed
+
+git diff --check HEAD^..HEAD
+PASS
+
+git status --short
+CLEAN
+```
 
 ## Siguiente foco único
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED / NEXT
 ```
 
-Objetivo:
-
-- eliminar toda lectura/decodificación schema v1 introducida para compatibilidad;
-- eliminar tests dedicados exclusivamente a conservar schema v1;
-- comprobar que no queda ruta legacy, adapter, shim, alias o doble contrato;
-- sólo después ejecutar qualification completa;
-- no abrir Tools/KPI hasta cerrar Users.
+No asumir que Tools requiere los mismos cambios que Users.
 
 Atajos:
 

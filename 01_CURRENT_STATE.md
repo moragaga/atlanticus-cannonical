@@ -4,19 +4,19 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ## Autoridad
 
-Implementación publicada al inicio de este cierre:
+Implementación publicada y verificada:
 
 ```text
-moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
+moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
 ```
 
-El usuario mantiene un working tree local posterior con cambios no publicados.
+Parent inmediato:
 
-Por regla de autoridad:
+```text
+ec9bd35455b8221180b3f15740b58e34766f6112
+```
 
-- `atlanticus:main` continúa siendo la realidad implementada publicada;
-- el working tree local es evidencia del incremento en progreso;
-- canonical no debe declarar como CURRENT un cambio local todavía no publicado.
+La qualification final terminó con working tree limpio.
 
 ## Estado resumido
 
@@ -24,26 +24,20 @@ Por regla de autoridad:
 MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER          CLOSED / VERIFIED / CURRENT
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER           CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER             CLOSED / VERIFIED / CURRENT
-
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL        IN PROGRESS
-USERS-CLEAN-CUTOVER-COMPLETION                     PLANNED / NEXT
-
+USERS-CLEAN-CUTOVER-COMPLETION                     CLOSED / VERIFIED / CURRENT
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL        CLOSED / VERIFIED / CURRENT
 PROJECTION-CORE-STALE-TEST-ALIGNMENT               CLOSED / VERIFIED
 
-TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER             PLANNED / NEXT
 KPI-CONFIG-MANAGER-GENERIC-CONSUMER-CUTOVER        PLANNED
 KPI-DEFINITION-MANAGER-GENERIC-CONSUMER-CUTOVER    PLANNED
 ```
 
-## VERIFIED durante este hito
+## VERIFIED
 
-### Manager / Users Manager
+### Manager
 
-`users-manager` fue alineado al contrato genérico de Manager.
-
-La ruta `Exact*` anterior dejó de ser la frontera de composición.
-
-El contrato vigente permanece:
+Contrato vigente:
 
 ```text
 ManagerModule
@@ -55,158 +49,116 @@ ManagerModule
 └── source_history_service | None
 ```
 
-### Users Configuration local cutover
-
-En el working tree local se eliminaron o reemplazaron piezas de la arquitectura revision-based, incluyendo:
+No forman parte de la frontera CURRENT:
 
 ```text
-bundle.py
-contracts.py
-services.py
-projection.py
-runtime_projection.py
-validation.py
-configuration adapters legacy
-old web callbacks/layout
+workflow_service
+ExactSource*
+ExactProjection* como frontera Manager
 expected_source_revision
-base_source_revision executable contract
-projection_source_revision
 revision -> ProjectionTarget reconstruction
 ```
 
-También se removieron los modelos paralelos de authoring:
+### Users
+
+`web/compositions/users-manager` consume Manager genérico.
+
+El checkpoint `a065f45c...` elimina la compatibilidad schema v1 que bloqueaba el cierre, incluyendo ambos `schema_v1.py` y los fallbacks Source/Projection.
+
+Familia CURRENT:
 
 ```text
-UsersConfigurationCatalog
-UserProfileConfiguration
+UsersConfiguration
+ProfilesConfiguration
+UsersProfilesConfiguration
+UsersSourceService
+SourceSnapshot
+SourceReleaseRef
+ProjectionTarget
+ProjectionRecord
+ProjectionStore
+SourceProjectionService
 ```
 
-### Qualification observada
+No se reintrodujo adapter, shim, alias ni segunda ruta runtime.
 
-Qualification scoped de Users:
+### Qualification final
 
 ```text
-ruff: PASS
-pytest: 113 passed
-git diff --check: PASS
+ruff scoped
+PASS
+
+pytest scoped
+99 passed
+
+forbidden scan sobre código CURRENT
+PASS / zero matches
+
+full Web pytest
+545 passed
+7 skipped
+0 failed
+
+git diff --check HEAD^..HEAD
+PASS
+
+git status --short
+CLEAN
 ```
-
-Qualification global Web después de alinear un test stale de Projection core:
-
-```text
-pytest: 546 passed, 7 skipped
-```
-
-El test stale esperaba un mensaje anterior referido sólo a release; producción valida correctamente el `ProjectionTarget` completo.
-
-## VERIFIED problema pendiente
-
-El mismo working tree introdujo compatibilidad permanente con un schema viejo:
-
-```text
-web/capabilities/users/configuration/.../schema_v1.py
-decode_users_profiles_schema_v1(...)
-```
-
-y branches de lectura schema v1 en Source/Projection.
-
-Eso constituye compatibilidad legacy aunque:
-
-- no se llame `Adapter`;
-- sea read-only;
-- ayude a leer historia durable;
-- mantenga los tests verdes.
-
-Por tanto:
-
-```text
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-IN PROGRESS
-```
-
-No está CLOSED.
-
-## DECIDED / FROZEN
-
-```text
-LEGACY
-REMOVE
-
-ADAPTERS / SHIMS / ALIASES
-FORBIDDEN
-
-DOBLE CONTRATO
-FORBIDDEN
-
-OLD SCHEMAS IN RUNTIME CODE
-REMOVE
-
-expected_source_revision
-REMOVE
-
-revision -> ProjectionTarget reconstruction
-REMOVE
-
-CONTRATO FINAL
-Generic Atlanticus contract only
-```
-
-No se permite una excepción implícita para “durable history compatibility”.
-
-Si existe información real persistida en formato viejo, su migración debe resolverse explícitamente como operación de migración, no como código de compatibilidad permanente dentro del contrato CURRENT.
-
-## Refinamiento del orden de trabajo
-
-La secuencia vigente es:
-
-```text
-1. completar migración/cutover
-2. borrar legacy completamente
-3. borrar tests que sólo preservan legacy
-4. ejecutar qualification scoped
-5. ejecutar qualification global
-6. adjudicar desalineaciones reales restantes
-```
-
-No se modifica producción para hacer pasar tests que defienden contratos removidos.
-
-## SUPERSEDED
-
-Queda reemplazada la decisión introducida durante este chat de conservar schema-v1 read compatibility dentro del runtime.
-
-```text
-schema-v1 compatibility in CURRENT runtime
-SUPERSEDED / REMOVE
-```
-
-También queda reemplazada cualquier conclusión previa que marcara Users como CLOSED sólo porque la suite estaba GREEN.
 
 ## INFERRED
 
-La suite GREEN demuestra consistencia del working tree con los tests existentes, pero **no demuestra cumplimiento arquitectónico** cuando esos tests aceptan o prueban compatibilidad expresamente prohibida.
+La qualification prueba coherencia del Web workspace con los tests CURRENT observados y con el clean cutover inspeccionado.
+
+No prueba automáticamente ADA, Docker E2E, CI remoto, Python/Trixie global ni consumers no inspeccionados.
 
 ## ASSUMED
 
-Ninguno de los formatos schema v1 debe conservarse en runtime por defecto.
+No se asume existencia de datos productivos schema v1.
 
-Si existe una necesidad operacional real de migrar datos históricos, debe comprobarse desde datos/entorno autoritativo antes de diseñar una migración puntual.
+No se diseñó migración histórica. Si aparece una necesidad real, debe verificarse desde datos/entorno autoritativo y resolverse como operación explícita separada.
+
+## PROPOSED
+
+Único foco siguiente:
+
+```text
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+```
+
+Primera etapa: inspección y diseño. No escribir código antes de verificar una desviación real.
+
+## SUPERSEDED
+
+```text
+keep schema-v1 read compatibility for durable history
+SUPERSEDED / REMOVED
+
+Users is CLOSED because tests are green
+SUPERSEDED
+
+preserve old schemas to keep tests passing
+SUPERSEDED
+```
+
+El cierre actual se basa en clean cutover publicado más qualification posterior.
 
 ## UNVERIFIED
 
-- eliminación completa de `schema_v1.py`;
-- eliminación de todos los branches schema v1;
-- ausencia total de old schema readers en el resto de `web`;
-- qualification global después de esa eliminación;
 - full ADA suite;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- estado de Tools/KPI respecto del contrato Manager genérico.
+- Tools consumer;
+- KPI Configuration consumer;
+- KPI Definition consumer;
+- existencia de datos históricos schema v1 que requieran migración operacional.
 
 ## Siguiente frontera
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
+PLANNED / NEXT
 ```
 
-No abrir Tools/KPI hasta cerrarla.
+No mezclar KPI, Python migration, Docker E2E general, ADA-specific work ni rediseño de Manager core.

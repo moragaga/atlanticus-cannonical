@@ -12,10 +12,14 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
+moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
 ```
 
-Existe un working tree local posterior con cambios no publicados.
+Parent inmediato:
+
+```text
+ec9bd35455b8221180b3f15740b58e34766f6112
+```
 
 ## Manager core
 
@@ -62,10 +66,6 @@ Sin doble contrato ni adapters de transición.
 
 ## Users Manager
 
-Durante este cierre se verificó y corrigió la composición `web/compositions/users-manager`.
-
-Resultado conceptual:
-
 ```text
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
@@ -77,31 +77,14 @@ No deben reaparecer:
 ExactSource*
 ExactProjection*
 expected_source_revision
+revision -> ProjectionTarget reconstruction
 ```
 
-## Users Configuration working tree
+## Users Configuration clean cutover
 
-Se ejecutó un cutover amplio en el working tree local:
+Publicado en `a065f45c55a527c96ce333705465487e95f0a737`.
 
-- remoción de services/contracts/bundle/projection revision-based;
-- remoción de adapters de configuración antiguos;
-- remoción de modelos `UsersConfigurationCatalog` / `UserProfileConfiguration`;
-- alineación a `UsersProfilesConfiguration`;
-- alineación de runtime projection al `ProjectionRecord` genérico;
-- remoción de revision→target.
-
-Qualification observada:
-
-```text
-ruff scoped: PASS
-pytest scoped: 113 passed
-git diff --check: PASS
-full Web pytest: 546 passed, 7 skipped
-```
-
-## Error de implementación detectado antes del cierre
-
-El cutover introdujo:
+Removido:
 
 ```text
 schema_v1.py
@@ -110,17 +93,39 @@ Source schema-v1 fallback
 Projection schema-v1 fallback
 ```
 
-Adjudicación:
+Resultado:
 
 ```text
-SUPERSEDED / REMOVE
+USERS-CLEAN-CUTOVER-COMPLETION
+CLOSED / VERIFIED / CURRENT
+
+USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
+CLOSED / VERIFIED / CURRENT
 ```
 
-Razón:
+## Qualification de cierre
 
-su única responsabilidad es comprender el schema anterior.
+```text
+ruff scoped
+PASS
 
-Eso es un adapter de compatibilidad semántico aunque no use la palabra Adapter.
+pytest scoped
+99 passed
+
+forbidden scan sobre código CURRENT
+PASS / zero matches
+
+full Web pytest
+545 passed
+7 skipped
+0 failed
+
+git diff --check HEAD^..HEAD
+PASS
+
+git status --short
+CLEAN
+```
 
 ## Decisión refinada
 
@@ -131,11 +136,14 @@ OLD SCHEMA READERS IN CURRENT RUNTIME
 FORBIDDEN
 ```
 
-Si existe migración real de datos persistidos, debe ser una operación explícita separada.
+Si existe migración real de datos persistidos, debe ser una operación explícita separada y respaldada por evidencia del entorno.
 
 ## Projection core stale test
 
-La full suite había quedado con un único test que esperaba un mensaje anterior.
+```text
+PROJECTION-CORE-STALE-TEST-ALIGNMENT
+CLOSED / VERIFIED
+```
 
 Producción CURRENT valida:
 
@@ -143,42 +151,31 @@ Producción CURRENT valida:
 projection.target == requested target
 ```
 
-El test fue alineado con el contrato actual sin cambiar producción.
+No se reabre desde este cierre.
 
-Resultado posterior:
+## Conflictos documentales resueltos por este reemplazo
 
-```text
-546 passed
-7 skipped
-```
-
-## Conflictos documentales
-
-El canonical anterior todavía decía:
+El canonical anterior todavía describía:
 
 ```text
-Users Manager alignment PLANNED / NEXT
-global qualification BLOCKED during collection
+Users clean cutover PLANNED / NEXT
+Users legacy contract removal IN PROGRESS
+schema v1 compatibility PRESENT
 ```
 
-Eso está desactualizado respecto de la evidencia de este cierre.
-
-A la vez, el working tree local de Users no puede declararse CURRENT porque:
-
-- no está publicado;
-- todavía contiene compatibilidad schema v1 prohibida.
+Eso quedó desactualizado frente a `atlanticus:main@a065f45c...` y la qualification final.
 
 ## Historical decisions
 
-`atlanticus-decisions` no fue re-auditado exhaustivamente durante este cierre.
+`atlanticus-decisions` continúa HISTORICAL.
 
-No se le concede autoridad para reintroducir schemas/adapters legacy.
+No puede reintroducir schemas/adapters legacy ni reemplazar el contrato CURRENT.
 
 ## Próxima frontera
 
 ```text
-USERS-CLEAN-CUTOVER-COMPLETION
+TOOLS-MANAGER-GENERIC-CONSUMER-CUTOVER
 PLANNED / NEXT
 ```
 
-No mezclar Tools/KPI.
+No mezclar KPI.

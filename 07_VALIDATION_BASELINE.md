@@ -12,13 +12,9 @@ No declarar un cutover CLOSED sólo porque la suite está GREEN.
 
 ## Autoridad de implementación
 
-Checkpoint publicado inspeccionado al iniciar este cierre:
-
 ```text
-moragaga/atlanticus@55cd6121e000a6af5d4f0dc0ea2e384f97a27f2a
+moragaga/atlanticus@a065f45c55a527c96ce333705465487e95f0a737
 ```
-
-Existe un working tree local posterior no publicado.
 
 ## Hitos
 
@@ -32,78 +28,73 @@ CLOSED / VERIFIED / CURRENT
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
+USERS-CLEAN-CUTOVER-COMPLETION
+CLOSED / VERIFIED / CURRENT
+
 USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-IN PROGRESS
+CLOSED / VERIFIED / CURRENT
 
 PROJECTION-CORE-STALE-TEST-ALIGNMENT
 CLOSED / VERIFIED
 ```
 
-## Evidencia de Users observada
-
-Ejecutada por el usuario sobre el working tree local:
+## Evidencia final de Users
 
 ```text
 ruff scoped
 All checks passed!
 
 pytest scoped
-113 passed
+99 passed
 
-git diff --check
-PASS
-```
-
-Después de ajustar un test stale de Projection core:
-
-```text
 full Web pytest
-546 passed
+545 passed
 7 skipped
 0 failed
+
+git diff --check HEAD^..HEAD
+PASS
+
+git status --short
+CLEAN
 ```
 
-El ajuste fue sólo de expectativa textual del test:
+## Forbidden scan
+
+Lista de control:
 
 ```text
-old expectation:
-Projection result source release does not match target
-
-CURRENT production:
-Projection result target does not match requested target
+schema_v1
+decode_users_profiles_schema_v1
+expected_source_revision
+UsersConfigurationCatalog
+UserProfileConfiguration
+split_legacy_users_configuration_catalog
 ```
 
-La producción compara el `ProjectionTarget` completo; no se cambió producción para satisfacer el test antiguo.
+Resultado sobre código CURRENT:
 
-## Scan legacy observado
+```text
+PASS / zero matches
+```
 
-Se ejecutó un scan exacto sobre nombres conocidos del contrato revision-based y dio 0 matches.
+Los matches observados inicialmente para `expected_source_revision` estaban sólo bajo `build/` generado de Manager y no pertenecían al source CURRENT.
 
-Ese scan **no incluía inicialmente la compatibilidad `schema_v1`**, por lo que no era suficiente para declarar clean cutover.
+## Clean cutover implementado
 
-## Hallazgo que invalida el cierre de Users
-
-VERIFIED en el working tree:
+Removido:
 
 ```text
 schema_v1.py
 decode_users_profiles_schema_v1(...)
 Source schema-v1 read branch
 Projection schema-v1 read branch
+tests cuyo propósito era preservar lectura schema v1
 ```
 
-Adjudicación:
+Los tests CURRENT rechazan versiones no vigentes donde corresponde.
 
-```text
-semantic compatibility adapter
-SUPERSEDED / REMOVE
-```
-
-Que sea read-only o histórico no altera la adjudicación.
-
-## Política de tests refinada
-
-Durante una migración raíz:
+## Política de tests vigente
 
 ```text
 DO
@@ -120,21 +111,7 @@ DO NOT
 - considerar GREEN como criterio suficiente de arquitectura.
 ```
 
-Si al eliminar legacy la suite rompe, eso es evidencia a adjudicar **después** del cutover.
-
-## Qualification requerida para cerrar Users
-
-Sólo después de eliminar toda compatibilidad schema v1:
-
-```text
-ruff scoped
-pytest scoped
-exact forbidden scan over all web
-full Web pytest
-git diff --check
-```
-
-Criterio de aceptación:
+## Criterio de aceptación de Users
 
 ```text
 one valid route
@@ -145,25 +122,22 @@ zero expected_source_revision
 tests validate only CURRENT behavior
 ```
 
-## Estado global
-
-La suite Web local está GREEN sobre el working tree actual:
+Resultado:
 
 ```text
-546 passed
-7 skipped
+ACCEPTED
+CLOSED / VERIFIED / CURRENT
 ```
-
-Pero el hito Users permanece `IN PROGRESS` porque el working tree todavía viola una decisión arquitectónica congelada.
 
 ## UNVERIFIED
 
-- full Web GREEN después de remover schema v1;
 - full ADA suite;
 - Docker E2E;
 - CI remoto;
 - Python 3.14.7/Trixie global;
-- Tools/KPI consumers.
+- Tools consumer;
+- KPI Configuration consumer;
+- KPI Definition consumer.
 
 ## Git
 

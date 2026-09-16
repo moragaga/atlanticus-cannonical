@@ -1,6 +1,6 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT / GENERIC CORE + NAVIGATION + USERS MANAGER CONSUMERS**
+Estado: **CURRENT / GENERIC CORE + NAVIGATION + USERS CONSUMERS CLOSED**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -43,23 +43,12 @@ CLOSED / VERIFIED / CURRENT
 
 Users Manager composition
 CLOSED / VERIFIED / CURRENT
+
+Users Configuration clean cutover
+CLOSED / VERIFIED / CURRENT
 ```
 
-Users Manager ya no debe reintroducir una familia `Exact*`.
-
-## Users Configuration
-
-El consumer Manager está alineado, pero la capability de configuración todavía no está cerrada porque el working tree local contiene compatibilidad schema v1.
-
-```text
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-IN PROGRESS
-
-USERS-CLEAN-CUTOVER-COMPLETION
-PLANNED / NEXT
-```
-
-La compatibilidad detectada debe eliminarse, no adaptarse.
+Users no debe reintroducir familia `Exact*`, revision lifecycle ni schema legacy runtime.
 
 ## Regla de consumer adoption
 
@@ -77,28 +66,33 @@ schema fallback para conservar consumer viejo
 
 ## Qualification observada
 
-Users scoped:
-
 ```text
-ruff: PASS
-pytest: 113 passed
-```
+Users scoped Ruff
+PASS
 
-Web global local:
+Users scoped pytest
+99 passed
 
-```text
-546 passed
+Web global
+545 passed
 7 skipped
-```
+0 failed
 
-No declarar Users Configuration CLOSED hasta eliminar schema v1 y repetir qualification.
+git diff --check HEAD^..HEAD
+PASS
+
+git status --short
+CLEAN
+```
 
 ## Consumers pendientes no revalidados
 
 ```text
-Tools             PLANNED
+Tools             PLANNED / NEXT
 KPI Configuration PLANNED
 KPI Definition    PLANNED
 ```
 
-No abrirlos en paralelo con `USERS-CLEAN-CUTOVER-COMPLETION`.
+No asumir que requieren el mismo cambio.
+
+El próximo incremento debe inspeccionar sólo Tools.
