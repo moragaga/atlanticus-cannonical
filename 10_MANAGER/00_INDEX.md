@@ -1,12 +1,12 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT GENERIC CORE / DOMAIN CONTRACTS CLOSED / ADA CONFIGURATION CONSUMER NEXT**
+Estado: **CURRENT GENERIC CORE / ADA CONFIGURATION CONSUMER CURRENT / UI CLEANUP NEXT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
 | `01_APPLICATION_BOUNDARY.md` | Manager como capability independiente. | CURRENT |
 | `02_NAVIGATION_AND_HOME.md` | Home, sidebar y navegación administrativa. | CURRENT |
-| `03_WORKFLOW_AND_SESSION.md` | WORKSPACE/SOURCE/PROJECTION y contrato genérico único. | CURRENT |
+| `03_WORKFLOW_AND_SESSION.md` | WORKSPACE/SOURCE/PROJECTION y consumer final. | CURRENT |
 | `04_TOOL_CONFIGURATION.md` | Herramienta, Component/Subcomponent y contrato Source/Projection CURRENT. | FROZEN/CURRENT |
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Testing contractual. | CURRENT POLICY |
@@ -52,56 +52,83 @@ CLOSED / VERIFIED / CURRENT
 
 KPI Definition Source/Projection
 CLOSED / VERIFIED / CURRENT
+
+ADA Configuration Manager final generic cutover
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Configuration Manager consumer mismatch
+## Configuration Manager CURRENT
 
-`scopes/ada/web/application/ada-configuration-manager` todavía usa contratos anteriores.
-
-Verificado en el checkpoint CURRENT:
+Publicado en:
 
 ```text
-workflow_service
-exact_source_*
-ExactProjectionWorkflow
+moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+```
+
+El consumer registra contratos genéricos separados por módulo:
+
+```text
+source
+source-reader
+source-history
+projection
+draft-validation
+```
+
+El workspace de los editores se integra mediante `ManagerWorkspaceBridge` sobre `ManagerWorkspace`.
+
+El package incluye un runtime local ejecutable con `LocalSourceStore` e `InProcessProjectionStore`.
+
+## Legacy consumer removal
+
+SUPERSEDED / REMOVED:
+
+```text
 ToolLifecycleServices
 KpiConfigurationServices
 KpiDefinitionServices
 KpiDefinitionAuthorityProvider
-revision-string workflow adapters
+NavigationConfigurationServices
+ExactProjectionWorkflow
+workflow_service
+exact_source_*
 expected_source_revision
+revision-string workflow adapters
 ```
 
-Además intenta importar nombres `create_users_manager_exact_source_*` que ya no forman parte del package Users Manager CURRENT.
+No reintroducirlos para corregir UI.
 
-Esto no reabre Manager core ni los dominios cerrados.
-
-## Regla de consumer adoption
-
-Todo consumer Manager final debe usar el contrato genérico directamente.
-
-FORBIDDEN:
+## Evidencia de cierre
 
 ```text
-adapter Manager-specific para contrato viejo
-double routing
-revision-string lifecycle
-revision -> ProjectionTarget reconstruction
-alias dentro del dominio para sostener imports viejos
+git diff --check
+PASS
+
+legacy scan
+0 matches
+
+compileall
+PASS
+
+local UI boot
+PASS / manual smoke
 ```
+
+Full behavioral E2E continúa UNVERIFIED.
 
 ## Siguiente frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP
 PLANNED / NEXT
 ```
 
-El objetivo es cortar el consumer completo una sola vez, no migrar Definition aisladamente dentro del Manager.
-
-Después:
+Después, en incrementos separados:
 
 ```text
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-BLOCKED until final cutover
+ADA-CONFIGURATION-MANAGER-LOCAL-E2E
+PLANNED
+
+ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E
+PLANNED
 ```

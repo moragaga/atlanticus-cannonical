@@ -13,7 +13,13 @@ No inventar un PASS cuando no existe resultado de ejecución observado.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+```
+
+Parent:
+
+```text
+ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
 ```
 
 ## Hitos contractuales
@@ -45,167 +51,146 @@ CLOSED / VERIFIED / CURRENT
 
 KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Evidencia anterior conservada — Users
+## Evidencia anterior conservada
 
-La qualification global documentada anterior permanece atribuida únicamente a su checkpoint correspondiente:
+La evidencia de checkpoints previos sigue atribuida únicamente a esos checkpoints.
 
-```text
-ruff scoped
-PASS
+No trasladar resultados de Users/KPI Configuration/KPI Definition al checkpoint actual.
 
-pytest scoped
-99 passed
+## Configuration Manager — evidencia observada
 
-full Web pytest
-545 passed
-7 skipped
-0 failed
-```
-
-No trasladar esa evidencia a checkpoints posteriores.
-
-## Tools — ejecución
-
-La implementación Tools Source/Projection permanece CLOSED / VERIFIED / CURRENT por inspección.
-
-Su ejecución scoped posterior a su cutover continúa UNVERIFIED en esta documentación.
-
-## KPI Configuration — evidencia observada
-
-Qualification local ejecutada sobre el árbol que luego fue integrado:
+Antes de cerrar el cutover se observó:
 
 ```text
-uv lock
-PASS
-
-uv sync --group dev
-PASS
-
-uv run ruff check src tests
-PASS
-
-uv run pytest
-45 passed
-
 git diff --check
 PASS
 
-legacy token scan scoped
-0 matches
-```
-
-Checkpoint publicado:
-
-```text
-4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
-```
-
-## KPI Definition — evidencia observada
-
-Qualification local ejecutada sobre el árbol que luego fue integrado:
-
-```text
-Python shell
-3.14.7
-
-uv lock
-PASS
-
-uv sync --group dev --extra web
-PASS
-
-uv run ruff check src tests
-PASS
-
-uv run pytest
-40 passed
-
 legacy token scan scoped over src/commented/tests
 0 matches
+
+python3 -m compileall scoped
+PASS
 ```
 
-El primer Ruff run detectó un único import no usado en `tests/test_web_runtime.py`; se eliminó ese import y la ejecución posterior pasó.
-
-Los errores de `rm` sobre archivos legacy ya borrados no representaban fallo: `git status` confirmaba las eliminaciones esperadas.
-
-Resultados bajo `build/lib` durante scans globales corresponden a artefactos generados y no son autoridad de código CURRENT. `build` está excluido del lint/package source relevante.
-
-Checkpoint publicado e inspeccionado:
+Después, el usuario levantó el runtime local y confirmó:
 
 ```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+Configuration Manager page boot
+PASS / manual smoke
 ```
 
-Verificado por inspección:
+El checkpoint publicado que contiene ese cutover es:
 
 ```text
-KpiDefinitionSourceService CURRENT
-KpiDefinitionProjectionBuilder CURRENT
-KpiDefinitionCatalog CURRENT
-exact KPI Configuration ProjectionTarget dependency CURRENT
-private authority/lifecycle/source/projection API removed
-current tests present
+ee9a0401c7947f2bf61abc0a783dfa905443b6b1
 ```
 
-## Criterio contractual de KPI Definition
+## Verificación por inspección de main
+
+El checkpoint contiene:
 
 ```text
-one generic Source contract
-one generic Projection contract
-exact KPI Configuration ProjectionTarget dependency
-zero KpiDefinitionAuthority bridge
-zero private Source/Projection lifecycle
-zero private source revision identity
-zero private projection revision identity
-zero kpi_configuration_revision dependency identity
-zero revision -> ProjectionTarget reconstruction
-zero compatibility adapters inside KPI Definition
-ADA ownership preserved
+ConfigurationManagerDependencies con contracts CURRENT
+ManagerModule generic service wiring
+ManagerWorkspaceBridge
+generic Source/Validation workflows
+ToolConfigurationKpiDestinationCatalogProvider
+local_runtime.py
+__main__.py
+KPI Definition dependency 0.6.0
 ```
 
-Resultado:
+El package ya no contiene `kpi_authority.py`.
+
+Búsquedas posteriores en `main` no encontraron `expected_source_revision`, `KpiDefinitionAuthorityProvider` ni `ExactProjectionWorkflow`.
+
+## Lo que NO está validado todavía
+
+No existe evidencia observada en este cierre para declarar PASS de:
 
 ```text
-IMPLEMENTED / VERIFIED IN MAIN
-SCOPED LOCAL QUALIFICATION / PASS
+uv lock del checkpoint final
+uv sync del checkpoint final
+full Ruff del Configuration Manager
+full pytest del Configuration Manager
+full ADA regression
+edit → workspace → validate → publish → project E2E
+history/reload E2E
+Storage/Cosmos Docker E2E
+CI remoto
 ```
 
-## Regresión final de Configuration
+El hecho de que la página levante no sustituye esas pruebas.
 
-Se difiere hasta completar:
+## UI
+
+La UI volvió a estar disponible.
+
+El usuario observó faltantes/problemas de UI y posibles contratos extraños.
+
+Estado:
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+PLANNED / NEXT
 ```
 
-Luego ejecutar la regression completa y adjudicar sólo fallos del contrato final.
+La validation visual debe comprobar apariencia y comportamiento visible sin crear tests que congelen CSS arbitrario.
 
-## UNVERIFIED
+## E2E planificado
 
-- Tools scoped pytest/Ruff posterior a su propio cutover;
-- final Configuration Manager runtime sobre contrato genérico;
-- full ADA suite posterior al cutover final;
-- Docker E2E;
-- CI remoto de `ef3f0a44...`;
-- Python 3.14.7/Trixie global;
-- concrete production provider composition para KPI destinations, si continúa siendo relevante tras el consumer cutover.
+Después de UI cleanup:
+
+```text
+ADA-CONFIGURATION-MANAGER-LOCAL-E2E
+PLANNED
+```
+
+Objetivo futuro:
+
+```text
+edit
+→ workspace
+→ validate
+→ verify Source
+→ publish
+→ project
+→ reload/status/history
+```
+
+Después:
+
+```text
+ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E
+PLANNED
+```
+
+Ese incremento deberá validar la topología acordada con Storage/Cosmos localizados en Docker. No se considera implementado ni diseñado por este cierre.
 
 ## Conflicto de metadata Python
 
-El runtime observado durante qualification KPI Definition fue Python 3.14.7, pero los `pyproject.toml` publicados contienen:
+Canonical fija:
 
 ```text
-KPI Configuration requires-python = "==3.14.2"
-KPI Definition    requires-python = "==3.14.2"
+Python 3.14.7
 ```
 
-No considerar este conflicto resuelto por el hecho de que la suite scoped de KPI Definition haya pasado.
+Configuration Manager CURRENT declara:
+
+```text
+requires-python = "==3.14.2"
+```
+
+Permanece OPEN.
 
 ## Tests Web
 
-La política CURRENT permanece:
+Política CURRENT:
 
 ```text
 tests protect behavior/contracts
@@ -214,14 +199,7 @@ not existence/non-existence of internal functions/classes
 not accidental module structure
 ```
 
-La revisión transversal de tests Web queda:
-
-```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / AFTER MANAGER
-```
-
-No mezclarla con el cutover final del Configuration Manager salvo tests legacy directamente afectados por el contrato que se elimina.
+`WEB-TEST-CONTRACT-CLEANUP` continúa PLANNED y separado.
 
 ## Git
 

@@ -1,6 +1,6 @@
 # Manager — Workflow and Session
 
-Estado: **CURRENT CONTRACT / GENERIC CUTOVER CLOSED**
+Estado: **CURRENT CONTRACT / GENERIC CONSUMER CUTOVER CLOSED**
 
 ## Flujo conceptual
 
@@ -71,7 +71,7 @@ Invariantes:
 
 ## Projection contract
 
-Manager coordina Projection mediante el contrato genérico y transporta `ProjectionTarget` completo.
+Manager transporta `ProjectionTarget` completo.
 
 Invariantes:
 
@@ -82,53 +82,42 @@ Invariantes:
 
 ## Workspace
 
-`ManagerWorkspace` schema `2` conserva:
+`ManagerWorkspace` mantiene identidad local del payload separada de Source identity.
+
+El Configuration Manager CURRENT usa `ManagerWorkspaceBridge`.
+
+El bridge:
 
 ```text
-owner_subject_id
-revision
-base_payload_revision
-saved_at_utc
-source_snapshot
-payload
+read browser document
+→ parse ManagerWorkspace
+→ verify owner
+→ expose payload
+
+write payload
+→ existing workspace.with_payload(...)
+or
+→ ManagerWorkspace.create(..., base=current SourceSnapshot)
 ```
 
-`revision` y `base_payload_revision` son identidad local del payload, no Source release identity.
+No crea identidad Source desde una revision local.
 
-`build_workspace_revision(payload)` pertenece a esta identidad local. No sustituirlo por digest/revision privado del dominio.
-
-## Navigation adoption
-
-Navigation implementa el contrato genérico sin una segunda familia de workflows.
+## Configuration Manager adoption
 
 Estado:
 
 ```text
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## Users adoption
+El consumer final publicado compone workflows que satisfacen directamente los contratos genéricos.
 
-Users Manager composition también fue cortado al contrato genérico.
+Para Navigation, Tools, KPI Configuration y KPI Definition existen workflows de Source y Draft Validation en el composition package.
 
-Package CURRENT exporta:
+Users usa la composición Users Manager CURRENT.
 
-```text
-UsersManagerDraftValidationWorkflow
-UsersManagerSourceWorkflow
-create_users_manager_draft_validation_workflow
-create_users_manager_source_workflow
-```
-
-No exporta la familia anterior `create_users_manager_exact_source_*`.
-
-Estado:
-
-```text
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
+Es legítimo que una misma instancia implemente Source reader/publication/history y se registre bajo service keys diferentes; esto no reintroduce `workflow_service` como contrato Manager.
 
 ## Contrato removido
 
@@ -148,38 +137,46 @@ source_revision como identidad ejecutable
 revision -> ProjectionTarget reconstruction
 ```
 
-## Consumer mismatch CURRENT
+## Runtime local
 
-`scopes/ada/web/application/ada-configuration-manager` todavía referencia la familia anterior.
-
-Verificado:
+CURRENT para smoke/manual validation:
 
 ```text
-composition.py imports create_users_manager_exact_source_* names
-composition.py constructs ManagerModule with exact_source_* / workflow_service
-workflows.py translates revision-string lifecycles
+LocalSourceStore
+InProcessProjectionStore
 ```
 
-Eso contradice el contrato Manager CURRENT y debe resolverse en el consumer, no reabriendo Manager core ni Users.
+La composición local incluye Users, Navigation, Tools, KPI Configuration y KPI Definition.
+
+Esto demuestra composición ejecutable local, no E2E productivo.
+
+## Qualification del cierre
+
+Observado:
+
+```text
+static checks
+PASS
+
+local page boot
+PASS
+```
+
+No observado:
+
+```text
+full behavioral E2E
+full package regression
+Storage/Cosmos E2E
+```
 
 ## Siguiente frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP
 PLANNED / NEXT
 ```
 
-No inventar una tercera familia de workflows. Componer directamente servicios que satisfagan los contratos genéricos CURRENT.
+No inventar una nueva familia de workflows para resolver UI.
 
-## Qualification
-
-La qualification del Manager core pertenece a sus checkpoints cerrados previos.
-
-Este cierre no ejecutó una regression final de `ada-configuration-manager` sobre `ef3f0a44...`.
-
-Estado:
-
-```text
-final Configuration Manager runtime
-UNVERIFIED / BLOCKED until consumer cutover
-```
+Cualquier contrato sospechoso debe contrastarse primero con este contrato CURRENT y con su implementación real.

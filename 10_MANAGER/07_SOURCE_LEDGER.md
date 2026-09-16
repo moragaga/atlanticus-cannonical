@@ -12,13 +12,13 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus@ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
 ```
 
 Parent inmediato:
 
 ```text
-4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
+ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
 ```
 
 ## Manager core
@@ -40,147 +40,140 @@ draft_validation_service
 source_history_service | None
 ```
 
-## Navigation
+## Configuration domains
 
 ```text
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-## Users
-
-```text
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-USERS-CLEAN-CUTOVER-COMPLETION
-CLOSED / VERIFIED / CURRENT
-
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-CLOSED / VERIFIED / CURRENT
-```
-
-## Tools Source/Projection
-
-```text
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-## KPI Configuration Source/Projection
-
-Publicado en:
-
-```text
-4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
-```
-
-```text
 KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-Qualification scoped documentada:
-
-```text
-Ruff PASS
-pytest 45 passed
-git diff --check PASS
-legacy token scan 0 matches
-```
-
-## KPI Definition Source/Projection
-
-Publicado en:
-
-```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
-```
-
-```text
 KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-CURRENT:
+## ADA Configuration Manager final consumer
+
+Publicado en:
 
 ```text
-KpiDefinitionSourceService
-KpiDefinitionProjectionBuilder
-KpiDefinitionCatalog
-exact KPI Configuration ProjectionTarget dependency
+ee9a0401c7947f2bf61abc0a783dfa905443b6b1
 ```
 
-Removido del dominio:
+Estado:
 
 ```text
-KpiDefinitionAuthorityCatalog
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+Verificado por inspección:
+
+```text
+ConfigurationManagerDependencies usa contracts CURRENT
+composition.py registra source/reader/history/projection/validation
+Users usa users-manager CURRENT
+Navigation usa NavigationSourceService + Projection service
+Tools usa ToolSourceService + Projection service
+KPI usa KpiSourceService + Projection service
+KPI Definition usa KpiDefinitionSourceService + Projection service
+ManagerWorkspaceBridge presente
+local_runtime.py presente
+__main__.py presente
+```
+
+Removido del consumer:
+
+```text
+kpi_authority.py
 KpiDefinitionAuthorityProvider
-KpiDefinitionServices
-private revision lifecycle
-expected_source_revision
-build_kpi_definition_digest as identity
-```
-
-Qualification scoped documentada:
-
-```text
-Python shell 3.14.7
-uv lock PASS
-uv sync --group dev --extra web PASS
-Ruff PASS
-pytest 40 passed
-legacy token scan 0 matches
-```
-
-## Desalineación CURRENT del consumer
-
-`ada-configuration-manager` todavía contiene imports y adapters del contrato anterior:
-
-```text
 ToolLifecycleServices
 KpiConfigurationServices
 KpiDefinitionServices
-KpiDefinitionAuthorityProvider
+NavigationConfigurationServices
 ExactProjectionWorkflow
 workflow_service
 exact_source_*
 expected_source_revision
-revision-string workflow adapters
+revision-string projection adapters
 ```
 
-También importa nombres `create_users_manager_exact_source_*` que ya no forman parte de Users Manager CURRENT.
+## Evidencia observada
 
-No es motivo para reintroducir legacy en los dominios.
-
-## Regla
+Antes de publicación:
 
 ```text
-DOMAIN FINAL CONTRACT FIRST
-CONSUMER CUTOVER LAST
-NO TEMPORARY COMPATIBILITY
+git diff --check
+PASS
+
+legacy token scan scoped
+0 matches
+
+compileall scoped
+PASS
 ```
 
-Todos los dominios Configuration requeridos ya alcanzaron contrato final.
+Después:
+
+```text
+Configuration Manager local page boot
+PASS / manual observation
+```
 
 ## Qualification pendiente
 
 ```text
-ADA Configuration Manager final runtime
+full Ruff
 UNVERIFIED
 
-full ADA regression after consumer cutover
-BLOCKED
-
-CI remote status for ef3f0a44...
+full pytest
 UNVERIFIED
+
+full ADA regression
+UNVERIFIED
+
+local behavioral E2E
+UNVERIFIED
+
+Storage/Cosmos Docker E2E
+UNVERIFIED
+
+CI remote
+UNVERIFIED
+```
+
+## Python metadata
+
+Configuration Manager CURRENT:
+
+```text
+requires-python = "==3.14.2"
+```
+
+Canonical baseline:
+
+```text
+Python 3.14.7
+```
+
+Estado:
+
+```text
+OPEN
 ```
 
 ## Próxima frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP
 PLANNED / NEXT
 ```
 
-No mezclar cleanup transversal de tests Web ni Python metadata en ese incremento salvo bloqueo real.
+No mezclar E2E, Storage/Cosmos Docker ni Python metadata en ese incremento salvo bloqueo directo.

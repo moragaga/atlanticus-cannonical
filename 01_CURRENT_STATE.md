@@ -4,23 +4,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ## Autoridad
 
-Implementación publicada y verificada por inspección:
+Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
 ```
 
 Parent inmediato:
 
 ```text
-4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
+ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
 ```
 
-Canonical inspeccionado para este cierre:
+Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@430a90529c99e69d16978f60d91aa86f819b851e
+moragaga/atlanticus-cannonical@c6c49d72638483d5bec3d2cf9745de3745f1c703
 ```
+
+Git permanece SOLO LECTURA para el asistente.
 
 ## Estado resumido
 
@@ -34,212 +36,244 @@ PROJECTION-CORE-STALE-TEST-ALIGNMENT               CLOSED / VERIFIED
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER            CLOSED / VERIFIED / CURRENT
 KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER       CLOSED / VERIFIED / CURRENT
 KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER   CLOSED / VERIFIED / CURRENT
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER    PLANNED / NEXT
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION              BLOCKED
-WEB-TEST-CONTRACT-CLEANUP                          PLANNED / AFTER MANAGER
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER    CLOSED / VERIFIED / CURRENT
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP               PLANNED / NEXT
+ADA-CONFIGURATION-MANAGER-LOCAL-E2E                 PLANNED / AFTER UI CLEANUP
+ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E        PLANNED / AFTER LOCAL E2E
+MANAGER-CONSUMER-GLOBAL-QUALIFICATION               PLANNED / UNBLOCKED
+WEB-TEST-CONTRACT-CLEANUP                           PLANNED
 ```
 
 ## VERIFIED
 
-### Ownership ADA
+### Published checkpoint
 
-Tools, KPI Configuration y KPI Definition son capacidades ADA-specific bajo `scopes/ada`.
+`main` avanzó a `ee9a0401c7947f2bf61abc0a783dfa905443b6b1`, hijo directo de `ef3f0a44c5dcc14f8fcafe5bb36bb97865381924`.
 
-Consumir infraestructura genérica Atlanticus no mueve automáticamente una capability hacia `web/capabilities`.
+### Configuration Manager final generic cutover
 
-### KPI Definition Source CURRENT
+El package publicado:
 
 ```text
-KpiDefinitionSourceCodec
-KpiDefinitionSourcePayload
-KpiDefinitionSourceRelease
-KpiDefinitionSourceService
-SourceStore
-SourceSnapshot
-SourceReleaseRef
-PublishRequest
-PublishResult
-HistoryQuery
-HistoryPage
+scopes/ada/web/application/ada-configuration-manager
 ```
 
-No existe `expected_source_revision` ni una revision string privada como identidad Source CURRENT.
+ya consume directamente los contratos CURRENT de Users, Navigation, Tools, KPI Configuration y KPI Definition.
 
-### KPI Definition Projection CURRENT
-
-```text
-KpiDefinitionProjectionBuilder
-create_kpi_definition_projection_service(...)
-ProjectionStore[KpiDefinitionCatalog]
-SourceProjectionService[KpiDefinitionCatalog]
-ProjectionTarget
-```
-
-Dependencia directa:
+`ConfigurationManagerDependencies` usa tipos finales:
 
 ```text
+UsersProfilesAdministrationService
+SourceProjectionService[UsersProfilesConfiguration]
+
+NavigationSourceService
+SourceProjectionService[NavigationConfigurationCatalog]
+
+ToolSourceService
+SourceProjectionService[ToolConfiguration]
+
+KpiSourceService
+SourceProjectionService[KpiConfiguration]
+KpiDestinationCatalogProvider
 ProjectionStore[KpiConfiguration]
-+
-exact KPI Configuration ProjectionTarget
+
+KpiDefinitionSourceService
+SourceProjectionService[KpiDefinitionCatalog]
 ```
 
-El target KPI Definition contiene exactamente una dependencia KPI Configuration. El builder carga la proyección activa KPI Configuration y exige igualdad exacta con la dependencia seleccionada. Si cambió antes de ejecutar KPI Definition, la proyección falla.
+No depende de los bundles legacy removidos.
 
-### Semántica de cobertura CURRENT
+### Manager module wiring
+
+La composición publicada registra por módulo servicios separados para:
 
 ```text
-KpiDefinitionCatalog
-KpiDefinitionCoverageStatus.DEFINED
-KpiDefinitionCoverageStatus.MISSING
+source
+source-reader
+source-history
+projection
+draft-validation
 ```
 
-Un KPI configurado sin Definition es `MISSING` y sigue siendo una proyección válida.
-
-Una Definition cuyo `kpi_key` no existe en `KpiConfiguration.kpi_keys` es inválida para proyección.
-
-### Legacy removido de KPI Definition
-
-El paquete CURRENT ya no exporta ni usa como contrato de dominio:
+y construye `ManagerModule` con:
 
 ```text
-KpiDefinitionAuthorityCatalog
-KpiDefinitionAuthorityProvider
-KpiDefinitionAdministrationService
-KpiDefinitionProjectionWorkflow
-KpiDefinitionServices
-KpiDefinitionSourceDocument
-build_kpi_definition_digest
-build_kpi_definition_projection_revision
+source_key
+source_service
+source_reader_service
+source_history_service
+projection_service
+draft_validation_service
+```
+
+No existe doble routing legacy/exact en el consumer final.
+
+### Workspace
+
+El consumer usa `ManagerWorkspace` como documento de workspace.
+
+`ManagerWorkspaceBridge`:
+
+- lee/escribe payload dentro de `ManagerWorkspace`;
+- valida ownership por `owner_subject_id`;
+- obtiene `SourceSnapshot` sólo al crear un workspace nuevo;
+- no reconstruye Source identity desde revision strings.
+
+La identidad local de workspace sigue separada de Source y Projection.
+
+### Local runtime
+
+El package publicado contiene entrypoint local y composición local.
+
+CURRENT para smoke/manual validation:
+
+```text
+LocalSourceStore
+InProcessProjectionStore
+EmptyPendingUsersReader
+Users Source/Projection
+Navigation Source/Projection
+Tools Source/Projection
+KPI Configuration Source/Projection
+KPI Definition Source/Projection
+```
+
+Las source keys locales son:
+
+```text
+users
+navigation
+tools
+kpis
+kpi-definitions
+```
+
+El principal local es administrador local.
+
+### Legacy removal
+
+Scans observados durante el cierre no encontraron:
+
+```text
+ExactProjectionWorkflow
 expected_source_revision
+KpiDefinitionAuthorityProvider
+KpiConfigurationServices
+KpiDefinitionServices
+ToolLifecycleServices
+NavigationConfigurationServices
+base_source_revision
+build_kpi_configuration_digest
+build_kpi_definition_digest
+build_tool_configuration_digest
+ManagerDraft
+tool_projection_revision
 ```
 
-El contrato final usa Source/Projection genéricos directamente.
-
-### Qualification local observada
+### Static validation observada
 
 ```text
-Python runtime shown by shell: 3.14.7
-uv lock: PASS
-uv sync --group dev --extra web: PASS
-uv run ruff check src tests: PASS
-uv run pytest: 40 passed
-legacy token scan scoped: 0 matches
+git diff --check
+PASS
+
+legacy token scan scoped
+0 matches
+
+python compileall scoped
+PASS
 ```
 
-El commit publicado `ef3f0a44...` fue inspeccionado después y contiene el cutover.
+### Runtime smoke observada
 
-### Configuration Manager consumer mismatch CURRENT
+El usuario levantó el Configuration Manager local y confirmó que la página carga.
 
-`scopes/ada/web/application/ada-configuration-manager` permanece en el contrato anterior.
-
-Verificado en `main@ef3f0a44...`:
+Resultado:
 
 ```text
-ConfigurationManagerDependencies
-    imports KpiConfigurationServices
-    imports KpiDefinitionServices
-    imports KpiDefinitionAuthorityProvider
-    imports ToolLifecycleServices
-    imports ExactProjectionWorkflow
-    imports NavigationConfigurationServices
-
-composition.py
-    imports old Manager workflow adapters
-    imports create_users_manager_exact_source_* names
-    constructs ManagerModule with workflow_service / exact_source_* fields
-
-workflows.py
-    maps source_revision / projection_revision
-    publishes with expected_source_revision
-    projects from revision strings
+Configuration Manager UI boot
+PASS / manual smoke
 ```
-
-Al mismo tiempo, Manager CURRENT exige:
-
-```text
-ManagerModule
-├── source_key
-├── source_service
-├── source_reader_service
-├── projection_service
-├── draft_validation_service
-└── source_history_service | None
-```
-
-`atlanticus.web.manager` ya no exporta `ExactProjectionWorkflow`, y `atlanticus.web.compositions.users_manager` ya no exporta `create_users_manager_exact_source_*`.
-
-Esto es un conflicto de consumer CURRENT, no una razón para reintroducir legacy en los dominios ya migrados.
 
 ## INFERRED
 
-Como Users, Navigation, Tools, KPI Configuration y KPI Definition ya tienen contratos finales, el corte correcto siguiente es refactorizar `ada-configuration-manager` completo una sola vez al contrato Manager genérico.
+La recuperación de la UI demuestra que el consumer dejó de estar bloqueado por los contratos legacy que impedían componer el Manager.
 
-No conviene hacer un mini-cutover exclusivo de KPI Definition y volver a tocar el mismo composition root después.
+No demuestra todavía que cada acción de edición/publicación/proyección funcione de punta a punta.
 
 ## ASSUMED
 
-No se asume todavía:
+No se asume:
 
-- composición final exacta de services por módulo dentro de `ada-configuration-manager`;
-- qué clases de composición pueden conservarse con responsabilidad legítima;
-- alcance exacto de los cambios Web internos del consumer;
-- que toda la suite ADA pase con el consumer actual;
-- Docker E2E;
-- CI remoto;
-- Python 3.14.7/Trixie global qualification;
-- que la metadata `requires-python` ya esté alineada.
+- que todos los faltantes visuales estén identificados;
+- que los contratos que el usuario percibió como “raros” estén mal ni cuál es su causa;
+- que full Ruff haya pasado en este checkpoint;
+- que full pytest haya pasado en este checkpoint;
+- que full ADA regression haya pasado;
+- que el flujo `edit → validate → publish → project` haya sido ejecutado completo;
+- que el runtime local represente la topología productiva final;
+- que Storage/Cosmos Docker E2E ya exista o pase;
+- que CI remoto pase;
+- que Python 3.14.7 esté alineado en metadata de todos los packages.
 
-## PROPOSED / NEXT
+## PROPOSED
 
 Único foco siguiente:
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP
 PLANNED / NEXT
 ```
 
-Primera etapa: inspección y diseño del consumer completo contra contratos CURRENT. No implementar hasta cerrar trazabilidad, contratos, archivos y tests afectados.
+Alcance:
+
+- observar la UI CURRENT;
+- corregir faltantes visuales/funcionales concretos;
+- verificar cualquier contrato sospechoso sólo cuando exista evidencia reproducible;
+- no rediseñar contratos congelados sin conflicto real.
 
 ## SUPERSEDED
 
 ```text
-KPI Definition private Authority bridge
-SUPERSEDED / REMOVED
-
-KPI Definition private Source/Projection lifecycle
-SUPERSEDED / REMOVED
-
-private revision strings as Source/Projection/dependency identity
-SUPERSEDED / REMOVED
-
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER as next work
-SUPERSEDED / CLOSED
-
-ADA Configuration Manager blocked by KPI Definition migration
-SUPERSEDED / UNBLOCKED
-
-migrar sólo el consumer KPI Definition antes del Manager final
-SUPERSEDED / REFINED
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER as PLANNED / NEXT
+SUPERSEDED
 ```
 
-La regla refinada es:
+Ahora:
 
 ```text
-all Configuration domain contracts first
-→ one final ada-configuration-manager cutover
-→ global regression
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
+
+También queda SUPERSEDED la afirmación canónica previa de que `ada-configuration-manager` todavía usaba:
+
+```text
+KpiConfigurationServices
+KpiDefinitionServices
+KpiDefinitionAuthorityProvider
+ToolLifecycleServices
+ExactProjectionWorkflow
+NavigationConfigurationServices
+workflow_service
+exact_source_*
+expected_source_revision
+revision-string projection adapters
+```
+
+Esos hallazgos describen `ef3f0a44...`, no `ee9a0401...`.
 
 ## UNVERIFIED / OPEN
 
-- final generic cutover de `ada-configuration-manager`;
-- full ADA suite después del cutover final;
-- Docker E2E;
-- CI remoto de `ef3f0a44...`;
+- UI cleanup del Manager;
+- naturaleza exacta de los “contratos raros” observados manualmente;
+- full Ruff/pytest del package después del cutover publicado;
+- full ADA regression;
+- local E2E de comportamiento;
+- Storage/Cosmos Docker E2E;
+- CI remoto;
 - Python 3.14.7/Trixie global qualification;
-- alignment de `requires-python` en KPI Configuration y KPI Definition;
-- concrete production composition/provider wiring para KPI destination snapshots, si sigue siendo relevante tras inspeccionar el consumer final;
-- revisión transversal posterior de tests Web de estructura interna/existencia/CSS donde existan.
+- metadata `requires-python` global;
+- cleanup transversal posterior de tests Web.
 
 ## Conflicto de baseline Python
 
@@ -249,20 +283,19 @@ Canonical fija:
 Python 3.14.7
 ```
 
-La implementación publicada declara:
+El Configuration Manager publicado todavía declara:
 
 ```text
-KPI Configuration: requires-python ==3.14.2
-KPI Definition:    requires-python ==3.14.2
+requires-python = "==3.14.2"
 ```
 
-La suite scoped de KPI Definition pasó con shell Python 3.14.7, pero la metadata sigue desalineada y permanece OPEN.
+Este conflicto sigue OPEN y no fue resuelto por el cutover.
 
 ## Siguiente frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-CONFIGURATION-MANAGER-UI-CLEANUP
 PLANNED / NEXT
 ```
 
-No mezclar todavía Python baseline cleanup, Command Center, Operational Data ni la limpieza transversal de tests Web.
+No mezclar todavía E2E, Storage/Cosmos Docker, Python baseline cleanup ni otros frentes.
