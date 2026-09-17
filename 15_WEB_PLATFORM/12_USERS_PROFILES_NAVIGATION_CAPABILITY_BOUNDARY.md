@@ -1,10 +1,10 @@
 # Web Platform — Users / Profiles / Navigation Capability Boundary
 
-Estado: **DECIDED / NOT YET IMPLEMENTED**
+Estado: **CURRENT DECISION / IMPLEMENTATION IN PROGRESS**
 
 ## Propósito
 
-Este documento fija la frontera objetivo entre las capabilities genéricas:
+Este documento fija la frontera vigente entre:
 
 ```text
 Users
@@ -12,63 +12,67 @@ Profiles
 Navigation
 ```
 
-y sirve como checkpoint canónico para un cutover que puede abarcar múltiples chats e incrementos.
-
-No describe todavía realidad implementada salvo donde se marca explícitamente como `VERIFIED`.
+y sirve como checkpoint canónico para el cutover incremental.
 
 ## Autoridad de implementación
 
-Baseline inspeccionado:
+CURRENT inspeccionado:
 
 ```text
 moragaga/atlanticus:main
-d3883e1e57ed6f4fdc88ae258b7b2f9ea1c99a9b
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
-Parent:
+Parent inmediato:
 
 ```text
-ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+709cf2fb9ee422094f011cfda051f08f37276992
 ```
 
-Git permanece **SOLO LECTURA** para el asistente.
+Git permanece SOLO LECTURA para el asistente.
 
-## Estado del incremento
+## Estado del frente
 
 ```text
 USERS-PROFILES-NAVIGATION-CAPABILITY-BOUNDARY
 IN PROGRESS
 
-PROFILES-CAPABILITY-EXTRACTION
-PLANNED
-
 USERS-STANDALONE-AUTHORITY-CUTOVER
-PLANNED
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CAPABILITY-EXTRACTION
+IN PROGRESS
+
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+PLANNED / NEXT
 
 USERS-PROFILES-COMPOSITION-CUTOVER
 PLANNED
 
+PROFILES-UI-EXTRACTION
+PLANNED
+
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 PLANNED
-```
 
-Los nombres anteriores expresan frentes lógicos. No autorizan mezclar todos los cambios en un único incremento de implementación.
+QUALIFICATION
+PLANNED
+```
 
 ## Regla principal
 
 Atlanticus es una base genérica.
 
-Las capabilities deben tener ownership, lifecycle, configuración, UI y contratos propios cuando exista una responsabilidad funcional independiente.
-
-El target de composición queda:
+El target de composition queda:
 
 ```text
 Users
-  │
   │ standalone válido
   ▼
 Profiles
-  │
   │ requiere Users
   ▼
 Navigation
@@ -80,51 +84,59 @@ Combinaciones válidas:
 
 ```text
 Users
-VALID
-
 Users + Profiles
-VALID
-
 Users + Profiles + Navigation
-VALID
 ```
 
 Combinaciones inválidas:
 
 ```text
-Profiles sin Users
-INVALID
-
-Navigation sin Profiles
-INVALID
-
-Users + Navigation sin Profiles
-INVALID
+Profiles without Users
+Navigation without Profiles
+Users + Navigation without Profiles
 ```
 
-## Capability Users
+La dependencia funcional no obliga a acoplar innecesariamente los cores.
 
-### Objetivo
+## Semántica estructural
 
-Users debe poder existir como capability genérica standalone.
+Misma responsabilidad implica mismo concepto.
 
-Por tanto:
+Target:
 
 ```text
-Users -> Profiles package dependency
-REMOVE
+users/
+├── core
+└── configuration
 
-Users -> Navigation dependency
-FORBIDDEN
+profiles/
+├── core
+└── configuration
+
+navigation/
+├── core
+└── configuration
 ```
 
-Users conserva identidad, observación, promoción, habilitación y runtime de usuarios.
+No crear arquitectura especial para Profiles.
 
-Users no debe necesitar `ProfileDefinition`, `ProfileCatalog` ni otro modelo de Profiles para resolver un usuario standalone.
+La propuesta:
 
-### Autoridades base
+```text
+profiles/management
+```
 
-Users posee un contrato de autoridad mínimo independiente de Profiles:
+queda:
+
+```text
+SUPERSEDED / NOT ADOPTED
+```
+
+## Users
+
+Users puede existir standalone.
+
+Users core posee autoridades base:
 
 ```text
 guest
@@ -133,145 +145,108 @@ root
 local
 ```
 
-Estas claves no deben modelarse como `ProfileDefinition` dentro de Users.
-
-Representan autoridad/runtime base de Users.
-
-### guest
+Contratos:
 
 ```text
-TRANSITIONAL
-NON-ASSIGNABLE
+guest
+TRANSITIONAL / NON-ASSIGNABLE
+
+basic
+ASSIGNABLE / STANDARD
+
+root
+ASSIGNABLE / SYSTEM FULL AUTHORITY
+
+local
+LOCAL-RUNTIME ONLY / NON-ASSIGNABLE / FULL AUTHORITY
 ```
 
-Semántica:
-
-- autoridad inicial de un usuario nuevo observado;
-- representa un usuario todavía no promovido;
-- no puede seleccionarse ni asignarse manualmente;
-- al promover al usuario debe abandonar el estado `guest`.
-
-`guest` no es un perfil funcional configurable.
-
-### basic
-
-```text
-ASSIGNABLE
-STANDARD
-```
-
-Semántica:
-
-- autoridad normal mínima de un usuario promovido;
-- permite que Users funcione sin instalar Profiles;
-- puede asignarse administrativamente;
-- no implica acceso global.
-
-Cuando Profiles está presente, un usuario `basic` puede posteriormente ser promovido a una autoridad/perfil funcional configurado por Profiles.
-
-### root
-
-```text
-ASSIGNABLE
-SYSTEM FULL AUTHORITY
-```
-
-Semántica:
-
-- autoridad máxima del sistema;
-- reemplaza completamente el concepto `administrator`;
-- no pertenece a una aplicación concreta;
-- es adecuada para una capability genérica.
-
-Regla:
+`administrator` no pertenece al contrato final.
 
 ```text
 administrator
 REMOVE
 ```
 
-No se debe conservar alias, shim ni compatibilidad `administrator -> root`.
-
-### local
+No existe compatibilidad permitida:
 
 ```text
-LOCAL-RUNTIME ONLY
-NON-ASSIGNABLE
-FULL AUTHORITY
+administrator -> root
 ```
 
-Semántica:
-
-- exclusiva del despliegue/runtime local;
-- nunca debe aparecer como opción asignable a usuarios administrados;
-- posee acceso completo;
-- representa la identidad local efectiva.
-
-El runtime local alterna aleatoriamente entre dos identidades base:
+### Local identities
 
 ```text
 Jane Doe
 authority = local
 avatar background = #C85D91
-avatar text       = #FFFFFF
+avatar text = #FFFFFF
 
 John Doe
 authority = local
 avatar background = #3778C2
-avatar text       = #FFFFFF
+avatar text = #FFFFFF
 ```
 
-Jane y John son usuarios/identidades locales, no Profiles independientes.
-
-Los colores pertenecen a la identidad/avatar local y no requieren crear `local-jane` o `local-john`.
-
-## Capability Profiles
-
-### Ownership
-
-Profiles es una capability Web genérica de primer nivel:
+Guest:
 
 ```text
-web/capabilities/profiles/
+background = #FF5722
+text = #FFFFFF
 ```
 
-Debe tener responsabilidad propia para:
+Jane y John son identities, no Profiles.
+
+CURRENT contiene selector local para ambas identities.
+
+El wiring exacto de ese selector en el composition root ejecutado permanece
+`UNVERIFIED`.
+
+## Profiles
+
+Profiles es first-class capability.
+
+CURRENT implementado:
 
 ```text
-domain/core
-configuration
-source
-administration
-UI
-lifecycle
+web/capabilities/profiles/core
+web/capabilities/profiles/configuration
 ```
 
-donde cada package exista sólo si hay una frontera técnica o de responsabilidad real.
-
-Profiles no debe continuar administrado desde:
+Ownership:
 
 ```text
-web/capabilities/users/configuration/
+profiles/core
+ProfileDefinition
+ProfileCatalog
+profile domain invariants
+
+profiles/configuration
+ProfilesConfiguration
 ```
 
-### Dependencia
+`ProfilesConfiguration` ya no vive dentro de core.
 
-Profiles requiere Users.
+Target todavía pendiente:
 
 ```text
-Profiles -> Users
-REQUIRED
+Profiles Source
+Profiles Projection/configuration lifecycle
+Profiles administration
+Profiles UI
 ```
 
-La razón es funcional: Profiles extiende la autoridad de usuarios promovidos y no tiene utilidad operacional standalone dentro del modelo Atlanticus definido.
+Profiles requiere Users a nivel de composition.
 
-Esto no autoriza a Profiles a apropiarse de identidad, pending users, runtime store o lifecycle de Users.
+Esto no autoriza a Profiles a apropiarse de identidad, pending users,
+UsersRuntimeStore o lifecycle de Users.
 
-### Perfiles funcionales
+## Functional profiles
 
-Profiles agrega autoridades/perfiles funcionales configurables sobre el contrato base de Users.
+Profiles agrega autoridades funcionales configurables sobre el contrato base de
+Users.
 
-Ejemplos no canónicos:
+Ejemplos son no canónicos:
 
 ```text
 operator
@@ -280,41 +255,36 @@ engineer
 planner
 ```
 
-No son system profiles implícitos.
-
 La configuración real determina cuáles existen.
 
-### Asignabilidad
-
-Autoridades base asignables sin Profiles:
+Assignable base:
 
 ```text
 basic
 root
 ```
 
-Reservadas / no asignables:
+No asignables:
 
 ```text
 guest
 local
 ```
 
-Cuando Profiles está activo, el universo asignable se amplía:
+Con Profiles:
 
 ```text
 basic
 root
-+ configured functional profiles
++ configured functional authorities
 ```
 
-`guest` y `local` permanecen no asignables.
+La validación exacta entre Users authority y Profiles configuration pertenece al
+`USERS-PROFILES-COMPOSITION-CUTOVER`.
 
-## Capability Navigation
+## Navigation
 
-Navigation necesita Profiles en la composición Atlanticus definida por este contrato.
-
-Por transitividad:
+Navigation requiere Profiles en el contract de composition Atlanticus.
 
 ```text
 Navigation
@@ -324,232 +294,99 @@ Profiles
 Users
 ```
 
-Esto significa que no se considera una composición válida:
+Navigation core debe permanecer desacoplado cuando sea posible.
 
-```text
-Navigation standalone
-```
-
-ni:
-
-```text
-Users + Navigation
-```
-
-sin Profiles.
-
-### Boundary técnico
-
-La dependencia funcional anterior no obliga automáticamente a que `navigation/core` importe clases concretas de Profiles.
-
-Debe preferirse un contrato desacoplado de autorización, por ejemplo una clave de acceso efectiva:
+Preferir:
 
 ```text
 principal.access_key
 ```
 
-comparada contra las claves admitidas por una ruta.
+como boundary efectivo de autorización antes que importar clases concretas de
+Profiles.
 
-La integración Users + Profiles debe producir la autoridad efectiva que Navigation consume.
+## CURRENT combinado todavía existente
 
-No introducir dependencia concreta entre cores salvo que la implementación demuestre que existe una responsabilidad contractual que no pueda mantenerse en composition/binding.
-
-## Estado CURRENT verificado
-
-En `atlanticus@d3883e1e...`:
-
-### Users
-
-`atlanticus-web-users` declara actualmente una dependencia directa:
+En `main@4e008055...` todavía existe:
 
 ```text
-atlanticus-web-profiles
+UsersProfilesConfiguration
+UsersProfilesAdministrationService
+UsersProfilesAdminDraft
 ```
 
-`UsersAccessResolver` requiere actualmente:
+El combined configuration todavía usa:
 
 ```text
-ProfileCatalog
+user.profile_key
+administrator
 ```
 
-y los usuarios resueltos requieren `profile_key`.
+y `UsersProfilesConfiguration` sigue validando Users contra
+`ProfilesConfiguration`.
 
 Por tanto:
 
 ```text
-Users standalone
-NOT CURRENT
+Profiles ownership extraction
+PARTIAL / IN PROGRESS
 ```
-
-### Profiles
-
-Existe:
-
-```text
-web/capabilities/profiles/core
-```
-
-pero CURRENT sólo contiene el core de definición/configuración.
-
-`ProfilesConfiguration` acepta actualmente un catálogo vacío.
-
-No existe todavía el lifecycle independiente completo de Profiles definido en este documento.
-
-### Administración combinada
-
-CURRENT contiene:
-
-```text
-UsersProfilesConfiguration
-UsersProfilesAdministrationService
-UsersProfilesAdminDraft
-```
-
-y la administración de Users posee operaciones de Profiles.
-
-También existe publicación conjunta Users + Profiles bajo el source de Users.
-
-Todo ello contradice el target de ownership separado.
-
-### administrator
-
-CURRENT crea un perfil default:
-
-```text
-administrator
-background = #673AB7
-text       = #FFFFFF
-```
-
-Este contrato queda:
-
-```text
-SUPERSEDED BY DECISION
-```
-
-pero todavía no está removido de la implementación.
-
-### guest / local
-
-CURRENT conserva semántica parcial de `guest`.
-
-La historia verificada de Atlanticus demuestra que existieron perfiles/autoridades de sistema `local`, `administrator` y `guest`, además de los colores de Jane y John.
-
-Este documento reemplaza `administrator` por `root` como decisión contractual actual.
-
-## Evidencia histórica recuperada
-
-En un checkpoint histórico inspeccionado de Atlanticus existían:
-
-```text
-local
-background = #3778C2
-text       = #FFFFFF
-
-guest
-background = #FF5722
-text       = #FFFFFF
-
-administrator
-background = #673AB7
-text       = #FFFFFF
-
-John Doe local avatar
-background = #3778C2
-text       = #FFFFFF
-
-Jane Doe local avatar
-background = #C85D91
-text       = #FFFFFF
-```
-
-Los valores anteriores son evidencia histórica útil.
-
-No convierten automáticamente `administrator` en contrato vigente.
-
-## Contratos combinados a eliminar
-
-El target final no conserva ownership combinado Users/Profiles.
-
-```text
-UsersProfilesConfiguration
-REMOVE
-
-UsersProfilesAdministrationService
-REMOVE
-
-UsersProfilesAdminDraft
-REMOVE
-
-Profiles source inside Users source
-REMOVE
-
-Profiles UI inside Users UI
-REMOVE
-
-administrator
-REMOVE
-```
-
-No introducir:
-
-```text
-legacy wrappers
-aliases
-compatibility shims
-dual contracts
-temporary administrator mapping
-distributed transaction Users + Profiles
-```
-
-## Publicación y consistencia entre Users y Profiles
-
-Separar Users y Profiles implica perder la publicación atómica actualmente obtenida por el agregado conjunto.
-
-No recrear esa atomicidad mediante transacción distribuida.
-
-Principio:
-
-```text
-cada capability publica su propio source
-```
-
-La integridad entre ambas debe resolverse mediante contratos explícitos de composición y secuencias operacionales verificables.
-
-Ejemplo de una futura eliminación de un perfil funcional referenciado:
-
-```text
-1. identificar usuarios referenciando el perfil
-2. reasignarlos a una autoridad válida
-3. publicar Users
-4. eliminar el perfil
-5. publicar Profiles
-```
-
-El detalle exacto de recovery, retry y auditoría debe definirse antes de implementar ese flujo.
 
 ## Source / Projection
 
-Target conceptual:
+Target:
 
 ```text
 Users
 source_key = users
+payload = UsersConfiguration
 
 Profiles
 source_key = profiles
+payload = ProfilesConfiguration
 
 Navigation
 source_key = navigation
 ```
 
-Cada capability debe usar los contratos genéricos Atlanticus de Source / Projection / Manager cuando corresponda.
+Cada capability publica su propio Source.
 
-No crear una arquitectura especial para Users, Profiles o Navigation.
+No recrear publicación atómica Users + Profiles mediante transacción distribuida.
+
+CURRENT todavía conserva Users + Profiles en un mismo lifecycle.
+
+Siguiente corte:
+
+```text
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+```
+
+Debe reemplazar ese ownership combinado de raíz, no crear un Source paralelo
+mientras el viejo siga vigente.
+
+## Users configuration field
+
+Target decidido:
+
+```text
+UserConfiguration.authority_key
+```
+
+CURRENT todavía:
+
+```text
+UserConfiguration.profile_key
+```
+
+Estado:
+
+```text
+DECIDED / NOT YET IMPLEMENTED
+```
+
+No crear alias de ambos nombres.
 
 ## UI
-
-Users y Profiles son pantallas diferentes con flujos propios.
 
 Target:
 
@@ -564,61 +401,103 @@ Navigation UI
 ownership = Navigation
 ```
 
-Profiles UI no debe permanecer embebida como una sección administrativa de Users.
+Profiles UI todavía permanece combinada con Users y se corta en un incremento
+posterior.
 
-La composición puede presentarlas dentro del mismo Manager sin fusionar ownership.
+No mezclar UI extraction con Source ownership.
 
-## Conflicto con canonical CURRENT
+## Publication consistency
 
-`15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md` dice actualmente que:
+Separar Users y Profiles elimina la publicación atómica del agregado actual.
 
-```text
-Navigation puede existir sin Users/Profile
-Navigation sin Profile integration funciona sin filtros de perfil
-profile-navigation binding es opcional
-```
+No recrear distributed transaction.
 
-Eso contradice la decisión actual:
+La integridad cross-capability debe resolverse mediante secuencias explícitas,
+recovery y auditoría cuando el caso operacional lo exija.
 
-```text
-Navigation requires Profiles
-Profiles requires Users
-```
+Delete/reassign de un functional profile referenciado sigue OPEN para el
+composition cutover.
 
-Por tanto:
+## Testing rules
+
+Automatizar:
 
 ```text
-15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md
-PARTIAL CONFLICT
+behavior
+contracts
+invariants
+regressions
+critical flows
 ```
 
-Al integrar este documento en canonical, las reglas anteriores de independencia de Navigation deben marcarse `SUPERSEDED` o actualizarse explícitamente.
+No automatizar como contract tests:
 
-No resolver este conflicto silenciosamente.
+```text
+CSS visual
+responsive
+spacing
+branding
+source token scans
+import scans
+existence/non-existence of functions/classes
+AST/module structure
+implementation internals
+```
 
-## Reglas congeladas para el cutover
+Assets JS/CSS sólo se verifican por carga/existencia si el contrato lo requiere.
+
+Existe un test CURRENT que escanea source para validar ausencia de Profiles en
+Users core. Es un conflicto conocido de test hygiene y no debe replicarse.
+
+## Conflicto canonical previo
+
+`15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md` en el checkpoint
+`497207bb...` todavía decía:
+
+```text
+Navigation can exist without Users/Profile
+profile binding optional
+```
+
+Eso queda `SUPERSEDED`.
+
+El reemplazo companion de ese documento debe reflejar:
+
+```text
+technical core independence
+!=
+valid composition independence
+```
+
+Aplicados juntos los reemplazos de este cierre, el conflicto queda resuelto
+documentalmente.
+
+## Reglas congeladas
 
 ```text
 Atlanticus generic
 REQUIRED
 
+same responsibility -> same concept/naming
+REQUIRED
+
 Users standalone
 REQUIRED
 
-Users -> Profiles dependency
-REMOVE
-
-Users -> Navigation dependency
+Users -> Profiles core dependency
 FORBIDDEN
 
 Profiles first-class capability
 REQUIRED
 
+Profiles structure
+core + configuration
+
 Profiles -> Users
-REQUIRED
+REQUIRED AT COMPOSITION
 
 Navigation -> Profiles
-REQUIRED AT COMPOSITION CONTRACT
+REQUIRED AT COMPOSITION
 
 Navigation -> Users direct ownership
 FORBIDDEN
@@ -638,16 +517,13 @@ LOCAL-RUNTIME ONLY / NON-ASSIGNABLE / FULL AUTHORITY
 administrator
 REMOVE
 
-Jane Doe local identity/colors
+Jane/John local identities/colors
 PRESERVE
-
-John Doe local identity/colors
-PRESERVE
-
-Profiles UI inside Users
-REMOVE
 
 UsersProfiles aggregate contracts
+REMOVE
+
+Profiles UI inside Users
 REMOVE
 
 LEGACY
@@ -658,91 +534,77 @@ FORBIDDEN
 
 DOUBLE CONTRACT
 FORBIDDEN
+
+CSS VISUAL CONTRACT TESTS
+FORBIDDEN
 ```
 
-## Orden de implementación propuesto
-
-El trabajo debe avanzar incrementalmente y con un foco único por incremento.
-
-Orden recomendado:
+## Orden de implementación refinado
 
 ```text
 1. USERS-STANDALONE-AUTHORITY-CUTOVER
-   - definir autoridad base Users
-   - guest/basic/root/local
-   - remover dependencia obligatoria Users -> Profiles
-   - preservar runtime local Jane/John
+   CLOSED / VERIFIED / CURRENT
 
-2. PROFILES-CAPABILITY-EXTRACTION
-   - mover ownership restante de Profiles fuera de Users
-   - crear source/admin/lifecycle propio
-   - remover UsersProfiles aggregate
+2A. PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+    CLOSED / VERIFIED / CURRENT
+
+2B. USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+    PLANNED / NEXT
 
 3. USERS-PROFILES-COMPOSITION-CUTOVER
-   - resolver promoción/asignación y validación cross-capability
-   - definir reglas operacionales de referencias
+   PLANNED
 
 4. PROFILES-UI-EXTRACTION
-   - pantalla Profiles independiente
-   - Users UI sólo administra Users
+   PLANNED
 
 5. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-   - alinear composición Navigation => Profiles => Users
-   - preservar core desacoplado cuando sea posible
-   - revisar `allowed_profiles` vs contrato genérico de access key sólo si el cutover lo exige
+   PLANNED
 
 6. QUALIFICATION
-   - comportamiento
-   - invariantes
-   - regresiones
-   - composición válida/inválida
-   - source/projection
-   - local runtime
+   PLANNED
 ```
 
-No ampliar un incremento únicamente para dejar todos los consumidores verdes mediante compatibilidad temporal.
+## Criterio de cierre del frente completo
 
-Un consumer puede quedar temporalmente roto durante un root cutover si el contrato anterior se elimina de raíz y el siguiente incremento tiene ownership claro.
-
-## Criterios de aceptación finales
-
-El cutover completo queda cerrado sólo cuando:
+No declarar CLOSED hasta que:
 
 ```text
-Users funciona sin Profiles
-Profiles tiene lifecycle propio y requiere Users
-Navigation se compone sólo con Profiles + Users
+Users funciona standalone
+Profiles tiene ownership y lifecycle propios
+UsersProfiles aggregate no existe
+combined Users+Profiles Source no existe
+UserConfiguration usa authority_key final
 administrator no existe
-guest no es asignable
-local no es asignable
-basic es asignable
-root es asignable y full authority
-Jane/John local se preservan con sus colores
 Profiles UI está fuera de Users
-no existe UsersProfiles aggregate
-no existe source Users+Profiles combinado
+Navigation se compone con Profiles + Users
 no existen shims/aliases/adapters legacy
-tests verifican comportamiento e invariantes finales
+tests validan comportamiento/invariantes
 ```
 
-## Pendientes de verificación durante implementación
+## Pendientes explícitos
 
 ```text
-- localizar todos los consumidores CURRENT de UsersProfilesConfiguration
-- localizar todos los consumidores CURRENT de UsersProfilesAdministrationService
-- trazar source/projection combined Users+Profiles
-- verificar el runtime local CURRENT y dónde se selecciona Jane/John
-- definir representación exacta de authority_key en Users
-- definir cómo Profiles extiende authority_key sin apropiarse de Users
-- definir migración de documentos CURRENT que todavía contienen administrator
-- definir recovery/auditoría para referencias Users -> functional profile
-- resolver explícitamente el conflicto con 15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md
-```
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+OPEN / NEXT
 
-Hasta que cada punto se verifique:
+USERS-PROFILES-COMPOSITION-CUTOVER
+OPEN
 
-```text
-NO ASSUMPTIONS
-NO SILENT COMPATIBILITY
-NO SILENT CANONICAL CONFLICT RESOLUTION
+PROFILES-UI-EXTRACTION
+OPEN
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+OPEN
+
+local selector composition wiring
+UNVERIFIED
+
+referenced profile delete/reassign recovery/audit
+OPEN
+
+Python 3.14.7 metadata alignment
+OPEN / SEPARATE
+
+WEB-TEST-CONTRACT-CLEANUP
+OPEN / SEPARATE
 ```

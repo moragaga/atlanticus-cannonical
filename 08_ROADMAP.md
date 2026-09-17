@@ -10,147 +10,186 @@ Cerrar cada frontera con evidencia suficiente para su alcance.
 
 No conservar legacy para sostener consumers o tests anteriores.
 
+No mezclar cleanup transversal con el incremento funcional activo.
+
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 Parent:
 
 ```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+709cf2fb9ee422094f011cfda051f08f37276992
 ```
 
-## Hitos cerrados
+## Hitos cerrados recientes
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+USERS-STANDALONE-AUTHORITY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-CLEAN-CUTOVER-COMPLETION
-CLOSED / VERIFIED / CURRENT
-
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-CLOSED / VERIFIED / CURRENT
-
-PROJECTION-CORE-STALE-TEST-ALIGNMENT
-CLOSED / VERIFIED
-
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## Configuration Manager closure
+Los hitos de Manager, Navigation generic configuration, Users legacy removal,
+Tools, KPI Configuration, KPI Definition y ADA Configuration Manager cerrados
+anteriormente permanecen CURRENT.
 
-El consumer final está publicado y la página local vuelve a levantar.
-
-El cierre de este hito cubre:
+## Hito activo
 
 ```text
-generic Manager contract adoption
-workspace bridge adoption
-legacy consumer removal
-local smoke runtime
-static validation
-manual UI boot
+PROFILES-CAPABILITY-EXTRACTION
+IN PROGRESS
 ```
 
-No cubre full E2E ni UI completeness.
+CURRENT parcial:
+
+```text
+profiles/core
+CURRENT
+
+profiles/configuration
+CURRENT
+
+ProfilesConfiguration ownership
+MOVED TO profiles/configuration
+```
+
+Todavía no está cerrado el lifecycle independiente completo de Profiles.
 
 ## Siguiente foco único
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 PLANNED / NEXT
 ```
 
-Reglas del siguiente chat:
-
-1. trabajar sólo sobre problemas visibles/reproducibles de la UI del Configuration Manager CURRENT;
-2. inspeccionar código CURRENT antes de proponer cambios;
-3. no reabrir Manager core, Source core, Projection core ni dominios ya cerrados sin conflicto demostrado;
-4. si un contrato parece extraño, verificar su uso y responsabilidad antes de cambiarlo;
-5. no introducir legacy, aliases, shims ni doble contrato;
-6. no mezclar E2E en este incremento;
-7. tests sólo para comportamiento automatizable; apariencia se valida visualmente;
-8. cambios pequeños y verificables.
-
-## Después del UI cleanup
+Objetivo contractual ya decidido:
 
 ```text
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-PLANNED / UNBLOCKED
+Users Source
+UsersConfiguration only
+
+Profiles Source
+ProfilesConfiguration only
+
+UsersProfilesConfiguration
+REMOVE
+
+UserConfiguration.profile_key
+REMOVE
+
+UserConfiguration.authority_key
+FINAL
+
+administrator
+REMOVE from combined boundary
 ```
 
-y, como incremento separado:
+No crear aliases, adapters, shims ni compatibilidad entre contratos viejo/nuevo.
+
+No inventar una arquitectura especial para Profiles.
+
+## Después del Source ownership cutover
 
 ```text
-ADA-CONFIGURATION-MANAGER-LOCAL-E2E
+USERS-PROFILES-COMPOSITION-CUTOVER
 PLANNED
 ```
 
-El E2E local deberá validar el flujo real del Manager sin añadir todavía Storage/Cosmos Docker.
-
-## Después del local E2E
+Debe resolver únicamente integración cross-capability:
 
 ```text
-ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E
+assignable authority universe
+functional profile existence validation
+referential operation sequencing
+recovery/audit where required
+```
+
+No recrear transacción distribuida.
+
+## Después de composition
+
+```text
+PROFILES-UI-EXTRACTION
 PLANNED
 ```
 
-Su objetivo será validar la misma semántica con infraestructura local de Storage/Cosmos, sólo después de que el flujo local esté estable.
+Target:
+
+```text
+Users UI
+Users-owned
+
+Profiles UI
+Profiles-owned
+```
+
+La apariencia se valida visualmente. No crear CSS-structure tests.
+
+## Después de Profiles UI
+
+```text
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+PLANNED
+```
+
+Target de composition:
+
+```text
+Navigation
+  ↓
+Profiles
+  ↓
+Users
+```
+
+Preservar core decoupling cuando la integración pueda vivir en composition.
+
+## Qualification final del frente
+
+```text
+QUALIFICATION
+PLANNED
+```
+
+Debe cubrir comportamiento, invariantes, regresiones y compositions
+válidas/inválidas.
 
 ## Open independiente
 
 ```text
-Python 3.14.7 metadata alignment
+WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED
+Python 3.14.7 metadata alignment
+PLANNED / OPEN
 
 CI remote
 UNVERIFIED
 ```
 
-Configuration Manager todavía declara:
-
-```text
-requires-python = "==3.14.2"
-```
-
-No resolver este punto dentro de UI cleanup salvo bloqueo directo.
+Existe un test CURRENT que inspecciona source/import absence. No mezclar su
+cleanup con el siguiente Source ownership cutover.
 
 ## No mezclar en el siguiente chat
 
-- local E2E;
-- Storage/Cosmos Docker E2E;
+- Profiles UI;
+- Navigation alignment;
+- E2E transversal;
 - Python baseline cleanup;
-- cleanup transversal de tests Web;
+- CSS visual tests;
+- Web test cleanup global;
 - Command Center;
 - Operational Data;
 - rediseño de Manager core;
-- rediseño de Source/Projection core;
-- reintroducción de contratos legacy.
+- rediseño de Source/Projection core.
 
 Único foco:
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 ```

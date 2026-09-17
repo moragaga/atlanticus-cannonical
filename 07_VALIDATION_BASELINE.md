@@ -13,164 +13,161 @@ No inventar un PASS cuando no existe resultado de ejecución observado.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 Parent:
 
 ```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+709cf2fb9ee422094f011cfda051f08f37276992
 ```
 
-## Hitos contractuales
+## Hitos contractuales relevantes
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+USERS-STANDALONE-AUTHORITY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-CLEAN-CUTOVER-COMPLETION
-CLOSED / VERIFIED / CURRENT
-
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-CLOSED / VERIFIED / CURRENT
-
-PROJECTION-CORE-STALE-TEST-ALIGNMENT
-CLOSED / VERIFIED
-
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
+PROFILES-CAPABILITY-EXTRACTION
+IN PROGRESS
 ```
 
-## Evidencia anterior conservada
+Los hitos genéricos de Manager, Navigation, Users legacy removal, Tools, KPI
+Configuration, KPI Definition y ADA Configuration Manager previamente cerrados
+permanecen CURRENT.
 
-La evidencia de checkpoints previos sigue atribuida únicamente a esos checkpoints.
+## Users standalone — evidencia observada
 
-No trasladar resultados de Users/KPI Configuration/KPI Definition al checkpoint actual.
-
-## Configuration Manager — evidencia observada
-
-Antes de cerrar el cutover se observó:
+Antes de publicar `709cf2f...`:
 
 ```text
+users/core                 41 PASS
+users/cosmos               22 PASS
+users/projection-cosmos    29 PASS
+TOTAL                      92 PASS
+
 git diff --check
 PASS
+```
 
-legacy token scan scoped over src/commented/tests
-0 matches
+Esto demuestra comportamiento afectado por el authority/runtime cutover.
 
-python3 -m compileall scoped
+No demuestra wiring completo del selector local en todas las compositions.
+
+## Profiles configuration boundary — evidencia observada
+
+Antes de publicar `4e008055...`:
+
+```text
+profiles/core              7 PASS
+profiles/configuration     2 PASS
+users/configuration       65 PASS
+TOTAL                     74 PASS
+
+uv lock
+PASS
+
+git diff --check
 PASS
 ```
 
-Después, el usuario levantó el runtime local y confirmó:
+El checkpoint publicado contiene el package
+`atlanticus-web-profiles-configuration==0.1.0` y el movimiento de
+`ProfilesConfiguration` fuera de core.
+
+## Política de tests Web
+
+Probar:
 
 ```text
-Configuration Manager page boot
-PASS / manual smoke
+behavior
+contracts
+invariants
+regressions
+critical flows
 ```
 
-El checkpoint publicado que contiene ese cutover es:
+No crear tests cuyo único objetivo sea:
 
 ```text
-ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+CSS visual
+responsive
+spacing
+branding
+apariencia
+estructura visual
+existencia/no existencia de funciones o clases
+source token presence/absence
+import presence/absence
+AST/module structure
+detalles internos
 ```
 
-## Verificación por inspección de main
+CSS/branding/responsive/spacing se validan visualmente salvo comportamiento
+funcional automatizable.
 
-El checkpoint contiene:
+Assets JS/CSS sólo se automatizan por existencia/carga cuando esa carga sea parte
+real del contrato.
+
+## Conflicto CURRENT de test hygiene
+
+Existe en CURRENT:
 
 ```text
-ConfigurationManagerDependencies con contracts CURRENT
-ManagerModule generic service wiring
-ManagerWorkspaceBridge
-generic Source/Validation workflows
-ToolConfigurationKpiDestinationCatalogProvider
-local_runtime.py
-__main__.py
-KPI Definition dependency 0.6.0
+web/capabilities/users/core/tests/test_authority.py
+test_users_core_has_no_profiles_dependency
 ```
 
-El package ya no contiene `kpi_authority.py`.
+Ese test lee `pyproject.toml` y los `.py` de `src` para comprobar ausencia de
+Profiles.
 
-Búsquedas posteriores en `main` no encontraron `expected_source_revision`, `KpiDefinitionAuthorityProvider` ni `ExactProjectionWorkflow`.
+Clasificación:
+
+```text
+VERIFIED
+POLICY CONFLICT
+OPEN
+```
+
+No bloquea el estado funcional ya publicado, pero no debe replicarse ni usarse
+como patrón.
+
+Su cleanup pertenece a:
+
+```text
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED
+```
+
+No mezclar con `USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER`.
 
 ## Lo que NO está validado todavía
 
-No existe evidencia observada en este cierre para declarar PASS de:
+No existe evidencia en este cierre para declarar PASS de:
 
 ```text
-uv lock del checkpoint final
-uv sync del checkpoint final
-full Ruff del Configuration Manager
-full pytest del Configuration Manager
+full web workspace pytest
+full Ruff workspace
 full ADA regression
-edit → workspace → validate → publish → project E2E
-history/reload E2E
-Storage/Cosmos Docker E2E
 CI remoto
+productivo local Jane/John wiring
+Users + Profiles final composition
+Profiles independent Source/Projection lifecycle
+Profiles UI
+Navigation => Profiles => Users composition
+Python 3.14.7 metadata alignment
 ```
 
-El hecho de que la página levante no sustituye esas pruebas.
+## UI / CSS
 
-## UI
+No integrar validaciones CSS visuales en suites contractuales.
 
-La UI volvió a estar disponible.
+Apariencia, responsive, spacing y branding se validan visualmente.
 
-El usuario observó faltantes/problemas de UI y posibles contratos extraños.
-
-Estado:
-
-```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
-PLANNED / NEXT
-```
-
-La validation visual debe comprobar apariencia y comportamiento visible sin crear tests que congelen CSS arbitrario.
-
-## E2E planificado
-
-Después de UI cleanup:
-
-```text
-ADA-CONFIGURATION-MANAGER-LOCAL-E2E
-PLANNED
-```
-
-Objetivo futuro:
-
-```text
-edit
-→ workspace
-→ validate
-→ verify Source
-→ publish
-→ project
-→ reload/status/history
-```
-
-Después:
-
-```text
-ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E
-PLANNED
-```
-
-Ese incremento deberá validar la topología acordada con Storage/Cosmos localizados en Docker. No se considera implementado ni diseñado por este cierre.
+No convertir markup/CSS incidental en contrato automatizado.
 
 ## Conflicto de metadata Python
 
@@ -180,26 +177,13 @@ Canonical fija:
 Python 3.14.7
 ```
 
-Configuration Manager CURRENT declara:
+Packages CURRENT todavía contienen metadata:
 
 ```text
 requires-python = "==3.14.2"
 ```
 
 Permanece OPEN.
-
-## Tests Web
-
-Política CURRENT:
-
-```text
-tests protect behavior/contracts
-not CSS visuals
-not existence/non-existence of internal functions/classes
-not accidental module structure
-```
-
-`WEB-TEST-CONTRACT-CLEANUP` continúa PLANNED y separado.
 
 ## Git
 

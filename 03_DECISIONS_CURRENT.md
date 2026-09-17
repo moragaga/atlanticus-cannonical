@@ -10,8 +10,10 @@ Estado: **CURRENT**
 | `python:3.14.7-slim-trixie` | DECIDED / NOT YET QUALIFIED GLOBALLY |
 | `uv`, no pip normal | CURRENT |
 | Definir contratos antes que consumidores | CURRENT |
+| Backend antes que frontend | CURRENT |
 | Cutover raíz limpio | CURRENT |
 | No crear shims/adapters/aliases temporales para legacy | FROZEN |
+| No conservar doble contrato | FROZEN |
 | Tests no son autoridad sobre contratos SUPERSEDED | FROZEN |
 | Un consumer puede quedar temporalmente roto durante un root cutover | FROZEN |
 
@@ -69,144 +71,278 @@ Usar infraestructura genérica no cambia automáticamente ownership de dominio.
 | doble routing exact/legacy | FORBIDDEN |
 | adapters/shims/aliases para conservar contrato anterior | FORBIDDEN |
 
-## Manager Source invariants
-
-| Decisión | Estado |
-|---|---|
-| Source BASE = `SourceSnapshot` | FROZEN |
-| Publication recibe snapshot/concurrency semantics genéricas | FROZEN |
-| conflicto se determina por release identity | FROZEN |
-| History usa `HistoryPage` + `SourceReleaseRef` | FROZEN |
-| Source identity no se reduce a revision string | FROZEN |
-
-## Manager Projection invariants
-
-| Decisión | Estado |
-|---|---|
-| `ProjectionTarget` llega completo a `project(...)` | FROZEN |
-| Manager no reconstruye target desde revision | FROZEN |
-| target con `source_key` distinto al módulo es inválido | FROZEN |
-| no existe Manager Projection model legacy paralelo | FROZEN |
-
-## Manager Workspace invariants
-
-| Decisión | Estado |
-|---|---|
-| Workspace es identidad editable local, no Source identity | FROZEN |
-| `ManagerWorkspace` conserva BASE como `SourceSnapshot` | FROZEN |
-| `build_workspace_revision(payload)` sólo identifica payload local | FROZEN |
-| un editor puede usar un bridge fino hacia `ManagerWorkspace` | IMPLEMENTED / CURRENT |
-| bridge de workspace no puede reconstruir Source desde revision | FROZEN |
-
-## Configuration domains
+## Manager invariants
 
 ```text
-Navigation
-CLOSED / VERIFIED / CURRENT
+Source BASE = SourceSnapshot
+Workspace identity != Source identity
+ProjectionTarget llega completo a project(...)
+Manager no reconstruye Source/Projection identity desde revision strings
+History usa HistoryPage + SourceReleaseRef
+```
 
+Estado: **FROZEN / CURRENT**.
+
+## Semántica estructural de capabilities
+
+La misma responsabilidad debe usar el mismo concepto y naming.
+
+Patrón vigente cuando existan ambas responsabilidades:
+
+```text
+<capability>/
+├── core
+└── configuration
+```
+
+Semántica:
+
+```text
+core
+domain models / invariants / contracts propios
+
+configuration
+editable/publishable configuration contract y lifecycle asociado cuando exista
+```
+
+No crear una arquitectura especial para una capability sin una frontera técnica
+o funcional real.
+
+Para Profiles:
+
+```text
+profiles/core
+CURRENT
+
+profiles/configuration
+CURRENT
+```
+
+La propuesta `profiles/management` queda `SUPERSEDED / NOT ADOPTED`.
+
+`management` no se usa como sinónimo genérico de configuration. Cuando exista
+como concepto de dominio, conserva ese significado específico.
+
+## Users / Profiles / Navigation
+
+Target de composición:
+
+```text
 Users
-CLOSED / VERIFIED / CURRENT
-
-Tools Source/Projection
-CLOSED / VERIFIED / CURRENT
-
-KPI Configuration Source/Projection
-CLOSED / VERIFIED / CURRENT
-
-KPI Definition Source/Projection
-CLOSED / VERIFIED / CURRENT
+  │ standalone válido
+  ▼
+Profiles
+  ▼
+Navigation
 ```
 
-Los ownerships ADA-specific permanecen bajo `scopes/ada` donde corresponda.
-
-## ADA Configuration Manager
+Estados contractuales:
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
+Users standalone
+REQUIRED
+
+Profiles without Users
+INVALID COMPOSITION
+
+Navigation without Profiles
+INVALID COMPOSITION
+
+Users + Navigation without Profiles
+INVALID COMPOSITION
 ```
 
-La composición final publicada consume los contratos genéricos CURRENT.
+Esto no obliga a acoplar innecesariamente los cores.
 
-La composición registra por módulo servicios separados:
+Navigation debe preferir una autoridad/access key efectiva inyectada por
+composition antes que importar modelos concretos de Profiles.
+
+## Users base authority
+
+Contrato congelado:
 
 ```text
-source
-source-reader
-source-history
-projection
-draft-validation
+guest
+TRANSITIONAL / NON-ASSIGNABLE
+
+basic
+ASSIGNABLE / STANDARD
+
+root
+ASSIGNABLE / FULL AUTHORITY
+
+local
+LOCAL-RUNTIME ONLY / NON-ASSIGNABLE / FULL AUTHORITY
 ```
 
-Los workflows de composición que permanecen son implementaciones directas de contratos genéricos reales. No son adapters para conservar un lifecycle anterior.
+`administrator` queda `SUPERSEDED / REMOVE`.
 
-`KpiDefinitionAuthority` no forma parte del consumer final.
-
-`ToolLifecycleServices`, `KpiConfigurationServices`, `KpiDefinitionServices`, `NavigationConfigurationServices`, `ExactProjectionWorkflow`, `expected_source_revision` y revision-string projection routing no forman parte del consumer final.
-
-## Local runtime
-
-Existe una composición local explícita para smoke/manual validation:
+No crear alias, shim o mapping:
 
 ```text
-LocalSourceStore
-+
-InProcessProjectionStore
+administrator -> root
 ```
 
-Esta composición es una frontera local de ejecución del Configuration Manager.
+Jane Doe y John Doe son identidades locales, no perfiles.
 
-No define por sí sola la topología productiva ni reemplaza el E2E posterior con Storage/Cosmos.
+Colores congelados:
+
+```text
+Jane Doe
+#C85D91 / #FFFFFF
+
+John Doe
+#3778C2 / #FFFFFF
+
+guest
+#FF5722 / #FFFFFF
+```
+
+## Profiles ownership
+
+Profiles es first-class capability.
+
+CURRENT parcial:
+
+```text
+profiles/core
+profiles/configuration
+```
+
+Target pendiente:
+
+```text
+Profiles own Source
+Profiles own Projection/configuration lifecycle
+Profiles own administration
+Profiles own UI
+```
+
+No conservar ownership combinado Users/Profiles al completar el cutover.
+
+## Users / Profiles combined contracts
+
+Target:
+
+```text
+UsersProfilesConfiguration
+REMOVE
+
+UsersProfilesAdministrationService
+REMOVE
+
+UsersProfilesAdminDraft
+REMOVE
+
+Profiles resource inside Users Source
+REMOVE
+
+Profiles UI inside Users UI
+REMOVE
+```
+
+No recrear atomicidad con una transacción distribuida.
+
+Cada capability publica su propio Source.
 
 ## Testing
 
-La política permanece:
+Tests protegen:
 
 ```text
-test behavior/contracts/invariants
-do not freeze CSS visual structure
-do not preserve legacy implementation details
+behavior
+contracts
+invariants
+regressions
+critical flows
 ```
 
-La validación visual es legítima para UI.
+No crear tests cuyo único objetivo sea:
 
-E2E se hará en incrementos posteriores y separados.
+```text
+CSS visual
+spacing
+responsive
+branding
+apariencia
+estructura visual
+existencia/no existencia de funciones o clases
+source-token scans
+import scans
+AST/module structure
+detalles internos de implementación
+```
+
+Assets JS/CSS pueden comprobarse sólo cuando su existencia/carga sea
+contractualmente relevante.
+
+La validación visual es legítima para apariencia y responsive.
+
+Un test CURRENT que inspecciona source para probar ausencia de Profiles en
+Users core permanece OPEN y debe tratarse bajo `WEB-TEST-CONTRACT-CLEANUP`, no
+usarse como precedente.
+
+## Estado de ejecución
+
+```text
+USERS-STANDALONE-AUTHORITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CAPABILITY-EXTRACTION
+IN PROGRESS
+
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+PLANNED / NEXT
+```
 
 ## Decisiones reemplazadas o refinadas
 
-1. `ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER` como trabajo siguiente.
-   → **SUPERSEDED / CLOSED**.
+1. Profiles bajo un package genérico `management`.
+   → **SUPERSEDED / NOT ADOPTED**.
 
-2. `MANAGER-CONSUMER-GLOBAL-QUALIFICATION` bloqueado por el cutover.
-   → **REFINED / UNBLOCKED**, todavía no ejecutado completamente.
+2. `ProfilesConfiguration` dentro de `profiles/core`.
+   → **SUPERSEDED / REMOVED**; owner CURRENT `profiles/configuration`.
 
-3. La afirmación de que el consumer CURRENT usa contratos legacy.
-   → **SUPERSEDED** por `main@ee9a0401...`.
+3. Navigation standalone o profile binding opcional dentro del target Atlanticus.
+   → **SUPERSEDED**; composition target exige Navigation => Profiles => Users.
 
-4. Resolver UI, E2E local y E2E con infraestructura dentro del mismo incremento.
-   → **NOT ADOPTED**. Se mantienen como fronteras separadas.
+4. Tests como mecanismo para congelar ausencia de imports/files/funciones.
+   → **FORBIDDEN**; validar comportamiento/contratos.
 
-5. Tratar cualquier “contrato raro” observado en UI como motivo automático de rediseño.
-   → **FORBIDDEN**. Primero reproducir y contrastar contra contratos CURRENT.
+5. Tests automatizados de apariencia CSS.
+   → **FORBIDDEN AS CONTRACT TESTS**; apariencia se valida visualmente.
 
-## Qualification observada para este checkpoint
+## Qualification del checkpoint
 
-| Hallazgo | Estado |
-|---|---|
-| checkpoint publicado | VERIFIED / `ee9a0401c7947f2bf61abc0a783dfa905443b6b1` |
-| consumer generic wiring presente | VERIFIED / CURRENT |
-| `ManagerWorkspaceBridge` presente | VERIFIED / CURRENT |
-| runtime local presente | VERIFIED / CURRENT |
-| `git diff --check` antes de publicación | VERIFIED / PASS |
-| legacy token scan scoped | VERIFIED / 0 matches |
-| `compileall` scoped | VERIFIED / PASS |
-| página Manager local levanta | VERIFIED / manual smoke |
-| full Ruff del checkpoint | UNVERIFIED |
-| full pytest del checkpoint | UNVERIFIED |
-| full ADA regression | UNVERIFIED |
-| local behavioral E2E | UNVERIFIED |
-| Storage/Cosmos Docker E2E | UNVERIFIED |
-| CI remoto | UNVERIFIED |
+Implementación CURRENT:
+
+```text
+moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+```
+
+Parent:
+
+```text
+709cf2fb9ee422094f011cfda051f08f37276992
+```
+
+Evidencia observada:
+
+```text
+Users standalone affected suites
+92 PASS
+
+Profiles configuration boundary affected suites
+74 PASS
+
+git diff --check
+PASS in both cutovers
+```
+
+No trasladar esos resultados a suites o flujos no ejecutados.
 
 ## Conflicto abierto de Python metadata
 
@@ -216,19 +352,17 @@ Decisión global:
 Python 3.14.7
 ```
 
-Configuration Manager CURRENT:
+Packages CURRENT todavía declaran en varios puntos:
 
 ```text
 requires-python = "==3.14.2"
 ```
 
-No resolver silenciosamente durante UI cleanup.
+Permanece OPEN y fuera del siguiente incremento.
 
 ## Siguiente foco único
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 PLANNED / NEXT
 ```
-
-No mezclar E2E local, Storage/Cosmos Docker, baseline Python ni otros dominios en ese incremento.

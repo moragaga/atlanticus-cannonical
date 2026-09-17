@@ -2,92 +2,141 @@
 
 Estado: **OPEN**
 
-## Capability composition
-
-1. Freeze contrato de optional bindings.
-2. Extraer Users→Navigation coupling de ADA Manager.
-3. Confirmar qué integrations necesitan packages explícitos y cuáles basta inyectar por provider.
-
-## User Activity
-
-4. Freeze `UserPageActivity` shape.
-5. Freeze partition key.
-6. Freeze deterministic ID strategy: application + actor + session + page.
-7. Verificar/aplicar `default_ttl_seconds=86400`.
-8. Freeze semantics de active time y visit_count.
-9. Freeze comportamiento de browser reload/client_session_id.
-10. Definir dashboard query contract.
-
-## Resource plan
-
-11. Freeze `ApplicationResourcePlan`.
-12. Freeze external/backend resource declaration.
-13. Definir owner/required/optional semantics.
-14. Definir named connection resolution.
-
-## Local/cloud
-
-15. Confirmar creación de database sólo local dentro del lifecycle Web; el bridge Cosmos no crea database.
-16. Confirmar qué containers puede crear Web en Azure según permisos.
-17. Definir Storage provisioning parity.
-18. Integrar el bridge Cosmos ya cerrado al punto de resource preparation cuando los contratos anteriores estén congelados.
-
-## Users Source / Projection / Profiles
+## Users / Profiles / Navigation
 
 Cerrados:
 
 ```text
-USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1           CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2       CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION          CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT     CLOSED / VERIFIED / CURRENT
+USERS-STANDALONE-AUTHORITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Permanecen OPEN/BLOCKED:
+En progreso:
 
-19. `USERS-PROFILES-ADMIN-COMPOSITION`.
-20. Migrar `UsersAdministrationService` y authoring/drafts a los contratos separados.
-21. Definir UX delete/reassign de Profiles referenciados respetando no-orphans.
-22. `USERS-RUNTIME-CANONICAL-CUTOVER`.
-23. `USERS-RUNTIME-EXACT-RELEASE-PROVENANCE`, sin shim `SourceReleaseId <-> str`.
-24. Freeze resource topology/provisioning del Cosmos canonical Projection store si deployment lo requiere.
-25. Legacy Users Source/Projection/admin deletion sólo tras consumer migration.
-26. Validar composition root productivo del canonical Projection store en su incremento de integración.
-27. Definir destino final de `FileUsersProjectionProfileCatalog` durante consumer cutover.
+```text
+PROFILES-CAPABILITY-EXTRACTION
+IN PROGRESS
+```
+
+Siguiente único foco:
+
+```text
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+PLANNED / NEXT
+```
+
+Pendientes posteriores:
+
+1. eliminar `UsersProfilesConfiguration`;
+2. eliminar `UsersProfilesAdministrationService`;
+3. eliminar `UsersProfilesAdminDraft`;
+4. separar Users Source y Profiles Source;
+5. separar el payload Projection combinado;
+6. migrar `UserConfiguration.profile_key` al contrato final `authority_key`;
+7. remover `administrator` del boundary combinado sin alias hacia `root`;
+8. definir y verificar composition Users + Profiles;
+9. definir validación de referencias hacia functional profiles;
+10. definir secuencia/recovery/audit para delete/reassign cuando exista referencia;
+11. extraer Profiles UI de Users;
+12. alinear Navigation => Profiles => Users;
+13. verificar wiring real del selector local Jane/John.
+
+La antigua frontera:
+
+```text
+USERS-PROFILES-ADMIN-COMPOSITION
+```
+
+queda `SUPERSEDED` por la secuencia incremental anterior.
+
+## User Activity
+
+14. Freeze `UserPageActivity` shape.
+15. Freeze partition key.
+16. Freeze deterministic ID strategy.
+17. Verificar/aplicar `default_ttl_seconds=86400`.
+18. Freeze semantics de active time y visit_count.
+19. Freeze comportamiento de browser reload/client_session_id.
+20. Definir dashboard query contract.
+
+## Resource plan
+
+21. Freeze `ApplicationResourcePlan`.
+22. Freeze external/backend resource declaration.
+23. Definir owner/required/optional semantics.
+24. Definir named connection resolution.
+
+## Local/cloud
+
+25. Confirmar creación de database local dentro del lifecycle Web donde corresponda.
+26. Confirmar permisos de creación/validación de containers en Azure.
+27. Definir Storage provisioning parity.
+28. Integrar resource preparation cuando sus contratos estén congelados.
 
 ## Readiness
 
-28. Freeze READY/DEGRADED/ERROR semantics.
-29. Definir qué dependencies son required por aplicación.
-30. Definir health/readiness endpoints/surface.
+29. Freeze READY/DEGRADED/ERROR semantics.
+30. Definir dependencies required por aplicación.
+31. Definir health/readiness endpoints/surface.
 
 ## Pre-Manager
 
-31. Freeze route/name.
-32. Freeze bootstrap authorization en Azure.
-33. Eliminar `is_local` full-access bypass.
-34. Definir local development access sin volver a crear bypass.
-35. Freeze projection action permissions.
+32. Freeze route/name.
+33. Freeze bootstrap authorization en Azure.
+34. Eliminar `is_local` full-access bypass donde todavía exista.
+35. Definir local development access sin recrear bypass.
+36. Freeze projection action permissions.
 
 ## Projection orchestration
 
-36. Projection dependency contract — **CLOSED / VERIFIED / CURRENT**: `ProjectionTarget.dependencies` transporta exact targets.
-37. Deterministic dependency ordering — **CLOSED / VERIFIED / CURRENT**: normalization por `source_key` en `ProjectionTarget`.
-38. Definir retry/resume donde todavía no esté cubierto por contracts CURRENT.
-39. Definir rollback/no-op semantics donde exista una necesidad real no cubierta.
-40. Mantener Source Release identity en consumers pendientes.
-
-KPI Configuration demuestra una dependencia real CURRENT:
+Cerrado:
 
 ```text
-Tool ProjectionTarget
-    ↓
-KPI Configuration ProjectionTarget.dependencies
+ProjectionTarget.dependencies
+exact targets / deterministic normalization
 ```
 
-Esto no crea un coordinator global ni impone orden artificial a projections independientes.
+Open:
+
+37. definir retry/resume donde no esté cubierto por contracts CURRENT;
+38. definir rollback/no-op sólo donde exista necesidad real;
+39. mantener Source Release identity en consumers pendientes.
+
+No crear coordinator global por defecto.
+
+## Test contract cleanup
+
+40. remover o reemplazar tests cuyo único objetivo sea inspeccionar ausencia de
+    imports, archivos, funciones, clases o source tokens;
+41. no crear validaciones automatizadas de CSS visual, responsive, spacing o branding;
+42. conservar sólo checks de carga/existencia de assets cuando sean contractuales.
+
+CURRENT conocido fuera de política:
+
+```text
+web/capabilities/users/core/tests/test_authority.py
+test_users_core_has_no_profiles_dependency
+```
+
+Estado:
+
+```text
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / OPEN
+```
+
+No mezclarlo con el siguiente source ownership cutover.
 
 ## Deployment
 
-41. Crear esquema/ilustración final para soporte una vez congelado el contrato.
+43. crear esquema/ilustración final para soporte una vez congelado el contrato.
+
+## Python baseline
+
+44. alinear metadata `requires-python` con Python 3.14.7 en incremento separado;
+45. qualificar globalmente `python:3.14.7-slim-trixie`.
+
+No resolver silenciosamente dentro de Profiles extraction.

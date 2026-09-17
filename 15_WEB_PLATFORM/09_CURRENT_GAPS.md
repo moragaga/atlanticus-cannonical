@@ -2,20 +2,93 @@
 
 Estado: **CURRENT**
 
-## 1. Users / Navigation
+Checkpoint de implementación:
 
-### Bien separado
+```text
+moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+```
 
-Packages core/configuration son independientes.
+## 1. Users / Profiles / Navigation
 
-### Gap
+### Cerrado
 
-ADA Configuration Manager enlaza Navigation con Users directamente para construir profile options.
+```text
+USERS-STANDALONE-AUTHORITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
 
-Acción futura:
-extraer ese enlace hacia una composition/binding opcional.
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
 
-## 2. User Activity
+Users core posee autoridades base:
+
+```text
+guest
+basic
+root
+local
+```
+
+Profiles CURRENT tiene:
+
+```text
+profiles/core
+profiles/configuration
+```
+
+`ProfilesConfiguration` es owned por `profiles/configuration`, no por core.
+
+### Gap vigente
+
+CURRENT todavía conserva ownership combinado dentro de Users configuration:
+
+```text
+UsersProfilesConfiguration
+UsersProfilesAdministrationService
+UsersProfilesAdminDraft
+combined Users + Profiles Source
+combined Users + Profiles Projection payload
+profile_key in UserConfiguration
+administrator in combined contract
+Profiles UI inside Users UI
+```
+
+Siguiente frontera:
+
+```text
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+PLANNED / NEXT
+```
+
+Después permanecen:
+
+```text
+USERS-PROFILES-COMPOSITION-CUTOVER
+PROFILES-UI-EXTRACTION
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+```
+
+## 2. Capability composition
+
+Target vigente:
+
+```text
+Users
+  ↓
+Profiles
+  ↓
+Navigation
+```
+
+Gap:
+
+- composition final no está implementada;
+- cross-capability authority validation sigue pendiente;
+- Navigation alignment sigue pendiente.
+
+La regla anterior de Navigation standalone queda SUPERSEDED.
+
+## 3. User Activity
 
 ### Existe
 
@@ -31,24 +104,26 @@ extraer ese enlace hacia una composition/binding opcional.
 
 No hay page visit history ordenada.
 
-## 3. TTL
+## 4. TTL
 
 El contrato canónico requiere 24 h.
 
-Debe verificarse dónde se declara físicamente el `CosmosContainerSpec` de User Activity.
+Debe verificarse dónde se declara físicamente el `CosmosContainerSpec` de User
+Activity.
 
-No asumir que el TTL está aplicado sólo porque el dominio lo requiere.
+No asumir que TTL está aplicado sólo porque el dominio lo requiere.
 
-## 4. Cosmos provisioning / Web lifecycle
+## 5. Cosmos provisioning / Web lifecycle
 
 Existe `CosmosProvisioner` y soporta:
+
 - create database;
 - ensure containers;
 - validate containers;
 - partition key validation;
 - TTL validation.
 
-Además están implementados y verificados:
+Además permanecen cerrados:
 
 ```text
 WEB-STORAGE-TOPOLOGY
@@ -57,6 +132,7 @@ STORAGE-PREFLIGHT-COSMOS-BRIDGE
 ```
 
 Gap vigente:
+
 - integrar resource preparation al lifecycle Web;
 - congelar `ApplicationResourcePlan`;
 - required/optional semantics;
@@ -64,79 +140,84 @@ Gap vigente:
 - política local/cloud de database creation;
 - readiness READY/DEGRADED/ERROR.
 
-## 5. Users runtime durable / Source / Projection
+## 6. Users runtime / local
 
-Cerrado y verificado:
+Users runtime durable y Cosmos adapter permanecen CURRENT.
 
-```text
-COSMOS-USERS-RUNTIME-ADAPTER       CLOSED / VERIFIED / CURRENT
-USERS-RUNTIME-PROJECTION-BOUNDARY  CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-SOURCE-1           CLOSED / VERIFIED / CURRENT
-USERS-CANONICAL-PROJECTION-2       CLOSED / VERIFIED / CURRENT
-USERS-CONTRACT-SEPARATION          CLOSED / VERIFIED / CURRENT
-UCS-1 CANONICAL-CONTRACT-SPLIT     CLOSED / VERIFIED / CURRENT
-```
+Existe selector local Jane/John en Users core.
 
-Checkpoint CURRENT:
+Gap:
 
 ```text
-moragaga/atlanticus@05d6cbb5b81b762f7fc06fc96b7959bfb835a7e3
+composition/runtime wiring exacto del selector local
+UNVERIFIED
 ```
 
-Users dispone de:
-- runtime durable común `users.runtime`;
-- `UsersRuntimeStore` + `PendingUsersReader` Cosmos;
-- writer Managed snapshot-level con Pending→Resolved, retirement/re-add y CAS;
-- `ProfilesConfiguration` Profiles-owned;
-- `UsersConfiguration` Users-owned;
-- `UsersProfilesConfiguration` como cross-contract;
-- Source canónico con una exact release y dos resources;
-- canonical Projection `ProjectionRecord[UsersProfilesConfiguration]`;
-- Cosmos ProjectionStore schema `2` con read schema `1`;
-- exact release provenance en Projection;
-- create-only + ETag/CAS;
-- retry same-target idempotente.
+No asumir que la existencia del selector prueba que el runtime ejecutado lo usa.
 
-Gap vigente:
-- admin authoring sigue usando aggregate/contracts legacy;
-- `users.runtime` conserva provenance legacy `projection_source_revision`;
-- runtime writer todavía no consume directamente la Projection canónica separada;
-- no está congelado el resource topology/provisioning físico de `CosmosUsersConfigurationProjectionStore`;
-- no se pueden eliminar todavía los contratos/adapters legacy de Users.
+## 7. Profiles source / projection ownership
 
-Siguiente frontera:
+Todavía no existe lifecycle independiente completo de Profiles.
+
+Target pendiente:
 
 ```text
-USERS-PROFILES-ADMIN-COMPOSITION  PLANNED / NEXT
+source_key = profiles
+Profiles Source owns ProfilesConfiguration
+Profiles projection/configuration lifecycle owned by Profiles
 ```
 
-## 6. Storage provisioning
+No crear un segundo Source paralelo mientras el combined contract siga CURRENT.
 
-No se ha cerrado parity equivalente a Cosmos provisioning para toda `connectivity/storage`.
+El siguiente cutover debe reemplazarlo de raíz.
 
-Debe diseñarse únicamente si Source/Blob/bootstrap lo requiere.
+## 8. Storage provisioning
 
-## 7. Manager bypass
+No se ha cerrado parity equivalente a Cosmos provisioning para toda
+`connectivity/storage`.
+
+Diseñar sólo si Source/Blob/bootstrap lo requiere.
+
+## 9. Manager bypass
 
 `is_local` full-access bypass continúa como open item donde aún corresponda.
 
-No mezclarlo con Users/Profiles admin composition.
+No mezclarlo con Profiles capability extraction.
 
-## 8. Pre-Manager page
+## 10. Pre-Manager page
 
-La superficie final de bootstrap/login permanece pendiente según canonical Manager.
+La superficie final de bootstrap/login permanece pendiente según canonical
+Manager.
 
-## 9. Projection planner
+## 11. Projection planner
 
-Manager tiene workflows de proyección por módulo, pero aún debe congelarse un orquestador de proyecciones múltiples basado en dependencias si una necesidad real lo exige.
+Manager tiene workflows de proyección por módulo.
 
-UCS-1 no introduce un segundo coordinator ni una Projection independiente de Profiles.
+No introducir un coordinator global sin necesidad real demostrada.
 
-## 10. Command Center
+## 12. Test hygiene
 
-Debe aplicar el mismo modelo de:
-- capability independence;
+Existe un test CURRENT de Users core que inspecciona source/import absence.
+
+Gap:
+
+```text
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / OPEN
+```
+
+No añadir tests nuevos de CSS visual, source tokens, imports, AST o estructura
+interna.
+
+## 13. Command Center
+
+Debe aplicar los mismos principios de:
+
+- capability ownership;
 - resource bootstrap;
 - readiness;
 - projection orchestration;
 - optional User Activity.
+
+No transferir automáticamente contratos del Web Platform a Alarm Engine sin una
+frontera explícita.

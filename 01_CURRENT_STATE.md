@@ -7,19 +7,19 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 Parent inmediato:
 
 ```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+709cf2fb9ee422094f011cfda051f08f37276992
 ```
 
-Canonical inspeccionado antes de este reemplazo:
+Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@c6c49d72638483d5bec3d2cf9745de3745f1c703
+moragaga/atlanticus-cannonical@497207bbdda23a829897751f37b9653298adf514
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -27,275 +27,338 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado resumido
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER          CLOSED / VERIFIED / CURRENT
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER           CLOSED / VERIFIED / CURRENT
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER             CLOSED / VERIFIED / CURRENT
-USERS-CLEAN-CUTOVER-COMPLETION                     CLOSED / VERIFIED / CURRENT
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL        CLOSED / VERIFIED / CURRENT
-PROJECTION-CORE-STALE-TEST-ALIGNMENT               CLOSED / VERIFIED
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER            CLOSED / VERIFIED / CURRENT
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER       CLOSED / VERIFIED / CURRENT
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER   CLOSED / VERIFIED / CURRENT
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER    CLOSED / VERIFIED / CURRENT
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP               PLANNED / NEXT
-ADA-CONFIGURATION-MANAGER-LOCAL-E2E                 PLANNED / AFTER UI CLEANUP
-ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E        PLANNED / AFTER LOCAL E2E
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION               PLANNED / UNBLOCKED
-WEB-TEST-CONTRACT-CLEANUP                           PLANNED
+USERS-STANDALONE-AUTHORITY-CUTOVER          CLOSED / VERIFIED / CURRENT
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER     CLOSED / VERIFIED / CURRENT
+PROFILES-CAPABILITY-EXTRACTION              IN PROGRESS
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER     PLANNED / NEXT
+USERS-PROFILES-COMPOSITION-CUTOVER          PLANNED
+PROFILES-UI-EXTRACTION                      PLANNED
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT    PLANNED
+QUALIFICATION                               PLANNED
+WEB-TEST-CONTRACT-CLEANUP                   PLANNED / OPEN
 ```
+
+Los hitos genéricos de Manager, Navigation, Tools, KPI Configuration,
+KPI Definition y ADA Configuration Manager cerrados anteriormente permanecen
+`CLOSED / VERIFIED / CURRENT`.
 
 ## VERIFIED
 
 ### Published checkpoint
 
-`main` avanzó a `ee9a0401c7947f2bf61abc0a783dfa905443b6b1`, hijo directo de `ef3f0a44c5dcc14f8fcafe5bb36bb97865381924`.
-
-### Configuration Manager final generic cutover
-
-El package publicado:
+`main` está publicado en:
 
 ```text
-scopes/ada/web/application/ada-configuration-manager
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
-ya consume directamente los contratos CURRENT de Users, Navigation, Tools, KPI Configuration y KPI Definition.
-
-`ConfigurationManagerDependencies` usa tipos finales:
+con parent inmediato:
 
 ```text
-UsersProfilesAdministrationService
-SourceProjectionService[UsersProfilesConfiguration]
-
-NavigationSourceService
-SourceProjectionService[NavigationConfigurationCatalog]
-
-ToolSourceService
-SourceProjectionService[ToolConfiguration]
-
-KpiSourceService
-SourceProjectionService[KpiConfiguration]
-KpiDestinationCatalogProvider
-ProjectionStore[KpiConfiguration]
-
-KpiDefinitionSourceService
-SourceProjectionService[KpiDefinitionCatalog]
+709cf2fb9ee422094f011cfda051f08f37276992
 ```
 
-No depende de los bundles legacy removidos.
+### Users standalone authority
 
-### Manager module wiring
-
-La composición publicada registra por módulo servicios separados para:
+El checkpoint parent introdujo en `users/core` el contrato de autoridad base:
 
 ```text
-source
-source-reader
-source-history
-projection
-draft-validation
+guest
+basic
+root
+local
 ```
 
-y construye `ManagerModule` con:
+Semántica implementada en core:
 
 ```text
-source_key
-source_service
-source_reader_service
-source_history_service
-projection_service
-draft_validation_service
+guest  non-assignable
+basic  assignable
+root   assignable / full access
+local  non-assignable / full access
 ```
 
-No existe doble routing legacy/exact en el consumer final.
+`EffectiveUser` y `ResolvedUserRecord` usan `authority_key` en el runtime de Users.
 
-### Workspace
+Users core dejó de requerir objetos `ProfileDefinition` / `ProfileCatalog`
+para resolver usuarios.
 
-El consumer usa `ManagerWorkspace` como documento de workspace.
+Existe un selector local con Jane Doe y John Doe y sus colores definidos.
 
-`ManagerWorkspaceBridge`:
-
-- lee/escribe payload dentro de `ManagerWorkspace`;
-- valida ownership por `owner_subject_id`;
-- obtiene `SourceSnapshot` sólo al crear un workspace nuevo;
-- no reconstruye Source identity desde revision strings.
-
-La identidad local de workspace sigue separada de Source y Projection.
-
-### Local runtime
-
-El package publicado contiene entrypoint local y composición local.
-
-CURRENT para smoke/manual validation:
+Qualification observada antes de publicar `709cf2f...`:
 
 ```text
-LocalSourceStore
-InProcessProjectionStore
-EmptyPendingUsersReader
-Users Source/Projection
-Navigation Source/Projection
-Tools Source/Projection
-KPI Configuration Source/Projection
-KPI Definition Source/Projection
+users/core                 41 PASS
+users/cosmos               22 PASS
+users/projection-cosmos    29 PASS
+TOTAL                      92 PASS
+
+git diff --check           PASS
 ```
 
-Las source keys locales son:
+### Profiles configuration boundary
+
+`ProfilesConfiguration` ya no pertenece a `profiles/core`.
+
+CURRENT:
 
 ```text
-users
-navigation
-tools
-kpis
-kpi-definitions
+web/capabilities/profiles/core
+    domain/core
+
+web/capabilities/profiles/configuration
+    ProfilesConfiguration
 ```
 
-El principal local es administrador local.
-
-### Legacy removal
-
-Scans observados durante el cierre no encontraron:
+Existe el package:
 
 ```text
-ExactProjectionWorkflow
-expected_source_revision
-KpiDefinitionAuthorityProvider
-KpiConfigurationServices
-KpiDefinitionServices
-ToolLifecycleServices
-NavigationConfigurationServices
-base_source_revision
-build_kpi_configuration_digest
-build_kpi_definition_digest
-build_tool_configuration_digest
-ManagerDraft
-tool_projection_revision
+atlanticus-web-profiles-configuration==0.1.0
 ```
 
-### Static validation observada
+`users/configuration` declara explícitamente esa dependencia mientras todavía
+consume `ProfilesConfiguration`.
+
+Qualification observada antes de publicar `4e008055...`:
 
 ```text
+profiles/core              7 PASS
+profiles/configuration     2 PASS
+users/configuration       65 PASS
+TOTAL                     74 PASS
+
+uv lock
+PASS
+
 git diff --check
 PASS
-
-legacy token scan scoped
-0 matches
-
-python compileall scoped
-PASS
-```
-
-### Runtime smoke observada
-
-El usuario levantó el Configuration Manager local y confirmó que la página carga.
-
-Resultado:
-
-```text
-Configuration Manager UI boot
-PASS / manual smoke
 ```
 
 ## INFERRED
 
-La recuperación de la UI demuestra que el consumer dejó de estar bloqueado por los contratos legacy que impedían componer el Manager.
+La nueva frontera `profiles/core + profiles/configuration` alinea Profiles con
+la misma semántica estructural usada por otras capabilities sin crear un package
+especial.
 
-No demuestra todavía que cada acción de edición/publicación/proyección funcione de punta a punta.
+Esto no demuestra todavía que Profiles tenga source, projection, administration
+o UI independientes.
 
 ## ASSUMED
 
 No se asume:
 
-- que todos los faltantes visuales estén identificados;
-- que los contratos que el usuario percibió como “raros” estén mal ni cuál es su causa;
-- que full Ruff haya pasado en este checkpoint;
-- que full pytest haya pasado en este checkpoint;
-- que full ADA regression haya pasado;
-- que el flujo `edit → validate → publish → project` haya sido ejecutado completo;
-- que el runtime local represente la topología productiva final;
-- que Storage/Cosmos Docker E2E ya exista o pase;
-- que CI remoto pase;
-- que Python 3.14.7 esté alineado en metadata de todos los packages.
+- que `UsersProfilesConfiguration` haya sido eliminado;
+- que Users y Profiles ya publiquen Sources independientes;
+- que `profile_key` haya desaparecido de Users configuration;
+- que `administrator` haya desaparecido del agregado combinado CURRENT;
+- que Profiles UI ya sea independiente;
+- que Navigation ya exija Profiles en composition;
+- que el selector local Jane/John esté conectado al composition root ejecutado;
+- que full workspace pytest/Ruff haya pasado en este checkpoint;
+- que CI remoto haya pasado;
+- que metadata Python 3.14.7 esté alineada globalmente.
 
 ## PROPOSED
 
 Único foco siguiente:
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 PLANNED / NEXT
 ```
 
-Alcance:
+Debe partir de código CURRENT e implementar únicamente la separación real de
+ownership Source/Projection/configuration entre Users y Profiles.
 
-- observar la UI CURRENT;
-- corregir faltantes visuales/funcionales concretos;
-- verificar cualquier contrato sospechoso sólo cuando exista evidencia reproducible;
-- no rediseñar contratos congelados sin conflicto real.
+## SUPERSEDED / REFINED
 
-## SUPERSEDED
+### Profiles management package
 
-```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER as PLANNED / NEXT
-SUPERSEDED
-```
-
-Ahora:
+La propuesta transitoria:
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
+web/capabilities/profiles/management
 ```
 
-También queda SUPERSEDED la afirmación canónica previa de que `ada-configuration-manager` todavía usaba:
+queda:
 
 ```text
-KpiConfigurationServices
-KpiDefinitionServices
-KpiDefinitionAuthorityProvider
-ToolLifecycleServices
-ExactProjectionWorkflow
-NavigationConfigurationServices
-workflow_service
-exact_source_*
-expected_source_revision
-revision-string projection adapters
+SUPERSEDED / NOT ADOPTED
 ```
 
-Esos hallazgos describen `ef3f0a44...`, no `ee9a0401...`.
+Profiles mantiene la semántica:
+
+```text
+profiles/
+├── core
+└── configuration
+```
+
+`management` no se usa como sinónimo genérico de configuration.
+
+### ProfilesConfiguration dentro de core
+
+```text
+profiles/core/.../configuration.py
+SUPERSEDED / REMOVED
+```
+
+El owner CURRENT es:
+
+```text
+profiles/configuration
+```
+
+### Optional Navigation/Profile composition
+
+La regla canónica anterior que permitía Navigation sin Profiles queda
+`SUPERSEDED BY CURRENT DECISION`.
+
+Target vigente:
+
+```text
+Users
+  ↓
+Profiles
+  ↓
+Navigation
+```
+
+La dependencia funcional no obliga a introducir imports innecesarios entre
+cores.
 
 ## UNVERIFIED / OPEN
 
-- UI cleanup del Manager;
-- naturaleza exacta de los “contratos raros” observados manualmente;
-- full Ruff/pytest del package después del cutover publicado;
-- full ADA regression;
-- local E2E de comportamiento;
-- Storage/Cosmos Docker E2E;
-- CI remoto;
-- Python 3.14.7/Trixie global qualification;
-- metadata `requires-python` global;
-- cleanup transversal posterior de tests Web.
+### Source / aggregate ownership
 
-## Conflicto de baseline Python
+CURRENT todavía contiene:
 
-Canonical fija:
+```text
+UsersProfilesConfiguration
+UsersProfilesAdministrationService
+UsersProfilesAdminDraft
+combined Users + Profiles Source
+combined Users + Profiles Projection payload
+```
+
+CURRENT `UsersProfilesConfiguration` todavía requiere:
+
+```text
+administrator
+```
+
+y valida Users contra:
+
+```text
+user.profile_key
+```
+
+Por tanto, la extracción de Profiles está sólo parcialmente implementada.
+
+### Users configuration field
+
+`UserConfiguration.profile_key` sigue CURRENT.
+
+Target decidido:
+
+```text
+UserConfiguration.authority_key
+```
+
+pero todavía no está implementado en esta capa.
+
+### administrator
+
+Users runtime base ya usa `root`, pero el agregado Users/Profiles CURRENT todavía
+contiene semántica `administrator`.
+
+Estado:
+
+```text
+administrator
+DECIDED REMOVE / NOT YET FULLY IMPLEMENTED
+```
+
+No crear mapping `administrator -> root`.
+
+### Local runtime wiring
+
+Existe `select_local_user()` con Jane/John.
+
+No está verificado en este cierre qué composition root ejecutado consume ese
+selector.
+
+### Test fuera de política
+
+CURRENT contiene:
+
+```text
+web/capabilities/users/core/tests/test_authority.py
+test_users_core_has_no_profiles_dependency
+```
+
+Ese test inspecciona `pyproject.toml` y source text para comprobar ausencia de
+dependencias.
+
+Contradice la política CURRENT de tests.
+
+Estado:
+
+```text
+OPEN / PLANNED UNDER WEB-TEST-CONTRACT-CLEANUP
+```
+
+No mezclar su cleanup con el siguiente source ownership cutover y no crear más
+tests de ese tipo.
+
+### Python metadata
+
+Baseline global:
 
 ```text
 Python 3.14.7
+python:3.14.7-slim-trixie
 ```
 
-El Configuration Manager publicado todavía declara:
+Packages CURRENT todavía contienen metadata `requires-python ==3.14.2`.
+
+Permanece OPEN y fuera de este frente.
+
+## Conflictos canonical detectados
+
+Los siguientes documentos del canonical checkpoint `497207bb...` quedaron
+desactualizados:
 
 ```text
-requires-python = "==3.14.2"
+15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md
+15_WEB_PLATFORM/09_CURRENT_GAPS.md
+15_WEB_PLATFORM/11_OPEN_ITEMS.md
+15_WEB_PLATFORM/12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md
 ```
 
-Este conflicto sigue OPEN y no fue resuelto por el cutover.
+`01_CAPABILITY_INDEPENDENCE.md` contradice explícitamente el target
+Navigation => Profiles => Users.
+
+`09_CURRENT_GAPS.md` y `11_OPEN_ITEMS.md` describen checkpoints y next steps
+anteriores a los cutovers publicados.
+
+`12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` conserva el baseline
+`d3883e1e...` y marca ambos primeros incrementos como PLANNED.
 
 ## Siguiente frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 PLANNED / NEXT
 ```
 
-No mezclar todavía E2E, Storage/Cosmos Docker, Python baseline cleanup ni otros frentes.
+No mezclar:
+
+```text
+Profiles UI
+Navigation dependency alignment
+Python metadata
+E2E
+CSS visual tests
+transversal test cleanup
+```
