@@ -6,7 +6,7 @@ Estado: **CURRENT**
 
 | Decisión | Estado |
 |---|---|
-| Python 3.14.7 | DECIDED / NOT YET QUALIFIED GLOBALLY |
+| Python 3.14.7 | DECIDED / LOCALLY USED / METADATA NOT YET GLOBALLY ALIGNED |
 | `python:3.14.7-slim-trixie` | DECIDED / NOT YET QUALIFIED GLOBALLY |
 | `uv`, no pip normal | CURRENT |
 | Definir contratos antes que consumidores | CURRENT |
@@ -33,10 +33,12 @@ OLD SCHEMA READERS IN CURRENT RUNTIME
 FORBIDDEN
 
 CONTRATO FINAL
-Generic Atlanticus infrastructure contract where applicable
+Responsabilidad real del dominio; infraestructura genérica sólo donde aplique
 ```
 
 Usar infraestructura genérica no cambia automáticamente ownership de dominio.
+
+No forzar Source/Projection/Manager sobre una entidad que no sea configuration lifecycle.
 
 ## Source / Projection
 
@@ -53,6 +55,8 @@ Usar infraestructura genérica no cambia automáticamente ownership de dominio.
 | No reconstruir `ProjectionTarget` desde revision | FROZEN |
 | `expected_source_revision` | SUPERSEDED / REMOVED |
 | private projection revision identity | SUPERSEDED / REMOVED |
+
+Estas decisiones aplican a configuration domains. Users CURRENT no es uno de ellos.
 
 ## Manager generic contract
 
@@ -83,88 +87,72 @@ History usa HistoryPage + SourceReleaseRef
 
 Estado: **FROZEN / CURRENT**.
 
-## Semántica estructural de capabilities
+## Users global registry
 
-La misma responsabilidad debe usar el mismo concepto y naming.
-
-Patrón vigente cuando existan ambas responsabilidades:
+Estado:
 
 ```text
-<capability>/
-├── core
-└── configuration
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-Semántica:
+### Ownership
+
+Users es registry/lifecycle de entidad global.
 
 ```text
-core
-domain models / invariants / contracts propios
-
-configuration
-editable/publishable configuration contract y lifecycle asociado cuando exista
+Users != Configuration Source
+Users != Profile assignment
+Users != Access configuration
+Users != Navigation configuration
 ```
 
-No crear una arquitectura especial para una capability sin una frontera técnica
-o funcional real.
-
-Para Profiles:
+No reintroducir:
 
 ```text
-profiles/core
-CURRENT
-
-profiles/configuration
-CURRENT
+UsersConfiguration
+UsersProfilesConfiguration
+UsersProfilesAdministrationService
+UsersProfilesAdminDraft
+Users Source
+Users Projection
+Users Manager Source workflow
 ```
 
-La propuesta `profiles/management` queda `SUPERSEDED / NOT ADOPTED`.
-
-`management` no se usa como sinónimo genérico de configuration. Cuando exista
-como concepto de dominio, conserva ese significado específico.
-
-## Users / Profiles / Navigation
-
-Target de composición:
-
-```text
-Users
-  │ standalone válido
-  ▼
-Profiles
-  ▼
-Navigation
-```
-
-Estados contractuales:
-
-```text
-Users standalone
-REQUIRED
-
-Profiles without Users
-INVALID COMPOSITION
-
-Navigation without Profiles
-INVALID COMPOSITION
-
-Users + Navigation without Profiles
-INVALID COMPOSITION
-```
-
-Esto no obliga a acoplar innecesariamente los cores.
-
-Navigation debe preferir una autoridad/access key efectiva inyectada por
-composition antes que importar modelos concretos de Profiles.
-
-## Users base authority
+### Strong identity
 
 Contrato congelado:
 
 ```text
-guest
-TRANSITIONAL / NON-ASSIGNABLE
+strong identity = (issuer, subject_id)
+user_id = build_user_key(issuer, subject_id)
+```
 
+Mismo email/display name no permite fusionar strong identities distintas.
+
+### Global User shape
+
+Campos CURRENT:
+
+```text
+user_id
+issuer
+subject_id
+display_name
+email
+enabled
+authority_key
+avatar_background_color
+avatar_text_color
+```
+
+No añadir estado app-specific al Global User.
+
+### Authorities
+
+Contrato CURRENT:
+
+```text
 basic
 ASSIGNABLE / STANDARD
 
@@ -175,17 +163,18 @@ local
 LOCAL-RUNTIME ONLY / NON-ASSIGNABLE / FULL AUTHORITY
 ```
 
-`administrator` queda `SUPERSEDED / REMOVE`.
-
-No crear alias, shim o mapping:
+Quedan SUPERSEDED:
 
 ```text
-administrator -> root
+guest as Users authority
+administrator
+administrator -> root mapping
+functional app profile keys inside Global User authority
 ```
 
-Jane Doe y John Doe son identidades locales, no perfiles.
+Jane Doe y John Doe siguen siendo identidades locales, no Profiles.
 
-Colores congelados:
+Colores preservados:
 
 ```text
 Jane Doe
@@ -193,57 +182,174 @@ Jane Doe
 
 John Doe
 #3778C2 / #FFFFFF
-
-guest
-#FF5722 / #FFFFFF
 ```
 
-## Profiles ownership
+### Runtime login
 
-Profiles es first-class capability.
+Contrato congelado:
 
-CURRENT parcial:
+```text
+UsersRuntimeStore.resolve(identity)
+READ ONLY
+```
+
+Si no existe promoted User:
+
+```text
+AccessStatus.USER_NOT_PROMOTED
+```
+
+Login no crea `pending`, no llama `observe()` y no muta durable state.
+
+### Durable registry
+
+Contrato:
+
+```text
+UsersRegistryStore.load()
+UsersRegistryStore.replace(users, expected_version)
+```
+
+Provider CURRENT:
+
+```text
+BlobUsersRegistryStore
+blob_name default = users/users.json.gz
+```
+
+Documento:
+
+```text
+document_type = atlanticus_users_registry
+schema_version = 1
+```
+
+Concurrencia por ETag:
+
+```text
+first create -> overwrite=False
+replace      -> If-Match expected ETag
+read         -> ETag stable before/after download
+```
+
+No convertir ETag en Source release identity.
+
+### Promoted store
+
+Provider CURRENT:
+
+```text
+CosmosUsersStore
+```
+
+Documento:
+
+```text
+document_type = atlanticus_user
+schema_version = 1
+id = user_id
+```
+
+No aceptar documentos legacy `pending` / `resolved`.
+
+### Candidate states
+
+```text
+PROMOTABLE
+CONFLICT
+PROMOTED
+```
+
+Cosmos presence implica already promoted para promotion.
+
+Registry + Directory con datos distintos para la misma strong identity se presenta
+como conflict que requiere resolución explícita; no se fusiona silenciosamente.
+
+Email compartido por strong identities distintas bloquea promotion automática.
+
+### Promotion ordering
+
+Congelado:
+
+```text
+1. comprobar promoted store
+2. leer/validar Registry + optional Directory candidate
+3. persistir Registry con expected version cuando cambia
+4. crear promoted User en Cosmos
+```
+
+Si Registry write pasa y Cosmos create falla:
+
+```text
+NO rollback distributed transaction
+Registry yes / Cosmos no
+retry/repairable state
+```
+
+## Profiles / Access
+
+Profiles permanece first-class capability:
 
 ```text
 profiles/core
 profiles/configuration
 ```
 
-Target pendiente:
+Profiles y Access son application-specific.
+
+Regla congelada:
 
 ```text
-Profiles own Source
-Profiles own Projection/configuration lifecycle
-Profiles own administration
-Profiles own UI
+Global Users no conoce aplicaciones concretas.
 ```
 
-No conservar ownership combinado Users/Profiles al completar el cutover.
+El contrato final de asociación:
+
+```text
+Global User -> app-specific Profile/Access
+```
+
+permanece OPEN. No inventarlo desde Users core.
+
+La secuencia canónica anterior `Users Source -> Profiles Source -> Navigation` queda
+refinada: Users ya no participa como Source.
 
 ## Users / Profiles combined contracts
 
-Target:
-
 ```text
 UsersProfilesConfiguration
-REMOVE
+SUPERSEDED / REMOVED
 
 UsersProfilesAdministrationService
-REMOVE
+SUPERSEDED / REMOVED
 
 UsersProfilesAdminDraft
-REMOVE
+SUPERSEDED / REMOVED
 
 Profiles resource inside Users Source
-REMOVE
+SUPERSEDED / REMOVED
 
-Profiles UI inside Users UI
-REMOVE
+Profiles UI inside legacy Users configuration UI
+SUPERSEDED / REMOVED WITH LEGACY PACKAGE
 ```
 
-No recrear atomicidad con una transacción distribuida.
+No recrear atomicidad mediante transacción distribuida.
 
-Cada capability publica su propio Source.
+## ADA Configuration Manager
+
+Users no es módulo del Configuration Manager CURRENT.
+
+La composition administra sólo Configuration domains presentes:
+
+```text
+Navigation
+Tools
+KPI Configuration optional
+KPI Definition optional
+```
+
+Una futura Users Administration surface debe consumir el lifecycle de Users, no
+simular Source/Projection para volver a entrar al Manager genérico.
 
 ## Testing
 
@@ -273,19 +379,10 @@ AST/module structure
 detalles internos de implementación
 ```
 
-Assets JS/CSS pueden comprobarse sólo cuando su existencia/carga sea
-contractualmente relevante.
-
-La validación visual es legítima para apariencia y responsive.
-
-Un test CURRENT que inspecciona source para probar ausencia de Profiles en
-Users core permanece OPEN y debe tratarse bajo `WEB-TEST-CONTRACT-CLEANUP`, no
-usarse como precedente.
-
 ## Estado de ejecución
 
 ```text
-USERS-STANDALONE-AUTHORITY-CUTOVER
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
@@ -294,55 +391,65 @@ CLOSED / VERIFIED / CURRENT
 PROFILES-CAPABILITY-EXTRACTION
 IN PROGRESS
 
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 ```
 
 ## Decisiones reemplazadas o refinadas
 
-1. Profiles bajo un package genérico `management`.
+1. Users como generic Configuration Source.
+   → **SUPERSEDED**; Users es global entity registry/lifecycle.
+
+2. `USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER` separando Users Source y Profiles Source.
+   → **SUPERSEDED / NOT FINAL TARGET**; Users Source fue eliminado.
+
+3. `UsersProfilesConfiguration` como agregado de administración.
+   → **SUPERSEDED / REMOVED**.
+
+4. `UserConfiguration.profile_key -> authority_key` dentro de un Users Source final.
+   → **SUPERSEDED AS LAYER**; Global `UserRecord.authority_key` existe, pero no dentro de Users Configuration.
+
+5. `guest` como authority base CURRENT.
+   → **SUPERSEDED / REMOVED FROM USERS AUTHORITY CONTRACT**.
+
+6. `administrator` dentro del boundary Users/Profiles.
+   → **SUPERSEDED / REMOVED FROM USERS**; no alias hacia root.
+
+7. Users dentro de ADA Configuration Manager.
+   → **SUPERSEDED / REMOVED**.
+
+8. Profiles bajo package genérico `management`.
    → **SUPERSEDED / NOT ADOPTED**.
 
-2. `ProfilesConfiguration` dentro de `profiles/core`.
+9. `ProfilesConfiguration` dentro de `profiles/core`.
    → **SUPERSEDED / REMOVED**; owner CURRENT `profiles/configuration`.
-
-3. Navigation standalone o profile binding opcional dentro del target Atlanticus.
-   → **SUPERSEDED**; composition target exige Navigation => Profiles => Users.
-
-4. Tests como mecanismo para congelar ausencia de imports/files/funciones.
-   → **FORBIDDEN**; validar comportamiento/contratos.
-
-5. Tests automatizados de apariencia CSS.
-   → **FORBIDDEN AS CONTRACT TESTS**; apariencia se valida visualmente.
 
 ## Qualification del checkpoint
 
 Implementación CURRENT:
 
 ```text
-moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 Parent:
 
 ```text
-709cf2fb9ee422094f011cfda051f08f37276992
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 Evidencia observada:
 
 ```text
-Users standalone affected suites
-92 PASS
-
-Profiles configuration boundary affected suites
-74 PASS
-
-git diff --check
-PASS in both cutovers
+Python 3.14.7 local qualification
+uv lock PASS
+uv sync PASS
+web pytest 416 PASS / 7 SKIPPED
+Users/Identity scoped Ruff PASS
+ADA Configuration Manager scoped qualification PASS / user-observed
 ```
 
-No trasladar esos resultados a suites o flujos no ejecutados.
+No atribuir PASS a full Ruff workspace, CI remoto o persisted-data migration.
 
 ## Conflicto abierto de Python metadata
 
@@ -352,7 +459,7 @@ Decisión global:
 Python 3.14.7
 ```
 
-Packages CURRENT todavía declaran en varios puntos:
+`web/pyproject.toml` CURRENT todavía declara:
 
 ```text
 requires-python = "==3.14.2"
@@ -363,6 +470,6 @@ Permanece OPEN y fuera del siguiente incremento.
 ## Siguiente foco único
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 ```

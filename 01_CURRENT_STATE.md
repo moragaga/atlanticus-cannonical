@@ -7,19 +7,19 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 Parent inmediato:
 
 ```text
-709cf2fb9ee422094f011cfda051f08f37276992
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@497207bbdda23a829897751f37b9653298adf514
+moragaga/atlanticus-cannonical@61da5829c6a1f8ec936d46e5a7ec02965b5e4743
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -27,15 +27,16 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado resumido
 
 ```text
-USERS-STANDALONE-AUTHORITY-CUTOVER          CLOSED / VERIFIED / CURRENT
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER     CLOSED / VERIFIED / CURRENT
-PROFILES-CAPABILITY-EXTRACTION              IN PROGRESS
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER     PLANNED / NEXT
-USERS-PROFILES-COMPOSITION-CUTOVER          PLANNED
-PROFILES-UI-EXTRACTION                      PLANNED
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT    PLANNED
-QUALIFICATION                               PLANNED
-WEB-TEST-CONTRACT-CLEANUP                   PLANNED / OPEN
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER           CLOSED / VERIFIED / CURRENT
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER      CLOSED / VERIFIED / CURRENT
+PROFILES-CAPABILITY-EXTRACTION               IN PROGRESS
+USERS-PERSISTED-DATA-CUTOVER                 PLANNED / NEXT
+USERS-ADMINISTRATION-SURFACE-CUTOVER         PLANNED
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE        PLANNED
+ACCESS-PROFILES-CONFIGURATION                PLANNED
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT     PLANNED
+WEB-TEST-CONTRACT-CLEANUP                    PLANNED / OPEN
+PYTHON-METADATA-ALIGNMENT                    PLANNED / OPEN
 ```
 
 Los hitos genéricos de Manager, Navigation, Tools, KPI Configuration,
@@ -49,267 +50,365 @@ KPI Definition y ADA Configuration Manager cerrados anteriormente permanecen
 `main` está publicado en:
 
 ```text
-4e008055ddc551e6c08a7d87715340c8c7cd149e
+6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 con parent inmediato:
 
 ```text
-709cf2fb9ee422094f011cfda051f08f37276992
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
-### Users standalone authority
+### Users global registry root cutover
 
-El checkpoint parent introdujo en `users/core` el contrato de autoridad base:
+El árbol CURRENT de Users contiene:
 
 ```text
-guest
+web/capabilities/users/activity
+web/capabilities/users/blob
+web/capabilities/users/core
+web/capabilities/users/cosmos
+```
+
+Ya no existen en `main`:
+
+```text
+web/capabilities/users/configuration
+web/capabilities/users/projection-cosmos
+web/compositions/users-manager
+```
+
+El antiguo `users/core/.../profiles.py` comentado también fue removido.
+
+### Global User contract
+
+`UserRecord` representa un User global promovido/durable con:
+
+```text
+user_id
+issuer
+subject_id
+display_name
+email
+enabled
+authority_key
+avatar_background_color
+avatar_text_color
+```
+
+Invariante de identidad:
+
+```text
+user_id = build_user_key(issuer, subject_id)
+```
+
+Managed Users aceptan únicamente:
+
+```text
 basic
 root
-local
 ```
 
-Semántica implementada en core:
+`local` permanece reservado para runtime local y no es asignable a Users manejados.
+
+El contrato CURRENT ya no define `guest` como authority de Users.
+
+### Runtime login
+
+`UsersRuntimeStore` expone sólo:
 
 ```text
-guest  non-assignable
-basic  assignable
-root   assignable / full access
-local  non-assignable / full access
+resolve(identity) -> UserRecord | None
 ```
 
-`EffectiveUser` y `ResolvedUserRecord` usan `authority_key` en el runtime de Users.
+No existe `observe()` ni escritura pending durante login.
 
-Users core dejó de requerir objetos `ProfileDefinition` / `ProfileCatalog`
-para resolver usuarios.
-
-Existe un selector local con Jane Doe y John Doe y sus colores definidos.
-
-Qualification observada antes de publicar `709cf2f...`:
+Cuando la identidad autenticada no está promovida:
 
 ```text
-users/core                 41 PASS
-users/cosmos               22 PASS
-users/projection-cosmos    29 PASS
-TOTAL                      92 PASS
-
-git diff --check           PASS
+AccessStatus.USER_NOT_PROMOTED
 ```
 
-### Profiles configuration boundary
+La decisión incluye el `user_id` determinístico.
 
-`ProfilesConfiguration` ya no pertenece a `profiles/core`.
+### Administration lifecycle
 
-CURRENT:
+Contratos CURRENT:
 
 ```text
-web/capabilities/profiles/core
-    domain/core
-
-web/capabilities/profiles/configuration
-    ProfilesConfiguration
+UsersAdministrationStore
+UsersRegistryStore
+UsersDirectoryReader
+UsersAdministrationService
 ```
 
-Existe el package:
+Estados de candidate:
 
 ```text
-atlanticus-web-profiles-configuration==0.1.0
+PROMOTABLE
+CONFLICT
+PROMOTED
 ```
 
-`users/configuration` declara explícitamente esa dependencia mientras todavía
-consume `ProfilesConfiguration`.
-
-Qualification observada antes de publicar `4e008055...`:
+Promotion CURRENT:
 
 ```text
-profiles/core              7 PASS
-profiles/configuration     2 PASS
-users/configuration       65 PASS
-TOTAL                     74 PASS
+1. verificar que Cosmos no tenga el User promovido
+2. descubrir/validar candidato Registry/Directory
+3. escribir Registry con control de versión cuando corresponda
+4. crear User en Cosmos
+```
 
+No existe rollback de Blob si la creación posterior en Cosmos falla.
+El estado durable-registry presente / Cosmos ausente queda recuperable mediante
+reintento o futura superficie de reparación; no se introduce adapter legacy.
+
+### Blob Users Registry
+
+Provider CURRENT:
+
+```text
+atlanticus-web-users-blob
+BlobUsersRegistryStore
+```
+
+Default provider-relative blob name:
+
+```text
+users/users.json.gz
+```
+
+El container se inyecta; no está hardcodeado por Users.
+
+Documento:
+
+```text
+document_type = atlanticus_users_registry
+schema_version = 1
+```
+
+Concurrencia:
+
+```text
+first create -> upload(overwrite=False)
+existing     -> upload_if_match(expected ETag)
+read         -> ETag before/after must match
+```
+
+### Cosmos promoted store
+
+Provider CURRENT:
+
+```text
+CosmosUsersStore
+```
+
+Documento final:
+
+```text
+document_type = atlanticus_user
+schema_version = 1
+id = user_id
+partition key value = user_id
+```
+
+No existe reader CURRENT para documentos legacy `pending` / `resolved`.
+
+### ADA Configuration Manager
+
+Users fue removido del Configuration Manager.
+
+La superficie CURRENT registra:
+
+```text
+navigation
+tools
+kpis                 optional
+kpi-definitions      optional
+```
+
+No existen Users service keys, Users Source workflow, Users Projection ni Users
+admin module dentro de esta composition.
+
+### Qualification observada
+
+En entorno local Fedora/WSL con Python 3.14.7:
+
+```text
 uv lock
 PASS
 
-git diff --check
+uv sync
+PASS
+
+web workspace pytest
+416 passed / 7 skipped
+
+Ruff scoped
+capabilities/identity/core
+capabilities/users/core
+capabilities/users/blob
+capabilities/users/cosmos
 PASS
 ```
 
+La qualification final del package `ada-configuration-manager` fue reportada por
+el usuario como OK después de alinear el test stale de índices y los dos findings
+E731 de `composition.py`.
+
+El commit remoto CURRENT contiene esas correcciones.
+
 ## INFERRED
 
-La nueva frontera `profiles/core + profiles/configuration` alinea Profiles con
-la misma semántica estructural usada por otras capabilities sin crear un package
-especial.
+La ausencia de Users Configuration/Projection/Manager del árbol y del workspace,
+combinada con los contratos `UsersRegistryStore` + `CosmosUsersStore`, demuestra
+que Users dejó de pertenecer al lifecycle genérico Source/Projection.
 
-Esto no demuestra todavía que Profiles tenga source, projection, administration
-o UI independientes.
+Esto no convierte Profiles ni Access en parte del registry global de Users.
+
+La existencia de issues de candidate para Registry/Cosmos/Directory permite una
+futura superficie de reparación, pero esa UI/operación no está implementada.
 
 ## ASSUMED
 
 No se asume:
 
-- que `UsersProfilesConfiguration` haya sido eliminado;
-- que Users y Profiles ya publiquen Sources independientes;
-- que `profile_key` haya desaparecido de Users configuration;
-- que `administrator` haya desaparecido del agregado combinado CURRENT;
-- que Profiles UI ya sea independiente;
-- que Navigation ya exija Profiles en composition;
-- que el selector local Jane/John esté conectado al composition root ejecutado;
-- que full workspace pytest/Ruff haya pasado en este checkpoint;
-- que CI remoto haya pasado;
-- que metadata Python 3.14.7 esté alineada globalmente.
+- contenido real de Blob/Cosmos en producción;
+- que exista actualmente `users/users.json.gz` en el container objetivo;
+- que documentos Cosmos legacy hayan sido migrados o borrados;
+- ubicación/container/productive connection exactos para Users Registry;
+- concrete Microsoft Graph/Entra directory listing provider;
+- ownership final del vínculo global User → app-specific Profile/Access;
+- que Profiles lifecycle independiente esté implementado;
+- que Navigation alignment esté implementado;
+- que CI remoto haya corrido;
+- que full Ruff workspace esté limpio;
+- que metadata `requires-python` esté alineada globalmente con 3.14.7.
 
 ## PROPOSED
 
 Único foco siguiente:
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 ```
 
-Debe partir de código CURRENT e implementar únicamente la separación real de
-ownership Source/Projection/configuration entre Users y Profiles.
+Debe empezar por evidencia real de datos/topología y definir una migración one-shot
+sin lectores legacy runtime.
+
+No implementar todavía Users Administration UI, Profiles, Access o Entra provider
+como parte de ese foco.
 
 ## SUPERSEDED / REFINED
 
-### Profiles management package
+### Users como configuration Source
 
-La propuesta transitoria:
+El target anterior:
 
 ```text
-web/capabilities/profiles/management
+Users Source
+UsersConfiguration only
 ```
 
 queda:
 
 ```text
-SUPERSEDED / NOT ADOPTED
+SUPERSEDED
 ```
 
-Profiles mantiene la semántica:
+Users CURRENT es lifecycle de entidad/registry global, no configuration Source.
+
+### Users / Profiles combined Source ownership cutover
 
 ```text
-profiles/
-├── core
-└── configuration
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+SUPERSEDED / NOT EXECUTED AS FINAL TARGET
 ```
 
-`management` no se usa como sinónimo genérico de configuration.
+El agregado combinado fue eliminado de raíz en lugar de dividir Users en otro Source.
 
-### ProfilesConfiguration dentro de core
+### Users Profiles composition cutover
+
+El target previo que hacía de Users/Profiles una cadena de configuration Source
+queda `SUPERSEDED`.
+
+Refinamiento CURRENT:
 
 ```text
-profiles/core/.../configuration.py
-SUPERSEDED / REMOVED
+Global Users
+independent registry/entity lifecycle
+
+Profiles / Access
+application-specific configuration and association
 ```
 
-El owner CURRENT es:
+El contrato exacto de asociación sigue OPEN y no debe inventarse.
+
+### Users authority baseline anterior
+
+El contrato previo que incluía `guest` queda refinado.
+
+CURRENT:
 
 ```text
-profiles/configuration
+basic   managed / assignable
+root    managed / assignable / full access
+local   runtime-local only / non-assignable
 ```
 
-### Optional Navigation/Profile composition
-
-La regla canónica anterior que permitía Navigation sin Profiles queda
-`SUPERSEDED BY CURRENT DECISION`.
-
-Target vigente:
-
-```text
-Users
-  ↓
-Profiles
-  ↓
-Navigation
-```
-
-La dependencia funcional no obliga a introducir imports innecesarios entre
-cores.
+No existe `administrator -> root` ni `guest` managed compatibility.
 
 ## UNVERIFIED / OPEN
 
-### Source / aggregate ownership
+### Persisted data
 
-CURRENT todavía contiene:
-
-```text
-UsersProfilesConfiguration
-UsersProfilesAdministrationService
-UsersProfilesAdminDraft
-combined Users + Profiles Source
-combined Users + Profiles Projection payload
-```
-
-CURRENT `UsersProfilesConfiguration` todavía requiere:
+No se ha inspeccionado en este cierre el contenido real de:
 
 ```text
-administrator
+legacy Users/Profiles Source data
+legacy Users Cosmos pending/resolved documents
+current production Users Cosmos documents
+current production Blob registry
 ```
 
-y valida Users contra:
+No borrar datos persistidos antes de inventariar y preservar la información que
+todavía pertenezca a Profiles.
+
+### Entra directory discovery
+
+Existe el boundary genérico:
 
 ```text
-user.profile_key
+UsersDirectoryReader
 ```
 
-Por tanto, la extracción de Profiles está sólo parcialmente implementada.
-
-### Users configuration field
-
-`UserConfiguration.profile_key` sigue CURRENT.
-
-Target decidido:
-
-```text
-UserConfiguration.authority_key
-```
-
-pero todavía no está implementado en esta capa.
-
-### administrator
-
-Users runtime base ya usa `root`, pero el agregado Users/Profiles CURRENT todavía
-contiene semántica `administrator`.
+No existe evidencia CURRENT de un provider reutilizable concreto que liste el
+directorio Entra/Graph.
 
 Estado:
 
 ```text
-administrator
-DECIDED REMOVE / NOT YET FULLY IMPLEMENTED
+UNVERIFIED / NOT IMPLEMENTED IN THIS HITO
 ```
 
-No crear mapping `administrator -> root`.
+### Users Administration surface
 
-### Local runtime wiring
-
-Existe `select_local_user()` con Jane/John.
-
-No está verificado en este cierre qué composition root ejecutado consume ese
-selector.
-
-### Test fuera de política
-
-CURRENT contiene:
-
-```text
-web/capabilities/users/core/tests/test_authority.py
-test_users_core_has_no_profiles_dependency
-```
-
-Ese test inspecciona `pyproject.toml` y source text para comprobar ausencia de
-dependencias.
-
-Contradice la política CURRENT de tests.
+No existe una nueva UI de Users en este hito.
 
 Estado:
 
 ```text
-OPEN / PLANNED UNDER WEB-TEST-CONTRACT-CLEANUP
+USERS-ADMINISTRATION-SURFACE-CUTOVER
+PLANNED
 ```
 
-No mezclar su cleanup con el siguiente source ownership cutover y no crear más
-tests de ese tipo.
+### Profiles / Access
+
+`profiles/core` y `profiles/configuration` permanecen CURRENT.
+
+No está implementado todavía el lifecycle Source/Projection/admin/UI independiente
+completo de Profiles ni el contrato final de Access/Profile association.
 
 ### Python metadata
 
@@ -320,45 +419,77 @@ Python 3.14.7
 python:3.14.7-slim-trixie
 ```
 
-Packages CURRENT todavía contienen metadata `requires-python ==3.14.2`.
+`web/pyproject.toml` CURRENT todavía declara:
 
-Permanece OPEN y fuera de este frente.
+```text
+requires-python = "==3.14.2"
+```
+
+La qualification local sí se ejecutó bajo Python 3.14.7, pero la metadata permanece
+inconsistente.
+
+### Full Ruff / CI
+
+Ruff completo del workspace no se declara PASS en este cierre.
+Antes del cleanup scoped se observaron findings fuera del incremento en Manager y
+Navigation; no se corrigieron oportunistamente.
+
+GitHub no reporta status checks ni workflow runs asociados al commit CURRENT.
 
 ## Conflictos canonical detectados
 
-Los siguientes documentos del canonical checkpoint `497207bb...` quedaron
-desactualizados:
+El canonical `61da5829...` quedó desactualizado respecto de implementación CURRENT.
+
+Conflictos principales:
 
 ```text
+canonical: Users es Source/configuration
+CURRENT:   Users configuration/projection/users-manager fueron eliminados
+
+canonical: UsersProfilesConfiguration todavía CURRENT
+CURRENT:   package users/configuration eliminado
+
+canonical: guest authority transitional
+CURRENT:   guest ya no existe en Users authority contract
+
+canonical: next = USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+CURRENT:   ese target fue superado por global registry lifecycle
+```
+
+Los replacements de este cierre deben actualizar como mínimo:
+
+```text
+00_AUTHORITY.md
+00_INDEX.md
+01_CURRENT_STATE.md
+02_ARCHITECTURE.md
+03_DECISIONS_CURRENT.md
+07_VALIDATION_BASELINE.md
+08_ROADMAP.md
+09_OPEN_QUESTIONS.md
+15_WEB_PLATFORM/00_INDEX.md
 15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md
 15_WEB_PLATFORM/09_CURRENT_GAPS.md
 15_WEB_PLATFORM/11_OPEN_ITEMS.md
 15_WEB_PLATFORM/12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md
 ```
 
-`01_CAPABILITY_INDEPENDENCE.md` contradice explícitamente el target
-Navigation => Profiles => Users.
-
-`09_CURRENT_GAPS.md` y `11_OPEN_ITEMS.md` describen checkpoints y next steps
-anteriores a los cutovers publicados.
-
-`12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` conserva el baseline
-`d3883e1e...` y marca ambos primeros incrementos como PLANNED.
-
 ## Siguiente frontera
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 ```
 
 No mezclar:
 
 ```text
-Profiles UI
-Navigation dependency alignment
+Users admin UI
+Profiles lifecycle
+Access
+Navigation alignment
 Python metadata
-E2E
-CSS visual tests
-transversal test cleanup
+Web test cleanup
+Command Center
+unrelated Ruff cleanup
 ```

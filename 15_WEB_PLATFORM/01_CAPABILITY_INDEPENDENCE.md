@@ -22,87 +22,108 @@ composition requirement
 Las integrations deben permanecer en composition/binding cuando no exista una
 responsabilidad de dominio que justifique acoplar cores.
 
-## Users
+## Global Users
 
-Users debe poder existir standalone.
+Users puede existir standalone y es independiente de una aplicación concreta.
 
 ```text
-Users
+Global Users
 VALID
 ```
 
-Users no requiere Profiles ni Navigation para identidad, pending/resolved
-runtime y autoridades base.
+Users CURRENT no es configuration Source.
 
-Users puede depender de Identity según el contrato de autenticación vigente.
+Estructura:
+
+```text
+users/core
+users/blob
+users/cosmos
+users/activity
+```
+
+Global User no contiene:
+
+```text
+profile_key
+app role
+Navigation configuration
+Tools configuration
+KPI configuration
+ADA-specific Access
+```
+
+Strong identity:
+
+```text
+issuer + subject_id
+```
 
 ## Profiles
 
-Profiles es first-class capability y extiende el universo de autoridad funcional
-de Users.
+Profiles es first-class capability y pertenece al plano application-specific.
 
-Composition vigente:
+CURRENT:
 
 ```text
-Users + Profiles
-VALID
-
-Profiles without Users
-INVALID
+profiles/core
+profiles/configuration
 ```
 
-La dependencia funcional `Profiles => Users` no obliga automáticamente a que
-`profiles/core` importe clases de Users.
+El hecho de que una aplicación pueda asociar Profiles a Global Users no autoriza a
+Profiles core a apropiarse del Users registry ni a Users a conocer todas las apps.
 
-Debe mantenerse ownership separado.
+El contrato exacto de asociación todavía no está congelado.
+
+Estado:
+
+```text
+OPEN / FUTURE INCREMENT
+```
+
+## Access
+
+Access es application-specific y puede consumir Profiles/Users mediante composition.
+
+No agregar Access al Global `UserRecord`.
+
+El ownership concreto de la asociación User/Profile/Access permanece OPEN.
 
 ## Navigation
 
-Target Atlanticus vigente:
+Navigation continúa siendo configuration domain independiente en core.
+
+La regla anterior que representaba todo el target como:
 
 ```text
-Users + Profiles + Navigation
-VALID
-
-Navigation without Profiles
-INVALID
-
-Users + Navigation without Profiles
-INVALID
+Users
+  ↓
+Profiles
+  ↓
+Navigation
 ```
 
-La regla anterior:
+queda **REFINED / SUPERSEDED AS COMPLETE CONTRACT**.
+
+Motivo: Users ya no es Source/configuration y no debe convertirse en dependencia
+directa de Navigation sólo para conservar el diagrama anterior.
+
+Target conceptual vigente:
 
 ```text
-Navigation standalone
-optional profile-navigation binding
+Global Users registry
+        │
+        └── app composition resolves Profile/Access
+                         │
+                         └── Navigation consumes effective app authorization/profile data
 ```
 
-queda:
-
-```text
-SUPERSEDED
-```
-
-### Boundary técnico
-
-Navigation core debe permanecer desacoplado cuando sea posible.
-
-Preferir consumo de una autoridad efectiva:
-
-```text
-principal.access_key
-```
-
-contra claves configuradas/admitidas, en vez de importar modelos concretos de
-Profiles dentro del core.
-
-La composition Users + Profiles produce la autoridad efectiva que Navigation
-consume.
+La forma exacta del binding sigue PLANNED y debe derivarse de contratos CURRENT de
+Profiles/Access, no inventarse en Navigation core.
 
 ## User Activity
 
-User Activity conserva independencia funcional respecto de Users Configuration,
+User Activity conserva independencia funcional respecto de Users Administration,
 Navigation y Manager salvo integrations explícitas.
 
 Su dependencia mínima puede seguir siendo:
@@ -117,7 +138,7 @@ Un binding de Navigation hacia Activity puede existir sin fusionar sus domains.
 
 ## Manager
 
-Manager registra únicamente módulos presentes en la composition.
+Manager registra únicamente módulos de Configuration presentes en la composition.
 
 No obliga por sí mismo a instalar:
 
@@ -131,19 +152,23 @@ Alarm
 ...
 ```
 
+Users CURRENT no es `ManagerModule`.
+
 Cada módulo administrativo conserva ownership propio.
 
 ## Invariante estructural
 
-Cuando varias capabilities tienen la misma responsabilidad, usar el mismo
-concepto:
+Cuando varias capabilities tienen la misma responsabilidad, usar el mismo concepto.
+
+Para configuration domains que tengan ambas responsabilidades:
 
 ```text
 <capability>/core
 <capability>/configuration
 ```
 
-No crear nombres especiales sin frontera real.
+No aplicar este patrón mecánicamente a Users: el package `users/configuration` fue
+eliminado porque la responsabilidad no corresponde.
 
 Para Profiles CURRENT:
 
@@ -156,8 +181,8 @@ profiles/configuration
 
 ## Dashboard
 
-Dashboard puede unificar visualmente información de varias capabilities sin
-convertir esa vista en dependencia de dominio.
+Dashboard puede unificar visualmente información de varias capabilities sin convertir
+esa vista en dependencia de dominio.
 
 ```text
 Users data ─────┐
@@ -172,18 +197,25 @@ Los productores preservan ownership.
 En:
 
 ```text
-moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 están CLOSED/CURRENT:
 
 ```text
-USERS-STANDALONE-AUTHORITY-CUTOVER
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 ```
 
-La composition final Users/Profiles/Navigation sigue:
+Permanece IN PROGRESS:
 
 ```text
-IN PROGRESS / PLANNED BY INCREMENT
+PROFILES-CAPABILITY-EXTRACTION
+```
+
+Siguiente Users focus:
+
+```text
+USERS-PERSISTED-DATA-CUTOVER
+PLANNED / NEXT
 ```

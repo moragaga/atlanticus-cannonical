@@ -13,19 +13,19 @@ No inventar un PASS cuando no existe resultado de ejecución observado.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 Parent:
 
 ```text
-709cf2fb9ee422094f011cfda051f08f37276992
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 ## Hitos contractuales relevantes
 
 ```text
-USERS-STANDALONE-AUTHORITY-CUTOVER
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
@@ -35,48 +35,106 @@ PROFILES-CAPABILITY-EXTRACTION
 IN PROGRESS
 ```
 
-Los hitos genéricos de Manager, Navigation, Users legacy removal, Tools, KPI
-Configuration, KPI Definition y ADA Configuration Manager previamente cerrados
-permanecen CURRENT.
+Los hitos genéricos de Manager, Navigation, Tools, KPI Configuration, KPI Definition
+y ADA Configuration Manager previamente cerrados permanecen CURRENT.
 
-## Users standalone — evidencia observada
+## Users global registry root cutover — evidencia observada
 
-Antes de publicar `709cf2f...`:
+Entorno reportado:
 
 ```text
-users/core                 41 PASS
-users/cosmos               22 PASS
-users/projection-cosmos    29 PASS
-TOTAL                      92 PASS
-
-git diff --check
-PASS
+Fedora WSL
+Python 3.14.7
+uv
 ```
 
-Esto demuestra comportamiento afectado por el authority/runtime cutover.
-
-No demuestra wiring completo del selector local en todas las compositions.
-
-## Profiles configuration boundary — evidencia observada
-
-Antes de publicar `4e008055...`:
+Workspace Web:
 
 ```text
-profiles/core              7 PASS
-profiles/configuration     2 PASS
-users/configuration       65 PASS
-TOTAL                     74 PASS
-
 uv lock
 PASS
 
-git diff --check
+uv sync
+PASS
+
+uv run pytest
+416 passed / 7 skipped
+```
+
+Ruff scoped a superficies afectadas:
+
+```text
+capabilities/identity/core
+capabilities/users/core
+capabilities/users/blob
+capabilities/users/cosmos
+```
+
+Resultado:
+
+```text
 PASS
 ```
 
-El checkpoint publicado contiene el package
-`atlanticus-web-profiles-configuration==0.1.0` y el movimiento de
-`ProfilesConfiguration` fuera de core.
+El único finding de Ruff introducido por el cutover (`typing.Any` no usado en
+Users Blob) fue eliminado en productivo y espejo comentado antes de publicar.
+
+## ADA Configuration Manager — evidencia observada
+
+Durante qualification apareció un test stale que todavía esperaba Users como módulo
+0 y luego índices heredados del layout anterior.
+
+Fue alineado al contrato CURRENT:
+
+```text
+navigation
+tools
+kpis
+kpi-definitions
+```
+
+También se corrigieron dos findings E731 de `composition.py` reemplazando asignación
+de lambda por `def actor_provider()` en productivo y espejo.
+
+La qualification final scoped fue reportada por el usuario como OK antes del push.
+El commit CURRENT remoto contiene esas correcciones.
+
+No inventar un conteo final del package ADA que no fue capturado explícitamente en
+la salida final del chat.
+
+## Verificación remota del checkpoint
+
+GitHub `main` apunta exactamente a:
+
+```text
+6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+```
+
+El árbol remoto CURRENT confirma:
+
+```text
+users/activity
+users/blob
+users/core
+users/cosmos
+```
+
+y ausencia de:
+
+```text
+users/configuration
+users/projection-cosmos
+compositions/users-manager
+```
+
+También confirma:
+
+```text
+UsersAccessResolver -> USER_NOT_PROMOTED without write
+BlobUsersRegistryStore -> users/users.json.gz + ETag concurrency
+CosmosUsersStore -> atlanticus_user schema 1
+ADA Configuration Manager -> no Users module/services
+```
 
 ## Política de tests Web
 
@@ -112,64 +170,64 @@ funcional automatizable.
 Assets JS/CSS sólo se automatizan por existencia/carga cuando esa carga sea parte
 real del contrato.
 
-## Conflicto CURRENT de test hygiene
+## Full Ruff workspace
 
-Existe en CURRENT:
-
-```text
-web/capabilities/users/core/tests/test_authority.py
-test_users_core_has_no_profiles_dependency
-```
-
-Ese test lee `pyproject.toml` y los `.py` de `src` para comprobar ausencia de
-Profiles.
-
-Clasificación:
+Durante el proceso se observaron findings de Ruff fuera del scope del incremento en:
 
 ```text
-VERIFIED
-POLICY CONFLICT
-OPEN
+capabilities/manager
+capabilities/navigation/configuration/tests
+ADA KPI/workflows files no modificados por este hito
 ```
 
-No bloquea el estado funcional ya publicado, pero no debe replicarse ni usarse
-como patrón.
+No se aplicó `ruff --fix .` ni cleanup oportunista.
 
-Su cleanup pertenece a:
+Estado final de full Ruff después del commit:
 
 ```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED
+UNVERIFIED / NOT CLAIMED PASS
 ```
 
-No mezclar con `USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER`.
+## CI remoto
 
-## Lo que NO está validado todavía
+Para el commit CURRENT GitHub no reportó status checks ni workflow runs asociados.
 
-No existe evidencia en este cierre para declarar PASS de:
+Estado:
 
 ```text
-full web workspace pytest
-full Ruff workspace
-full ADA regression
-CI remoto
-productivo local Jane/John wiring
-Users + Profiles final composition
-Profiles independent Source/Projection lifecycle
-Profiles UI
-Navigation => Profiles => Users composition
-Python 3.14.7 metadata alignment
+UNVERIFIED
 ```
 
-## UI / CSS
+## Persisted data
 
-No integrar validaciones CSS visuales en suites contractuales.
+No existe qualification en este cierre para:
 
-Apariencia, responsive, spacing y branding se validan visualmente.
+```text
+production Blob users registry
+legacy Users/Profiles Source migration
+legacy Cosmos pending/resolved cleanup
+Blob <-> Cosmos parity in deployed environment
+```
 
-No convertir markup/CSS incidental en contrato automatizado.
+Estado:
 
-## Conflicto de metadata Python
+```text
+UNVERIFIED / NEXT FOCUS
+```
+
+## Entra discovery
+
+`UsersDirectoryReader` existe como contrato.
+
+No se verificó provider concreto de Microsoft Graph/Entra directory listing.
+
+Estado:
+
+```text
+UNVERIFIED
+```
+
+## Python metadata
 
 Canonical fija:
 
@@ -177,13 +235,19 @@ Canonical fija:
 Python 3.14.7
 ```
 
-Packages CURRENT todavía contienen metadata:
+La qualification local se ejecutó bajo 3.14.7.
+
+`web/pyproject.toml` remoto CURRENT todavía contiene:
 
 ```text
 requires-python = "==3.14.2"
 ```
 
-Permanece OPEN.
+Estado:
+
+```text
+VERIFIED CONFLICT / OPEN
+```
 
 ## Git
 

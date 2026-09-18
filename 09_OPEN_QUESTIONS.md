@@ -28,9 +28,6 @@ compatibility shims/adapters
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
 TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
@@ -39,94 +36,128 @@ CLOSED / VERIFIED / CURRENT
 
 KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-## CLOSED — ADA Configuration Manager final generic cutover
-
-```text
 ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Ya no están OPEN en el consumer:
+## CLOSED — Users global registry root cutover
 
 ```text
-KpiConfigurationServices
-KpiDefinitionServices
-KpiDefinitionAuthorityProvider
-ToolLifecycleServices
-NavigationConfigurationServices
-ExactProjectionWorkflow
-workflow_service
-exact_source_*
-expected_source_revision
-revision-string projection adapters
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## OPEN — Configuration Manager UI cleanup
+Ya no están OPEN:
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+Users as Manager module
+Users Source workflow
+Users generic Projection
+UsersProfilesConfiguration
+UsersProfilesAdministrationService
+UsersProfilesAdminDraft
+Cosmos pending/resolved runtime contract
+login observe/write pending
+Users configuration package
+Users projection-cosmos package
+users-manager composition
+```
+
+## OPEN — Users persisted data cutover
+
+```text
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 ```
 
 Motivo:
 
-La página ya levanta, pero el usuario observó faltantes/problemas de UI.
+El código CURRENT rechaza contratos legacy, pero este cierre no inspeccionó ni
+migró los datos persistidos reales.
 
-También indicó que algunos contratos “quedaron raros”, sin adjudicar todavía cuáles ni si requieren cambio.
+Preguntas obligatorias del siguiente chat:
 
-Preguntas permitidas en el siguiente chat:
+1. ¿Qué datos Users/Profiles existen realmente en los stores/deployments actuales?
+2. ¿Qué documentos Cosmos pertenecen al schema legacy `pending` / `resolved` y cuáles al schema CURRENT?
+3. ¿Existe ya un Blob registry compatible con `atlanticus_users_registry` schema 1?
+4. ¿Qué información de los antiguos payloads pertenece a Users globales y cuál debe preservarse para Profiles?
+5. ¿Cuál es la topología/configuración real de container/blob/connections sin inventar nombres ni credenciales?
+6. ¿Qué operación one-shot permite migrar y verificar sin introducir lectores legacy runtime?
+7. ¿Qué condición exacta permite borrar los datos legacy después de verificar parity?
 
-1. ¿Qué problemas de UI son reproducibles en la aplicación CURRENT?
-2. ¿Qué archivos son realmente responsables de cada problema?
-3. ¿Existe un contrato funcional incorrecto detrás de alguno de esos síntomas?
-4. ¿Puede corregirse cada problema sin reabrir contratos congelados?
-5. ¿Qué validación visual/manual y qué tests funcionales corresponden a cada corrección?
+No asumir que un dato existe o está vacío sin inspección.
 
-No inventar respuestas ni modificar contratos sólo por apariencia.
-
-## OPEN — local behavioral E2E
-
-```text
-ADA-CONFIGURATION-MANAGER-LOCAL-E2E
-PLANNED / AFTER UI CLEANUP
-```
-
-Todavía no se verificó de punta a punta:
+## OPEN — Users Administration surface
 
 ```text
-edit
-workspace
-validate
-source verification
-publish
-project
-reload/status
-history
+USERS-ADMINISTRATION-SURFACE-CUTOVER
+PLANNED / AFTER PERSISTED DATA
 ```
 
-## OPEN — Storage/Cosmos Docker E2E
+El core ya expone:
 
 ```text
-ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E
-PLANNED / AFTER LOCAL E2E
+PROMOTABLE
+CONFLICT
+PROMOTED
 ```
 
-No está diseñado ni ejecutado por este cierre.
+pero este hito no implementó UI ni repair commands.
 
-La topología concreta deberá derivarse de los contratos CURRENT y de los providers existentes, no inventarse.
+No reintroducir Users en Configuration Manager como Source/Projection.
 
-## OPEN — Manager consumer global qualification
+## OPEN — concrete Entra directory discovery
+
+Contrato disponible:
 
 ```text
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-PLANNED / UNBLOCKED
+UsersDirectoryReader
 ```
 
-El cutover ya no lo bloquea.
+Provider concreto Graph/Entra:
 
-Permanece sin evidencia observada de full Ruff/pytest/full ADA regression para el checkpoint `ee9a0401...`.
+```text
+UNVERIFIED
+```
+
+No inventar tenant settings, Graph permissions, credential flow ni endpoints.
+
+## OPEN — Profiles lifecycle
+
+```text
+PROFILES-CAPABILITY-EXTRACTION
+IN PROGRESS
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+PLANNED
+```
+
+`profiles/core` y `profiles/configuration` existen.
+
+No está cerrado todavía:
+
+```text
+independent Source/Projection lifecycle
+administration surface
+app-specific User/Profile association
+Access configuration ownership
+```
+
+No reabrir Users registry para resolver estos puntos.
+
+## OPEN — Navigation / Access integration
+
+La anterior cadena rígida:
+
+```text
+Users Source -> Profiles Source -> Navigation
+```
+
+queda SUPERSEDED porque Users ya no es Source.
+
+Permanece OPEN cómo Navigation consume el resultado efectivo de Profiles/Access sin
+adquirir ownership de Users.
 
 ## OPEN — Python package metadata alignment
 
@@ -136,19 +167,21 @@ Canonical fija:
 Python 3.14.7
 ```
 
-Configuration Manager CURRENT declara:
+CURRENT remoto:
 
 ```text
+web/pyproject.toml
 requires-python = "==3.14.2"
 ```
+
+La qualification local del cutover usó Python 3.14.7, pero la metadata continúa
+inconsistente.
 
 Estado:
 
 ```text
-PLANNED / UNVERIFIED
+PLANNED / OPEN
 ```
-
-No mezclar con UI cleanup salvo bloqueo real.
 
 ## PLANNED — Web test contract cleanup
 
@@ -157,25 +190,25 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED
 ```
 
-La política vigente ya prohíbe congelar CSS visual o implementación interna como contrato general.
-
-No abrir este frente durante UI cleanup salvo un test directamente afectado por un cambio funcional legítimo.
+No abrir este frente durante persisted-data cutover salvo que un test directamente
+afectado contradiga el comportamiento final legítimo.
 
 ## UNVERIFIED
 
-- detalle exacto de todos los problemas UI;
-- naturaleza exacta de los contratos percibidos como raros;
-- full Ruff/pytest del Configuration Manager en `ee9a0401...`;
+- production Blob registry presence/content;
+- production Cosmos legacy/current record inventory;
+- final deletion conditions for persisted legacy data;
+- concrete Entra/Graph directory provider;
+- full Ruff workspace after current commit;
 - full ADA regression;
-- local behavioral E2E;
-- Storage/Cosmos Docker E2E;
 - CI remoto;
-- Python 3.14.7/Trixie global.
+- Python metadata/Trixie global qualification;
+- exact app-specific User → Profile/Access association contract.
 
 ## Siguiente foco
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+USERS-PERSISTED-DATA-CUTOVER
 ```
 
 Fuentes obligatorias:
@@ -184,5 +217,7 @@ Fuentes obligatorias:
 moragaga/atlanticus:main
 moragaga/atlanticus-cannonical:main
 ```
+
+`moragaga/atlanticus-decisions` es sólo HISTORICAL.
 
 Git sólo lectura para el asistente.

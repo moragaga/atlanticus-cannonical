@@ -4,7 +4,7 @@ Estado: **CURRENT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_CAPABILITY_INDEPENDENCE.md` | Independencia técnica de cores y reglas vigentes de composition Users/Profiles/Navigation. | CURRENT / REFINED |
+| `01_CAPABILITY_INDEPENDENCE.md` | Independencia técnica y fronteras CURRENT de Users global / Profiles / Navigation. | CURRENT / REFINED |
 | `02_USER_ACTIVITY_HISTORY.md` | Historia ordenada por página y TTL 24 h. | CURRENT DIRECTION / CONTRACT DESIGN |
 | `03_RESOURCE_PROVISIONING.md` | Provisionamiento de Cosmos/Storage y ownership. | CURRENT DIRECTION |
 | `04_WEB_READINESS_AND_DECOUPLING.md` | Web disponible aun sin datos/backend/infra. | CURRENT DIRECTION |
@@ -15,4 +15,10 @@ Estado: **CURRENT**
 | `09_CURRENT_GAPS.md` | Diferencias entre `main` y objetivo. | CURRENT |
 | `10_SOURCE_LEDGER.md` | Evidencia recuperada del código auditado. | AUDIT LEDGER |
 | `11_OPEN_ITEMS.md` | Contratos todavía abiertos. | OPEN |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary vigente Users / Profiles / Navigation y ejecución incremental. | CURRENT DECISION / IN PROGRESS |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary refinado: Global Users independiente; Profiles/Access app-specific; Navigation integration pending. | CURRENT DECISION / REFINED |
+
+Checkpoint de implementación de referencia:
+
+```text
+moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+```

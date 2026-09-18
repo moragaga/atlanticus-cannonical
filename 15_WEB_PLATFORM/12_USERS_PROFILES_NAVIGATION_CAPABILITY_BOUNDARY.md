@@ -1,18 +1,18 @@
 # Web Platform — Users / Profiles / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / IMPLEMENTATION IN PROGRESS**
+Estado: **CURRENT DECISION / REFINED AFTER USERS GLOBAL REGISTRY CUTOVER**
 
 ## Propósito
 
-Este documento fija la frontera vigente entre:
+Este documento fija la frontera CURRENT entre:
 
 ```text
-Users
-Profiles
+Global Users
+Profiles / Access application-specific
 Navigation
 ```
 
-y sirve como checkpoint canónico para el cutover incremental.
+sin reintroducir el modelo Users Configuration Source ya eliminado.
 
 ## Autoridad de implementación
 
@@ -20,13 +20,13 @@ CURRENT inspeccionado:
 
 ```text
 moragaga/atlanticus:main
-4e008055ddc551e6c08a7d87715340c8c7cd149e
+6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 Parent inmediato:
 
 ```text
-709cf2fb9ee422094f011cfda051f08f37276992
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -34,10 +34,7 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado del frente
 
 ```text
-USERS-PROFILES-NAVIGATION-CAPABILITY-BOUNDARY
-IN PROGRESS
-
-USERS-STANDALONE-AUTHORITY-CUTOVER
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
@@ -46,129 +43,130 @@ CLOSED / VERIFIED / CURRENT
 PROFILES-CAPABILITY-EXTRACTION
 IN PROGRESS
 
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 
-USERS-PROFILES-COMPOSITION-CUTOVER
+USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED
 
-PROFILES-UI-EXTRACTION
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+PLANNED
+
+ACCESS-PROFILES-CONFIGURATION
 PLANNED
 
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 PLANNED
+```
 
-QUALIFICATION
-PLANNED
+Quedan SUPERSEDED:
+
+```text
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PROFILES-COMPOSITION-CUTOVER as previous Source-centric model
 ```
 
 ## Regla principal
 
 Atlanticus es una base genérica.
 
-El target de composition queda:
+Global Users debe ser reusable y no conocer aplicaciones concretas.
 
 ```text
-Users
-  │ standalone válido
-  ▼
-Profiles
-  │ requiere Users
-  ▼
-Navigation
-    requiere Profiles
-    y por transitividad Users
+Global Users
+    identity + lifecycle + global base authority
 ```
 
-Combinaciones válidas:
+Profiles/Access pertenecen a la aplicación que los define.
 
 ```text
-Users
-Users + Profiles
-Users + Profiles + Navigation
+Application
+    Profiles
+    Access
+    Navigation configuration
+    domain capabilities
 ```
 
-Combinaciones inválidas:
-
-```text
-Profiles without Users
-Navigation without Profiles
-Users + Navigation without Profiles
-```
-
-La dependencia funcional no obliga a acoplar innecesariamente los cores.
-
-## Semántica estructural
-
-Misma responsabilidad implica mismo concepto.
-
-Target:
-
-```text
-users/
-├── core
-└── configuration
-
-profiles/
-├── core
-└── configuration
-
-navigation/
-├── core
-└── configuration
-```
-
-No crear arquitectura especial para Profiles.
-
-La propuesta:
-
-```text
-profiles/management
-```
-
-queda:
-
-```text
-SUPERSEDED / NOT ADOPTED
-```
+No introducir estado app-specific dentro del Global User.
 
 ## Users
 
 Users puede existir standalone.
 
-Users core posee autoridades base:
+CURRENT estructura:
 
 ```text
-guest
+web/capabilities/users/
+├── activity
+├── blob
+├── core
+└── cosmos
+```
+
+No existen CURRENT:
+
+```text
+users/configuration
+users/projection-cosmos
+users-manager composition
+```
+
+### Strong identity
+
+```text
+issuer
+subject_id
+user_id = build_user_key(issuer, subject_id)
+```
+
+Strong identity es la frontera primaria de identidad.
+
+Email/display name no autorizan merge automático entre strong identities distintas.
+
+### UserRecord
+
+```text
+user_id
+issuer
+subject_id
+display_name
+email
+enabled
+authority_key
+avatar_background_color
+avatar_text_color
+```
+
+No contiene:
+
+```text
+profile_key
+app_id
+navigation role
+ADA Access
+Tools/KPI configuration
+```
+
+### Authorities
+
+Managed global:
+
+```text
 basic
 root
+```
+
+Runtime local:
+
+```text
 local
 ```
 
-Contratos:
+`administrator` no pertenece a Users CURRENT.
 
-```text
-guest
-TRANSITIONAL / NON-ASSIGNABLE
+`guest` ya no pertenece al Users authority contract CURRENT.
 
-basic
-ASSIGNABLE / STANDARD
-
-root
-ASSIGNABLE / SYSTEM FULL AUTHORITY
-
-local
-LOCAL-RUNTIME ONLY / NON-ASSIGNABLE / FULL AUTHORITY
-```
-
-`administrator` no pertenece al contrato final.
-
-```text
-administrator
-REMOVE
-```
-
-No existe compatibilidad permitida:
+No existe mapping:
 
 ```text
 administrator -> root
@@ -178,39 +176,152 @@ administrator -> root
 
 ```text
 Jane Doe
-authority = local
-avatar background = #C85D91
-avatar text = #FFFFFF
+local
+#C85D91 / #FFFFFF
 
 John Doe
-authority = local
-avatar background = #3778C2
-avatar text = #FFFFFF
+local
+#3778C2 / #FFFFFF
 ```
 
-Guest:
+Jane y John son identities locales, no Profiles.
+
+El wiring exacto del selector local en todas las compositions sigue UNVERIFIED.
+
+## Users Registry
+
+Durable contract:
 
 ```text
-background = #FF5722
-text = #FFFFFF
+UsersRegistryStore
 ```
 
-Jane y John son identities, no Profiles.
+Provider CURRENT:
 
-CURRENT contiene selector local para ambas identities.
+```text
+BlobUsersRegistryStore
+```
 
-El wiring exacto de ese selector en el composition root ejecutado permanece
-`UNVERIFIED`.
+Default blob:
+
+```text
+users/users.json.gz
+```
+
+Documento:
+
+```text
+document_type = atlanticus_users_registry
+schema_version = 1
+```
+
+El container se inyecta desde afuera del dominio.
+
+No hardcodear container productivo en Users core/provider salvo contrato real.
+
+## Promoted Users / runtime
+
+Provider CURRENT:
+
+```text
+CosmosUsersStore
+```
+
+Documento:
+
+```text
+document_type = atlanticus_user
+schema_version = 1
+```
+
+Login:
+
+```text
+resolve only
+no observe
+no pending write
+```
+
+Absent promoted user:
+
+```text
+USER_NOT_PROMOTED
+```
+
+Legacy documents `pending` / `resolved` no son aceptados por el store CURRENT.
+
+## Administration lifecycle
+
+Core:
+
+```text
+UsersAdministrationService
+UsersAdministrationStore
+UsersRegistryStore
+UsersDirectoryReader
+```
+
+Candidate states:
+
+```text
+PROMOTABLE
+CONFLICT
+PROMOTED
+```
+
+### Candidate rules
+
+```text
+Cosmos present
+=> PROMOTED
+
+Registry only
+=> PROMOTABLE
+
+Directory only
+=> PROMOTABLE
+
+Registry + Directory, exact same represented data
+=> PROMOTABLE
+
+Registry + Directory, differing represented data
+=> CONFLICT
+
+same email across different strong identities
+=> non-promoted candidate CONFLICT / promotion blocked
+```
+
+Promoted Users pueden exponer issues de inconsistencia sin dejar de ser PROMOTED.
+
+### Promotion ordering
+
+```text
+1. reject already promoted
+2. load/validate Registry + Directory candidate
+3. persist Registry when needed using expected version
+4. create Cosmos promoted User
+```
+
+No distributed transaction.
+
+Si step 3 pasa y step 4 falla:
+
+```text
+Registry yes
+Cosmos no
+```
+
+Ese estado debe poder repararse/reintentarse; no se revierte automáticamente Blob.
 
 ## Profiles
 
-Profiles es first-class capability.
+Profiles es first-class capability application-specific.
 
-CURRENT implementado:
+CURRENT:
 
 ```text
-web/capabilities/profiles/core
-web/capabilities/profiles/configuration
+profiles/core
+profiles/configuration
 ```
 
 Ownership:
@@ -225,198 +336,143 @@ profiles/configuration
 ProfilesConfiguration
 ```
 
-`ProfilesConfiguration` ya no vive dentro de core.
+`ProfilesConfiguration` no vive dentro de core.
 
-Target todavía pendiente:
+Target posterior todavía pendiente:
 
 ```text
-Profiles Source
-Profiles Projection/configuration lifecycle
+Profiles independent Source/Projection lifecycle where justified by current contracts
 Profiles administration
 Profiles UI
 ```
 
-Profiles requiere Users a nivel de composition.
+No mover Global Users lifecycle a Profiles.
 
-Esto no autoriza a Profiles a apropiarse de identidad, pending users,
-UsersRuntimeStore o lifecycle de Users.
+## Access
 
-## Functional profiles
+Access es application-specific.
 
-Profiles agrega autoridades funcionales configurables sobre el contrato base de
-Users.
-
-Ejemplos son no canónicos:
+Target conceptual:
 
 ```text
-operator
-viewer
-engineer
-planner
+Promoted Global User
+        ↓ application association
+Profile / Access
+        ↓
+effective app capabilities
 ```
 
-La configuración real determina cuáles existen.
-
-Assignable base:
+El owner y shape exactos de esa association permanecen:
 
 ```text
-basic
-root
+OPEN / UNVERIFIED
 ```
 
-No asignables:
-
-```text
-guest
-local
-```
-
-Con Profiles:
-
-```text
-basic
-root
-+ configured functional authorities
-```
-
-La validación exacta entre Users authority y Profiles configuration pertenece al
-`USERS-PROFILES-COMPOSITION-CUTOVER`.
+No inventar contract, store o package desde este documento.
 
 ## Navigation
 
-Navigation requiere Profiles en el contract de composition Atlanticus.
+Navigation permanece configuration domain.
+
+El diagrama canónico anterior:
 
 ```text
-Navigation
-    ↓
-Profiles
-    ↓
 Users
+  ↓
+Profiles
+  ↓
+Navigation
+```
+
+queda refinado porque Users ya no es Configuration Source.
+
+Target conceptual vigente:
+
+```text
+Global Users
+    ↓ resolved by app composition
+Profile / Access effective state
+    ↓
+Navigation
 ```
 
 Navigation core debe permanecer desacoplado cuando sea posible.
 
-Preferir:
+Preferir un boundary efectivo de autorización/perfil provisto por composition antes
+que importar lifecycle/storage de Users.
+
+La forma final queda:
 
 ```text
-principal.access_key
-```
-
-como boundary efectivo de autorización antes que importar clases concretas de
-Profiles.
-
-## CURRENT combinado todavía existente
-
-En `main@4e008055...` todavía existe:
-
-```text
-UsersProfilesConfiguration
-UsersProfilesAdministrationService
-UsersProfilesAdminDraft
-```
-
-El combined configuration todavía usa:
-
-```text
-user.profile_key
-administrator
-```
-
-y `UsersProfilesConfiguration` sigue validando Users contra
-`ProfilesConfiguration`.
-
-Por tanto:
-
-```text
-Profiles ownership extraction
-PARTIAL / IN PROGRESS
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+PLANNED
 ```
 
 ## Source / Projection
 
-Target:
+Aplica a Profiles/Navigation cuando esas capabilities sean configuration lifecycle.
+
+No aplica a Global Users CURRENT.
+
+La propuesta anterior:
 
 ```text
 Users
 source_key = users
 payload = UsersConfiguration
-
-Profiles
-source_key = profiles
-payload = ProfilesConfiguration
-
-Navigation
-source_key = navigation
 ```
 
-Cada capability publica su propio Source.
-
-No recrear publicación atómica Users + Profiles mediante transacción distribuida.
-
-CURRENT todavía conserva Users + Profiles en un mismo lifecycle.
-
-Siguiente corte:
+queda:
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+SUPERSEDED / REMOVE FROM CANONICAL TARGET
 ```
 
-Debe reemplazar ese ownership combinado de raíz, no crear un Source paralelo
-mientras el viejo siga vigente.
-
-## Users configuration field
-
-Target decidido:
-
-```text
-UserConfiguration.authority_key
-```
-
-CURRENT todavía:
-
-```text
-UserConfiguration.profile_key
-```
-
-Estado:
-
-```text
-DECIDED / NOT YET IMPLEMENTED
-```
-
-No crear alias de ambos nombres.
+No crear otro Users Source para restaurar simetría visual con Profiles/Navigation.
 
 ## UI
 
-Target:
+Legacy Users configuration UI fue eliminada con `users/configuration`.
+
+No existe nueva Users Administration UI en este hito.
+
+Target futuro:
 
 ```text
-Users UI
-ownership = Users
-
-Profiles UI
-ownership = Profiles
-
-Navigation UI
-ownership = Navigation
+Users Administration surface
+consumes UsersAdministrationService
 ```
 
-Profiles UI todavía permanece combinada con Users y se corta en un incremento
-posterior.
+Profiles UI deberá ser Profiles-owned cuando se implemente.
 
-No mezclar UI extraction con Source ownership.
+Navigation UI permanece Navigation-owned.
 
-## Publication consistency
+No mezclar estas tres superficies sólo porque aparezcan dentro de una misma aplicación.
 
-Separar Users y Profiles elimina la publicación atómica del agregado actual.
+## Persisted data
 
-No recrear distributed transaction.
+Código CURRENT ya no lee legacy schema.
 
-La integridad cross-capability debe resolverse mediante secuencias explícitas,
-recovery y auditoría cuando el caso operacional lo exija.
+Persisted data real no fue migrado por este hito.
 
-Delete/reassign de un functional profile referenciado sigue OPEN para el
-composition cutover.
+Siguiente frontera:
+
+```text
+USERS-PERSISTED-DATA-CUTOVER
+PLANNED / NEXT
+```
+
+No borrar datos antiguos hasta:
+
+```text
+inventory verified
+Global Users extracted
+Profiles information preserved where needed
+new Blob/Cosmos state verified
+explicit delete criteria satisfied
+```
+
+No implementar old-schema reader en runtime como transición.
 
 ## Testing rules
 
@@ -444,90 +500,56 @@ AST/module structure
 implementation internals
 ```
 
-Assets JS/CSS sólo se verifican por carga/existencia si el contrato lo requiere.
-
-Existe un test CURRENT que escanea source para validar ausencia de Profiles en
-Users core. Es un conflicto conocido de test hygiene y no debe replicarse.
-
-## Conflicto canonical previo
-
-`15_WEB_PLATFORM/01_CAPABILITY_INDEPENDENCE.md` en el checkpoint
-`497207bb...` todavía decía:
-
-```text
-Navigation can exist without Users/Profile
-profile binding optional
-```
-
-Eso queda `SUPERSEDED`.
-
-El reemplazo companion de ese documento debe reflejar:
-
-```text
-technical core independence
-!=
-valid composition independence
-```
-
-Aplicados juntos los reemplazos de este cierre, el conflicto queda resuelto
-documentalmente.
-
 ## Reglas congeladas
 
 ```text
 Atlanticus generic
 REQUIRED
 
-same responsibility -> same concept/naming
+Global Users standalone
 REQUIRED
 
-Users standalone
-REQUIRED
-
-Users -> Profiles core dependency
+Global Users app-specific state
 FORBIDDEN
 
-Profiles first-class capability
-REQUIRED
+Global User strong identity
+issuer + subject_id
 
-Profiles structure
-core + configuration
-
-Profiles -> Users
-REQUIRED AT COMPOSITION
-
-Navigation -> Profiles
-REQUIRED AT COMPOSITION
-
-Navigation -> Users direct ownership
-FORBIDDEN
-
-guest
-TRANSITIONAL / NON-ASSIGNABLE
-
-basic
-ASSIGNABLE / STANDARD
-
-root
-ASSIGNABLE / FULL AUTHORITY
+Managed authority
+basic | root
 
 local
-LOCAL-RUNTIME ONLY / NON-ASSIGNABLE / FULL AUTHORITY
+LOCAL-RUNTIME ONLY
 
 administrator
-REMOVE
+REMOVED FROM USERS
 
-Jane/John local identities/colors
-PRESERVE
+guest
+REMOVED FROM USERS AUTHORITY CONTRACT
 
-UsersProfiles aggregate contracts
-REMOVE
+Users Configuration Source
+REMOVED
 
-Profiles UI inside Users
-REMOVE
+Users generic Projection
+REMOVED
 
-LEGACY
-REMOVE
+Users Manager module
+REMOVED
+
+Users login write/pending
+FORBIDDEN
+
+Blob registry default path
+users/users.json.gz
+
+Cosmos current document
+atlanticus_user schema 1
+
+Users Registry document
+atlanticus_users_registry schema 1
+
+OLD SCHEMA RUNTIME READERS
+FORBIDDEN
 
 ADAPTERS / SHIMS / ALIASES
 FORBIDDEN
@@ -535,72 +557,66 @@ FORBIDDEN
 DOUBLE CONTRACT
 FORBIDDEN
 
-CSS VISUAL CONTRACT TESTS
-FORBIDDEN
+Profiles
+APPLICATION-SPECIFIC FIRST-CLASS CAPABILITY
+
+Access
+APPLICATION-SPECIFIC
+
+Global User -> app Profile/Access exact association
+OPEN / DO NOT INVENT
 ```
 
 ## Orden de implementación refinado
 
 ```text
-1. USERS-STANDALONE-AUTHORITY-CUTOVER
+1. USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
    CLOSED / VERIFIED / CURRENT
 
-2A. PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-    CLOSED / VERIFIED / CURRENT
+2. USERS-PERSISTED-DATA-CUTOVER
+   PLANNED / NEXT
 
-2B. USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
-    PLANNED / NEXT
-
-3. USERS-PROFILES-COMPOSITION-CUTOVER
+3. USERS-ADMINISTRATION-SURFACE-CUTOVER
    PLANNED
 
-4. PROFILES-UI-EXTRACTION
+4. PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
    PLANNED
 
-5. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+5. ACCESS-PROFILES-CONFIGURATION
    PLANNED
 
-6. QUALIFICATION
+6. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
    PLANNED
 ```
 
-## Criterio de cierre del frente completo
-
-No declarar CLOSED hasta que:
-
-```text
-Users funciona standalone
-Profiles tiene ownership y lifecycle propios
-UsersProfiles aggregate no existe
-combined Users+Profiles Source no existe
-UserConfiguration usa authority_key final
-administrator no existe
-Profiles UI está fuera de Users
-Navigation se compone con Profiles + Users
-no existen shims/aliases/adapters legacy
-tests validan comportamiento/invariantes
-```
+Los puntos 3-6 no deben adelantarse dentro del punto 2.
 
 ## Pendientes explícitos
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+actual persisted data inventory
 OPEN / NEXT
 
-USERS-PROFILES-COMPOSITION-CUTOVER
-OPEN
+legacy persisted data migration/deletion
+OPEN / NEXT
 
-PROFILES-UI-EXTRACTION
-OPEN
+concrete Entra/Graph Directory provider
+UNVERIFIED
 
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-OPEN
+Users Administration UI/repair
+PLANNED
+
+Profiles lifecycle/admin/UI
+PLANNED
+
+Global User -> app Profile/Access association
+OPEN / UNVERIFIED
+
+Navigation effective-access integration
+PLANNED
 
 local selector composition wiring
 UNVERIFIED
-
-referenced profile delete/reassign recovery/audit
-OPEN
 
 Python 3.14.7 metadata alignment
 OPEN / SEPARATE

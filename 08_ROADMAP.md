@@ -15,30 +15,44 @@ No mezclar cleanup transversal con el incremento funcional activo.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@4e008055ddc551e6c08a7d87715340c8c7cd149e
+moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
 ```
 
 Parent:
 
 ```text
-709cf2fb9ee422094f011cfda051f08f37276992
+4e008055ddc551e6c08a7d87715340c8c7cd149e
 ```
 
 ## Hitos cerrados recientes
 
 ```text
-USERS-STANDALONE-AUTHORITY-CUTOVER
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-Los hitos de Manager, Navigation generic configuration, Users legacy removal,
-Tools, KPI Configuration, KPI Definition y ADA Configuration Manager cerrados
-anteriormente permanecen CURRENT.
+Los hitos de Manager, Navigation generic configuration, Tools, KPI Configuration,
+KPI Definition y ADA Configuration Manager cerrados anteriormente permanecen CURRENT.
 
-## Hito activo
+## Hitos anteriores de Users superados
+
+```text
+USERS-STANDALONE-AUTHORITY-CUTOVER
+CLOSED / SUPERSEDED BY USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
+
+USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+SUPERSEDED / NOT FINAL TARGET
+
+USERS-PROFILES-COMPOSITION-CUTOVER
+SUPERSEDED AS PREVIOUS MODEL
+```
+
+Users ya no participa de Source/Projection Configuration.
+
+## Frente Profiles
 
 ```text
 PROFILES-CAPABILITY-EXTRACTION
@@ -55,109 +69,71 @@ profiles/configuration
 CURRENT
 
 ProfilesConfiguration ownership
-MOVED TO profiles/configuration
+profiles/configuration
 ```
 
-Todavía no está cerrado el lifecycle independiente completo de Profiles.
+No abrir este frente dentro del siguiente incremento de Users persisted data.
 
 ## Siguiente foco único
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 PLANNED / NEXT
 ```
 
-Objetivo contractual ya decidido:
+Primera etapa obligatoria:
 
 ```text
-Users Source
-UsersConfiguration only
-
-Profiles Source
-ProfilesConfiguration only
-
-UsersProfilesConfiguration
-REMOVE
-
-UserConfiguration.profile_key
-REMOVE
-
-UserConfiguration.authority_key
-FINAL
-
-administrator
-REMOVE from combined boundary
+inspect actual persisted data/topology
+classify current vs legacy records
+identify Profiles information that must be preserved
+freeze one-shot migration contract
 ```
 
-No crear aliases, adapters, shims ni compatibilidad entre contratos viejo/nuevo.
+Sólo después de evidencia suficiente puede implementarse una migración.
 
-No inventar una arquitectura especial para Profiles.
-
-## Después del Source ownership cutover
+Target CURRENT que la migración deberá respetar:
 
 ```text
-USERS-PROFILES-COMPOSITION-CUTOVER
+Blob registry
+users/users.json.gz
+atlanticus_users_registry / schema 1
+
+Cosmos promoted Users
+atlanticus_user / schema 1
+```
+
+No crear runtime adapters para `pending`, `resolved`, Users Source o combined
+Users/Profiles configuration.
+
+No borrar legacy persisted data antes de verificar que su información necesaria fue
+migrada o preservada.
+
+## Después de persisted data
+
+```text
+USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED
 ```
 
-Debe resolver únicamente integración cross-capability:
+Debe consumir `UsersAdministrationService` directamente y presentar lifecycle de
+entidad, no Source/Projection.
+
+Después, en incrementos separados:
 
 ```text
-assignable authority universe
-functional profile existence validation
-referential operation sequencing
-recovery/audit where required
-```
-
-No recrear transacción distribuida.
-
-## Después de composition
-
-```text
-PROFILES-UI-EXTRACTION
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
 PLANNED
-```
 
-Target:
+ACCESS-PROFILES-CONFIGURATION
+PLANNED
 
-```text
-Users UI
-Users-owned
-
-Profiles UI
-Profiles-owned
-```
-
-La apariencia se valida visualmente. No crear CSS-structure tests.
-
-## Después de Profiles UI
-
-```text
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 PLANNED
 ```
 
-Target de composition:
-
-```text
-Navigation
-  ↓
-Profiles
-  ↓
-Users
-```
-
-Preservar core decoupling cuando la integración pueda vivir en composition.
-
-## Qualification final del frente
-
-```text
-QUALIFICATION
-PLANNED
-```
-
-Debe cubrir comportamiento, invariantes, regresiones y compositions
-válidas/inválidas.
+El orden exacto posterior puede refinarse sólo con evidencia CURRENT; no adelantar
+implementación desde este documento.
 
 ## Open independiente
 
@@ -165,24 +141,25 @@ válidas/inválidas.
 WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 
-Python 3.14.7 metadata alignment
+PYTHON-METADATA-ALIGNMENT
 PLANNED / OPEN
 
 CI remote
 UNVERIFIED
-```
 
-Existe un test CURRENT que inspecciona source/import absence. No mezclar su
-cleanup con el siguiente Source ownership cutover.
+Concrete Entra/Graph UsersDirectoryReader provider
+UNVERIFIED
+```
 
 ## No mezclar en el siguiente chat
 
-- Profiles UI;
+- Users Administration UI;
+- Profiles Source/UI;
+- Access;
 - Navigation alignment;
-- E2E transversal;
-- Python baseline cleanup;
-- CSS visual tests;
+- Python metadata cleanup;
 - Web test cleanup global;
+- unrelated Ruff cleanup;
 - Command Center;
 - Operational Data;
 - rediseño de Manager core;
@@ -191,5 +168,5 @@ cleanup con el siguiente Source ownership cutover.
 Único foco:
 
 ```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
+USERS-PERSISTED-DATA-CUTOVER
 ```
