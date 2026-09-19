@@ -41,69 +41,103 @@ ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## CLOSED — Users global registry root cutover
+## CLOSED — Users / Profiles / Access / Navigation alignment sequence
 
 ```text
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
-```
 
-Ya no están OPEN:
-
-```text
-Users as Manager module
-Users Source workflow
-Users generic Projection
-UsersProfilesConfiguration
-UsersProfilesAdministrationService
-UsersProfilesAdminDraft
-Cosmos pending/resolved runtime contract
-login observe/write pending
-Users configuration package
-Users projection-cosmos package
-users-manager composition
-```
-
-## OPEN — Users persisted data cutover
-
-```text
 USERS-PERSISTED-DATA-CUTOVER
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CAPABILITY-EXTRACTION
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
-Motivo:
+Ya no está OPEN cómo Navigation Configuration obtiene Profiles para administración y
+validación: consume `ProfileCatalog` desde Profiles core mediante composition.
 
-El código CURRENT rechaza contratos legacy, pero este cierre no inspeccionó ni
-migró los datos persistidos reales.
+Tampoco están OPEN:
 
-Preguntas obligatorias del siguiente chat:
+```text
+NavigationProfileOption
+_BASE_PROFILES
+NavigationProfileOptionsProvider
+profile_options_provider
+Navigation -> Users profile options
+Navigation -> ADA Access authorization dependency
+```
 
-1. ¿Qué datos Users/Profiles existen realmente en los stores/deployments actuales?
-2. ¿Qué documentos Cosmos pertenecen al schema legacy `pending` / `resolved` y cuáles al schema CURRENT?
-3. ¿Existe ya un Blob registry compatible con `atlanticus_users_registry` schema 1?
-4. ¿Qué información de los antiguos payloads pertenece a Users globales y cuál debe preservarse para Profiles?
-5. ¿Cuál es la topología/configuración real de container/blob/connections sin inventar nombres ni credenciales?
-6. ¿Qué operación one-shot permite migrar y verificar sin introducir lectores legacy runtime?
-7. ¿Qué condición exacta permite borrar los datos legacy después de verificar parity?
+## OPEN — Manager authorization stale semantics
 
-No asumir que un dato existe o está vacío sin inspección.
+Implementación CURRENT todavía contiene en `DefaultManagerAuthorizationPolicy`:
+
+```text
+principal.is_local
+OR
+'administrator' in principal.profile_keys
+→ full Manager access
+```
+
+ADA Configuration Manager mantiene helpers `_can_manage_navigation`, `_can_manage_tools`
+y `_can_manage_kpis` con bypass equivalente.
+
+Preguntas obligatorias del siguiente chat recomendado:
+
+1. ¿Cuál es el contrato final de `ManagerPrincipal` para autorización?
+2. ¿Debe `ManagerModuleAccess` ser la única fuente funcional de permisos por módulo?
+3. ¿Cómo obtiene permisos explícitos el runtime local sin inventar `administrator`?
+4. ¿Qué responsabilidad pertenece al generic Manager y cuál a la composition ADA?
+5. ¿Qué tests de comportamiento deben proteger el contrato final?
+6. ¿Qué referencias `administrator`/`is_local` quedan realmente legacy y cuáles son runtime concerns legítimos?
+
+No implementar hasta revisar código CURRENT y consumers.
+
+Estado:
+
+```text
+OPEN / PROPOSED NEXT
+```
+
+## OPEN — exact Navigation fallback para identidad no promovida
+
+La entrada a la aplicación ya es CURRENT para identidad autenticada no promovida.
+
+Sigue OPEN la composición exacta de `NavigationPrincipal`/perfil de fallback.
+
+No resolver mediante:
+
+```text
+guest authority en Users
+UserRecord ficticio
+Navigation -> Users dependency
+Navigation -> ADA Access dependency
+```
+
+Estado:
+
+```text
+OPEN / SEPARATE
+```
 
 ## OPEN — Users Administration surface
 
 ```text
 USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / AFTER PERSISTED DATA
+PLANNED / SEPARATE
 ```
-
-El core ya expone:
-
-```text
-PROMOTABLE
-CONFLICT
-PROMOTED
-```
-
-pero este hito no implementó UI ni repair commands.
 
 No reintroducir Users en Configuration Manager como Source/Projection.
 
@@ -123,41 +157,18 @@ UNVERIFIED
 
 No inventar tenant settings, Graph permissions, credential flow ni endpoints.
 
-## OPEN — Profiles lifecycle
+## OPEN — ADA Access runtime composition
+
+ADA Access domain/configuration está cerrado.
+
+El wiring runtime exacto permanece separado de Navigation Configuration y no fue
+modificado en este hito.
+
+Estado:
 
 ```text
-PROFILES-CAPABILITY-EXTRACTION
-IN PROGRESS
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-PLANNED
+OPEN / SEPARATE
 ```
-
-`profiles/core` y `profiles/configuration` existen.
-
-No está cerrado todavía:
-
-```text
-independent Source/Projection lifecycle
-administration surface
-app-specific User/Profile association
-Access configuration ownership
-```
-
-No reabrir Users registry para resolver estos puntos.
-
-## OPEN — Navigation / Access integration
-
-La anterior cadena rígida:
-
-```text
-Users Source -> Profiles Source -> Navigation
-```
-
-queda SUPERSEDED porque Users ya no es Source.
-
-Permanece OPEN cómo Navigation consume el resultado efectivo de Profiles/Access sin
-adquirir ownership de Users.
 
 ## OPEN — Python package metadata alignment
 
@@ -167,19 +178,17 @@ Canonical fija:
 Python 3.14.7
 ```
 
-CURRENT remoto:
+Navigation Configuration CURRENT:
 
 ```text
-web/pyproject.toml
 requires-python = "==3.14.2"
 ```
 
-La qualification local del cutover usó Python 3.14.7, pero la metadata continúa
+La qualification local del último cutover usó Python 3.14.7, pero la metadata continúa
 inconsistente.
 
-Estado:
-
 ```text
+PYTHON-METADATA-ALIGNMENT
 PLANNED / OPEN
 ```
 
@@ -187,28 +196,31 @@ PLANNED / OPEN
 
 ```text
 WEB-TEST-CONTRACT-CLEANUP
-PLANNED
+PLANNED / OPEN
 ```
 
-No abrir este frente durante persisted-data cutover salvo que un test directamente
-afectado contradiga el comportamiento final legítimo.
+Durante qualification del último hito quedaron findings fuera de alcance en:
+
+```text
+capabilities/navigation/configuration/tests/test_web_contract.py
+capabilities/navigation/configuration/tests/test_web_source_contract.py
+```
+
+No fueron modificados oportunistamente.
 
 ## UNVERIFIED
 
-- production Blob registry presence/content;
-- production Cosmos legacy/current record inventory;
-- final deletion conditions for persisted legacy data;
 - concrete Entra/Graph directory provider;
-- full Ruff workspace after current commit;
-- full ADA regression;
-- CI remoto;
+- full Ruff workspace después de `3eb46dac...`;
+- CI remoto para `3eb46dac...`;
 - Python metadata/Trixie global qualification;
-- exact app-specific User → Profile/Access association contract.
+- exact runtime fallback guest composition;
+- exact local Manager authorization composition después del futuro cutover.
 
-## Siguiente foco
+## Siguiente foco recomendado
 
 ```text
-USERS-PERSISTED-DATA-CUTOVER
+Manager authorization stale administrator/local semantics
 ```
 
 Fuentes obligatorias:

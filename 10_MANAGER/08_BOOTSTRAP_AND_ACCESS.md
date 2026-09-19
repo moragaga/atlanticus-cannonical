@@ -1,13 +1,14 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT DIRECTION / REFINED AFTER USERS AND PROFILES CUTOVERS**
+Estado: **CURRENT DIRECTION / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
 
 ## Alcance
 
-Este documento conserva la frontera entre Bootstrap Access y Manager Access.
+Este documento conserva la frontera entre Bootstrap Access y Manager Access y registra
+el gap CURRENT de autorización de Manager.
 
-El cierre actual no modifica la autorización interna de Manager; únicamente corrige
-las referencias antiguas que acoplaban Navigation a Users para obtener perfiles.
+El cierre `NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT` no modifica la autorización interna
+de Manager.
 
 ## Bootstrap Access
 
@@ -21,7 +22,7 @@ MANAGER ACCESS
 
 Producción utiliza identidad autenticada mediante el provider configurado.
 
-El estado CURRENT de Identity/Users distingue:
+Identity/Users CURRENT distingue:
 
 ```text
 invalid identity
@@ -36,21 +37,56 @@ valid authenticated identity without promoted UserRecord
 
 La promoción de Users no es el gate de entrada a la aplicación.
 
-## Manager Access
+## Manager Access CURRENT
 
-Manager utiliza su propio contrato de autorización.
+Manager utiliza:
 
-Los detalles actuales de `profile_keys`, `access_keys`, `is_local` y cualquier semántica
-stale relacionada con `administrator` pertenecen a un frente separado.
+```text
+ManagerPrincipal
+ManagerModuleAccess
+ManagerAuthorizationPolicy
+```
 
-Este documento no redefine esa política ni crea una nueva.
+Sin embargo `DefaultManagerAuthorizationPolicy` CURRENT todavía concede acceso total si:
 
-## Superficie previa
+```text
+principal.is_local
+OR
+'administrator' in principal.profile_keys
+```
 
-Una superficie bootstrap/operacional puede existir antes de que Manager tenga todas sus
-dependencias listas para permitir diagnóstico y recuperación controlada.
+antes de evaluar el access key requerido por `ManagerModuleAccess`.
 
-La ruta, UI y composición exactas siguen fuera del alcance de este cierre.
+Estado:
+
+```text
+VERIFIED CURRENT IMPLEMENTATION
+OPEN CONTRACT CLEANUP
+```
+
+Este documento no redefine silenciosamente la política final.
+
+## ADA Configuration Manager CURRENT
+
+La composition ADA mantiene helpers:
+
+```text
+_can_manage_navigation
+_can_manage_tools
+_can_manage_kpis
+```
+
+con semántica equivalente:
+
+```text
+principal.is_local
+OR
+'administrator' in principal.profile_keys
+OR
+required access key in principal.access_keys
+```
+
+Ese duplicado pertenece al mismo frente futuro de autorización Manager.
 
 ## Local
 
@@ -60,31 +96,34 @@ No existe mapping contractual:
 
 ```text
 local -> administrator
+administrator -> root
 ```
 
-La semántica exacta de Manager para `is_local` no se modifica en este hito.
+El siguiente incremento debe verificar cómo se otorgan permisos Manager explícitos en
+runtime local antes de remover cualquier bypass.
 
-## Navigation / Users / Profiles
+No inventar access keys ni mappings sin inspeccionar consumers CURRENT.
 
-Manager debe poder convivir con capabilities instaladas de forma independiente.
+## Navigation / Profiles
+
+Estado:
 
 ```text
-Users only
-Navigation only
-Users + Navigation
-Profiles + Navigation
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
-Navigation no debe requerir Users ni ADA Access.
-
-Cuando Navigation necesita catálogo de perfiles para validación o administración,
-la integración correcta es con la capability generic Profiles:
+Manager puede componer Navigation con un provider opcional de `ProfileCatalog`:
 
 ```text
-Profiles
-    ↓ optional integration
-Navigation
+Profiles core
+    ↓
+NavigationProfileCatalogProvider
+    ↓
+Navigation Manager draft validation + Projection validation + admin options
 ```
+
+Navigation no requiere Users ni ADA Access.
 
 No usar:
 
@@ -93,20 +132,23 @@ Users -> Navigation profile options
 ADA Access -> Navigation authorization
 ```
 
-Navigation conserva sus propias `allowed_profiles` como referencias por key.
+Navigation conserva sus `allowed_profiles` como referencias por key.
 
-## Estado
+## Siguiente frontera recomendada
 
 ```text
-BOOTSTRAP / ACCESS SEPARATION
-CURRENT DIRECTION
-
-USERS NONPROMOTED ENTRY SEMANTICS
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED
-
-MANAGER AUTHORIZATION CLEANUP
-OPEN / OUT OF CURRENT FOCUS
+Manager authorization stale administrator/local semantics
+PLANNED / PROPOSED NEXT
 ```
+
+Debate obligatorio antes de implementación:
+
+1. `ManagerPrincipal` CURRENT.
+2. `ManagerModuleAccess` CURRENT.
+3. `DefaultManagerAuthorizationPolicy` CURRENT.
+4. consumers/compositions ADA CURRENT.
+5. runtime local CURRENT.
+6. tests de comportamiento existentes.
+
+No mezclar con guest fallback de Navigation, Users Administration, ADA Access runtime,
+Python metadata ni cleanup transversal de tests.

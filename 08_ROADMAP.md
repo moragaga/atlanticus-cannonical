@@ -15,29 +15,62 @@ No mezclar cleanup transversal con el incremento funcional activo.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Parent:
 
 ```text
-4e008055ddc551e6c08a7d87715340c8c7cd149e
+0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
 ```
 
-## Hitos cerrados recientes
+## Hitos cerrados relevantes
 
 ```text
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+USERS-PERSISTED-DATA-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CAPABILITY-EXTRACTION
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
-Los hitos de Manager, Navigation generic configuration, Tools, KPI Configuration,
-KPI Definition y ADA Configuration Manager cerrados anteriormente permanecen CURRENT.
-
-## Hitos anteriores de Users superados
+## Hitos superados
 
 ```text
 USERS-STANDALONE-AUTHORITY-CUTOVER
@@ -48,96 +81,73 @@ SUPERSEDED / NOT FINAL TARGET
 
 USERS-PROFILES-COMPOSITION-CUTOVER
 SUPERSEDED AS PREVIOUS MODEL
+
+ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access target
+SUPERSEDED / NOT ADOPTED
+
+Navigation local profile mini-model
+SUPERSEDED / REMOVED
 ```
 
-Users ya no participa de Source/Projection Configuration.
-
-## Frente Profiles
+## Navigation / Profiles CURRENT
 
 ```text
-PROFILES-CAPABILITY-EXTRACTION
-IN PROGRESS
-```
-
-CURRENT parcial:
-
-```text
-profiles/core
+Navigation Configuration -> Profiles core
 CURRENT
 
-profiles/configuration
-CURRENT
+Navigation -> Users
+FORBIDDEN
 
-ProfilesConfiguration ownership
-profiles/configuration
+Navigation -> ADA Access
+FORBIDDEN
+
+Navigation -> Profiles Configuration
+FORBIDDEN
+
+Navigation durable profile references
+allowed_profiles = profile keys
 ```
 
-No abrir este frente dentro del siguiente incremento de Users persisted data.
+No existe catálogo local `_BASE_PROFILES` ni adapter equivalente.
 
-## Siguiente foco único
+## Siguiente foco único recomendado
 
 ```text
-USERS-PERSISTED-DATA-CUTOVER
-PLANNED / NEXT
+Manager authorization stale administrator/local semantics
+PLANNED / PROPOSED NEXT
 ```
 
 Primera etapa obligatoria:
 
 ```text
-inspect actual persisted data/topology
-classify current vs legacy records
-identify Profiles information that must be preserved
-freeze one-shot migration contract
+inspect ManagerPrincipal contract
+inspect ManagerModuleAccess contract
+inspect DefaultManagerAuthorizationPolicy behavior
+inspect ADA Configuration Manager duplicated _can_manage_* helpers
+identify exact local-development composition requirements
+freeze final authorization semantics before implementation
 ```
 
-Sólo después de evidencia suficiente puede implementarse una migración.
+No asumir que `local`, `root`, Profiles o ADA Access deban mapearse automáticamente a
+Manager permissions.
 
-Target CURRENT que la migración deberá respetar:
+No conservar compatibility con `administrator` si el contrato final lo elimina.
 
-```text
-Blob registry
-users/users.json.gz
-atlanticus_users_registry / schema 1
-
-Cosmos promoted Users
-atlanticus_user / schema 1
-```
-
-No crear runtime adapters para `pending`, `resolved`, Users Source o combined
-Users/Profiles configuration.
-
-No borrar legacy persisted data antes de verificar que su información necesaria fue
-migrada o preservada.
-
-## Después de persisted data
+## Frentes separados que permanecen abiertos
 
 ```text
+exact guest fallback composition for authenticated non-promoted identities
+OPEN / SEPARATE
+
 USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED
-```
+PLANNED / SEPARATE
 
-Debe consumir `UsersAdministrationService` directamente y presentar lifecycle de
-entidad, no Source/Projection.
+ADA Access runtime composition
+OPEN / SEPARATE
 
-Después, en incrementos separados:
+concrete Entra/Graph UsersDirectoryReader provider
+UNVERIFIED
 
-```text
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-PLANNED
-
-ACCESS-PROFILES-CONFIGURATION
-PLANNED
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED
-```
-
-El orden exacto posterior puede refinarse sólo con evidencia CURRENT; no adelantar
-implementación desde este documento.
-
-## Open independiente
-
-```text
 WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 
@@ -146,27 +156,23 @@ PLANNED / OPEN
 
 CI remote
 UNVERIFIED
-
-Concrete Entra/Graph UsersDirectoryReader provider
-UNVERIFIED
 ```
 
 ## No mezclar en el siguiente chat
 
-- Users Administration UI;
-- Profiles Source/UI;
-- Access;
-- Navigation alignment;
+- Navigation Configuration redesign;
+- Navigation guest fallback runtime composition;
+- Users Administration UI/repair;
+- ADA Access runtime composition;
 - Python metadata cleanup;
 - Web test cleanup global;
 - unrelated Ruff cleanup;
 - Command Center;
 - Operational Data;
-- rediseño de Manager core;
 - rediseño de Source/Projection core.
 
-Único foco:
+Único foco recomendado:
 
 ```text
-USERS-PERSISTED-DATA-CUTOVER
+Manager authorization stale administrator/local semantics
 ```

@@ -10,11 +10,11 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `0fba548329afd9bc9dee92ea6caa53d1aaa69eb0`
+  `3eb46dac80f23d438774e3afa39999dc96f592d7`
 - Parent inmediato:
-  `96b95172bae389f117c3c7e2afed7844eb79e98d`
+  `0fba548329afd9bc9dee92ea6caa53d1aaa69eb0`
 - Tree:
-  `24efaa448bf4cd0ac6f7c488c9dd01357d91ad0d`
+  `69386cf40e566baad2786a079029a6eea20bd8d1`
 
 El checkpoint CURRENT contiene, entre otros hitos ya cerrados:
 
@@ -57,6 +57,9 @@ CLOSED / VERIFIED / CURRENT
 
 NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
 CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
 ### Canonical
@@ -64,6 +67,8 @@ CLOSED / VERIFIED / CURRENT
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
+  `59ca0864daac7b79816974679cd4353033fe6408`
+- Parent inmediato:
   `179a151d24074e9d4cb8c5f16bdcd6ef49308929`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
@@ -75,10 +80,6 @@ CLOSED / VERIFIED / CURRENT
 
 Puede aportar rationale y evidencia histórica. No puede reemplazar
 `atlanticus:main` ni `atlanticus-cannonical:main`.
-
-No se usa una decisión histórica para reintroducir Users como Source de configuración,
-recrear contratos Users/Profiles combinados, reintroducir `USER_NOT_PROMOTED` como
-estado de bloqueo ni conservar legacy eliminado.
 
 ## Jerarquía
 
@@ -146,6 +147,21 @@ ADA-specific capability
 Navigation
 Atlanticus generic capability
 
+Navigation durable authorization
+allowed_profiles = profile keys
+
+Navigation configuration -> Profiles core
+ALLOWED / CURRENT
+
+Navigation -> Users
+FORBIDDEN
+
+Navigation -> ADA Access
+FORBIDDEN
+
+Navigation -> Profiles Configuration
+FORBIDDEN
+
 Users login write/pending
 FORBIDDEN
 
@@ -161,7 +177,7 @@ FORBIDDEN
 
 Promotion de Users no habilita el ingreso a la aplicación.
 
-El contrato CURRENT de acceso es:
+El contrato CURRENT de acceso permanece:
 
 ```text
 authenticated identity + no promoted UserRecord
@@ -178,7 +194,44 @@ authenticated identity + promoted disabled UserRecord
 → 403
 ```
 
-`USER_NOT_PROMOTED` ya no existe en `AccessStatus` CURRENT.
+`USER_NOT_PROMOTED` no existe en `AccessStatus` CURRENT.
+
+## Navigation / Profiles CURRENT
+
+Navigation Configuration consume directamente el contrato generic de Profiles core:
+
+```text
+ProfileCatalog
+ProfileDefinition
+```
+
+Contrato de integración:
+
+```text
+NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
+```
+
+Sin provider configurado:
+
+```text
+profile_definitions() -> ()
+Navigation no inventa perfiles base
+```
+
+Con provider configurado:
+
+```text
+ProfileCatalog.all()
+→ perfiles disponibles en la superficie administrativa
+
+ProfileCatalog.require(profile_key)
+→ validación referencial de allowed_profiles
+```
+
+Fallos del provider no se silencian.
+
+El mismo conjunto de `NavigationProjectionValidator` se usa en validación de draft y
+en Projection cuando la composition lo configura.
 
 ## Targets superseded
 
@@ -208,25 +261,42 @@ SUPERSEDED / REJECTED BEFORE INTEGRATION
 
 USER_NOT_PROMOTED -> 403
 SUPERSEDED / REMOVED
+
+NavigationProfileOption
+SUPERSEDED / REMOVED
+
+NavigationProfileOptionsProvider
+SUPERSEDED / REMOVED
+
+_BASE_PROFILES
+SUPERSEDED / REMOVED
+
+resolve_profile_options / selectable_profile_options
+SUPERSEDED / REMOVED
+
+profile_options_provider
+SUPERSEDED / REMOVED
 ```
 
-## Siguiente foco único
+## Siguiente foco único recomendado
 
 ```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED / NEXT
+Manager authorization stale administrator/local semantics
+PLANNED / PROPOSED NEXT
 ```
 
-El incremento debe permanecer limitado a la relación Navigation ↔ Profiles.
+El nombre de incremento puede fijarse en el siguiente chat; no se considera contrato
+CURRENT hasta revisar implementación, canonical y consumers.
 
 No mezclar:
 
 ```text
+exact guest fallback composition for authenticated non-promoted identities
 ADA Access runtime composition
-Users Administration UI
-Manager authorization cleanup
+Users Administration UI/repair
 Python metadata alignment
-cross-cutting test cleanup
+WEB-TEST-CONTRACT-CLEANUP
+CI/global lint cleanup
 ```
 
 No inventar contratos nuevos cuando el código CURRENT ya provee una frontera suficiente.

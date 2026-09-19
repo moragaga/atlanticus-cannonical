@@ -2,63 +2,93 @@
 
 Estado: **OPEN**
 
-## Global Users
+Los items cerrados no deben reabrirse para restaurar simetría o legacy.
 
-Cerrado:
+## Closed baselines relevantes
 
 ```text
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-PERSISTED-DATA-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-CAPABILITY-EXTRACTION
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 ```
 
 Ya no son open items:
 
 ```text
-separate Users Source
-UsersConfiguration
+Users Source/Projection lifecycle
 UsersProfilesConfiguration
-UsersProfilesAdministrationService
-UsersProfilesAdminDraft
-Users generic projection
-Users Manager module
 pending/resolved runtime dual schema
-login observe pending
+Profiles extraction/source lifecycle
+NavigationProfileOption
+_BASE_PROFILES
+NavigationProfileOptionsProvider
+Navigation -> Users profile options
+Navigation -> ADA Access authorization dependency
+Navigation Configuration -> Profiles catalog alignment
 ```
 
-## Users persisted data — NEXT
+## Manager authorization — PROPOSED NEXT
+
+Open:
+
+1. revisar `ManagerPrincipal` CURRENT;
+2. revisar `ManagerModuleAccess` CURRENT;
+3. revisar `DefaultManagerAuthorizationPolicy` CURRENT;
+4. determinar si `is_local` sigue siendo bypass válido o debe convertirse en permisos explícitos;
+5. eliminar o justificar `administrator` dentro de Manager sin mapping hacia `root`;
+6. revisar helpers `_can_manage_navigation/_tools/_kpis` de ADA Configuration Manager;
+7. verificar composition local antes de remover bypass;
+8. definir tests de comportamiento final sin congelar implementación interna.
+
+Estado:
 
 ```text
-USERS-PERSISTED-DATA-CUTOVER
-PLANNED / NEXT
+Manager authorization stale administrator/local semantics
+OPEN / PROPOSED NEXT
 ```
 
-Open items de este foco:
+## Navigation runtime fallback
 
-1. inspeccionar stores/topology reales antes de diseñar migración;
-2. inventariar documentos Cosmos legacy/current por schema real;
-3. confirmar si existe registry Blob CURRENT y su ubicación/configuración real;
-4. separar datos global Users de información Profiles que deba preservarse;
-5. congelar transformación one-shot hacia `atlanticus_users_registry` schema 1;
-6. congelar transformación one-shot hacia `atlanticus_user` schema 1;
-7. definir verification de strong identity y Blob/Cosmos parity;
-8. definir comportamiento de retry si Registry existe y Cosmos todavía no;
-9. definir condición verificable para borrar legacy persisted data;
-10. no crear runtime adapters, shims ni old-schema readers.
+9. resolver composition exacta para identidad autenticada sin promoted `UserRecord`;
+10. definir `NavigationPrincipal` efectivo sin crear UserRecord ficticio;
+11. usar `guest` sólo como profile normal si existe en `ProfileCatalog`;
+12. no crear dependency Navigation -> Users/ADA Access.
+
+Estado:
+
+```text
+OPEN / SEPARATE
+```
 
 ## Users Administration
 
 ```text
 USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / AFTER PERSISTED DATA
+PLANNED / SEPARATE
 ```
 
 Open:
 
-11. UI/surface para PROMOTABLE / CONFLICT / PROMOTED;
-12. explicit promote/update commands;
-13. repair/recovery operations para inconsistencias detectadas;
-14. audit semantics cuando un operation contract real lo requiera;
-15. concrete Directory provider wiring.
+13. UI/surface para lifecycle actual de Users;
+14. explicit promote/update/repair operations según contratos existentes;
+15. concrete Directory provider wiring cuando exista evidencia suficiente.
 
 No reintroducir Users Source/Projection.
 
@@ -74,74 +104,59 @@ Estado:
 UNVERIFIED
 ```
 
-## Profiles / Access
+## ADA Access runtime
+
+19. verificar wiring runtime real;
+20. no convertir ADA Access en dependency de Navigation;
+21. no mover Access application-specific a Atlanticus generic sin evidencia de reutilización.
+
+Estado:
 
 ```text
-PROFILES-CAPABILITY-EXTRACTION
-IN PROGRESS
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-PLANNED
-
-ACCESS-PROFILES-CONFIGURATION
-PLANNED
+OPEN / SEPARATE
 ```
-
-Open:
-
-19. lifecycle independiente de Profiles;
-20. Profiles admin/UI owner;
-21. exact Global User -> app-specific Profile association owner;
-22. Access configuration contract;
-23. delete/reassign/recovery semantics sólo cuando referencias reales estén congeladas.
-
-No abrir estos puntos dentro del próximo Users persisted-data increment.
-
-## Navigation
-
-24. alinear Navigation con effective Profile/Access result después de congelar esos contracts;
-25. no crear dependencia directa a Users por analogía.
 
 ## User Activity
 
-26. Freeze `UserPageActivity` shape.
-27. Freeze partition key.
-28. Freeze deterministic ID strategy.
-29. Verificar/aplicar `default_ttl_seconds=86400`.
-30. Freeze semantics de active time y visit_count.
-31. Freeze comportamiento de browser reload/client_session_id.
-32. Definir dashboard query contract.
+22. Freeze `UserPageActivity` shape.
+23. Freeze partition key.
+24. Freeze deterministic ID strategy.
+25. Verificar/aplicar `default_ttl_seconds=86400`.
+26. Freeze semantics de active time y visit_count.
+27. Freeze comportamiento de browser reload/client_session_id.
+28. Definir dashboard query contract.
 
 ## Resource plan
 
-33. Freeze `ApplicationResourcePlan` cuando corresponda.
-34. Freeze external/backend resource declaration.
-35. Definir owner/required/optional semantics.
-36. Definir named connection resolution.
+29. Freeze `ApplicationResourcePlan` cuando corresponda.
+30. Freeze external/backend resource declaration.
+31. Definir owner/required/optional semantics.
+32. Definir named connection resolution.
 
 ## Readiness
 
-37. Freeze READY/DEGRADED/ERROR semantics.
-38. Definir dependencies required por aplicación.
-39. Definir health/readiness endpoints/surface.
+33. Freeze READY/DEGRADED/ERROR semantics.
+34. Definir dependencies required por aplicación.
+35. Definir health/readiness endpoints/surface.
 
 ## Test contract cleanup
 
 ```text
 WEB-TEST-CONTRACT-CLEANUP
-PLANNED
+PLANNED / OPEN
 ```
 
-40. remover/reemplazar tests que congelen implementación interna sin comportamiento;
-41. no crear validaciones automatizadas de CSS visual/responsive/spacing/branding;
-42. conservar checks de assets sólo cuando su carga sea contractual.
+36. remover/reemplazar tests que congelen implementación interna sin comportamiento;
+37. revisar findings preexistentes en `test_web_contract.py` y `test_web_source_contract.py`;
+38. no crear validaciones automatizadas de CSS visual/responsive/spacing/branding;
+39. conservar checks de assets sólo cuando su carga sea contractual.
 
 ## Python baseline
 
-43. alinear metadata `requires-python` con Python 3.14.7 en incremento separado;
-44. qualificar globalmente `python:3.14.7-slim-trixie`.
+40. alinear metadata `requires-python` con Python 3.14.7 en incremento separado;
+41. qualificar globalmente `python:3.14.7-slim-trixie`.
 
 ## CI / lint transversal
 
-45. qualificar CI remoto cuando exista workflow/status evidence;
-46. tratar Ruff global preexistente en incremento separado, no durante Users data cutover.
+42. qualificar CI remoto para un checkpoint CURRENT cuando exista evidence;
+43. tratar Ruff global preexistente en incremento separado.

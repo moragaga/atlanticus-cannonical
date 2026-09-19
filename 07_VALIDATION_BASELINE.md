@@ -13,13 +13,19 @@ No inventar un PASS cuando no existe resultado de ejecución observado.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Parent:
 
 ```text
-4e008055ddc551e6c08a7d87715340c8c7cd149e
+0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+```
+
+Tree:
+
+```text
+69386cf40e566baad2786a079029a6eea20bd8d1
 ```
 
 ## Hitos contractuales relevantes
@@ -32,108 +38,170 @@ PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CAPABILITY-EXTRACTION
-IN PROGRESS
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
+
+USERS-PERSISTED-DATA-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
 Los hitos genéricos de Manager, Navigation, Tools, KPI Configuration, KPI Definition
 y ADA Configuration Manager previamente cerrados permanecen CURRENT.
 
-## Users global registry root cutover — evidencia observada
+## Navigation / Profiles alignment — evidencia observada
 
-Entorno reportado:
+Entorno reportado por el usuario:
 
 ```text
-Fedora WSL
+Fedora
 Python 3.14.7
 uv
 ```
 
-Workspace Web:
+### Lock
 
 ```text
-uv lock
+uv lock --check
+Resolved 77 packages
 PASS
-
-uv sync
-PASS
-
-uv run pytest
-416 passed / 7 skipped
 ```
 
-Ruff scoped a superficies afectadas:
+### Tests focalizados
 
 ```text
-capabilities/identity/core
-capabilities/users/core
-capabilities/users/blob
-capabilities/users/cosmos
+uv run --locked pytest \
+  capabilities/navigation/configuration/tests \
+  compositions/navigation-manager/tests \
+  -q
 ```
 
 Resultado:
 
 ```text
+PASS / 100%
+```
+
+### Regresión Profiles + Navigation
+
+```text
+uv run --locked pytest \
+  capabilities/profiles/core/tests \
+  capabilities/navigation/core/tests \
+  capabilities/navigation/configuration/tests \
+  compositions/navigation-manager/tests \
+  -q
+```
+
+Resultado:
+
+```text
+PASS / 100%
+```
+
+### Ruff sobre archivos modificados del incremento
+
+Después de aplicar formatter únicamente a los cuatro archivos Navigation Manager
+modificados por este incremento:
+
+```text
+uv run --locked ruff check \
+  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/composition.py \
+  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/workflows.py \
+  compositions/navigation-manager/tests/test_composition.py \
+  compositions/navigation-manager/tests/test_workflows.py
+```
+
+Resultado:
+
+```text
+All checks passed!
+```
+
+Y:
+
+```text
+uv run --locked ruff format --check \
+  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/composition.py \
+  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/workflows.py \
+  compositions/navigation-manager/tests/test_composition.py \
+  compositions/navigation-manager/tests/test_workflows.py
+```
+
+Resultado:
+
+```text
+4 files already formatted
+```
+
+### Git diff check
+
+```text
+git diff --check
 PASS
 ```
 
-El único finding de Ruff introducido por el cutover (`typing.Any` no usado en
-Users Blob) fue eliminado en productivo y espejo comentado antes de publicar.
+### Legacy symbol scan
 
-## ADA Configuration Manager — evidencia observada
-
-Durante qualification apareció un test stale que todavía esperaba Users como módulo
-0 y luego índices heredados del layout anterior.
-
-Fue alineado al contrato CURRENT:
+Búsqueda ejecutada:
 
 ```text
-navigation
-tools
-kpis
-kpi-definitions
+NavigationProfileOption
+NavigationProfileOptionsProvider
+profile_options_provider
+_BASE_PROFILES
+resolve_profile_options
+selectable_profile_options
+profile--unrestricted
+projection_validators
 ```
 
-También se corrigieron dos findings E731 de `composition.py` reemplazando asignación
-de lambda por `def actor_provider()` en productivo y espejo.
-
-La qualification final scoped fue reportada por el usuario como OK antes del push.
-El commit CURRENT remoto contiene esas correcciones.
-
-No inventar un conteo final del package ADA que no fue capturado explícitamente en
-la salida final del chat.
-
-## Verificación remota del checkpoint
-
-GitHub `main` apunta exactamente a:
+Scope:
 
 ```text
-6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+capabilities/navigation/configuration
+compositions/navigation-manager
 ```
 
-El árbol remoto CURRENT confirma:
+Resultado:
 
 ```text
-users/activity
-users/blob
-users/core
-users/cosmos
+0 matches
 ```
 
-y ausencia de:
+## Ruff global / cleanup transversal
+
+Antes de limitar Ruff al ownership real del incremento se observaron findings fuera del
+scope inmediato:
 
 ```text
-users/configuration
-users/projection-cosmos
-compositions/users-manager
+capabilities/navigation/configuration/tests/test_web_contract.py
+capabilities/navigation/configuration/tests/test_web_source_contract.py
 ```
 
-También confirma:
+El primer archivo produjo un `I001`; ambos aparecieron en `ruff format --check` del
+directorio completo.
+
+No fueron modificados oportunistamente.
+
+Estado:
 
 ```text
-UsersAccessResolver -> USER_NOT_PROMOTED without write
-BlobUsersRegistryStore -> users/users.json.gz + ETag concurrency
-CosmosUsersStore -> atlanticus_user schema 1
-ADA Configuration Manager -> no Users module/services
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / OPEN
+
+full Ruff workspace
+UNVERIFIED / NOT CLAIMED PASS
 ```
 
 ## Política de tests Web
@@ -170,56 +238,10 @@ funcional automatizable.
 Assets JS/CSS sólo se automatizan por existencia/carga cuando esa carga sea parte
 real del contrato.
 
-## Full Ruff workspace
-
-Durante el proceso se observaron findings de Ruff fuera del scope del incremento en:
-
-```text
-capabilities/manager
-capabilities/navigation/configuration/tests
-ADA KPI/workflows files no modificados por este hito
-```
-
-No se aplicó `ruff --fix .` ni cleanup oportunista.
-
-Estado final de full Ruff después del commit:
-
-```text
-UNVERIFIED / NOT CLAIMED PASS
-```
-
 ## CI remoto
 
-Para el commit CURRENT GitHub no reportó status checks ni workflow runs asociados.
-
-Estado:
-
-```text
-UNVERIFIED
-```
-
-## Persisted data
-
-No existe qualification en este cierre para:
-
-```text
-production Blob users registry
-legacy Users/Profiles Source migration
-legacy Cosmos pending/resolved cleanup
-Blob <-> Cosmos parity in deployed environment
-```
-
-Estado:
-
-```text
-UNVERIFIED / NEXT FOCUS
-```
-
-## Entra discovery
-
-`UsersDirectoryReader` existe como contrato.
-
-No se verificó provider concreto de Microsoft Graph/Entra directory listing.
+No se verificaron status checks/workflow runs asociados a `3eb46dac...` durante este
+cierre.
 
 Estado:
 
@@ -235,9 +257,9 @@ Canonical fija:
 Python 3.14.7
 ```
 
-La qualification local se ejecutó bajo 3.14.7.
+La qualification local de este incremento se ejecutó bajo 3.14.7.
 
-`web/pyproject.toml` remoto CURRENT todavía contiene:
+Navigation Configuration CURRENT todavía contiene:
 
 ```text
 requires-python = "==3.14.2"

@@ -1,6 +1,6 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT GENERIC CORE / ADA CONFIGURATION CONSUMER CURRENT / UI CLEANUP NEXT**
+Estado: **CURRENT GENERIC CORE / AUTHORIZATION CLEANUP OPEN**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -11,7 +11,7 @@ Estado: **CURRENT GENERIC CORE / ADA CONFIGURATION CONSUMER CURRENT / UI CLEANUP
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Testing contractual. | CURRENT POLICY |
 | `07_SOURCE_LEDGER.md` | Fuentes/checkpoints/evidencia. | AUDIT LEDGER |
-| `08_BOOTSTRAP_AND_ACCESS.md` | Primera instalación y acceso. | CURRENT DIRECTION |
+| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access y gap de autorización stale. | CURRENT DIRECTION / OPEN GAP |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos y warmup. | CONTRACT DESIGN |
 
 ## Contrato Manager CURRENT
@@ -41,9 +41,6 @@ expected_source_revision
 Navigation Manager adoption
 CLOSED / VERIFIED / CURRENT
 
-Users Manager composition
-CLOSED / VERIFIED / CURRENT
-
 Tools Source/Projection
 CLOSED / VERIFIED / CURRENT
 
@@ -55,14 +52,20 @@ CLOSED / VERIFIED / CURRENT
 
 ADA Configuration Manager final generic cutover
 CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
+
+Users Manager composition no es CURRENT: fue removida cuando Users dejó de ser
+Configuration Source.
 
 ## Configuration Manager CURRENT
 
-Publicado en:
+Checkpoint global de referencia:
 
 ```text
-moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 El consumer registra contratos genéricos separados por módulo:
@@ -75,9 +78,29 @@ projection
 draft-validation
 ```
 
-El workspace de los editores se integra mediante `ManagerWorkspaceBridge` sobre `ManagerWorkspace`.
+La surface CURRENT incluye:
 
-El package incluye un runtime local ejecutable con `LocalSourceStore` e `InProcessProjectionStore`.
+```text
+navigation
+tools
+kpis                 optional
+kpi-definitions      optional
+```
+
+Users no es `ManagerModule`.
+
+## Navigation Manager CURRENT
+
+Navigation Manager puede recibir:
+
+```text
+profile_catalog_provider: NavigationProfileCatalogProvider | None
+validators: tuple[NavigationProjectionValidator, ...]
+```
+
+Si hay `ProfileCatalog`, la misma validación referencial participa en draft y Projection.
+
+Navigation Manager no obtiene perfiles desde Users ni ADA Access.
 
 ## Legacy consumer removal
 
@@ -94,41 +117,30 @@ workflow_service
 exact_source_*
 expected_source_revision
 revision-string workflow adapters
+NavigationProfileOptionsProvider
+profile_options_provider
+projection_validators parameter name
 ```
 
-No reintroducirlos para corregir UI.
+No reintroducirlos para corregir UI o autorización.
 
-## Evidencia de cierre
+## Gap CURRENT
+
+`DefaultManagerAuthorizationPolicy` todavía contiene bypass:
 
 ```text
-git diff --check
-PASS
-
-legacy scan
-0 matches
-
-compileall
-PASS
-
-local UI boot
-PASS / manual smoke
+principal.is_local
+OR
+'administrator' in principal.profile_keys
 ```
 
-Full behavioral E2E continúa UNVERIFIED.
+ADA Configuration Manager conserva helpers equivalentes.
 
-## Siguiente frontera
+Estado:
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
-PLANNED / NEXT
+Manager authorization stale administrator/local semantics
+OPEN / PROPOSED NEXT
 ```
 
-Después, en incrementos separados:
-
-```text
-ADA-CONFIGURATION-MANAGER-LOCAL-E2E
-PLANNED
-
-ADA-CONFIGURATION-MANAGER-STORAGE-COSMOS-E2E
-PLANNED
-```
+No resolver sin inspeccionar runtime local y consumers.

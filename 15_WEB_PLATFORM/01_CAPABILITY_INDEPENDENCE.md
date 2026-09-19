@@ -1,6 +1,6 @@
 # Web Platform — Capability Independence
 
-Estado: **CURRENT / REFINED**
+Estado: **CURRENT / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
 
 ## Regla
 
@@ -46,6 +46,8 @@ Global User no contiene:
 
 ```text
 profile_key
+profile_keys
+access_keys
 app role
 Navigation configuration
 Tools configuration
@@ -61,7 +63,7 @@ issuer + subject_id
 
 ## Profiles
 
-Profiles es first-class capability y pertenece al plano application-specific.
+Profiles es first-class capability generic Atlanticus.
 
 CURRENT:
 
@@ -70,56 +72,80 @@ profiles/core
 profiles/configuration
 ```
 
-El hecho de que una aplicación pueda asociar Profiles a Global Users no autoriza a
-Profiles core a apropiarse del Users registry ni a Users a conocer todas las apps.
+`profiles/core` posee `ProfileDefinition` y `ProfileCatalog`.
 
-El contrato exacto de asociación todavía no está congelado.
+`profiles/configuration` posee `ProfilesConfiguration` y su Source lifecycle.
+
+Una aplicación puede asociar Profiles a Global Users sin transferir ownership del Users
+registry hacia Profiles y sin agregar estado application-specific al Global User.
+
+## Access
+
+Access es application-specific cuando sus permisos pertenecen a una aplicación.
+
+ADA Access CURRENT vive bajo `scopes/ada`.
+
+No agregar Access al Global `UserRecord`.
+
+No convertir ADA Access en dependency de Navigation core/configuration.
+
+## Navigation
+
+Navigation continúa siendo configuration domain generic.
 
 Estado:
 
 ```text
-OPEN / FUTURE INCREMENT
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Access
-
-Access es application-specific y puede consumir Profiles/Users mediante composition.
-
-No agregar Access al Global `UserRecord`.
-
-El ownership concreto de la asociación User/Profile/Access permanece OPEN.
-
-## Navigation
-
-Navigation continúa siendo configuration domain independiente en core.
-
-La regla anterior que representaba todo el target como:
+Boundary CURRENT:
 
 ```text
-Users
-  ↓
-Profiles
-  ↓
-Navigation
+Navigation core
+independiente de Users / Profiles lifecycle / ADA Access
+
+Navigation Configuration
+    -> Profiles core
+       ProfileCatalog / ProfileDefinition
+
+Navigation durable authorization
+    -> allowed_profiles = profile keys
 ```
 
-queda **REFINED / SUPERSEDED AS COMPLETE CONTRACT**.
-
-Motivo: Users ya no es Source/configuration y no debe convertirse en dependencia
-directa de Navigation sólo para conservar el diagrama anterior.
-
-Target conceptual vigente:
+La integración se provee por composition mediante:
 
 ```text
-Global Users registry
-        │
-        └── app composition resolves Profile/Access
-                         │
-                         └── Navigation consumes effective app authorization/profile data
+NavigationProfileCatalogProvider
 ```
 
-La forma exacta del binding sigue PLANNED y debe derivarse de contratos CURRENT de
-Profiles/Access, no inventarse en Navigation core.
+Navigation Configuration no depende de `profiles/configuration`.
+
+No existe catálogo paralelo local de Profiles.
+
+Removed:
+
+```text
+NavigationProfileOption
+_BASE_PROFILES
+NavigationProfileOptionsProvider
+profile_options_provider
+```
+
+Sin `ProfileCatalog` provider, Navigation no inventa perfiles de administración.
+
+Con provider, consume directamente `ProfileCatalog.all()` y valida referencias mediante
+`ProfileCatalog.require(...)`.
+
+Fallos del provider se propagan.
+
+## Runtime authorization composition
+
+La composición exacta de `NavigationPrincipal` para identidad autenticada no promovida
+sigue OPEN / SEPARATE.
+
+No resolver ese punto agregando dependencias directas entre Navigation y Users/ADA Access.
 
 ## User Activity
 
@@ -156,6 +182,9 @@ Users CURRENT no es `ManagerModule`.
 
 Cada módulo administrativo conserva ownership propio.
 
+La autorización interna de Manager mantiene un gap stale de `is_local`/`administrator`;
+es un frente separado.
+
 ## Invariante estructural
 
 Cuando varias capabilities tienen la misma responsabilidad, usar el mismo concepto.
@@ -167,8 +196,8 @@ Para configuration domains que tengan ambas responsabilidades:
 <capability>/configuration
 ```
 
-No aplicar este patrón mecánicamente a Users: el package `users/configuration` fue
-eliminado porque la responsabilidad no corresponde.
+No aplicar este patrón mecánicamente a Users: `users/configuration` fue eliminado porque
+la responsabilidad no corresponde.
 
 Para Profiles CURRENT:
 
@@ -197,25 +226,25 @@ Los productores preservan ownership.
 En:
 
 ```text
-moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
-están CLOSED/CURRENT:
+están CLOSED / VERIFIED / CURRENT:
 
 ```text
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-```
-
-Permanece IN PROGRESS:
-
-```text
-PROFILES-CAPABILITY-EXTRACTION
-```
-
-Siguiente Users focus:
-
-```text
 USERS-PERSISTED-DATA-CUTOVER
-PLANNED / NEXT
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
+PROFILES-CAPABILITY-EXTRACTION
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+ADA-ACCESS-PROFILES-CONFIGURATION
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+```
+
+Siguiente gap recomendado para debate separado:
+
+```text
+Manager authorization stale administrator/local semantics
+OPEN / PROPOSED NEXT
 ```

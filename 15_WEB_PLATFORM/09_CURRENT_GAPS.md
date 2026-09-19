@@ -5,15 +5,18 @@ Estado: **CURRENT**
 Checkpoint de implementación:
 
 ```text
-moragaga/atlanticus@6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 ## 1. Global Users
 
-### Cerrado
+Cerrado:
 
 ```text
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+USERS-PERSISTED-DATA-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
@@ -49,38 +52,20 @@ Runtime local:
 local
 ```
 
-### Gap vigente
+No existe `guest` ni `administrator` como Users authority CURRENT.
 
-Datos persistidos reales todavía no fueron migrados/inspeccionados en este cierre.
+## 2. Users Administration surface
 
-```text
-USERS-PERSISTED-DATA-CUTOVER
-PLANNED / NEXT
-```
-
-## 2. Users persisted data
-
-Target de código CURRENT:
-
-```text
-Blob registry
-users/users.json.gz
-atlanticus_users_registry schema 1
-
-Cosmos promoted store
-atlanticus_user schema 1
-```
+Core administration lifecycle existe.
 
 Gap:
 
-- inventory de datos legacy/current en environment real;
-- migración one-shot;
-- preservation de datos Profiles todavía útiles;
-- parity verification Blob/Cosmos;
-- deletion criteria para legacy persisted data;
-- repair path para registry yes / Cosmos no.
+```text
+USERS-ADMINISTRATION-SURFACE-CUTOVER
+PLANNED / SEPARATE
+```
 
-No crear old-schema runtime readers.
+Debe consumir el lifecycle de Users directamente y no reconstruir Users Source/Projection.
 
 ## 3. Users directory discovery
 
@@ -97,52 +82,113 @@ concrete Entra/Graph provider
 UNVERIFIED
 ```
 
-## 4. Users Administration surface
+## 4. Profiles
 
-Core administration lifecycle existe.
-
-Gap:
+Cerrado:
 
 ```text
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED
+PROFILES-CAPABILITY-EXTRACTION
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
 ```
-
-Debe mostrar/promover/actualizar/reparar lifecycle de Users sin volver a Manager Source.
-
-## 5. Profiles / Access
 
 CURRENT:
 
 ```text
 profiles/core
 profiles/configuration
+ProfileDefinition
+ProfileCatalog
+ProfilesConfiguration
+Profiles Source lifecycle
 ```
 
+No agregar estado app-specific a Profiles generic.
+
+## 5. ADA Access
+
+Cerrado:
+
+```text
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+```
+
+ADA Access permanece application-specific.
+
+Gap separado:
+
+```text
+runtime composition exacta de ADA Access
+OPEN / SEPARATE
+```
+
+No convertirla en dependencia de Navigation.
+
+## 6. Navigation / Profiles integration
+
+Cerrado:
+
+```text
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
+```
+
+CURRENT:
+
+```text
+Navigation Configuration -> Profiles core
+NavigationProfileCatalogProvider
+ProfileCatalog / ProfileDefinition
+allowed_profiles = durable profile keys
+shared draft/projection validation
+```
+
+Eliminado:
+
+```text
+NavigationProfileOption
+_BASE_PROFILES
+NavigationProfileOptionsProvider
+profile_options_provider
+local/administrator/guest mini-catalog
+```
+
+No existe dependencia de Navigation hacia Users, ADA Access o Profiles Configuration.
+
+Gap separado:
+
+```text
+exact guest fallback composition for authenticated non-promoted identity
+OPEN / SEPARATE
+```
+
+## 7. Manager authorization
+
+`DefaultManagerAuthorizationPolicy` CURRENT todavía permite full access mediante:
+
+```text
+principal.is_local
+OR
+'administrator' in principal.profile_keys
+```
+
+ADA Configuration Manager repite semántica equivalente en helpers `_can_manage_*`.
+
 Gap:
 
-- independent Profiles lifecycle completo;
-- app-specific Global User association;
-- Access ownership/contract;
-- Profiles admin/UI independiente.
+```text
+Manager authorization stale administrator/local semantics
+OPEN / PROPOSED NEXT
+```
 
-No resolver esos gaps añadiendo app state a `UserRecord`.
+No asumir la solución antes de revisar runtime local y consumers.
 
-## 6. Navigation integration
+## 8. User Activity
 
-Navigation configuration permanece CURRENT.
-
-Gap:
-
-- definir cómo consume effective Profile/Access output;
-- evitar ownership directo de Global Users;
-- validar composition real cuando Profiles/Access contract esté congelado.
-
-La antigua cadena Users Source → Profiles Source → Navigation ya no es CURRENT.
-
-## 7. User Activity
-
-### Existe
+Existe:
 
 - event model;
 - route changes;
@@ -152,11 +198,11 @@ La antigua cadena Users Source → Profiles Source → Navigation ya no es CURRE
 - Memory adapter;
 - Identity binding.
 
-### Gap
+Gap:
 
 No hay page visit history ordenada según el target documentado.
 
-## 8. TTL
+## 9. TTL
 
 El contrato canónico requiere 24 h para User Activity.
 
@@ -164,18 +210,18 @@ Debe verificarse dónde se declara físicamente el `CosmosContainerSpec` corresp
 
 No asumir TTL aplicado sólo porque el dominio lo requiere.
 
-## 9. Cosmos provisioning / Web lifecycle
+## 10. Cosmos provisioning / Web lifecycle
 
 Existe `CosmosProvisioner` y contratos previos de provisioning.
 
-Permanecen gaps fuera de Users root cutover:
+Permanecen gaps:
 
 - integrar resource preparation al lifecycle Web donde corresponda;
 - required/optional semantics;
 - named connection resolution global;
 - readiness READY/DEGRADED/ERROR.
 
-## 10. Local runtime
+## 11. Local runtime
 
 Jane/John local identities permanecen en Users core.
 
@@ -186,18 +232,14 @@ composition/runtime wiring exacto del selector local
 UNVERIFIED
 ```
 
-## 11. Storage provisioning
+No usar este gap para justificar `administrator` implícito.
+
+## 12. Storage provisioning
 
 No se ha cerrado parity equivalente a Cosmos provisioning para toda
 `connectivity/storage`.
 
 Diseñar sólo cuando un consumer real lo exija.
-
-## 12. Manager bypass
-
-`is_local` full-access bypass continúa como open item donde aún corresponda.
-
-No mezclarlo con Users persisted-data cutover.
 
 ## 13. Projection planner
 
@@ -212,6 +254,13 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
+Durante el último hito quedaron findings fuera de scope en:
+
+```text
+capabilities/navigation/configuration/tests/test_web_contract.py
+capabilities/navigation/configuration/tests/test_web_source_contract.py
+```
+
 No añadir tests nuevos de CSS visual, source tokens, imports, AST o estructura interna.
 
 ## 15. Python metadata
@@ -222,18 +271,25 @@ Canonical:
 Python 3.14.7
 ```
 
-CURRENT `web/pyproject.toml`:
+Navigation Configuration CURRENT:
 
 ```text
 requires-python = "==3.14.2"
 ```
 
-Gap VERIFIED / separado.
+Gap:
+
+```text
+PYTHON-METADATA-ALIGNMENT
+PLANNED / OPEN
+```
 
 ## 16. CI / global lint
 
-CI remoto no tiene evidence asociada al checkpoint CURRENT.
+CI remoto para `3eb46dac...` no fue verificado en este cierre.
 
-Full Ruff workspace final no se declara PASS.
+Full Ruff workspace tampoco se declara PASS.
 
-No mezclar cleanup ajeno con Users persisted-data cutover.
+```text
+UNVERIFIED
+```

@@ -1,6 +1,6 @@
 # Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER PROFILES, ADA ACCESS AND ACCESS-SEMANTICS CUTOVERS**
+Estado: **CURRENT DECISION / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
 
 ## Propósito
 
@@ -13,8 +13,8 @@ Application-specific Access
 Generic Navigation
 ```
 
-sin reintroducir Users Configuration Source, estado app-specific dentro de Global User
-ni un Access generic no demostrado.
+sin reintroducir Users Configuration Source, estado app-specific dentro de Global User,
+un Access generic no demostrado ni un catálogo paralelo de Profiles dentro de Navigation.
 
 ## Autoridad de implementación
 
@@ -22,19 +22,25 @@ CURRENT inspeccionado:
 
 ```text
 moragaga/atlanticus:main
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Parent inmediato:
 
 ```text
-96b95172bae389f117c3c7e2afed7844eb79e98d
+0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
 ```
 
 Tree:
 
 ```text
-24efaa448bf4cd0ac6f7c488c9dd01357d91ad0d
+69386cf40e566baad2786a079029a6eea20bd8d1
+```
+
+Canonical base inspeccionado antes de este reemplazo:
+
+```text
+moragaga/atlanticus-cannonical@59ca0864daac7b79816974679cd4353033fe6408
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -64,10 +70,13 @@ NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
 CLOSED / VERIFIED / CURRENT
 
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 
 USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED
+PLANNED / SEPARATE
+
+Manager authorization stale administrator/local semantics
+OPEN / PROPOSED NEXT
 ```
 
 Quedan SUPERSEDED:
@@ -77,6 +86,12 @@ USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 USERS-PROFILES-COMPOSITION-CUTOVER as previous Source-centric model
 ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access target
 USER_NOT_PROMOTED -> 403
+NavigationProfileOption
+NavigationProfileOptionsProvider
+_BASE_PROFILES
+resolve_profile_options
+selectable_profile_options
+profile_options_provider
 ```
 
 ## Regla principal
@@ -105,7 +120,7 @@ ADA
     profile -> ADA access keys
 ```
 
-Navigation es generic y consume profile keys; no debe importar Users ni ADA Access para
+Navigation es generic y consume profile keys; no importa Users ni ADA Access para
 resolver rutas.
 
 ## Users
@@ -338,7 +353,7 @@ AdaAccessConfiguration
 
 ADA Access valida referencias contra `ProfileCatalog` de forma explícita.
 
-Un user_id sin assignment devuelve acceso ADA efectivo vacío; no crea asignación ni
+Un `user_id` sin assignment devuelve acceso ADA efectivo vacío; no crea asignación ni
 perfil por defecto dentro de `AdaAccessConfiguration`.
 
 Source contract CURRENT:
@@ -370,64 +385,159 @@ habilitadas.
 
 Navigation no necesita Users ni ADA Access para ese contrato.
 
-### Desalineamiento pendiente
+### Durable configuration
 
-CURRENT `navigation/configuration/profiles.py` todavía define:
+Navigation conserva:
 
 ```text
-NavigationProfileOption
-_BASE_PROFILES:
-    local          unrestricted
-    administrator  unrestricted
-    guest          restricted
+NavigationLinkConfiguration.allowed_profiles
+= tuple[str, ...]
 ```
 
-Ese mini-modelo duplica semántica que ahora debe alinearse con Profiles y conserva
-`administrator` como special-case unrestricted aunque `administrator -> root` está
-prohibido.
+Esas strings son referencias de profile key.
 
-El siguiente incremento debe resolver exclusivamente:
+Navigation no persiste `ProfileDefinition`.
+
+### Profiles core dependency
+
+Navigation Configuration CURRENT declara:
 
 ```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+atlanticus-web-profiles==0.1.0
 ```
 
-### Reglas ya decididas para el alignment
+Y no declara:
 
 ```text
+atlanticus-web-profiles-configuration
+atlanticus-web-users
+ADA dependency
+```
+
+Boundary CURRENT:
+
+```text
+Navigation Configuration -> Profiles core
+ALLOWED / CURRENT
+
+Navigation Configuration -> Profiles Configuration
+FORBIDDEN
+
 Navigation -> Users
 FORBIDDEN
 
 Navigation -> ADA Access
 FORBIDDEN
-
-root
-unrestricted para Navigation
-
-local
-unrestricted para Navigation
-
-guest
-perfil restringido normal
-
-administrator -> root
-FORBIDDEN
 ```
 
-Un usuario autenticado sin promoted User puede entrar. La materialización exacta del
-fallback `guest` para Navigation sigue pendiente del siguiente incremento y no debe
-resolverse creando una authority `guest` en Users ni un UserRecord ficticio.
+### Profile catalog provider
 
-### Profiles opcional
+Contrato CURRENT:
 
-Navigation core no debe importar lifecycle/storage de Profiles.
+```text
+NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
+```
 
-La integración con `ProfileCatalog` puede aportar validación o profile options en la
-superficie de configuración, pero el contrato durable de Navigation conserva keys.
+Sin provider:
 
-La conducta exacta de administración/runtime cuando Profiles no está instalado debe
-ser verificada en el siguiente incremento contra el código y consumers actuales; no
-inventarla desde este documento.
+```text
+profile_definitions() -> ()
+```
+
+La superficie administrativa no inventa perfiles base.
+
+Con provider:
+
+```text
+profile_definitions(provider) -> provider().all()
+```
+
+Los `ProfileDefinition` provistos aportan:
+
+```text
+key
+label
+background_color
+text_color
+```
+
+para la UI administrativa.
+
+Fallos del provider se propagan; no se ocultan devolviendo catálogo vacío.
+
+### Referential validation
+
+`create_navigation_profile_catalog_validator(...)` recorre
+`NavigationConfigurationCatalog.configured_profiles()` y resuelve cada key mediante:
+
+```text
+ProfileCatalog.require(profile_key)
+```
+
+Unknown key produce:
+
+```text
+NavigationProjectionIssue
+code = navigation.profile.unknown
+level = error
+```
+
+La composition Navigation Manager construye una única colección `validators`.
+
+La misma colección se entrega a:
+
+```text
+NavigationManagerDraftValidationWorkflow
+create_navigation_projection_service / NavigationProjectionBuilder
+```
+
+Un warning se preserva sin invalidar el draft; un error lo invalida.
+
+### Removed local mini-model
+
+Ya no existen:
+
+```text
+NavigationProfileOption
+_BASE_PROFILES
+resolve_profile_options
+selectable_profile_options
+NavigationProfileOptionsProvider
+profile_options_provider
+```
+
+Navigation Configuration no crea perfiles especiales `local`, `administrator` ni `guest`.
+
+`administrator` no recibe acceso unrestricted por configuración.
+
+No existe mapping:
+
+```text
+administrator -> root
+```
+
+`local` no es un `ProfileDefinition` especial de Navigation Configuration.
+
+### root / local / guest
+
+`NavigationPrincipal.unrestricted` sigue siendo el mecanismo generic del core para
+acceso total.
+
+La composición de `root`/`local` hacia `unrestricted` pertenece al runtime/composition y
+no se representa creando `ProfileDefinition` artificiales.
+
+`guest` es un profile normal sólo si existe en el `ProfileCatalog` provisto.
+
+La composition exacta para identidad autenticada no promovida sigue OPEN / SEPARATE.
+
+No resolver creando:
+
+```text
+guest authority en Users
+UserRecord ficticio
+Navigation -> Users dependency
+Navigation -> ADA Access dependency
+```
 
 ## Source / Projection
 
@@ -445,7 +555,8 @@ Source lifecycle: YES
 Projection: NO
 
 Navigation
-existing generic configuration Source/Projection contract remains CURRENT
+existing generic configuration Source/Projection contract: YES
+profile referential validator: CURRENT
 
 Global Users
 Configuration Source: NO
@@ -463,7 +574,7 @@ no reconstruir la antigua Users Configuration.
 
 Profiles UI debe ser Profiles-owned cuando exista.
 
-Navigation UI permanece Navigation-owned.
+Navigation UI permanece Navigation-owned y usa `ProfileCatalog` provisto por composition.
 
 ADA Access UI, si se introduce, debe ser ADA-owned.
 
@@ -477,7 +588,7 @@ Durante el cierre de persisted-data se confirmó que no existían datos reales y
 persistidos que requirieran migración; por tanto no se creó reader legacy, migrador ni
 compatibilidad temporal.
 
-Ese frente queda CLOSED.
+Ese frente permanece CLOSED.
 
 ## Testing rules
 
@@ -570,11 +681,23 @@ APPLICATION-SPECIFIC / CURRENT
 Navigation authorization input
 PROFILE KEY
 
+Navigation durable profile reference
+allowed_profiles
+
+Navigation Configuration -> Profiles core
+CURRENT
+
+Navigation -> Profiles Configuration
+FORBIDDEN
+
 Navigation dependency on Users
 FORBIDDEN
 
 Navigation dependency on ADA Access
 FORBIDDEN
+
+Navigation local profile mini-model
+REMOVED
 ```
 
 ## Orden de implementación refinado
@@ -599,27 +722,22 @@ FORBIDDEN
    CLOSED / VERIFIED / CURRENT
 
 7. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-   PLANNED / NEXT
+   CLOSED / VERIFIED / CURRENT
 ```
-
-Users Administration surface permanece pendiente, pero no debe mezclarse en el punto 7.
 
 ## Pendientes explícitos
 
 ```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED / NEXT
+Manager authorization stale administrator/local semantics
+OPEN / PROPOSED NEXT
 
 exact guest fallback composition for authenticated non-promoted identities
-OPEN / NEXT BOUNDARY
-
-Navigation behavior when Profiles is not installed
-OPEN / MUST VERIFY AGAINST CURRENT CONSUMERS
+OPEN / SEPARATE
 
 Users Administration UI/repair
 PLANNED / SEPARATE
 
-Manager authorization stale administrator/local semantics
+ADA Access runtime composition
 OPEN / SEPARATE
 
 concrete Entra/Graph Directory provider
@@ -633,4 +751,7 @@ OPEN / SEPARATE
 
 WEB-TEST-CONTRACT-CLEANUP
 OPEN / SEPARATE
+
+CI remote / full Ruff workspace
+UNVERIFIED
 ```

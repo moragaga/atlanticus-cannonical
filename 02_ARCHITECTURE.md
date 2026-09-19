@@ -19,11 +19,11 @@ Una capability bajo `scopes/ada` puede consumir infraestructura genérica Atlant
 Regla CURRENT:
 
 ```text
-Atlanticus generic infrastructure
+Atlanticus generic infrastructure/capabilities
     Source / Projection / Manager / Navigation / Users / Profiles / ...
 
 ADA-specific capabilities
-    Tools / KPI Configuration / KPI Definition / future Access / ...
+    Tools / KPI Configuration / KPI Definition / ADA Access / ...
 ```
 
 No generalizar una capability sólo porque reutiliza contratos genéricos.
@@ -98,8 +98,8 @@ planner y materialization.
 ADA Generic compone la experiencia operacional y consume capacidades Atlanticus y
 contratos ADA-specific ya resueltos.
 
-ADA-specific authorization puede consumir/extender contratos genéricos, pero no
-convertirse en dependencia del core Atlanticus.
+ADA-specific authorization puede consumir contratos genéricos, pero no convertirse en
+dependencia del core Atlanticus.
 
 ## Manager vs ADA Generic
 
@@ -202,12 +202,44 @@ Reglas:
 ```text
 NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
 Navigation continúa como configuration domain genérico.
 
-Su alineación futura con Profiles/Access no debe reintroducir ownership directo de
-Users ni assumptions de Users Source.
+Autorización core:
+
+```text
+principal.unrestricted
+OR
+principal.access_key in allowed_profiles
+```
+
+Durable configuration:
+
+```text
+allowed_profiles = tuple de profile keys
+```
+
+Navigation Configuration puede consumir Profiles core para catálogo y validación:
+
+```text
+ProfileCatalog
+ProfileDefinition
+NavigationProfileCatalogProvider
+```
+
+No depende de:
+
+```text
+Users
+ADA Access
+Profiles Configuration
+```
+
+El mini-modelo local `NavigationProfileOption/_BASE_PROFILES` fue eliminado.
 
 ## Users CURRENT
 
@@ -286,15 +318,19 @@ CosmosUsersStore
 atlanticus_user / schema 1
 ```
 
-Login consulta sólo promoted state.
+Login consulta sólo promoted state y no escribe pending.
 
-Identity ausente:
+Identity autenticada sin promoted record:
 
 ```text
-USER_NOT_PROMOTED
+READY
 ```
 
-Login no crea pending User.
+Promoted disabled:
+
+```text
+USER_DISABLED / 403
+```
 
 ### Administration
 
@@ -314,31 +350,55 @@ CONFLICT
 PROMOTED
 ```
 
-Promotion persiste Registry antes de Cosmos.
 No se introduce rollback distribuido ni adapter legacy.
 
 ## Profiles CURRENT
+
+```text
+PROFILES-CAPABILITY-EXTRACTION
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
+```
+
+Estructura:
 
 ```text
 profiles/core
 profiles/configuration
 ```
 
-`ProfilesConfiguration` pertenece a `profiles/configuration`.
-
-El lifecycle independiente completo de Profiles permanece `IN PROGRESS / PLANNED`
-fuera del cierre Users.
-
-Profiles y Access son application-specific. No agregar sus campos al `UserRecord`
-global para evitar acoplar Atlanticus Users a ADA u otra aplicación.
-
-El ownership exacto del vínculo:
+Ownership:
 
 ```text
-global User -> app-specific Profile/Access
+profiles/core
+ProfileDefinition
+ProfileCatalog
+
+profiles/configuration
+ProfilesConfiguration
+Profiles Source lifecycle
 ```
 
-permanece OPEN y debe derivarse del código/contratos reales del incremento futuro.
+Profiles es generic Atlanticus first-class capability.
+
+No agregar campos ADA-specific al modelo generic.
+
+El vínculo entre Global User y estado application-specific permanece fuera de Users core.
+
+## ADA Access CURRENT
+
+```text
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+```
+
+ADA Access es application-specific bajo `scopes/ada`.
+
+Puede consumir `ProfileCatalog` para validar sus referencias.
+
+Navigation no depende de ADA Access.
 
 ## Tools CURRENT
 
@@ -362,8 +422,6 @@ Ownership:
 ```text
 scopes/ada/web/kpis/configuration
 ```
-
-KPI Configuration conserva semántica ADA y consume directamente Source/Projection genéricos.
 
 ```text
 KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
@@ -401,7 +459,7 @@ KPI Definition ProjectionTarget
 
 ## ADA Configuration Manager CURRENT
 
-La composition ya no incluye Users.
+La composition no incluye Users.
 
 Módulos directos:
 
@@ -413,7 +471,10 @@ KPI Definition       optional
 ```
 
 Users Administration futura no debe reintroducirse como falso `ManagerModule` de
-Source/Projection salvo que un contrato CURRENT futuro demuestre una razón distinta.
+Source/Projection.
+
+La autorización Manager actual mantiene bypass stale de `is_local`/`administrator`;
+es un gap separado y no un contrato de Navigation/Profiles.
 
 ## Reglas congeladas
 
@@ -434,7 +495,22 @@ READ ONLY AGAINST PROMOTED STORE
 
 USERS REGISTRY
 DURABLE + VERSIONED BY PROVIDER CONCURRENCY TOKEN, NOT SOURCE RELEASE
+
+PROFILES
+GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
+
+NAVIGATION DURABLE AUTHORIZATION
+PROFILE KEYS
+
+NAVIGATION -> USERS
+FORBIDDEN
+
+NAVIGATION -> ADA ACCESS
+FORBIDDEN
+
+NAVIGATION CONFIGURATION -> PROFILES CORE
+CURRENT
 ```
 
 No reabrir Manager core, Source/Projection core ni los dominios Configuration
-cerrados para acomodar el lifecycle de Users.
+cerrados para acomodar otro lifecycle.

@@ -1,6 +1,6 @@
 # ADA Command Center — Identity, Users, Profiles, Access, Navigation and Activity
 
-Estado: **CURRENT DIRECTION / REFINED**
+Estado: **CURRENT DIRECTION / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
 
 ## Identity
 
@@ -154,49 +154,96 @@ allowed_profiles
 
 más `principal.unrestricted` cuando corresponde.
 
-Navigation configura perfiles por key; no debe persistir copias de `ProfileDefinition`.
+Navigation configura perfiles por key; no persiste copias de `ProfileDefinition`.
 
-### Decisiones para el siguiente alignment
+### Navigation / Profiles alignment
 
-Estas reglas están decididas pero la alineación de código sigue pendiente:
-
-```text
-root
-unrestricted para Navigation
-
-local
-unrestricted para Navigation
-
-guest
-perfil restringido normal
-
-administrator
-NO equivale a root
-```
-
-Un usuario Entra autenticado sin promoted `UserRecord` debe poder continuar en la
-aplicación. La resolución exacta de su perfil Navigation `guest` todavía debe
-materializarse en el frente de composición/alineación correspondiente; no crear un
-Global User ficticio ni una authority `guest` en Users.
-
-### Desalineamiento CURRENT conocido
-
-`navigation/configuration/profiles.py` todavía contiene un mini-catálogo propio:
-
-```text
-local
-administrator
-guest
-```
-
-con `administrator` marcado unrestricted.
-
-Ese estado no representa el target refinado y debe corregirse en:
+Estado:
 
 ```text
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 ```
+
+Navigation Configuration consume `ProfileCatalog` desde Profiles core mediante:
+
+```text
+NavigationProfileCatalogProvider
+```
+
+Sin provider configurado no inventa perfiles base.
+
+Con provider configurado:
+
+```text
+ProfileCatalog.all()
+→ perfiles disponibles en UI administrativa
+
+ProfileCatalog.require(profile_key)
+→ validación referencial de allowed_profiles
+```
+
+Unknown profile produce issue:
+
+```text
+navigation.profile.unknown
+```
+
+El mismo validator referencial participa en draft validation y Projection dentro de
+Navigation Manager.
+
+Fallos del provider se propagan.
+
+### Removed legacy
+
+Ya no existen como contrato Navigation Configuration:
+
+```text
+NavigationProfileOption
+_BASE_PROFILES
+local/administrator/guest mini-catalog
+NavigationProfileOptionsProvider
+profile_options_provider
+```
+
+`administrator` no recibe semántica unrestricted especial desde Navigation Configuration.
+
+No existe mapping:
+
+```text
+administrator -> root
+```
+
+`local` tampoco se representa como `ProfileDefinition` especial.
+
+### Runtime fallback pendiente
+
+Un usuario Entra autenticado sin promoted `UserRecord` puede entrar en la aplicación.
+
+La materialización exacta de su `NavigationPrincipal`/fallback `guest` sigue fuera de
+este hito.
+
+No crear:
+
+```text
+Global User ficticio
+guest authority en Users
+Navigation -> Users dependency
+Navigation -> ADA Access dependency
+```
+
+Estado:
+
+```text
+OPEN / SEPARATE
+```
+
+## Manager authorization
+
+La semántica stale de `is_local` / `administrator` dentro de Manager sigue siendo un
+frente separado.
+
+No confundirla con Navigation authorization ni con Profiles.
 
 ## User Activity
 
@@ -223,6 +270,12 @@ FORBIDDEN
 Navigation -> ADA Access dependency
 FORBIDDEN
 
+Navigation Configuration -> Profiles core
+CURRENT
+
+Navigation Configuration -> Profiles Configuration
+FORBIDDEN
+
 Generic Atlanticus Access capability
 NOT ADOPTED
 
@@ -231,4 +284,7 @@ APPLICATION-SPECIFIC
 
 Profiles
 GENERIC ATLANTICUS
+
+Navigation durable profile references
+PROFILE KEYS
 ```
