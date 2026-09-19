@@ -1,6 +1,6 @@
 # Web Platform — Open Items
 
-Estado: **OPEN**
+Estado: **PLANNED OPEN ITEMS**
 
 Los items cerrados no deben reabrirse para restaurar simetría o legacy.
 
@@ -33,24 +33,45 @@ CLOSED / VERIFIED / CURRENT
 
 MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
 CLOSED / VERIFIED / CURRENT
+
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+CLOSED / VERIFIED / CURRENT
+
+GENERIC-WEB-PAGINATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Configuration UI composition recovery — NEXT
+## Profiles Configuration editor contract — NEXT
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 PLANNED / NEXT
 ```
 
-Open dentro de ese foco de diseño/inventario:
+Consumir contratos existentes:
 
-1. inspeccionar Manager shell/home/sidebar/workflow CURRENT;
-2. inventariar primitives/composiciones UI reutilizables CURRENT;
-3. localizar evidencia histórica concreta de visualizaciones reportadas como perdidas;
-4. distinguir comportamiento reusable de estilos/implementación obsoleta;
-5. no copiar una composición histórica como autoridad automática;
-6. resolver incompatibilidades CURRENT que bloqueen reutilización sin aliases/shims;
-7. elegir un único primer módulo UI faltante para el incremento posterior.
+```text
+ProfileDefinition
+ProfileCatalog
+ProfilesConfiguration
+Profiles Source lifecycle
+atlanticus.web.pagination
+```
+
+No inventar dominio nuevo ni shared UI.
+
+El editor contract debe cerrarse antes de la Web surface.
+
+## Profiles Configuration Web surface
+
+```text
+PROFILES-CONFIGURATION-WEB-SURFACE
+PLANNED
+```
+
+La presentación es Profiles-owned.
+
+Puede usar paginación generic pero no importar presentación ADA.
 
 ## navigation-manager authorization consumer
 
@@ -72,15 +93,6 @@ PLANNED / SEPARATE
 Usar `UsersAdministrationService` y contracts actuales.
 No reintroducir Users Source/Projection.
 
-## Profiles Configuration UI
-
-```text
-PLANNED / SEPARATE INCREMENT
-```
-
-Usar `ProfileCatalog`, `ProfilesConfiguration` y Profiles Source lifecycle actuales.
-No agregar permisos ADA a Profiles generic.
-
 ## ADA Access Configuration UI
 
 ```text
@@ -90,10 +102,19 @@ PLANNED / SEPARATE INCREMENT
 Usar `AdaAccessConfiguration` y contracts actuales.
 Mantener ownership ADA.
 
+## Manager final administrative composition
+
+```text
+MANAGER-FINAL-ADMIN-COMPOSITION
+PLANNED / FINAL
+```
+
+Sólo después de cerrar las superficies faltantes.
+
 ## Navigation runtime fallback
 
 ```text
-OPEN / SEPARATE
+PLANNED / SEPARATE
 ```
 
 No crear Users authority `guest` ni UserRecord ficticio.
@@ -101,7 +122,7 @@ No crear Users authority `guest` ni UserRecord ficticio.
 ## ADA Access runtime
 
 ```text
-OPEN / SEPARATE
+PLANNED / SEPARATE
 ```
 
 No convertirlo en dependency de Navigation.
@@ -123,6 +144,8 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
+Incluye deuda preexistente fuera de los incrementos funcionales cuando corresponda.
+
 ## Python baseline
 
 ```text
@@ -133,13 +156,7 @@ PLANNED / OPEN
 ## Qualification transversal
 
 ```text
-full web pytest after final callback delta
-UNVERIFIED
-
-full ADA pytest after final callback delta
-UNVERIFIED
-
-CI remote
+CI remote fbef06a8...
 UNVERIFIED
 
 full Ruff workspace

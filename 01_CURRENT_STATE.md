@@ -7,25 +7,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
+moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
 ```
 
 Parent inmediato:
 
 ```text
-3eb46dac80f23d438774e3afa39999dc96f592d7
+9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Tree:
 
 ```text
-dd002b632b494065428af9dd10f1e58b7e6638d1
+fc8c293f617aca4a53d89f687a22728e9d0fdcca
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@b11b6ad4fd8d32ba89d029e4d200fc42d6933091
+moragaga/atlanticus-cannonical@4e59aa1e5160ff827ca6767fe178d3b45f4bc30d
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -33,22 +33,27 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado resumido
 
 ```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER               CLOSED / VERIFIED / CURRENT
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER          CLOSED / VERIFIED / CURRENT
-PROFILES-CAPABILITY-EXTRACTION                   CLOSED / VERIFIED / CURRENT
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE            CLOSED / VERIFIED / CURRENT
-USERS-PERSISTED-DATA-CUTOVER                     CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-PROFILES-CONFIGURATION                CLOSED / VERIFIED / CURRENT
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION          CLOSED / VERIFIED / CURRENT
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT         CLOSED / VERIFIED / CURRENT
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT        CLOSED / VERIFIED / CURRENT
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY     CLOSED / VERIFIED / CURRENT
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT BLOCKED / VERIFIED CONFLICT
-CONFIGURATION-UI-COMPOSITION-RECOVERY             PLANNED / NEXT
-USERS-ADMINISTRATION-SURFACE-CUTOVER             PLANNED / SEPARATE
-ADA-ACCESS-RUNTIME-COMPOSITION                   OPEN / SEPARATE
-WEB-TEST-CONTRACT-CLEANUP                        PLANNED / OPEN
-PYTHON-METADATA-ALIGNMENT                        PLANNED / OPEN
+USERS-GLOBAL-REGISTRY-ROOT-CUTOVER                  CLOSED / VERIFIED / CURRENT
+PROFILES-CONFIGURATION-BOUNDARY-CUTOVER             CLOSED / VERIFIED / CURRENT
+PROFILES-CAPABILITY-EXTRACTION                      CLOSED / VERIFIED / CURRENT
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE               CLOSED / VERIFIED / CURRENT
+USERS-PERSISTED-DATA-CUTOVER                        CLOSED / VERIFIED / CURRENT
+ADA-ACCESS-PROFILES-CONFIGURATION                   CLOSED / VERIFIED / CURRENT
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION             CLOSED / VERIFIED / CURRENT
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT            CLOSED / VERIFIED / CURRENT
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT           CLOSED / VERIFIED / CURRENT
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY        CLOSED / VERIFIED / CURRENT
+CONFIGURATION-UI-COMPOSITION-RECOVERY                CLOSED / VERIFIED / CURRENT
+GENERIC-WEB-PAGINATION-CUTOVER                       CLOSED / VERIFIED / CURRENT
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT  BLOCKED / VERIFIED CONFLICT
+PROFILES-CONFIGURATION-EDITOR-CONTRACT               PLANNED / NEXT
+PROFILES-CONFIGURATION-WEB-SURFACE                   PLANNED
+USERS-ADMINISTRATION-SURFACE-CUTOVER                 PLANNED / SEPARATE
+ADA-ACCESS-CONFIGURATION-UI                          PLANNED / SEPARATE
+MANAGER-FINAL-ADMIN-COMPOSITION                      PLANNED / FINAL
+ADA-ACCESS-RUNTIME-COMPOSITION                       PLANNED / SEPARATE
+WEB-TEST-CONTRACT-CLEANUP                            PLANNED / OPEN
+PYTHON-METADATA-ALIGNMENT                            PLANNED / OPEN
 ```
 
 ## VERIFIED
@@ -58,145 +63,162 @@ PYTHON-METADATA-ALIGNMENT                        PLANNED / OPEN
 `main` está publicado exactamente en:
 
 ```text
-9f12c41a23d69784c7c5b775a4093a94ac654d55
+fbef06a8a0a587571527d9ecf131c73c5fc5f01a
 ```
 
 con parent:
 
 ```text
-3eb46dac80f23d438774e3afa39999dc96f592d7
+9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
-### Manager authorization semantics
+### Generic Web pagination
 
-`ManagerModuleAccess` fue removido del contrato CURRENT.
-
-`ManagerModule` expone:
+El comportamiento transversal de paginación fue extraído desde ADA hacia Atlanticus:
 
 ```text
-access_key: str | None
+web/framework/core/src/atlanticus/web/pagination.py
 ```
 
-`ManagerAuthorizationPolicy` expone:
+Contrato CURRENT:
 
 ```text
-can_view(principal, module) -> bool
+DEFAULT_PAGE_SIZE = 10
+ALLOWED_PAGE_SIZES = (10, 20)
+PageRequest(page_number=1, page_size=10)
+Page(items, total_count, request)
+paginate_items(items, request)
 ```
 
-`DefaultManagerAuthorizationPolicy` concede acceso sólo si el `access_key` del módulo
-está presente en `principal.access_keys`.
+`PageRequest` valida página positiva y tamaño sólo `10|20`.
 
-No conceden acceso por sí mismos:
+`Page` expone:
 
 ```text
-principal.is_local
-'administrator' in principal.profile_keys
+page_count
+has_previous
+has_next
+start_index
+end_index
 ```
 
-El coordinator usa una única verificación de acceso de módulo antes de:
+`paginate_items`:
 
 ```text
-status
-projection target
-validate draft
-source snapshot/current source
-publish
-project
-history
+- pagina una colección ya resuelta por el consumer;
+- no ordena, filtra ni busca;
+- clampa page_number a la última página válida;
+- para colección vacía resuelve page_number=1 y conserva page_size;
+- devuelve sólo items reales.
 ```
 
-No existen permisos Manager separados por operación para validate/publish/project.
+### ADA pagination legacy removal
 
-### ADA Configuration Manager authorization
-
-La composition CURRENT declara access keys funcionales:
+Fue removido:
 
 ```text
-navigation.manage
-tools.manage
-kpis.manage
+scopes/ada/web/configuration/core/src/ada/web/configuration/pagination.py
 ```
 
-Navigation y Tools usan sus keys respectivas.
-KPI Configuration y KPI Definition comparten `kpis.manage`.
+También se retiraron sus exports y su test específico legacy.
 
-Los callbacks/domain contexts específicos usan `_has_access(principal, access_key)` y no
-bypass de `is_local` o profile `administrator`.
+No existen aliases, shims ni reexports para mantener el contrato anterior.
 
-El runtime local conserva `is_local=True` como contexto y recibe access keys explícitos.
-
-### Manager active workflow callback
-
-`refresh_active_workflow` usa `PreventUpdate` cuando durante transición de ruta no existe
-un módulo visible resoluble.
-
-Esto reemplaza el retorno de listas vacías que provocaba cardinalidad inválida con Outputs
-pattern `ALL`.
-
-Existe test de regresión específico en `test_dash_registration.py`.
-
-### Qualification observada durante el hito
-
-Antes del último delta de callback se observó:
+`ada.web.configuration.presentation` permanece ADA-owned y consume:
 
 ```text
-legacy Manager authorization scan
-0 matches en el scope buscado
+atlanticus.web.pagination.Page
+atlanticus.web.pagination.ALLOWED_PAGE_SIZES
+```
 
-Manager + navigation-manager focused pytest
-68 PASS
+La presentación no fue generalizada.
 
-web full pytest
-PASS / 100%
-7 skipped
+### KPI consumers
 
-ADA Configuration Manager pytest
-26 PASS
+KPI Configuration y KPI Definition consumen directamente:
 
-focused Ruff / format
+```text
+atlanticus.web.pagination.Page
+atlanticus.web.pagination.PageRequest
+atlanticus.web.pagination.paginate_items
+```
+
+`SortDirection` quedó local a KPI Configuration porque la trazabilidad no demostró uso
+transversal.
+
+### UI boundary recuperada
+
+Quedó congelada la distinción:
+
+```text
+TRANSVERSAL
+→ comportamiento de paginación
+
+LOCAL A CADA PRESENTACIÓN
+→ markup
+→ CSS
+→ tabla/cards/modal
+→ placeholders visuales
+→ responsive
+→ acciones de fila
+```
+
+Profiles, Users y ADA Access no deben compartir UI sólo por parecerse visualmente.
+
+### Testing policy aplicada al cutover
+
+Se removieron asserts cuyo objetivo era fijar clases/estilos CSS del paginador.
+
+El contrato genérico se prueba por comportamiento.
+
+Qualification observada contra el working tree que luego fue publicado como
+`fbef06a8...`:
+
+```text
+Atlanticus Web framework/core pytest
+53 PASS
+Ruff framework/core
 PASS
 
-ADA Configuration Manager uv lock --check
-PASS después de alinear navigation-configuration 0.1.9
-```
-
-Después del delta final del callback se observó:
-
-```text
-callbacks productive/commented AST-equivalent
+ADA Configuration core pytest
+4 PASS
+Ruff core
 PASS
 
-targeted callback regression tests
+KPI Configuration pytest
+37 PASS
+Ruff sobre archivos modificados
+PASS
+
+KPI Definition pytest
+35 PASS
+Ruff sobre archivos modificados
 PASS
 
 git diff --check
-PASS dentro del script de reparación
-
-manual smoke ADA Configuration Manager
-/manager carga
-navegación entre superficies responde 200/204
-sin InvalidCallbackReturnValue
-sin HTTP 500 observado
+PASS
 ```
 
-No declarar que el full web pytest ni el full ADA pytest fueron rerun después del último
-delta del callback: no se observó esa ejecución final completa.
-
-### Dependency lock alignment
-
-ADA Configuration Manager fue alineado de:
+Total observado:
 
 ```text
-atlanticus-web-navigation-configuration[web]==0.1.8
+129 tests PASS
 ```
 
-a:
+Los `test_web_runtime.py` de KPI Configuration y KPI Definition mostraron findings I001 de
+orden de imports al ejecutar Ruff sobre paquetes completos antes del cierre. Esos archivos
+no fueron modificados por el incremento y quedaron fuera de alcance.
+
+### Manager authorization semantics
+
+Permanece CURRENT:
 
 ```text
-atlanticus-web-navigation-configuration[web]==0.1.9
+ManagerModule.access_key: str | None
+ManagerAuthorizationPolicy.can_view(principal, module) -> bool
 ```
 
-`uv.lock` quedó actualizado y `uv lock --check` pasó.
+No hay bypass por `is_local` ni profile `administrator`.
 
 ### UI administrativa CURRENT
 
@@ -209,27 +231,13 @@ kpis
 kpi-definitions
 ```
 
-El árbol CURRENT verifica que:
+Siguen ausentes:
 
 ```text
-web/capabilities/profiles/configuration
+Profiles Configuration UI
+Users Administration UI
+ADA Access Configuration UI
 ```
-
-posee modelos y Source lifecycle, pero no superficie/editor Dash.
-
-```text
-web/capabilities/users/core
-```
-
-posee `UsersAdministrationService`, pero no superficie administrativa web.
-
-```text
-scopes/ada/web/access/configuration
-```
-
-posee modelo/configuración + Source lifecycle, pero no superficie/editor Dash.
-
-Por tanto, la ausencia CURRENT de esas tres UI está VERIFIED.
 
 ## VERIFIED CONFLICT
 
@@ -241,9 +249,7 @@ En CURRENT:
 ManagerAuthorizationPolicy.can_view(...)
 ```
 
-es el contrato disponible.
-
-Pero:
+pero:
 
 ```text
 web/compositions/navigation-manager/src/.../composition.py
@@ -255,8 +261,6 @@ invoca:
 resolved_authorization.can_access(...)
 ```
 
-Ese consumer no está alineado con el contrato publicado.
-
 Estado:
 
 ```text
@@ -264,31 +268,27 @@ NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-El smoke de ADA Configuration Manager no demuestra ese consumer porque ADA Configuration
-Manager compone Navigation por su propia composition.
+No fue parte del pagination cutover.
 
 ## INFERRED
 
-El contrato de autorización publicado expresa una capacidad funcional por módulo, no
-permisos por cada paso interno del workflow.
+La extracción confirma una frontera reusable real: la paginación modela estado/cálculo y
+puede ser consumida por superficies distintas sin transferir ownership visual.
 
-La ausencia de superficies UI para Profiles, Users Administration y ADA Access no exige
-nuevos dominios: existe lógica/backend que la UI futura debe consumir.
+La similitud de tablas entre módulos no demuestra un componente UI genérico compartido.
 
-La recuperación de una composición visual transversal debe preferir código/histórico
-verificable antes que recreación manual.
+Profiles puede consumir `atlanticus.web.pagination` sin depender de ADA.
 
 ## ASSUMED
 
 No se asume:
 
-- que una UI histórica concreta sea todavía correcta;
-- que Profiles, Users y Access deban compartir el mismo lifecycle de Manager;
-- que Users deba volver a Source/Projection;
-- que ADA Access deba depender de Navigation;
-- que el consumer standalone navigation-manager esté funcional hasta corregir `can_access`;
-- que full CI esté verde;
-- que todo Ruff workspace esté limpio;
+- que Profiles deba copiar markup/CSS de KPI;
+- que `ada.web.configuration.presentation` deba moverse a Atlanticus;
+- que SortDirection sea genérico;
+- que Users/Profiles/ADA Access compartan lifecycle o presentación;
+- que full Ruff workspace esté limpio;
+- que CI remoto esté verde;
 - que metadata Python esté globalmente alineada.
 
 ## PROPOSED
@@ -296,20 +296,22 @@ No se asume:
 Único foco siguiente:
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 PLANNED / NEXT
 ```
 
-Debe comenzar por inventario y recuperación, no por diseño nuevo.
-
-## UNVERIFIED / OPEN
+Después:
 
 ```text
-visualizaciones/composiciones UI históricas concretas a recuperar
-UNVERIFIED HISTORICAL
+PROFILES-CONFIGURATION-WEB-SURFACE
+PLANNED
+```
 
+## UNVERIFIED / PENDING
+
+```text
 exact guest fallback composition for authenticated non-promoted identities
-OPEN / SEPARATE
+PLANNED / SEPARATE
 
 Users Administration UI
 PLANNED
@@ -321,23 +323,17 @@ ADA Access Configuration UI
 PLANNED
 
 ADA Access runtime composition exacta
-OPEN / SEPARATE
+PLANNED / SEPARATE
 
 concrete Entra/Graph UsersDirectoryReader provider
 UNVERIFIED
 
-full web pytest después del último callback delta
+full Ruff workspace de fbef06a8...
 UNVERIFIED
 
-full ADA pytest después del último callback delta
-UNVERIFIED
-
-CI remoto de 9f12c41...
-UNVERIFIED
-
-full Ruff workspace de 9f12c41...
+CI remoto de fbef06a8...
 UNVERIFIED
 
 Python metadata global 3.14.7
-OPEN / SEPARATE
+PLANNED / SEPARATE
 ```

@@ -7,19 +7,19 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
+moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
 ```
 
 Parent inmediato:
 
 ```text
-3eb46dac80f23d438774e3afa39999dc96f592d7
+9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@b11b6ad4fd8d32ba89d029e4d200fc42d6933091
+moragaga/atlanticus-cannonical@4e59aa1e5160ff827ca6767fe178d3b45f4bc30d
 ```
 
 `moragaga/atlanticus-decisions` permanece HISTORICAL.
@@ -99,6 +99,12 @@ CLOSED / VERIFIED / CURRENT
 
 MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
 CLOSED / VERIFIED / CURRENT
+
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+CLOSED / VERIFIED / CURRENT
+
+GENERIC-WEB-PAGINATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
 Finding no cerrado:
@@ -126,8 +132,15 @@ La ausencia de UI no implica ausencia de dominio/backend.
 ## Siguiente foco recomendado
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 PLANNED / NEXT
+```
+
+Después, en incremento separado:
+
+```text
+PROFILES-CONFIGURATION-WEB-SURFACE
+PLANNED
 ```
 
 No diseñar desde cero lo que ya exista en código o historial verificable.

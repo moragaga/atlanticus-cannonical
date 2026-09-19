@@ -10,11 +10,11 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `9f12c41a23d69784c7c5b775a4093a94ac654d55`
+  `fbef06a8a0a587571527d9ecf131c73c5fc5f01a`
 - Parent inmediato:
-  `3eb46dac80f23d438774e3afa39999dc96f592d7`
+  `9f12c41a23d69784c7c5b775a4093a94ac654d55`
 - Tree:
-  `dd002b632b494065428af9dd10f1e58b7e6638d1`
+  `fc8c293f617aca4a53d89f687a22728e9d0fdcca`
 
 El checkpoint CURRENT contiene, entre otros hitos ya cerrados:
 
@@ -66,6 +66,12 @@ CLOSED / VERIFIED / CURRENT
 
 MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
 CLOSED / VERIFIED / CURRENT
+
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+CLOSED / VERIFIED / CURRENT
+
+GENERIC-WEB-PAGINATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
 Existe un conflicto implementado todavía abierto en un consumer standalone:
@@ -84,9 +90,7 @@ No tratar ese consumer como CLOSED hasta corregirlo y verificarlo.
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `b11b6ad4fd8d32ba89d029e4d200fc42d6933091`
-- Tree inspeccionado:
-  `8888d64f8eeda582d114c4d37ebd0a1a75ec6cf5`
+  `4e59aa1e5160ff827ca6767fe178d3b45f4bc30d`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -103,6 +107,9 @@ Checkpoint inspeccionado:
 
 Puede aportar rationale, UX previamente aprobada y evidencia histórica. No puede reemplazar
 `atlanticus:main` ni `atlanticus-cannonical:main`.
+
+Durante este cierre no se encontró un registro histórico relevante que contradiga el
+cutover de paginación genérica. Eso no convierte `atlanticus-decisions` en autoridad.
 
 ## Jerarquía
 
@@ -274,6 +281,42 @@ NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
 
 Sin provider, Navigation no inventa perfiles base. Fallos del provider no se silencian.
 
+## Paginación Web CURRENT
+
+El comportamiento transversal de paginación pertenece a Atlanticus:
+
+```text
+atlanticus.web.pagination
+├── DEFAULT_PAGE_SIZE = 10
+├── ALLOWED_PAGE_SIZES = (10, 20)
+├── PageRequest
+├── Page
+└── paginate_items(...)
+```
+
+`Page` contiene únicamente registros reales.
+
+No pertenecen al contrato genérico:
+
+```text
+markup Dash del paginador
+CSS del paginador
+placeholders visuales
+sort/filter/search
+SortDirection
+```
+
+Cada presentación conserva ownership de su UI. La presentación de paginación que hoy usa
+ADA permanece en `ada.web.configuration.presentation` y consume el contrato genérico.
+
+El contrato legacy:
+
+```text
+ada.web.configuration.pagination
+```
+
+fue removido sin aliases, shims ni reexports de compatibilidad.
+
 ## Superficies administrativas CURRENT
 
 ADA Configuration Manager CURRENT compone:
@@ -296,21 +339,14 @@ ADA Access Configuration UI
 Esto no autoriza inventar UI ni contratos. Los dominios/backend existentes deben ser la
 fuente de la futura superficie.
 
-Que existieran visualizaciones o composiciones transversales anteriores se considera
-**UNVERIFIED HISTORICAL** hasta localizar evidencia concreta en Git/histórico indicado.
-
 ## Siguiente foco único recomendado
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 PLANNED / NEXT
 ```
 
-Objetivo del siguiente foco:
+Debe consumir `ProfilesConfiguration`, Profiles core/Source lifecycle y
+`atlanticus.web.pagination` sin crear UI transversal nueva.
 
-1. inspeccionar la composición UI CURRENT y sus fronteras transversales;
-2. localizar evidencia histórica de visualizaciones/composiciones perdidas sin tratarlas como autoridad automática;
-3. resolver cualquier incompatibilidad CURRENT que bloquee reutilización, empezando por el finding `can_access`/`can_view` si afecta el camino elegido;
-4. definir el primer incremento UI faltante a partir de lógica existente, no de contratos inventados.
-
-No implementar Profiles + Users + Access simultáneamente.
+La Web surface de Profiles queda separada como incremento posterior.

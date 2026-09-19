@@ -16,6 +16,7 @@ Estado: **CURRENT**
 | No conservar doble contrato | FROZEN |
 | Tests no son autoridad sobre contratos SUPERSEDED | FROZEN |
 | Un consumer puede quedar temporalmente roto durante un root cutover | FROZEN |
+| Presentación propia por módulo; reutilizar sólo comportamiento realmente transversal | FROZEN |
 
 ## Regla universal de cutover
 
@@ -51,6 +52,70 @@ project(target) no relee current
 Manager no reconstruye ProjectionTarget desde revision
 expected_source_revision REMOVED
 ```
+
+## Generic Web pagination
+
+Contrato CURRENT/FROZEN:
+
+```text
+atlanticus.web.pagination
+├── DEFAULT_PAGE_SIZE = 10
+├── ALLOWED_PAGE_SIZES = (10, 20)
+├── PageRequest
+├── Page
+└── paginate_items(...)
+```
+
+Responsabilidad:
+
+```text
+page number / page size
+range
+page count
+previous / next
+clamp a página válida
+slice de items reales
+```
+
+No responsabilidad:
+
+```text
+markup Dash
+CSS
+placeholders visuales
+search/filter/sort
+SortDirection
+modal/table/card rendering
+```
+
+El contrato legacy `ada.web.configuration.pagination` está SUPERSEDED / REMOVED.
+
+No crear alias de nombres anteriores:
+
+```text
+ConfigurationPageRequest
+ConfigurationPage
+DEFAULT_CONFIGURATION_PAGE_SIZE
+ALLOWED_CONFIGURATION_PAGE_SIZES
+```
+
+La presentación ADA actual puede consumir el contrato generic sin transferirse a Atlanticus.
+
+## UI ownership
+
+Cada superficie mantiene presentación propia.
+
+La reutilización transversal requiere comportamiento compartido real, no similitud visual.
+
+Para superficies paginadas administrativas se conserva la decisión de interacción:
+
+```text
+default page size = 10
+allowed page sizes = 10 | 20
+```
+
+Si una presentación necesita altura estable puede completar visualmente hasta `page_size`,
+pero esos placeholders no pertenecen a `Page` ni a `paginate_items`.
 
 ## Manager generic contract
 
@@ -102,40 +167,9 @@ is_local
 administrator profile
 ```
 
-`is_local` puede permanecer como contexto de runtime, pero no concede permisos.
-
-Una capacidad funcional de módulo protege el workflow completo del módulo.
-
-```text
-navigation.manage
-→ acceso funcional al módulo Navigation Manager
-
-tools.manage
-→ acceso funcional al módulo Tools Manager
-
-kpis.manage
-→ acceso funcional a KPI Configuration y KPI Definition en la composition ADA CURRENT
-```
-
-No reinterpretar estas keys como permisos separados de guardar/validar/publicar/proyectar.
-Esas acciones son mecanismos internos del workflow del módulo.
-
-### Manager callback transition
-
-Cuando un callback pattern `ALL` queda temporalmente sin módulo resoluble durante una
-transición de ruta, debe preservar estado mediante `PreventUpdate`, no fabricar listas de
-cardinalidad cero que contradigan los outputs todavía montados.
-
 ## Global Users
 
 Users es registry/lifecycle global y no Configuration Source.
-
-```text
-Users != Configuration Source
-Users != Profile assignment
-Users != Access configuration
-Users != Navigation configuration
-```
 
 Managed authority:
 
@@ -174,7 +208,9 @@ profiles/configuration
 → Profiles Source lifecycle
 ```
 
-UI pendiente no autoriza cambiar ese ownership.
+La futura UI consume estos contratos; no los redefine.
+
+Profiles puede usar `atlanticus.web.pagination` directamente.
 
 ## ADA Access
 
@@ -186,8 +222,6 @@ profile_key -> access_keys
 ```
 
 No convertir ADA Access en dependency de Navigation.
-
-UI pendiente debe permanecer ADA-owned.
 
 ## Navigation / Profiles
 
@@ -201,16 +235,14 @@ Navigation -> Users FORBIDDEN
 Navigation -> ADA Access FORBIDDEN
 ```
 
-No restaurar mini-modelo de perfiles dentro de Navigation.
-
 ## UI composition boundary
 
 El Manager genérico posee shell/home/sidebar/workflow administrativo.
 
 La configuración concreta de cada dominio permanece en su capability/domain.
 
-La aplicación administrativa puede componer múltiples superficies, pero no debe fusionar
-ownership de dominio para ganar simetría visual.
+No crear un design system administrativo compartido sólo porque varias pantallas sean
+tablas con paginación.
 
 Estado CURRENT de superficies faltantes:
 
@@ -225,17 +257,48 @@ ADA Access Configuration UI
 PLANNED
 ```
 
-La creación/recuperación debe reutilizar lógica CURRENT y evidencia histórica verificable.
-No inventar un framework UI nuevo antes de inspeccionar composiciones transversales ya
-existentes o previamente implementadas.
+Secuencia vigente:
+
+```text
+1. PROFILES-CONFIGURATION-EDITOR-CONTRACT
+2. PROFILES-CONFIGURATION-WEB-SURFACE
+3. USERS-ADMINISTRATION-UI
+4. ADA-ACCESS-CONFIGURATION-UI
+5. MANAGER-FINAL-ADMIN-COMPOSITION
+```
+
+No mezclar esas superficies en un solo incremento.
 
 ## Testing
 
-Automatizar comportamiento, contratos, invariantes, regresiones y flujos críticos.
+Automatizar:
 
-No crear tests cuyo único objetivo sea fijar CSS visual, estructura interna o símbolos.
-Visualizaciones perdidas se validan visualmente salvo que exista comportamiento funcional
-automatizable.
+```text
+behavior
+contracts
+invariants
+regressions
+critical flows
+```
+
+No crear tests cuyo único objetivo sea fijar:
+
+```text
+CSS visual
+clases CSS
+responsive visual
+spacing
+branding
+estructura HTML accidental
+existencia/no existencia de funciones o clases
+nombres privados
+implementación interna
+```
+
+Assets JS/CSS sólo se automatizan cuando su disponibilidad es requisito contractual.
+
+Responsive, densidad, spacing, branding y apariencia se validan visualmente salvo
+comportamiento funcional automatizable.
 
 ## Conflict CURRENT conocido
 
@@ -244,13 +307,11 @@ protocolo CURRENT sólo declara `can_view(...)`.
 
 No crear alias `can_access` para conservar el consumer.
 
-Debe alinearse directamente al contrato final cuando se trabaje esa composition.
-
 ## Siguiente foco
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 PLANNED / NEXT
 ```
 
-Primero inventario y recuperación. Después, un solo incremento UI faltante por vez.
+Definir primero el contrato del editor; Web surface después.

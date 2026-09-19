@@ -15,13 +15,13 @@ No mezclar cleanup transversal con el incremento funcional activo.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
+moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
 ```
 
 Parent:
 
 ```text
-3eb46dac80f23d438774e3afa39999dc96f592d7
+9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 ## Hitos cerrados relevantes
@@ -71,6 +71,12 @@ CLOSED / VERIFIED / CURRENT
 
 MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
 CLOSED / VERIFIED / CURRENT
+
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+CLOSED / VERIFIED / CURRENT
+
+GENERIC-WEB-PAGINATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## Hitos superados
@@ -92,6 +98,12 @@ Navigation local profile mini-model
 SUPERSEDED / REMOVED
 
 Users Source/Projection Manager model
+SUPERSEDED / REMOVED
+
+ada.web.configuration.pagination
+SUPERSEDED / REMOVED
+
+ConfigurationPageRequest / ConfigurationPage generic names
 SUPERSEDED / REMOVED
 ```
 
@@ -136,39 +148,55 @@ ADA Access Configuration
 → AdaAccessConfiguration + ADA Access Source lifecycle
 ```
 
-No diseñar nuevos dominios para crear esas superficies.
-
-## Siguiente foco único recomendado
+## Paginación generic CURRENT
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-PLANNED / NEXT
+atlanticus.web.pagination
+CURRENT
+
+page sizes
+10 | 20
+
+presentation ownership
+LOCAL TO EACH UI
 ```
 
-Primera etapa obligatoria:
+No mover markup/CSS/placeholder logic a Atlanticus sólo para uniformar apariencia.
+
+## Secuencia siguiente
 
 ```text
-inspect CURRENT admin composition and Manager shell
-inventory reusable UI/composition primitives already implemented
-locate historical transversal UI/composition evidence when available
-identify visualizations that are actually missing in CURRENT
-expose current conflicts instead of adding compatibility
-freeze one reusable composition boundary only if evidence requires it
-choose one first missing UI increment
+1. PROFILES-CONFIGURATION-EDITOR-CONTRACT
+   PLANNED / NEXT
+
+2. PROFILES-CONFIGURATION-WEB-SURFACE
+   PLANNED
+
+3. USERS-ADMINISTRATION-UI
+   PLANNED / SEPARATE
+
+4. ADA-ACCESS-CONFIGURATION-UI
+   PLANNED / SEPARATE
+
+5. MANAGER-FINAL-ADMIN-COMPOSITION
+   PLANNED / FINAL
 ```
 
-No implementar las tres UI faltantes en un solo incremento.
+No implementar las superficies faltantes en un solo incremento.
 
-No crear un framework transversal nuevo sin evidencia de reutilización o código previo.
+No crear un framework UI transversal nuevo sin evidencia de reutilización real.
 
 ## Frentes separados que permanecen abiertos
 
 ```text
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+
 exact guest fallback composition for authenticated non-promoted identities
-OPEN / SEPARATE
+PLANNED / SEPARATE
 
 ADA Access runtime composition
-OPEN / SEPARATE
+PLANNED / SEPARATE
 
 concrete Entra/Graph UsersDirectoryReader provider
 UNVERIFIED
@@ -179,6 +207,9 @@ PLANNED / OPEN
 PYTHON-METADATA-ALIGNMENT
 PLANNED / OPEN
 
-CI remote
+CI remote fbef06a8...
+UNVERIFIED
+
+full Ruff workspace
 UNVERIFIED
 ```

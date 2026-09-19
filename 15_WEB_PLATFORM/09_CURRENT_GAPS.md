@@ -5,7 +5,7 @@ Estado: **CURRENT**
 Checkpoint:
 
 ```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
+moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
 ```
 
 ## 1. Global Users
@@ -71,14 +71,44 @@ ProfilesConfiguration
 Profiles Source lifecycle
 ```
 
-Gap:
+Siguiente frontera:
 
 ```text
-Profiles Configuration UI
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
+PLANNED / NEXT
+```
+
+Gap UI posterior:
+
+```text
+PROFILES-CONFIGURATION-WEB-SURFACE
 PLANNED
 ```
 
-## 5. ADA Access
+## 5. Generic Web pagination
+
+CLOSED:
+
+```text
+GENERIC-WEB-PAGINATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+CURRENT:
+
+```text
+atlanticus.web.pagination
+PageRequest
+Page
+paginate_items
+10 | 20
+```
+
+No incluye UI, CSS, placeholders, filtros ni sorting.
+
+El contrato `ada.web.configuration.pagination` fue removido.
+
+## 6. ADA Access
 
 CURRENT:
 
@@ -98,10 +128,10 @@ Gap runtime separado:
 
 ```text
 ADA Access runtime composition exacta
-OPEN / SEPARATE
+PLANNED / SEPARATE
 ```
 
-## 6. Navigation / Profiles integration
+## 7. Navigation / Profiles integration
 
 ```text
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
@@ -110,7 +140,7 @@ CLOSED / VERIFIED / CURRENT
 
 No existe dependency Navigation -> Users/ADA Access/Profiles Configuration.
 
-## 7. Manager authorization
+## 8. Manager authorization
 
 ```text
 MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
@@ -125,9 +155,7 @@ ManagerAuthorizationPolicy.can_view
 explicit principal.access_keys
 ```
 
-No bypass de `is_local` o `administrator`.
-
-## 8. navigation-manager consumer mismatch
+## 9. navigation-manager consumer mismatch
 
 Gap verificado:
 
@@ -144,54 +172,53 @@ NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-## 9. Configuration UI composition recovery
-
-CURRENT app surface incluye:
-
-```text
-Navigation
-Tools
-KPI Configuration
-KPI Definition
-```
-
-No incluye Profiles/Users Administration/ADA Access UI.
-
-El usuario reporta visualizaciones/composiciones transversales previas perdidas.
-Su existencia histórica concreta permanece UNVERIFIED hasta inspeccionar evidencia.
+## 10. Configuration UI composition recovery
 
 ```text
 CONFIGURATION-UI-COMPOSITION-RECOVERY
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 ```
 
-## 10. User Activity
+Resultado:
+
+```text
+shared behavior only with demonstrated reuse
+presentation remains owned by each module
+pagination extracted as generic behavior
+```
+
+No crear un shared admin UI framework por simetría visual.
+
+## 11. User Activity
 
 Permanece gap histórico de page visit history ordenada según target documentado.
 
-## 11. TTL
+## 12. TTL
 
 Contrato canónico requiere 24 h para User Activity.
 Verificar `CosmosContainerSpec` físico antes de declarar aplicado.
 
-## 12. Cosmos provisioning / Web lifecycle
+## 13. Cosmos provisioning / Web lifecycle
 
 Permanecen gaps de resource preparation/readiness/named connections según consumers reales.
 
-## 13. Local runtime
+## 14. Local runtime
 
 Local selector wiring exacto fuera de Configuration Manager continúa UNVERIFIED.
 
 No usar ese gap para justificar authority implícita.
 
-## 14. Test hygiene
+## 15. Test hygiene
 
 ```text
 WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
-## 15. Python metadata
+Los I001 observados en `tests/test_web_runtime.py` de KPI Configuration/Definition son
+preexistentes y no fueron absorbidos por pagination cutover.
+
+## 16. Python metadata
 
 Canonical:
 
@@ -206,10 +233,10 @@ PYTHON-METADATA-ALIGNMENT
 PLANNED / OPEN
 ```
 
-## 16. CI / global lint
+## 17. CI / global lint
 
 ```text
-CI remoto 9f12c41...
+CI remoto fbef06a8...
 UNVERIFIED
 
 full Ruff workspace

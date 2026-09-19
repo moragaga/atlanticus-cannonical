@@ -13,19 +13,19 @@ No inventar un PASS cuando no existe resultado observado.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
+moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
 ```
 
 Parent:
 
 ```text
-3eb46dac80f23d438774e3afa39999dc96f592d7
+9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Tree:
 
 ```text
-dd002b632b494065428af9dd10f1e58b7e6638d1
+fc8c293f617aca4a53d89f687a22728e9d0fdcca
 ```
 
 ## Hitos contractuales relevantes
@@ -39,123 +39,154 @@ CLOSED / VERIFIED / CURRENT
 
 MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
 CLOSED / VERIFIED / CURRENT
+
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+CLOSED / VERIFIED / CURRENT
+
+GENERIC-WEB-PAGINATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Manager authorization — evidencia observada
+## Generic Web pagination — evidencia observada
 
-Durante el incremento se observó:
+### Atlanticus Web
+
+Ejecutado desde `web/`:
 
 ```text
-rg stale Manager authorization symbols
-0 matches en el scope ejecutado
+uv run pytest framework/core/tests
+53 PASS
 
-uv lock --check [web]
+uv run ruff check framework/core
 PASS
-
-pytest capabilities/manager/tests compositions/navigation-manager/tests
-68 PASS
-
-ruff check focused Manager + navigation-manager files
-PASS
-
-ruff format --check focused Manager + navigation-manager files
-PASS
-
-full web pytest
-PASS / 100%
-7 skipped
 ```
 
-La suite full web anterior fue ejecutada antes del último delta de callback. Por tanto no
-atribuir ese full PASS específicamente al estado posterior al `PreventUpdate` sin rerun.
+### ADA Configuration
 
-## ADA Configuration Manager — evidencia observada
-
-Después de alinear:
+Ejecutado desde `scopes/ada/web/configuration/core`:
 
 ```text
-atlanticus-web-navigation-configuration[web]==0.1.9
+uv run pytest
+4 PASS
+
+uv run ruff check .
+PASS
 ```
 
-se observó:
+### KPI Configuration
+
+Ejecutado desde `scopes/ada/web/kpis/configuration`:
 
 ```text
-uv lock --check
-PASS
+uv run pytest
+37 PASS
+```
 
-focused Ruff
-PASS
+Ruff completo mostró inicialmente dos I001:
 
-focused format --check
+```text
+src/.../web/presentation.py
+→ modificado por el cutover
+
+tests/test_web_runtime.py
+→ no modificado por el cutover
+```
+
+Se corrigió exclusivamente el archivo modificado y su espejo comentado.
+
+Validación final dirigida:
+
+```text
+ruff check callbacks.py presentation.py query.py tests/test_web_query.py
 PASS
 
 pytest
-26 PASS
+37 PASS
 ```
 
-Ese full ADA pytest también precede al último delta del callback genérico.
+### KPI Definition
 
-## Callback cardinality regression
-
-Problema observado antes del fix:
+Ejecutado desde `scopes/ada/web/kpis/definition`:
 
 ```text
-InvalidCallbackReturnValue
-Expected 1, got 0
+uv run pytest
+35 PASS
 ```
 
-sobre outputs pattern `ALL` de `refresh_active_workflow`.
-
-Fix CURRENT:
+Ruff completo mostró inicialmente cuatro I001:
 
 ```text
-route/module no resoluble o no visible
-→ raise PreventUpdate
+callbacks.py
+presentation.py
+query.py
+→ modificados por el cutover
+
+tests/test_web_runtime.py
+→ no modificado por el cutover
 ```
 
-Después del fix se observó:
+Se corrigieron exclusivamente los tres archivos modificados y sus espejos comentados.
+
+Validación final dirigida:
 
 ```text
-productive/commented callbacks AST-equivalent
+ruff check callbacks.py presentation.py query.py tests/test_web_query.py
 PASS
 
-targeted callback regression tests
-PASS
+pytest
+35 PASS
+```
 
+### Total observado
+
+```text
+53 + 4 + 37 + 35 = 129 tests PASS
+```
+
+Desde la raíz:
+
+```text
 git diff --check
-PASS dentro del repair script
-
-manual smoke /manager
-HTTP 200/204
-sin 500 observado
-sin InvalidCallbackReturnValue observado
+PASS
 ```
 
-## Conflict detectado durante cierre documental
+El commit publicado `fbef06a8...` fue verificado en `main` después de la qualification.
 
-Inspección de `main@9f12c41...` demuestra:
+## Propiedades demostradas del contrato
+
+Los tests de `atlanticus.web.pagination` demuestran:
 
 ```text
-ManagerAuthorizationPolicy
-→ can_view(...)
+default page size = 10
+allowed page sizes = 10 | 20
+other page sizes rejected
+range/page-count/previous-next correct on final page
+empty result resolves to page 1 and preserves page size
 ```
 
-pero:
+Los tests de presentación ADA demuestran interacción funcional:
 
 ```text
-web/compositions/navigation-manager
-→ resolved_authorization.can_access(...)
+page metadata
+previous / next enabled state
+page size options 10 / 20
 ```
 
-Estado:
+No se conservan asserts de estilo/clases CSS como contrato.
+
+## Manager authorization — evidencia previa preservada
+
+Permanece la evidencia del checkpoint anterior sobre:
 
 ```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
+ManagerAuthorizationPolicy.can_view
+explicit access_keys
+PreventUpdate cardinality fix
+ADA Configuration Manager smoke
 ```
 
-Los tests ejecutados no demostraron el callback `can_manage` de ese consumer standalone.
-No considerar el consumer funcional por inferencia.
+No reinterpretar esa evidencia como qualification del consumer standalone
+`navigation-manager`, que sigue en conflicto `can_access`/`can_view`.
 
 ## Política de tests Web
 
@@ -184,8 +215,8 @@ import presence/absence
 AST/module structure
 ```
 
-El check AST usado durante reparación del espejo fue una verificación de entrega puntual,
-no un contrato de producto que deba proliferar como test permanente.
+Los checks AST de mirrors son verificación de entrega donde ya existen, no motivo para
+crear nuevos tests de estructura interna.
 
 ## Python metadata
 
@@ -195,7 +226,7 @@ Baseline:
 Python 3.14.7
 ```
 
-El entorno observado ejecutó Python 3.14.7.
+Los comandos observados durante el cutover ejecutaron Python 3.14.7.
 
 Permanece metadata `==3.14.2` en packages CURRENT.
 
@@ -207,11 +238,14 @@ PLANNED / OPEN
 ## UNVERIFIED
 
 ```text
-full web pytest después del último callback delta
-full ADA pytest después del último callback delta
-full Ruff workspace
-CI remoto de 9f12c41...
+CI remoto de fbef06a8...
+full Ruff workspace de fbef06a8...
+full package Ruff de KPI Configuration después del fix fuera de los archivos dirigidos
+full package Ruff de KPI Definition después del fix fuera de los archivos dirigidos
 python:3.14.7-slim-trixie global qualification
 ```
+
+Los findings I001 preexistentes de `tests/test_web_runtime.py` están fuera del alcance de
+`GENERIC-WEB-PAGINATION-CUTOVER`.
 
 Git continúa SOLO LECTURA para el asistente.
