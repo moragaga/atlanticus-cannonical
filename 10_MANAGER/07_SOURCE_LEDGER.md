@@ -12,168 +12,196 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
+moragaga/atlanticus@415c8263c15bae2b5d3c01b734b0f1e0101a7242
 ```
 
 Parent:
 
 ```text
-3eb46dac80f23d438774e3afa39999dc96f592d7
+9b623d67e253413f6b0d894e10d9cc15735b553d
 ```
 
 Tree:
 
 ```text
-dd002b632b494065428af9dd10f1e58b7e6638d1
+ff81bcd74b5e844604ca656562f9aaf398946d67
 ```
 
-## Manager authorization semantics
+## Cierres anteriores relevantes ya CURRENT
 
 ```text
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-COMPOSITION
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
+```
+
+## Profiles -> ADA Configuration Manager
+
+Estado:
+
+```text
+PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 ```
 
 Implementado:
 
 ```text
-ManagerModuleAccess REMOVED
-ManagerModule.access_key CURRENT
-ManagerAuthorizationPolicy.can_view CURRENT
-Default authorization = explicit access key membership
-is_local bypass REMOVED
-administrator profile bypass REMOVED
-per-operation validate/publish/project Manager permissions REMOVED
+compose_profiles_manager(...)
+→ produce ManagerModule existente
+→ ManagerModule.web_module registra Source/Projection/Validation
+→ registro ocurre sobre el ServiceRegistry real de Atlanticus Web
+
+ADA Configuration Manager
+→ recibe profiles_module
+→ lo incluye en ManagerSurfaceDefinition
 ```
 
-ADA Configuration Manager:
+No implementado:
 
 ```text
+registry temporal
+adapter de integración
+shim
+alias
+segundo contrato Manager para Profiles
+```
+
+Capability funcional:
+
+```text
+profiles.manage
+```
+
+Local runtime CURRENT:
+
+```text
+profiles.manage
 navigation.manage
 tools.manage
 kpis.manage
 ```
 
-Local runtime recibe esas capabilities explícitamente.
-
-## Manager active workflow callback
-
-```text
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
-CLOSED / VERIFIED / CURRENT
-```
-
-Problema reproducido:
-
-```text
-InvalidCallbackReturnValue
-Expected 1, got 0
-```
-
-Fix:
-
-```text
-unresolvable/non-visible active module
-→ PreventUpdate
-```
-
-Targeted regression + manual smoke posterior: PASS observado.
-
-## Dependency alignment incidental necesaria
-
-ADA Configuration Manager fue alineado a:
-
-```text
-atlanticus-web-navigation-configuration[web]==0.1.9
-```
-
-Su lock fue actualizado y `uv lock --check` pasó.
-
 ## Qualification observada
 
-Durante el hito:
+Durante este cierre:
 
 ```text
-legacy scan scoped                         0
-Manager + navigation-manager tests         68 PASS
-web full pytest before final callback fix  PASS / 7 skipped
-ADA Configuration Manager pytest           26 PASS
-focused Ruff/format                        PASS
-callbacks commented mirror AST             PASS
-callback targeted regression               PASS
-manual /manager smoke after final fix       PASS
-HTTP 500 after final fix                    not observed
-InvalidCallbackReturnValue after final fix  not observed
+profiles-manager pytest             8 PASS
+ADA Configuration Manager pytest   26 PASS
+Ruff sobre archivos del incremento  PASS
+git diff --check                    PASS
 ```
 
-No declarar full web/ADA pytest rerun después del delta final del callback.
+El commit publicado fue verificado remotamente.
 
-## Finding descubierto durante cierre documental
+No declarar:
 
 ```text
-ManagerAuthorizationPolicy.can_view(...)
+full Web pytest GREEN
+full ADA pytest GREEN
+full Ruff workspace GREEN
+CI remote GREEN
+Storage/Cosmos E2E GREEN
+Python 3.14.7 global qualification
 ```
 
-vs:
+salvo evidencia posterior.
+
+## ADA Access Projection persistence
+
+Checkpoint parent:
 
 ```text
-web/compositions/navigation-manager
-resolved_authorization.can_access(...)
+9b623d67e253413f6b0d894e10d9cc15735b553d
 ```
 
 Estado:
 
 ```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
 ```
 
-El consumer no fue demostrado por el smoke ADA Configuration Manager.
+CURRENT incluye:
+
+```text
+durable ProjectionRecord[AdaAccessConfiguration] serialization
+exact recursive ProjectionTarget dependencies
+local projection provider
+Cosmos projection provider
+standalone storage topology
+```
+
+No reconstruir provenance desde CURRENT Profiles después de restart.
 
 ## UI CURRENT observada
 
-Configuration Manager compone:
+ADA Configuration Manager compone:
 
 ```text
+profiles
 navigation
 tools
 kpis
 kpi-definitions
 ```
 
-No compone actualmente:
+Todavía no compone:
 
 ```text
-Profiles Configuration
 Users Administration
 ADA Access Configuration
 ```
 
-El backend/lifecycle de esos dominios existe en sus fronteras actuales; la ausencia es de
-surface/composition, no una autorización para reconstruir dominios.
+La ausencia es de superficie/composition administrativa.
+No autoriza reconstruir dominios ni inventar contracts paralelos.
 
-## Qualification pendiente
+## Finding pendiente separado
 
 ```text
-full web pytest después del delta final
-UNVERIFIED
-
-full ADA pytest después del delta final
-UNVERIFIED
-
-full Ruff workspace
-UNVERIFIED
-
-CI remote
-UNVERIFIED
-
-Storage/Cosmos E2E
-UNVERIFIED
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
+
+`web/compositions/navigation-manager` usa un consumer desalineado respecto de
+`ManagerAuthorizationPolicy.can_view(...)`.
+
+No introducir alias.
 
 ## Próxima frontera
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-PLANNED / NEXT
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
+PLANNED / NEXT / DESIGN FIRST
+```
+
+CURRENT Users ya tiene:
+
+```text
+UsersAdministrationService
+```
+
+y no tiene:
+
+```text
+users-manager composition
+Users Manager Source/Projection module
+```
+
+La etapa siguiente debe seguir ese lifecycle existente.
+
+## Después
+
+```text
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+PLANNED
+
+MANAGER-FINAL-ADMIN-COMPOSITION
+PLANNED
 ```

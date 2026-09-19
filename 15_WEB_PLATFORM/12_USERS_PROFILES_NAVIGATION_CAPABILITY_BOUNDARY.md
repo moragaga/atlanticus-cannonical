@@ -1,6 +1,6 @@
 # Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER USERS-PROFILES AND ADA ACCESS REALIGNMENT**
+Estado: **CURRENT DECISION / REFINED AFTER ADA ACCESS PERSISTENCE AND PROFILES MANAGER ADOPTION**
 
 ## Propósito
 
@@ -20,19 +20,19 @@ catálogos paralelos de Profiles ni contracts legacy.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
+moragaga/atlanticus@415c8263c15bae2b5d3c01b734b0f1e0101a7242
 ```
 
 Parent:
 
 ```text
-90e89c376dfdfd182f0380b1d407127ecb7c9711
+9b623d67e253413f6b0d894e10d9cc15735b553d
 ```
 
 Tree:
 
 ```text
-737310de59774f3033607c1ef17c1c921efe1e09
+ff81bcd74b5e844604ca656562f9aaf398946d67
 ```
 
 ## Estado del frente
@@ -50,6 +50,9 @@ CLOSED / VERIFIED / CURRENT
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
+PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
+
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
@@ -57,6 +60,9 @@ ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-PROJECTION-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-PERSISTENCE
 CLOSED / VERIFIED / CURRENT
 ```
 
@@ -105,6 +111,12 @@ UserRecord.profile_key
 EffectiveUser.profile_key
 ```
 
+Lifecycle administrativo CURRENT:
+
+```text
+UsersAdministrationService
+```
+
 Managed profiles:
 
 ```text
@@ -124,6 +136,8 @@ No existe CURRENT:
 authority_key
 User authority basic|root mini-contract
 administrator -> root alias
+Users Manager Source/Projection module
+users-manager composition
 ```
 
 Users consume `ProfileCatalog` para validación y opciones administrativas.
@@ -160,11 +174,20 @@ Configured profiles conservan stable keys.
 
 La Web surface de Profiles es CURRENT.
 
+Profiles Manager es CURRENT y ADA Configuration Manager ya consume su `ManagerModule`.
+
+Services de Profiles se registran a través del `ManagerModule.web_module` existente sobre
+el `ServiceRegistry` real de Atlanticus Web.
+
+No existe registry temporal ni contract paralelo de integración.
+
 ## ADA Access CURRENT
 
 ```text
 scopes/ada/web/access/core
 scopes/ada/web/access/configuration
+scopes/ada/web/access/projection-local
+scopes/ada/web/access/projection-cosmos
 ```
 
 Contracts:
@@ -205,7 +228,16 @@ dependency = exact Profiles ProjectionTarget
 
 ADA Access valida las profile keys contra el `ProfileCatalog` de esa dependencia.
 
-Persistencia durable de la Projection sigue OPEN.
+Persistencia CURRENT:
+
+```text
+ProjectionRecord[AdaAccessConfiguration]
+exact recursive dependencies
+local provider
+Cosmos provider
+```
+
+No reconstruir provenance desde la Profiles Projection CURRENT después de restart.
 
 ## Navigation CURRENT
 
@@ -234,12 +266,22 @@ NavigationLinkConfiguration.allowed_profiles
 
 Manager core sigue generic.
 
-Profiles dispone de `profiles-manager` reusable.
+ADA Configuration Manager CURRENT compone:
 
-Users no es Source/Projection Manager module.
+```text
+Profiles
+Navigation
+Tools
+KPI Configuration
+KPI Definition
+```
 
-ADA Access tiene Source/Projection contract, pero la persistencia de su Projection y su UI
-administrativa todavía no están cerradas.
+Profiles usa `web/compositions/profiles-manager`.
+
+Users no es Source/Projection Manager module y su superficie administrativa sigue pendiente.
+
+ADA Access tiene Source/Projection y persistencia CURRENT; su UI/composition administrativa
+sigue pendiente.
 
 ## UI composition boundary
 
@@ -289,11 +331,17 @@ REMOVED
 Profiles
 GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
 
+Profiles -> ADA Configuration Manager
+CURRENT VIA EXISTING PROFILES MANAGER COMPOSITION
+
 ADA Access
 APPLICATION-SPECIFIC
 
 ADA Access user_id -> profile_keys
 REMOVED
+
+ADA Access Projection provenance
+EXACT / DURABLE
 
 Navigation authorization input
 PROFILE KEY
@@ -314,25 +362,25 @@ DOUBLE CONTRACT
 FORBIDDEN
 ```
 
-## Pendientes explícitos
+## Pendientes explícitos y orden
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
 PLANNED / NEXT / DESIGN FIRST
 
-Users Administration UI
-PLANNED
-
-ADA Access Configuration UI
-PLANNED
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+PLANNED / AFTER USERS
 
 MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / SEPARATE
-
-exact Navigation fallback composition
-PLANNED / SEPARATE
+PLANNED / AFTER USERS + ADA ACCESS
 
 ADA Access runtime composition
+PLANNED / SEPARATE
+
+Navigation operational authorization alignment
+PLANNED / SEPARATE
+
+Navigation disabled-route surface
 PLANNED / SEPARATE
 
 concrete Entra/Graph provider
@@ -344,6 +392,6 @@ PLANNED / SEPARATE
 WEB-TEST-CONTRACT-CLEANUP
 PLANNED / SEPARATE
 
-CI remote / full Ruff
+CI remote / full Ruff / full workspace qualification
 UNVERIFIED
 ```

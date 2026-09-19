@@ -1,6 +1,6 @@
 # Manager — Workflow and Session
 
-Estado: **CURRENT CONTRACT / GENERIC CONSUMER CUTOVER CLOSED**
+Estado: **CURRENT CONTRACT / GENERIC CONSUMER CUTOVER CLOSED / PROFILES INTEGRATED**
 
 ## Flujo conceptual
 
@@ -99,38 +99,57 @@ Manager transporta `ProjectionTarget` completo.
 
 `ManagerWorkspace` mantiene identidad local del payload separada de Source identity.
 
-ADA Configuration Manager CURRENT usa `ManagerWorkspaceBridge`.
+ADA Configuration Manager CURRENT usa `ManagerWorkspaceBridge` para los consumers que ya
+están implementados de esa manera.
+
+Profiles conserva su propia composition reusable y no duplica ese wiring dentro de ADA.
 
 ## Configuration Manager adoption
 
 ```text
 ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 CLOSED / VERIFIED / CURRENT
+
+PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
 ```
 
-CURRENT compone workflows Source/Draft Validation para:
+CURRENT compone:
 
 ```text
+Profiles
 Navigation
 Tools
 KPI Configuration
 KPI Definition
 ```
 
-Users no usa Manager Source/Projection y no es ManagerModule CURRENT.
+Profiles llega desde:
+
+```text
+web/compositions/profiles-manager
+```
+
+El `ManagerModule.web_module` de Profiles registra los workflows Source/Projection/Validation
+en el `ServiceRegistry` real de la aplicación.
+
+No existe registry auxiliar ni adapter de integración.
+
+Users no usa Manager Source/Projection y no es `ManagerModule` CURRENT.
 
 ## Runtime local CURRENT
 
-Para smoke/manual validation:
+Para smoke/manual validation de configuration:
 
 ```text
 LocalSourceStore
 InProcessProjectionStore
 ```
 
-La composition local CURRENT incluye Sources/Projection de:
+La composition local CURRENT incluye:
 
 ```text
+Profiles
 Navigation
 Tools
 KPI Configuration
@@ -141,7 +160,12 @@ Principal local:
 
 ```text
 is_local=True
-access_keys=(navigation.manage, tools.manage, kpis.manage)
+access_keys=(
+    profiles.manage,
+    navigation.manage,
+    tools.manage,
+    kpis.manage,
+)
 ```
 
 `is_local` no concede permiso por sí mismo.
@@ -169,18 +193,33 @@ expected_source_revision
 revision -> ProjectionTarget reconstruction
 ```
 
+No reintroducirlos.
+
 ## Finding consumer standalone
 
 `web/compositions/navigation-manager` CURRENT invoca `authorization.can_access(...)` y debe
-alinearse a `can_view(...)` cuando se trabaje esa composition.
+alinearse a `can_view(...)` cuando ese consumer entre al scope.
 
 No crear alias de compatibilidad.
 
 ## Siguiente frontera
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-PLANNED / NEXT
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-No inventar nueva familia de workflows para recuperar UI.
+Users ya posee `UsersAdministrationService`.
+
+La etapa siguiente debe revisar y reutilizar ese lifecycle.
+No crear Source/Projection ficticios, adapters ni un contrato administrativo paralelo.
+
+Después:
+
+```text
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+PLANNED
+
+MANAGER-FINAL-ADMIN-COMPOSITION
+PLANNED
+```

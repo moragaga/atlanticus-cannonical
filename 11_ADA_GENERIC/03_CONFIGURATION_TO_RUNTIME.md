@@ -39,6 +39,9 @@ CLOSED / VERIFIED / CURRENT
 
 KPI Definition Source/Projection
 CLOSED / VERIFIED / CURRENT
+
+ADA Configuration Manager generic consumer cutover
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## Ownership ADA
@@ -98,8 +101,8 @@ El builder exige exactamente una dependencia KPI Configuration y valida que la p
 Cobertura:
 
 ```text
-configured KPI + Definition    -> DEFINED
-configured KPI without Definition -> MISSING
+configured KPI + Definition         -> DEFINED
+configured KPI without Definition   -> MISSING
 Definition outside configured KPI set -> invalid projection
 ```
 
@@ -152,24 +155,27 @@ Data granularity != visual alarm granularity.
 
 Las alarmas se proyectan sobre identidad estructural y pueden coexistir con dato vacío.
 
-## Estrategia de cutover
+## Estado del cutover
 
 Los dominios Configuration ya alcanzaron contrato final:
 
 ```text
-Tools              CLOSED
-→ KPI Configuration CLOSED
-→ KPI Definition    CLOSED
+Tools               CLOSED / CURRENT
+KPI Configuration   CLOSED / CURRENT
+KPI Definition      CLOSED / CURRENT
 ```
 
-Siguiente frontera:
+El consumer ADA Configuration Manager también está cerrado sobre el contrato genérico:
 
 ```text
-→ ADA Configuration Manager final generic cutover
-→ global regression
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-No introducir adapters/shims para mantener contratos de consumer antiguos.
+No introducir adapters/shims para conservar contratos consumer antiguos.
+
+La integración administrativa de Profiles también es CURRENT, pero pertenece a la
+composición Manager y no altera la cadena Tool -> KPI -> Definition.
 
 ## Handoff hacia Command Center
 
@@ -183,4 +189,4 @@ Tool Configuration
 
 Command Center no modifica Tool Configuration.
 
-Este frente no se abre durante el cutover final del Configuration Manager.
+Los siguientes incrementos Manager no deben reabrir esta cadena.

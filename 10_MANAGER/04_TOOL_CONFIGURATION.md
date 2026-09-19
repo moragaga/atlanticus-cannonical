@@ -146,27 +146,35 @@ build_tool_configuration_projection_revision
 
 No reintroducir aliases, adapters o shims.
 
-## Manager integration
+## Manager integration CURRENT
 
-El `ada-configuration-manager` publicado todavía referencia `ToolLifecycleServices` y `ToolConfigurationManagerWorkflowAdapter`.
-
-KPI Configuration y KPI Definition ya completaron también sus cutovers Source/Projection. Por tanto ya no existe una dependencia de dominio pendiente que justifique postergar el consumer final.
+ADA Configuration Manager ya consume directamente los contratos genéricos Source/Projection
+de Tools.
 
 Estado:
 
 ```text
 ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-PLANNED / NEXT
+CLOSED / VERIFIED / CURRENT
 ```
 
-El ajuste debe ocurrir en el consumer. No adaptar Tools para sostener el contrato antiguo.
+KPI Configuration y KPI Definition también están cerrados sobre sus contratos genéricos.
 
-## Qualification
+No existe una dependencia de dominio pendiente que justifique volver a introducir
+`ToolLifecycleServices`, `ToolConfigurationManagerWorkflowAdapter` o cualquier ruta legacy.
 
-Los tests CURRENT para Source/Projection existen en el repositorio.
+## Qualification observada
 
-Su ejecución scoped posterior al cutover Tools permanece:
+En el checkpoint publicado:
 
 ```text
-UNVERIFIED
+moragaga/atlanticus@415c8263c15bae2b5d3c01b734b0f1e0101a7242
 ```
+
+la suite scoped de ADA Configuration Manager observada durante el cierre fue:
+
+```text
+26 passed
+```
+
+No se afirma con esto full ADA, full Web, Docker E2E ni CI global.

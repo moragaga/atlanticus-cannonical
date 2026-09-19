@@ -1,6 +1,6 @@
 # ADA Command Center — Identity, Users, Profiles, Access, Navigation and Activity
 
-Estado: **CURRENT DIRECTION / REFINED AFTER USERS-PROFILES AND ADA ACCESS REALIGNMENT**
+Estado: **CURRENT DIRECTION / REFINED AFTER USERS-PROFILES, ADA ACCESS PERSISTENCE AND PROFILES MANAGER INTEGRATION**
 
 ## Identity
 
@@ -55,6 +55,7 @@ CURRENT:
 ```text
 UserRecord.profile_key
 EffectiveUser.profile_key
+UsersAdministrationService
 ```
 
 Users posee:
@@ -90,6 +91,7 @@ Profiles Source lifecycle
 Profiles Projection
 Profiles Configuration Web surface
 Profiles Manager composition
+Profiles integration in ADA Configuration Manager
 ```
 
 No agregar permisos ADA al modelo generic Profiles.
@@ -111,6 +113,9 @@ EffectiveAdaAccess
 AdaAccessConfiguration
 AdaAccessSourceService
 AdaAccessProjectionBuilder
+durable ProjectionRecord serialization
+local Projection persistence
+Cosmos Projection persistence
 ```
 
 Ownership:
@@ -129,7 +134,10 @@ user_id -> profile_keys
 ADA Access Projection depende exactamente de Profiles Projection y valida sus referencias
 contra el `ProfileCatalog` de esa dependencia.
 
-Persistencia durable de ADA Access Projection sigue OPEN.
+La persistencia durable conserva el `ProjectionTarget` y dependencies exactas.
+No reconstruir provenance desde la Profiles Projection CURRENT tras restart.
+
+La UI/composition administrativa de ADA Access sigue PLANNED.
 
 ## Navigation
 
@@ -159,6 +167,8 @@ Core CURRENT:
 ```text
 ManagerAuthorizationPolicy.can_view(...)
 ```
+
+Profiles Manager usa esta semántica.
 
 Permanece un consumer standalone desalineado en `navigation-manager`.
 
@@ -205,4 +215,23 @@ GENERIC ATLANTICUS
 
 Navigation durable profile references
 PROFILE KEYS
+
+ADAPTERS / SHIMS / ALIASES
+FORBIDDEN
+```
+
+## Pendientes separados
+
+```text
+Users Administration Manager integration
+PLANNED / NEXT MANAGER FRONT
+
+ADA Access Configuration Manager integration
+PLANNED / AFTER USERS
+
+ADA Access runtime composition
+PLANNED / SEPARATE
+
+Navigation operational authorization alignment
+PLANNED / SEPARATE
 ```

@@ -1,6 +1,6 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT / AUTHORIZATION SEMANTICS ALIGNED**
+Estado: **CURRENT / AUTHORIZATION SEMANTICS ALIGNED / PROFILES CAPABILITY ADDED**
 
 ## Alcance
 
@@ -62,18 +62,18 @@ principal.is_local
 Capabilities funcionales:
 
 ```text
+profiles.manage
 navigation.manage
 tools.manage
 kpis.manage
 ```
 
-Los contexts específicos usan la misma semántica explícita:
+Profiles usa la misma semántica `ManagerAuthorizationPolicy.can_view(...)` mediante su
+composition reusable.
 
-```text
-access_key in principal.access_keys
-```
+Los contexts específicos existentes conservan capacidad explícita.
 
-No usan Profiles ni `is_local` como privilegios.
+No usan Profiles ni `is_local` como privilegios implícitos.
 
 ## Local runtime
 
@@ -84,6 +84,7 @@ ManagerPrincipal(
     subject_id='local',
     display_name='Administrador local',
     access_keys=(
+        profiles.manage,
         navigation.manage,
         tools.manage,
         kpis.manage,
@@ -121,11 +122,30 @@ composición de producto.
 `web/compositions/navigation-manager` llama `can_access(...)`, pero el protocolo actual
 declara `can_view(...)`.
 
-No introducir alias. Alinear directamente cuando ese consumer entre al scope.
-
-## Siguiente frontera
+Estado:
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+```
+
+No introducir alias.
+
+## Próxima frontera
+
+```text
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
 PLANNED / NEXT
+```
+
+Users Administration tiene lifecycle propio y no debe adquirir Source/Projection ficticio.
+
+Después:
+
+```text
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+PLANNED
+
+MANAGER-FINAL-ADMIN-COMPOSITION
+PLANNED
 ```
