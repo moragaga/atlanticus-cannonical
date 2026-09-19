@@ -1,6 +1,6 @@
-# Web Platform — Users / Profiles / Navigation Capability Boundary
+# Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER USERS GLOBAL REGISTRY CUTOVER**
+Estado: **CURRENT DECISION / REFINED AFTER PROFILES, ADA ACCESS AND ACCESS-SEMANTICS CUTOVERS**
 
 ## Propósito
 
@@ -8,11 +8,13 @@ Este documento fija la frontera CURRENT entre:
 
 ```text
 Global Users
-Profiles / Access application-specific
-Navigation
+Generic Profiles
+Application-specific Access
+Generic Navigation
 ```
 
-sin reintroducir el modelo Users Configuration Source ya eliminado.
+sin reintroducir Users Configuration Source, estado app-specific dentro de Global User
+ni un Access generic no demostrado.
 
 ## Autoridad de implementación
 
@@ -20,13 +22,19 @@ CURRENT inspeccionado:
 
 ```text
 moragaga/atlanticus:main
-6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a
+0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
 ```
 
 Parent inmediato:
 
 ```text
-4e008055ddc551e6c08a7d87715340c8c7cd149e
+96b95172bae389f117c3c7e2afed7844eb79e98d
+```
+
+Tree:
+
+```text
+24efaa448bf4cd0ac6f7c488c9dd01357d91ad0d
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -41,21 +49,24 @@ PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CAPABILITY-EXTRACTION
-IN PROGRESS
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
 
 USERS-PERSISTED-DATA-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 PLANNED / NEXT
 
 USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-PLANNED
-
-ACCESS-PROFILES-CONFIGURATION
-PLANNED
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 PLANNED
 ```
 
@@ -64,30 +75,38 @@ Quedan SUPERSEDED:
 ```text
 USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
 USERS-PROFILES-COMPOSITION-CUTOVER as previous Source-centric model
+ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access target
+USER_NOT_PROMOTED -> 403
 ```
 
 ## Regla principal
 
-Atlanticus es una base genérica.
+Atlanticus es una base generic reusable.
 
-Global Users debe ser reusable y no conocer aplicaciones concretas.
+Global Users no conoce aplicaciones concretas.
 
 ```text
 Global Users
     identity + lifecycle + global base authority
 ```
 
-Profiles/Access pertenecen a la aplicación que los define.
+Profiles es generic y reusable:
 
 ```text
-Application
-    Profiles
-    Access
-    Navigation configuration
-    domain capabilities
+Profiles
+    profile definition + catalog + configuration + Source lifecycle
 ```
 
-No introducir estado app-specific dentro del Global User.
+Access pertenece a la aplicación cuando sus permisos son application-specific:
+
+```text
+ADA
+    user -> profiles
+    profile -> ADA access keys
+```
+
+Navigation es generic y consume profile keys; no debe importar Users ni ADA Access para
+resolver rutas.
 
 ## Users
 
@@ -119,8 +138,6 @@ subject_id
 user_id = build_user_key(issuer, subject_id)
 ```
 
-Strong identity es la frontera primaria de identidad.
-
 Email/display name no autorizan merge automático entre strong identities distintas.
 
 ### UserRecord
@@ -141,6 +158,8 @@ No contiene:
 
 ```text
 profile_key
+profile_keys
+access_keys
 app_id
 navigation role
 ADA Access
@@ -164,7 +183,7 @@ local
 
 `administrator` no pertenece a Users CURRENT.
 
-`guest` ya no pertenece al Users authority contract CURRENT.
+`guest` no pertenece al Users authority contract CURRENT.
 
 No existe mapping:
 
@@ -172,23 +191,43 @@ No existe mapping:
 administrator -> root
 ```
 
-### Local identities
+### Login / access semantics
+
+Login continúa siendo read-only sobre el promoted store:
 
 ```text
-Jane Doe
-local
-#C85D91 / #FFFFFF
-
-John Doe
-local
-#3778C2 / #FFFFFF
+resolve only
+no observe
+no pending write
 ```
 
-Jane y John son identities locales, no Profiles.
+La ausencia de un promoted User no bloquea el ingreso.
 
-El wiring exacto del selector local en todas las compositions sigue UNVERIFIED.
+CURRENT:
 
-## Users Registry
+```text
+record absent
+→ AccessStatus.READY
+→ deterministic user_id
+→ UsersRuntime has no EffectiveUser for that load
+
+record present + enabled=True
+→ AccessStatus.READY
+→ EffectiveUser stored in UsersRuntime
+
+record present + enabled=False
+→ AccessStatus.USER_DISABLED
+→ 403
+```
+
+`AccessStatus.USER_NOT_PROMOTED` fue eliminado.
+
+Promotion significa administración/control y disponibilidad de `EffectiveUser`, no
+permiso básico para entrar a la aplicación.
+
+Legacy documents `pending` / `resolved` no son aceptados por el store CURRENT.
+
+## Users Registry / Administration
 
 Durable contract:
 
@@ -215,113 +254,19 @@ document_type = atlanticus_users_registry
 schema_version = 1
 ```
 
-El container se inyecta desde afuera del dominio.
+Administration core continúa separado del login runtime.
 
-No hardcodear container productivo en Users core/provider salvo contrato real.
-
-## Promoted Users / runtime
-
-Provider CURRENT:
-
-```text
-CosmosUsersStore
-```
-
-Documento:
-
-```text
-document_type = atlanticus_user
-schema_version = 1
-```
-
-Login:
-
-```text
-resolve only
-no observe
-no pending write
-```
-
-Absent promoted user:
-
-```text
-USER_NOT_PROMOTED
-```
-
-Legacy documents `pending` / `resolved` no son aceptados por el store CURRENT.
-
-## Administration lifecycle
-
-Core:
-
-```text
-UsersAdministrationService
-UsersAdministrationStore
-UsersRegistryStore
-UsersDirectoryReader
-```
-
-Candidate states:
-
-```text
-PROMOTABLE
-CONFLICT
-PROMOTED
-```
-
-### Candidate rules
-
-```text
-Cosmos present
-=> PROMOTED
-
-Registry only
-=> PROMOTABLE
-
-Directory only
-=> PROMOTABLE
-
-Registry + Directory, exact same represented data
-=> PROMOTABLE
-
-Registry + Directory, differing represented data
-=> CONFLICT
-
-same email across different strong identities
-=> non-promoted candidate CONFLICT / promotion blocked
-```
-
-Promoted Users pueden exponer issues de inconsistencia sin dejar de ser PROMOTED.
-
-### Promotion ordering
-
-```text
-1. reject already promoted
-2. load/validate Registry + Directory candidate
-3. persist Registry when needed using expected version
-4. create Cosmos promoted User
-```
-
-No distributed transaction.
-
-Si step 3 pasa y step 4 falla:
-
-```text
-Registry yes
-Cosmos no
-```
-
-Ese estado debe poder repararse/reintentarse; no se revierte automáticamente Blob.
+No reintroducir pending writes durante login.
 
 ## Profiles
 
-Profiles es first-class capability application-specific.
+Profiles es generic Atlanticus first-class capability.
 
 CURRENT:
 
 ```text
-profiles/core
-profiles/configuration
+web/capabilities/profiles/core
+web/capabilities/profiles/configuration
 ```
 
 Ownership:
@@ -334,145 +279,205 @@ profile domain invariants
 
 profiles/configuration
 ProfilesConfiguration
+Profiles Source lifecycle
 ```
 
-`ProfilesConfiguration` no vive dentro de core.
-
-Target posterior todavía pendiente:
+`ProfileDefinition` CURRENT:
 
 ```text
-Profiles independent Source/Projection lifecycle where justified by current contracts
-Profiles administration
-Profiles UI
+key
+label
+background_color
+text_color
 ```
 
-No mover Global Users lifecycle a Profiles.
-
-## Access
-
-Access es application-specific.
-
-Target conceptual:
+Source contract CURRENT:
 
 ```text
-Promoted Global User
-        ↓ application association
-Profile / Access
-        ↓
-effective app capabilities
+document_type = atlanticus_profiles_configuration_release
+schema_version = 1
+resource_path = profiles/configuration.json.gz
 ```
 
-El owner y shape exactos de esa association permanecen:
+Source Store es injected y generic; Profiles no hardcodea proveedor Blob/Cosmos.
+
+No agregar permisos ADA ni un campo arbitrario `options` al modelo generic.
+
+## ADA Access
+
+Generic Atlanticus Access fue rechazado antes de integración por falta de evidencia de
+reutilización.
+
+El owner CURRENT es ADA:
 
 ```text
-OPEN / UNVERIFIED
+scopes/ada/web/access/core
+scopes/ada/web/access/configuration
 ```
 
-No inventar contract, store o package desde este documento.
+Contratos CURRENT:
+
+```text
+UserProfileAssignment
+    user_id
+    profile_keys
+
+ProfileAccessGrant
+    profile_key
+    access_keys
+
+EffectiveAdaAccess
+    user_id
+    profile_keys
+    access_keys
+
+AdaAccessConfiguration
+    user_profiles
+    profile_access
+```
+
+ADA Access valida referencias contra `ProfileCatalog` de forma explícita.
+
+Un user_id sin assignment devuelve acceso ADA efectivo vacío; no crea asignación ni
+perfil por defecto dentro de `AdaAccessConfiguration`.
+
+Source contract CURRENT:
+
+```text
+document_type = ada_access_configuration_release
+schema_version = 1
+resource_path = access/configuration.json.gz
+```
+
+No existe Projection de ADA Access CURRENT.
+
+No inventar una hasta que un consumidor real justifique esa segunda persistencia.
 
 ## Navigation
 
-Navigation permanece configuration domain.
+Navigation permanece generic configuration domain.
 
-El diagrama canónico anterior:
-
-```text
-Users
-  ↓
-Profiles
-  ↓
-Navigation
-```
-
-queda refinado porque Users ya no es Configuration Source.
-
-Target conceptual vigente:
+CURRENT autorización de rutas:
 
 ```text
-Global Users
-    ↓ resolved by app composition
-Profile / Access effective state
-    ↓
-Navigation
+NavigationPrincipal.access_key
+        ∈
+NavigationRouteMatch.allowed_profiles
 ```
 
-Navigation core debe permanecer desacoplado cuando sea posible.
+`NavigationPrincipal.unrestricted=True` omite el filtro por profile key para rutas
+habilitadas.
 
-Preferir un boundary efectivo de autorización/perfil provisto por composition antes
-que importar lifecycle/storage de Users.
+Navigation no necesita Users ni ADA Access para ese contrato.
 
-La forma final queda:
+### Desalineamiento pendiente
+
+CURRENT `navigation/configuration/profiles.py` todavía define:
+
+```text
+NavigationProfileOption
+_BASE_PROFILES:
+    local          unrestricted
+    administrator  unrestricted
+    guest          restricted
+```
+
+Ese mini-modelo duplica semántica que ahora debe alinearse con Profiles y conserva
+`administrator` como special-case unrestricted aunque `administrator -> root` está
+prohibido.
+
+El siguiente incremento debe resolver exclusivamente:
 
 ```text
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED
 ```
+
+### Reglas ya decididas para el alignment
+
+```text
+Navigation -> Users
+FORBIDDEN
+
+Navigation -> ADA Access
+FORBIDDEN
+
+root
+unrestricted para Navigation
+
+local
+unrestricted para Navigation
+
+guest
+perfil restringido normal
+
+administrator -> root
+FORBIDDEN
+```
+
+Un usuario autenticado sin promoted User puede entrar. La materialización exacta del
+fallback `guest` para Navigation sigue pendiente del siguiente incremento y no debe
+resolverse creando una authority `guest` en Users ni un UserRecord ficticio.
+
+### Profiles opcional
+
+Navigation core no debe importar lifecycle/storage de Profiles.
+
+La integración con `ProfileCatalog` puede aportar validación o profile options en la
+superficie de configuración, pero el contrato durable de Navigation conserva keys.
+
+La conducta exacta de administración/runtime cuando Profiles no está instalado debe
+ser verificada en el siguiente incremento contra el código y consumers actuales; no
+inventarla desde este documento.
 
 ## Source / Projection
 
-Aplica a Profiles/Navigation cuando esas capabilities sean configuration lifecycle.
+Source/Projection aplica por capability sólo cuando el contrato lo requiere.
 
-No aplica a Global Users CURRENT.
-
-La propuesta anterior:
+CURRENT:
 
 ```text
-Users
-source_key = users
-payload = UsersConfiguration
+Profiles
+Source lifecycle: YES
+Projection: NO
+
+ADA Access
+Source lifecycle: YES
+Projection: NO
+
+Navigation
+existing generic configuration Source/Projection contract remains CURRENT
+
+Global Users
+Configuration Source: NO
+Generic Projection: NO
 ```
 
-queda:
-
-```text
-SUPERSEDED / REMOVE FROM CANONICAL TARGET
-```
-
-No crear otro Users Source para restaurar simetría visual con Profiles/Navigation.
+No restaurar simetría artificial entre domains.
 
 ## UI
 
-Legacy Users configuration UI fue eliminada con `users/configuration`.
+Legacy Users configuration UI permanece eliminada.
 
-No existe nueva Users Administration UI en este hito.
+Users Administration UI sigue pendiente y debe consumir el lifecycle de administración,
+no reconstruir la antigua Users Configuration.
 
-Target futuro:
-
-```text
-Users Administration surface
-consumes UsersAdministrationService
-```
-
-Profiles UI deberá ser Profiles-owned cuando se implemente.
+Profiles UI debe ser Profiles-owned cuando exista.
 
 Navigation UI permanece Navigation-owned.
 
-No mezclar estas tres superficies sólo porque aparezcan dentro de una misma aplicación.
+ADA Access UI, si se introduce, debe ser ADA-owned.
+
+No fusionar estas superficies sólo porque convivan en una misma aplicación.
 
 ## Persisted data
 
-Código CURRENT ya no lee legacy schema.
+El código CURRENT no lee legacy Users schemas.
 
-Persisted data real no fue migrado por este hito.
+Durante el cierre de persisted-data se confirmó que no existían datos reales ya
+persistidos que requirieran migración; por tanto no se creó reader legacy, migrador ni
+compatibilidad temporal.
 
-Siguiente frontera:
-
-```text
-USERS-PERSISTED-DATA-CUTOVER
-PLANNED / NEXT
-```
-
-No borrar datos antiguos hasta:
-
-```text
-inventory verified
-Global Users extracted
-Profiles information preserved where needed
-new Blob/Cosmos state verified
-explicit delete criteria satisfied
-```
-
-No implementar old-schema reader en runtime como transición.
+Ese frente queda CLOSED.
 
 ## Testing rules
 
@@ -496,7 +501,6 @@ branding
 source token scans
 import scans
 existence/non-existence of functions/classes
-AST/module structure
 implementation internals
 ```
 
@@ -539,14 +543,11 @@ REMOVED
 Users login write/pending
 FORBIDDEN
 
-Blob registry default path
-users/users.json.gz
+not promoted -> 403
+REMOVED
 
-Cosmos current document
-atlanticus_user schema 1
-
-Users Registry document
-atlanticus_users_registry schema 1
+promoted disabled -> 403
+CURRENT
 
 OLD SCHEMA RUNTIME READERS
 FORBIDDEN
@@ -558,13 +559,22 @@ DOUBLE CONTRACT
 FORBIDDEN
 
 Profiles
-APPLICATION-SPECIFIC FIRST-CLASS CAPABILITY
+GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
 
-Access
-APPLICATION-SPECIFIC
+Generic Access
+NOT ADOPTED
 
-Global User -> app Profile/Access exact association
-OPEN / DO NOT INVENT
+ADA Access
+APPLICATION-SPECIFIC / CURRENT
+
+Navigation authorization input
+PROFILE KEY
+
+Navigation dependency on Users
+FORBIDDEN
+
+Navigation dependency on ADA Access
+FORBIDDEN
 ```
 
 ## Orden de implementación refinado
@@ -574,46 +584,46 @@ OPEN / DO NOT INVENT
    CLOSED / VERIFIED / CURRENT
 
 2. USERS-PERSISTED-DATA-CUTOVER
-   PLANNED / NEXT
+   CLOSED / VERIFIED / CURRENT
 
-3. USERS-ADMINISTRATION-SURFACE-CUTOVER
-   PLANNED
+3. PROFILES-CAPABILITY-EXTRACTION
+   CLOSED / VERIFIED / CURRENT
 
 4. PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-   PLANNED
+   CLOSED / VERIFIED / CURRENT
 
-5. ACCESS-PROFILES-CONFIGURATION
-   PLANNED
+5. ADA-ACCESS-PROFILES-CONFIGURATION
+   CLOSED / VERIFIED / CURRENT
 
-6. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-   PLANNED
+6. NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+   CLOSED / VERIFIED / CURRENT
+
+7. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+   PLANNED / NEXT
 ```
 
-Los puntos 3-6 no deben adelantarse dentro del punto 2.
+Users Administration surface permanece pendiente, pero no debe mezclarse en el punto 7.
 
 ## Pendientes explícitos
 
 ```text
-actual persisted data inventory
-OPEN / NEXT
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+PLANNED / NEXT
 
-legacy persisted data migration/deletion
-OPEN / NEXT
+exact guest fallback composition for authenticated non-promoted identities
+OPEN / NEXT BOUNDARY
+
+Navigation behavior when Profiles is not installed
+OPEN / MUST VERIFY AGAINST CURRENT CONSUMERS
+
+Users Administration UI/repair
+PLANNED / SEPARATE
+
+Manager authorization stale administrator/local semantics
+OPEN / SEPARATE
 
 concrete Entra/Graph Directory provider
 UNVERIFIED
-
-Users Administration UI/repair
-PLANNED
-
-Profiles lifecycle/admin/UI
-PLANNED
-
-Global User -> app Profile/Access association
-OPEN / UNVERIFIED
-
-Navigation effective-access integration
-PLANNED
 
 local selector composition wiring
 UNVERIFIED

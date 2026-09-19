@@ -1,25 +1,17 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT DIRECTION / REFINED AFTER USERS AND PROFILES CUTOVERS**
 
-## Problema actual
+## Alcance
 
-Manager utiliza perfiles y access keys para proteger módulos.
+Este documento conserva la frontera entre Bootstrap Access y Manager Access.
 
-Sin embargo existe bypass implícito:
+El cierre actual no modifica la autorización interna de Manager; únicamente corrige
+las referencias antiguas que acoplaban Navigation a Users para obtener perfiles.
 
-```text
-principal.is_local
-→ full access
-```
+## Bootstrap Access
 
-y la composición ADA repite la misma excepción para Users, Navigation, Tools y KPI.
-
-Esto debe retirarse.
-
-## Objetivo
-
-Separar:
+Bootstrap puede existir antes de que otras capabilities de aplicación estén listas.
 
 ```text
 BOOTSTRAP ACCESS
@@ -27,59 +19,94 @@ BOOTSTRAP ACCESS
 MANAGER ACCESS
 ```
 
-### Bootstrap
+Producción utiliza identidad autenticada mediante el provider configurado.
 
-Puede existir antes de:
+El estado CURRENT de Identity/Users distingue:
 
-- Users projection;
-- Profiles efectivos;
-- Navigation projection.
+```text
+invalid identity
+→ rejected
 
-### Manager
+promoted disabled user
+→ USER_DISABLED / 403
 
-Sólo queda habilitado después de que sus dependencias mínimas estén listas.
+valid authenticated identity without promoted UserRecord
+→ READY
+```
 
-Utiliza autorización normal.
+La promoción de Users no es el gate de entrada a la aplicación.
+
+## Manager Access
+
+Manager utiliza su propio contrato de autorización.
+
+Los detalles actuales de `profile_keys`, `access_keys`, `is_local` y cualquier semántica
+stale relacionada con `administrator` pertenecen a un frente separado.
+
+Este documento no redefine esa política ni crea una nueva.
 
 ## Superficie previa
 
-Una página independiente del Manager debe permitir:
+Una superficie bootstrap/operacional puede existir antes de que Manager tenga todas sus
+dependencias listas para permitir diagnóstico y recuperación controlada.
 
-- revisar infraestructura;
-- visualizar Source releases/files;
-- calcular plan de proyección;
-- proyectar configuración;
-- ver bloqueos/errores;
-- determinar Manager readiness.
-
-La ruta/nombre exactos quedan abiertos.
-
-## Producción
-
-La página puede estar antes de Users/Profile app config, pero no debe ser anónima para acciones privilegiadas.
-
-Utiliza Entra/bootstrap authorization independiente.
+La ruta, UI y composición exactas siguen fuera del alcance de este cierre.
 
 ## Local
 
-Provider local puede habilitar el flujo de desarrollo, pero no implica `administrator`.
+Provider local y autoridad local son runtime concerns.
 
-## Navigation / Users
+No existe mapping contractual:
 
-Manager debe poder instalar:
+```text
+local -> administrator
+```
+
+La semántica exacta de Manager para `is_local` no se modifica en este hito.
+
+## Navigation / Users / Profiles
+
+Manager debe poder convivir con capabilities instaladas de forma independiente.
 
 ```text
 Users only
 Navigation only
 Users + Navigation
+Profiles + Navigation
 ```
 
-sin que Navigation requiera Users.
+Navigation no debe requerir Users ni ADA Access.
 
-Cuando Navigation usa perfiles:
+Cuando Navigation necesita catálogo de perfiles para validación o administración,
+la integración correcta es con la capability generic Profiles:
 
 ```text
-optional Users↔Navigation binding
+Profiles
+    ↓ optional integration
+Navigation
 ```
 
-es quien aporta profile options.
+No usar:
+
+```text
+Users -> Navigation profile options
+ADA Access -> Navigation authorization
+```
+
+Navigation conserva sus propias `allowed_profiles` como referencias por key.
+
+## Estado
+
+```text
+BOOTSTRAP / ACCESS SEPARATION
+CURRENT DIRECTION
+
+USERS NONPROMOTED ENTRY SEMANTICS
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+PLANNED
+
+MANAGER AUTHORIZATION CLEANUP
+OPEN / OUT OF CURRENT FOCUS
+```

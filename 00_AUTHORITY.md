@@ -10,15 +10,33 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `6dd09a6f24370bbad8ae358b6d5d7c6ea9aeba4a`
+  `0fba548329afd9bc9dee92ea6caa53d1aaa69eb0`
 - Parent inmediato:
-  `4e008055ddc551e6c08a7d87715340c8c7cd149e`
+  `96b95172bae389f117c3c7e2afed7844eb79e98d`
 - Tree:
-  `618619a6cb0fb416d51e7b095e1ed0a1d743a4c9`
+  `24efaa448bf4cd0ac6f7c488c9dd01357d91ad0d`
 
-El checkpoint CURRENT contiene:
+El checkpoint CURRENT contiene, entre otros hitos ya cerrados:
 
 ```text
+MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
@@ -26,7 +44,19 @@ PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CAPABILITY-EXTRACTION
-IN PROGRESS
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+CLOSED / VERIFIED / CURRENT
+
+USERS-PERSISTED-DATA-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILES-CONFIGURATION
+CLOSED / VERIFIED / CURRENT
+
+NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
+CLOSED / VERIFIED / CURRENT
 ```
 
 ### Canonical
@@ -34,7 +64,7 @@ IN PROGRESS
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `61da5829c6a1f8ec936d46e5a7ec02965b5e4743`
+  `179a151d24074e9d4cb8c5f16bdcd6ef49308929`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -47,7 +77,8 @@ Puede aportar rationale y evidencia histórica. No puede reemplazar
 `atlanticus:main` ni `atlanticus-cannonical:main`.
 
 No se usa una decisión histórica para reintroducir Users como Source de configuración,
-recrear contratos Users/Profiles combinados ni conservar legacy eliminado.
+recrear contratos Users/Profiles combinados, reintroducir `USER_NOT_PROMOTED` como
+estado de bloqueo ni conservar legacy eliminado.
 
 ## Jerarquía
 
@@ -97,33 +128,61 @@ explícita.
 No reabrir sin conflicto demostrado:
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+Global Users
+standalone / generic
 
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+Managed global authority
+basic | root
 
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+local
+runtime-only authority
 
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+Profiles
+Atlanticus generic first-class capability
 
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+ADA Access
+ADA-specific capability
 
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
+Navigation
+Atlanticus generic capability
 
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-CLOSED / VERIFIED / CURRENT
+Users login write/pending
+FORBIDDEN
 
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
+OLD SCHEMA RUNTIME READERS
+FORBIDDEN
+
+ADAPTERS / SHIMS / ALIASES
+FORBIDDEN
+
+DOUBLE CONTRACT
+FORBIDDEN
 ```
 
-Los siguientes hitos anteriores de Users quedan históricos y no definen el contrato
-CURRENT:
+Promotion de Users no habilita el ingreso a la aplicación.
+
+El contrato CURRENT de acceso es:
+
+```text
+authenticated identity + no promoted UserRecord
+→ READY
+→ deterministic user_id
+→ no UsersRuntime user
+
+authenticated identity + promoted enabled UserRecord
+→ READY
+→ EffectiveUser available in UsersRuntime
+
+authenticated identity + promoted disabled UserRecord
+→ USER_DISABLED
+→ 403
+```
+
+`USER_NOT_PROMOTED` ya no existe en `AccessStatus` CURRENT.
+
+## Targets superseded
+
+Quedan históricos o reemplazados:
 
 ```text
 USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
@@ -143,18 +202,31 @@ SUPERSEDED / NOT EXECUTED AS FINAL TARGET
 
 USERS-PROFILES-COMPOSITION-CUTOVER
 SUPERSEDED AS PREVIOUS MODEL
+
+ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access capability
+SUPERSEDED / REJECTED BEFORE INTEGRATION
+
+USER_NOT_PROMOTED -> 403
+SUPERSEDED / REMOVED
 ```
 
 ## Siguiente foco único
 
 ```text
-USERS-PERSISTED-DATA-CUTOVER
+NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 PLANNED / NEXT
 ```
 
-Su primera etapa debe ser inventario y diseño contra datos/topología reales.
-No inventar migración, Entra provider, containers, credenciales, perfiles ni datos
-que no estén demostrados por las fuentes autoritativas.
+El incremento debe permanecer limitado a la relación Navigation ↔ Profiles.
 
-No mezclar Users Administration UI, Profiles lifecycle, Access, Navigation, Python
-metadata ni cleanup transversal de tests dentro de ese incremento.
+No mezclar:
+
+```text
+ADA Access runtime composition
+Users Administration UI
+Manager authorization cleanup
+Python metadata alignment
+cross-cutting test cleanup
+```
+
+No inventar contratos nuevos cuando el código CURRENT ya provee una frontera suficiente.
