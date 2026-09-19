@@ -12,11 +12,11 @@ Estado: **CURRENT**
 | Definir contratos antes que consumidores | CURRENT |
 | Backend antes que frontend | CURRENT |
 | Cutover raíz limpio | CURRENT |
-| No crear shims/adapters/aliases temporales para legacy | FROZEN |
-| No conservar doble contrato | FROZEN |
+| No shims/adapters/aliases legacy | FROZEN |
+| No doble contrato | FROZEN |
 | Tests no son autoridad sobre contratos SUPERSEDED | FROZEN |
-| Un consumer puede quedar temporalmente roto durante un root cutover | FROZEN |
-| Presentación propia por módulo; reutilizar sólo comportamiento realmente transversal | FROZEN |
+| Presentación propia por módulo; reutilizar sólo comportamiento transversal real | FROZEN |
+| Un foco por incremento | FROZEN |
 
 ## Regla universal de cutover
 
@@ -27,26 +27,20 @@ REMOVE
 ADAPTERS / SHIMS / ALIASES
 FORBIDDEN
 
-DOBLE CONTRATO
+DOUBLE CONTRACT
 FORBIDDEN
 
 OLD SCHEMA READERS IN CURRENT RUNTIME
 FORBIDDEN
-
-CONTRATO FINAL
-Responsabilidad real del dominio; infraestructura genérica sólo donde aplique
 ```
-
-No forzar Source/Projection/Manager sobre una entidad que no sea configuration lifecycle.
 
 ## Source / Projection
 
-Permanecen CURRENT/FROZEN:
+CURRENT/FROZEN:
 
 ```text
 Source generic -> web/capabilities/source
 Projection exact-release -> web/capabilities/projection/core
-release identity != content hash
 ProjectionTarget = SourceKey + SourceReleaseRef + dependencies
 project(target) no relee current
 Manager no reconstruye ProjectionTarget desde revision
@@ -55,173 +49,103 @@ expected_source_revision REMOVED
 
 ## Generic Web pagination
 
-Contrato CURRENT/FROZEN:
+CURRENT/FROZEN:
 
 ```text
 atlanticus.web.pagination
-├── DEFAULT_PAGE_SIZE = 10
-├── ALLOWED_PAGE_SIZES = (10, 20)
-├── PageRequest
-├── Page
-└── paginate_items(...)
+DEFAULT_PAGE_SIZE = 10
+ALLOWED_PAGE_SIZES = (10, 20)
+PageRequest
+Page
+paginate_items(...)
 ```
 
-Responsabilidad:
+Presentación/CSS/placeholders/search/filter/sort no pertenecen al contrato generic.
 
-```text
-page number / page size
-range
-page count
-previous / next
-clamp a página válida
-slice de items reales
-```
-
-No responsabilidad:
-
-```text
-markup Dash
-CSS
-placeholders visuales
-search/filter/sort
-SortDirection
-modal/table/card rendering
-```
-
-El contrato legacy `ada.web.configuration.pagination` está SUPERSEDED / REMOVED.
-
-No crear alias de nombres anteriores:
-
-```text
-ConfigurationPageRequest
-ConfigurationPage
-DEFAULT_CONFIGURATION_PAGE_SIZE
-ALLOWED_CONFIGURATION_PAGE_SIZES
-```
-
-La presentación ADA actual puede consumir el contrato generic sin transferirse a Atlanticus.
-
-## UI ownership
-
-Cada superficie mantiene presentación propia.
-
-La reutilización transversal requiere comportamiento compartido real, no similitud visual.
-
-Para superficies paginadas administrativas se conserva la decisión de interacción:
-
-```text
-default page size = 10
-allowed page sizes = 10 | 20
-```
-
-Si una presentación necesita altura estable puede completar visualmente hasta `page_size`,
-pero esos placeholders no pertenecen a `Page` ni a `paginate_items`.
-
-## Manager generic contract
+## Manager
 
 CURRENT:
 
 ```text
 ManagerModule
-├── source_key
-├── source_service
-├── source_reader_service
-├── projection_service
-├── draft_validation_service
-├── source_history_service | None
-└── access_key | None
+ManagerAuthorizationPolicy.can_view(principal, module)
+```
+
+No bypass por `is_local` ni profile administrator.
+
+Profiles posee composition Manager reusable.
+
+Users no es Source/Projection Manager module.
+
+## Users / Profiles
+
+Decisión CURRENT:
+
+```text
+Profiles
+owns profile definitions/catalog
+
+Users
+owns user -> profile_key
+```
+
+Contrato:
+
+```text
+UserRecord.profile_key
+EffectiveUser.profile_key
 ```
 
 SUPERSEDED / REMOVED:
 
 ```text
-ManagerModuleAccess
-workflow_service
-exact_source_*
-exact_projection_service
-expected_source_revision
-per-operation Manager access fields
+authority_key
+basic|root authority mini-contract
+administrator/root aliases
 ```
 
-### Manager authorization
-
-Contrato CURRENT:
-
-```text
-ManagerAuthorizationPolicy.can_view(principal, module)
-```
-
-Política default:
-
-```text
-required = module.access_key
-required is None -> deny
-required in principal.access_keys -> allow
-otherwise -> deny
-```
-
-No hay bypass de autorización por:
-
-```text
-is_local
-administrator profile
-```
-
-## Global Users
-
-Users es registry/lifecycle global y no Configuration Source.
-
-Managed authority:
-
-```text
-basic
-root
-```
-
-Runtime local:
-
-```text
-local
-```
-
-No son Users authority CURRENT:
-
-```text
-guest
-administrator
-```
-
-Users Administration UI debe consumir el lifecycle existente; no reintroducir Users
-Source/Projection ni Users Manager configuration module.
-
-## Profiles
-
-Profiles es capability generic Atlanticus first-class.
-
-```text
-profiles/core
-→ ProfileDefinition
-→ ProfileCatalog
-
-profiles/configuration
-→ ProfilesConfiguration
-→ Profiles Source lifecycle
-```
-
-La futura UI consume estos contratos; no los redefine.
-
-Profiles puede usar `atlanticus.web.pagination` directamente.
+Managed users consumen `ProfileCatalog`; `local` no es managed assignment.
 
 ## ADA Access
 
 ADA Access es application-specific.
 
+CURRENT:
+
 ```text
-user_id -> profile_keys
 profile_key -> access_keys
 ```
 
-No convertir ADA Access en dependency de Navigation.
+SUPERSEDED / REMOVED:
+
+```text
+user_id -> profile_keys
+UserProfileAssignment
+```
+
+Contracts CURRENT:
+
+```text
+ProfileAccessGrant
+EffectiveAdaAccess(profile_key, access_keys)
+AdaAccessConfiguration
+```
+
+Source schema CURRENT:
+
+```text
+2
+```
+
+Projection CURRENT:
+
+```text
+ProjectionRecord[AdaAccessConfiguration]
+```
+
+con dependencia exacta sobre Profiles Projection.
+
+No crear `AdaAccessCatalog` paralelo sin una responsabilidad independiente demostrada.
 
 ## Navigation / Profiles
 
@@ -235,83 +159,46 @@ Navigation -> Users FORBIDDEN
 Navigation -> ADA Access FORBIDDEN
 ```
 
-## UI composition boundary
+## UI ownership
 
-El Manager genérico posee shell/home/sidebar/workflow administrativo.
+Cada superficie mantiene presentación propia.
 
-La configuración concreta de cada dominio permanece en su capability/domain.
-
-No crear un design system administrativo compartido sólo porque varias pantallas sean
-tablas con paginación.
-
-Estado CURRENT de superficies faltantes:
+CURRENT reusable:
 
 ```text
-Profiles Configuration UI
-PLANNED
+Profiles Configuration Web surface
+Profiles Manager composition
+```
 
+Pendientes separados:
+
+```text
 Users Administration UI
-PLANNED
-
 ADA Access Configuration UI
-PLANNED
+Manager final administrative composition
 ```
-
-Secuencia vigente:
-
-```text
-1. PROFILES-CONFIGURATION-EDITOR-CONTRACT
-2. PROFILES-CONFIGURATION-WEB-SURFACE
-3. USERS-ADMINISTRATION-UI
-4. ADA-ACCESS-CONFIGURATION-UI
-5. MANAGER-FINAL-ADMIN-COMPOSITION
-```
-
-No mezclar esas superficies en un solo incremento.
 
 ## Testing
 
-Automatizar:
+Automatizar comportamiento, contracts, invariants, regressions y critical flows.
 
-```text
-behavior
-contracts
-invariants
-regressions
-critical flows
-```
-
-No crear tests cuyo único objetivo sea fijar:
-
-```text
-CSS visual
-clases CSS
-responsive visual
-spacing
-branding
-estructura HTML accidental
-existencia/no existencia de funciones o clases
-nombres privados
-implementación interna
-```
-
-Assets JS/CSS sólo se automatizan cuando su disponibilidad es requisito contractual.
-
-Responsive, densidad, spacing, branding y apariencia se validan visualmente salvo
-comportamiento funcional automatizable.
+No fijar CSS/markup/implementación interna accidental.
 
 ## Conflict CURRENT conocido
 
-`web/compositions/navigation-manager` usa `authorization.can_access(...)` aunque el
-protocolo CURRENT sólo declara `can_view(...)`.
+```text
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+```
 
-No crear alias `can_access` para conservar el consumer.
+No crear alias para conservar el consumer.
 
 ## Siguiente foco
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-Definir primero el contrato del editor; Web surface después.
+Antes de implementar, verificar serializer/provider contracts existentes y definir cómo el
+store durable preserva `ProjectionRecord.dependencies`.

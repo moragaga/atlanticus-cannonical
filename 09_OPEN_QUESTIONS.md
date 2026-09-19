@@ -2,160 +2,121 @@
 
 Estado: **CANONICAL OPEN ITEMS**
 
-Los puntos aquí no reabren contratos CLOSED.
+Los puntos aquí no reabren contracts CLOSED.
 
-## CLOSED — Manager authorization semantics
-
-```text
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-```
-
-CURRENT:
-
-```text
-ManagerModule.access_key
-ManagerAuthorizationPolicy.can_view
-explicit principal.access_keys
-```
-
-## CLOSED — Manager callback cardinality
-
-```text
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
-CLOSED / VERIFIED / CURRENT
-```
-
-La transición sin módulo resoluble usa `PreventUpdate`.
-
-## CLOSED — configuration UI composition recovery
-
-```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-CLOSED / VERIFIED / CURRENT
-```
-
-Quedó fijado:
-
-```text
-presentation belongs to each module
-reusable behavior may be generic when real reuse exists
-visual similarity alone does not justify shared UI
-```
-
-El primer comportamiento transversal identificado y cerrado fue pagination.
-
-## CLOSED — generic web pagination
-
-```text
-GENERIC-WEB-PAGINATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-CURRENT:
-
-```text
-atlanticus.web.pagination
-PageRequest
-Page
-paginate_items
-DEFAULT_PAGE_SIZE = 10
-ALLOWED_PAGE_SIZES = (10, 20)
-```
-
-SUPERSEDED / REMOVED:
-
-```text
-ada.web.configuration.pagination
-ConfigurationPageRequest
-ConfigurationPage
-DEFAULT_CONFIGURATION_PAGE_SIZE
-ALLOWED_CONFIGURATION_PAGE_SIZES
-```
-
-UI/CSS/placeholders no forman parte del contrato generic.
-
-## OPEN — Profiles Configuration editor contract
+## CLOSED — Profiles editor / Web surface / Projection / Manager composition
 
 ```text
 PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
-```
+CLOSED / VERIFIED / CURRENT
 
-Debe resolver únicamente el comportamiento del editor sobre contratos CURRENT de Profiles.
-
-No debe:
-
-```text
-inventar nuevos modelos Profiles
-crear Manager-specific lifecycle
-crear UI shared framework
-copiar contratos legacy Users/Profiles
-publicar Source dentro del editor si no forma parte del contrato acordado
-```
-
-La Web surface queda separada.
-
-## OPEN — Profiles Configuration Web surface
-
-```text
 PROFILES-CONFIGURATION-WEB-SURFACE
-PLANNED
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-PROJECTION-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-COMPOSITION
+CLOSED / VERIFIED / CURRENT
 ```
 
-Debe tener presentación propia y puede consumir `atlanticus.web.pagination`.
+No reabrirlos para rediseñar Profiles mientras se implementan consumers.
 
-Reglas UI ya decididas:
+## CLOSED — Users / Profiles contract realignment
 
 ```text
-full available width
-page size 10 | 20
-10 default
-real rows remain interactive
-placeholder rows, if used for stable height, are presentation-only
-pagination position should remain visually stable
-responsive remains presentation-specific
+USERS-PROFILES-CONTRACT-REALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
-La validación visual no se reemplaza con tests de CSS/clases.
+CURRENT:
+
+```text
+UserRecord.profile_key
+EffectiveUser.profile_key
+Users -> ProfileCatalog
+```
+
+REMOVED:
+
+```text
+authority_key
+authority.py
+```
+
+## CLOSED — ADA Access ownership
+
+```text
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
+CLOSED / VERIFIED / CURRENT
+```
+
+CURRENT:
+
+```text
+profile_key -> access_keys
+```
+
+REMOVED:
+
+```text
+UserProfileAssignment
+user_id -> profile_keys
+```
+
+## CLOSED — ADA Access Projection contract
+
+```text
+ADA-ACCESS-PROJECTION-CONTRACT
+CLOSED / VERIFIED / CURRENT
+```
+
+CURRENT:
+
+```text
+AdaAccessProjectionBuilder
+create_ada_access_projection_service
+ProjectionRecord[AdaAccessConfiguration]
+exact dependency -> Profiles ProjectionTarget
+```
+
+## OPEN — ADA Access Projection persistence
+
+```text
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
+```
+
+Debe verificarse primero el contract genérico de `ProjectionStore`/`ProjectionRecord`, los
+providers de Profiles y la serialización existente.
+
+Punto crítico a resolver antes de implementar:
+
+```text
+ProjectionRecord.dependencies
+```
+
+ADA Access sí tiene una dependencia exacta de Profiles; cualquier persistencia durable debe
+preservar la provenance necesaria para reconstruir el mismo record/target.
+
+No asumir package names, topology Cosmos ni schema durable sin verificar.
 
 ## OPEN — navigation-manager authorization consumer mismatch
-
-Implementación CURRENT contiene:
-
-```text
-ManagerAuthorizationPolicy.can_view(...)
-```
-
-pero `web/compositions/navigation-manager` llama:
-
-```text
-resolved_authorization.can_access(...)
-```
-
-Estado:
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-No introducir `can_access` como alias de compatibilidad.
+No introducir alias de compatibilidad.
 
 ## OPEN — Navigation fallback para identidad no promovida
 
-La entrada a la aplicación ya es CURRENT para identidad autenticada no promovida.
+La autenticación base no requiere promoted `UserRecord`.
 
-Sigue OPEN la composición exacta de `NavigationPrincipal`/perfil de fallback.
+Sigue OPEN la composición exacta de Navigation para esa identidad.
 
-No resolver mediante:
-
-```text
-guest authority en Users
-UserRecord ficticio
-Navigation -> Users dependency
-Navigation -> ADA Access dependency
-```
+No crear Users record ficticio ni dependencias Navigation -> Users/ADA Access.
 
 ## OPEN — Users Administration surface
 
@@ -164,31 +125,25 @@ USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED / SEPARATE
 ```
 
-El core de administración existe. Falta superficie UI.
-
-No reintroducir Users Source/Projection.
+Consumir `UsersAdministrationService` y el current `profile_key` contract.
 
 ## OPEN — ADA Access Configuration UI
 
-ADA Access core + configuration + Source lifecycle existen.
-
-Falta editor/surface administrativa.
-
 ```text
-PLANNED / SEPARATE INCREMENT
+PLANNED / SEPARATE
 ```
 
-No confundir esta UI con el wiring runtime exacto de ADA Access.
+Consumir `AdaAccessConfiguration` CURRENT; no reintroducir user-to-profile ownership.
 
 ## OPEN — final Manager administrative composition
 
 ```text
 MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / FINAL
+PLANNED / SEPARATE
 ```
 
-Se aborda después de cerrar las superficies faltantes. No anticipar ahora una arquitectura
-especial de sidebar/navigation para cada dominio.
+Profiles Manager composition reusable existe; la aplicación final todavía debe integrar las
+superficies que correspondan cuando sus fronteras estén cerradas.
 
 ## OPEN — ADA Access runtime composition
 
@@ -200,25 +155,17 @@ No convertir ADA Access en dependency de Navigation.
 
 ## OPEN — concrete Entra directory discovery
 
-Contrato disponible:
-
 ```text
 UsersDirectoryReader
-```
+CURRENT CONTRACT
 
-Provider concreto Graph/Entra:
-
-```text
+Graph/Entra provider
 UNVERIFIED
 ```
 
-No inventar tenant settings, Graph permissions, credential flow ni endpoints.
+No inventar settings/scopes/endpoints.
 
-## OPEN — Python package metadata alignment
-
-Canonical fija Python 3.14.7.
-
-Packages CURRENT aún contienen metadata 3.14.2.
+## OPEN — Python metadata alignment
 
 ```text
 PYTHON-METADATA-ALIGNMENT
@@ -232,13 +179,10 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
-Incluye deuda preexistente como import-order findings sólo cuando se tome ese foco; no
-mezclar con Profiles salvo bloqueo directo.
-
 ## UNVERIFIED
 
 ```text
-CI remoto de fbef06a8...
+CI remote
 full Ruff workspace
 Python/Trixie global qualification
 concrete Entra/Graph provider

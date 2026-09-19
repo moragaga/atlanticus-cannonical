@@ -5,17 +5,10 @@ Estado: **CURRENT**
 Checkpoint:
 
 ```text
-moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
+moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
 ```
 
-## 1. Global Users
-
-CLOSED:
-
-```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-USERS-PERSISTED-DATA-CUTOVER
-```
+## 1. Users
 
 CURRENT:
 
@@ -24,20 +17,23 @@ users/core
 users/blob
 users/cosmos
 users/activity
+
+UserRecord.profile_key
+EffectiveUser.profile_key
 ```
 
-No existen CURRENT:
+Removed:
 
 ```text
+authority_key
 users/configuration
-users/projection-cosmos
-users-manager Source/Projection composition
-pending write during login
+users generic Projection
+users-manager Source/Projection
 ```
 
 ## 2. Users Administration surface
 
-`UsersAdministrationService` existe.
+`UsersAdministrationService` existe y consume `ProfileCatalog`.
 
 Gap:
 
@@ -45,8 +41,6 @@ Gap:
 USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED / SEPARATE
 ```
-
-Debe consumir el lifecycle de Users directamente.
 
 ## 3. Users directory discovery
 
@@ -65,48 +59,20 @@ CURRENT:
 ```text
 profiles/core
 profiles/configuration
-ProfileDefinition
-ProfileCatalog
-ProfilesConfiguration
-Profiles Source lifecycle
+profiles/projection-local
+profiles/projection-cosmos
+Profiles Configuration Web surface
+profiles-manager composition
 ```
 
-Siguiente frontera:
-
-```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
-```
-
-Gap UI posterior:
-
-```text
-PROFILES-CONFIGURATION-WEB-SURFACE
-PLANNED
-```
+No queda gap de editor/Web surface/Projection contract de Profiles.
 
 ## 5. Generic Web pagination
-
-CLOSED:
 
 ```text
 GENERIC-WEB-PAGINATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
-
-CURRENT:
-
-```text
-atlanticus.web.pagination
-PageRequest
-Page
-paginate_items
-10 | 20
-```
-
-No incluye UI, CSS, placeholders, filtros ni sorting.
-
-El contrato `ada.web.configuration.pagination` fue removido.
 
 ## 6. ADA Access
 
@@ -115,20 +81,28 @@ CURRENT:
 ```text
 scopes/ada/web/access/core
 scopes/ada/web/access/configuration
+
+profile_key -> access_keys
+Source schema 2
+AdaAccessProjectionBuilder
+exact dependency -> Profiles Projection
 ```
 
-Gap UI:
+Next gap:
+
+```text
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
+```
+
+Otros gaps separados:
 
 ```text
 ADA Access Configuration UI
 PLANNED
-```
 
-Gap runtime separado:
-
-```text
-ADA Access runtime composition exacta
-PLANNED / SEPARATE
+ADA Access runtime composition
+PLANNED
 ```
 
 ## 7. Navigation / Profiles integration
@@ -138,56 +112,27 @@ NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 ```
 
-No existe dependency Navigation -> Users/ADA Access/Profiles Configuration.
-
 ## 8. Manager authorization
 
-```text
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-```
-
-CURRENT:
+Core CURRENT:
 
 ```text
-ManagerModule.access_key
 ManagerAuthorizationPolicy.can_view
-explicit principal.access_keys
 ```
 
 ## 9. navigation-manager consumer mismatch
-
-Gap verificado:
-
-```text
-web/compositions/navigation-manager
-calls can_access(...)
-
-ManagerAuthorizationPolicy
-exposes can_view(...)
-```
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-## 10. Configuration UI composition recovery
+## 10. Manager final administrative composition
 
-```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-CLOSED / VERIFIED / CURRENT
-```
+Profiles Manager composition reusable existe.
 
-Resultado:
-
-```text
-shared behavior only with demonstrated reuse
-presentation remains owned by each module
-pagination extracted as generic behavior
-```
-
-No crear un shared admin UI framework por simetría visual.
+La integración final de Profiles/Users/ADA Access en una aplicación administrativa
+completa sigue abierta.
 
 ## 11. User Activity
 
@@ -195,8 +140,8 @@ Permanece gap histórico de page visit history ordenada según target documentad
 
 ## 12. TTL
 
-Contrato canónico requiere 24 h para User Activity.
-Verificar `CosmosContainerSpec` físico antes de declarar aplicado.
+Contrato canónico requiere 24 h para User Activity; verificar recurso físico antes de
+declarar aplicado.
 
 ## 13. Cosmos provisioning / Web lifecycle
 
@@ -204,9 +149,7 @@ Permanecen gaps de resource preparation/readiness/named connections según consu
 
 ## 14. Local runtime
 
-Local selector wiring exacto fuera de Configuration Manager continúa UNVERIFIED.
-
-No usar ese gap para justificar authority implícita.
+Local selector wiring exacto fuera de las compositions actuales continúa separado.
 
 ## 15. Test hygiene
 
@@ -214,9 +157,6 @@ No usar ese gap para justificar authority implícita.
 WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
-
-Los I001 observados en `tests/test_web_runtime.py` de KPI Configuration/Definition son
-preexistentes y no fueron absorbidos por pagination cutover.
 
 ## 16. Python metadata
 
@@ -226,7 +166,7 @@ Canonical:
 Python 3.14.7
 ```
 
-Packages CURRENT aún tienen metadata 3.14.2.
+Packages aún contienen metadata 3.14.2 en múltiples boundaries.
 
 ```text
 PYTHON-METADATA-ALIGNMENT
@@ -236,7 +176,7 @@ PLANNED / OPEN
 ## 17. CI / global lint
 
 ```text
-CI remoto fbef06a8...
+CI remoto
 UNVERIFIED
 
 full Ruff workspace

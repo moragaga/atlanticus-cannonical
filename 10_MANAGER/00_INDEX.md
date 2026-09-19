@@ -1,6 +1,6 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT GENERIC CORE / AUTHORIZATION ALIGNED / UI RECOVERY NEXT**
+Estado: **CURRENT GENERIC CORE / PROFILES COMPOSITION AVAILABLE**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -27,15 +27,7 @@ ManagerModule
 └── access_key | None
 ```
 
-Manager no declara:
-
-```text
-ManagerModuleAccess
-workflow_service
-exact_source_*
-exact_projection_service
-expected_source_revision
-```
+Manager no declara legacy/exact dual contracts.
 
 ## Authorization CURRENT
 
@@ -43,47 +35,35 @@ expected_source_revision
 ManagerAuthorizationPolicy.can_view(principal, module)
 ```
 
-Default:
+No bypass por `is_local` ni profile administrator.
+
+## Profiles Manager composition CURRENT
+
+Existe una composition reusable:
 
 ```text
-module.access_key in principal.access_keys
+web/compositions/profiles-manager
 ```
 
-No bypass:
+Integra el lifecycle Profiles existente con Manager sin crear un contract paralelo.
 
-```text
-is_local
-administrator profile
-```
+Esto no implica que la aplicación final ADA Configuration Manager ya haya integrado todas
+las superficies administrativas pendientes.
 
-## Configuration Manager CURRENT
-
-Checkpoint:
-
-```text
-moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
-```
-
-Surface CURRENT:
-
-```text
-navigation
-tools
-kpis                 optional
-kpi-definitions      optional
-```
+## Users
 
 Users no es `ManagerModule` Source/Projection.
 
-Profiles y ADA Access tienen configuration lifecycle propio, pero no UI Manager CURRENT.
+Users Administration continúa siendo un lifecycle administrativo separado.
+
+## ADA Access
+
+ADA Access ya tiene Source y Projection contract CURRENT.
+
+Persistencia física de su Projection sigue pendiente antes de construir consumers que
+dependan de durabilidad.
 
 ## Finding CURRENT
-
-```text
-web/compositions/navigation-manager
-```
-
-usa `authorization.can_access(...)`, incompatible con el protocolo CURRENT `can_view(...)`.
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
@@ -92,11 +72,11 @@ BLOCKED / VERIFIED CONFLICT
 
 No añadir shim/alias.
 
-## Siguiente frontera
+## Siguiente frontera del Project
 
 ```text
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-PLANNED / NEXT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-Manager shell/workflow sigue siendo generic. Cada editor concreto sigue siendo owned por su dominio.
+No es un cambio de Manager core.

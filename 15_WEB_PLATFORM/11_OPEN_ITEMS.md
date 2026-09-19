@@ -7,71 +7,47 @@ Los items cerrados no deben reabrirse para restaurar simetría o legacy.
 ## Closed baselines relevantes
 
 ```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-PERSISTED-DATA-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CAPABILITY-EXTRACTION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROFILES-CONFIGURATION
-CLOSED / VERIFIED / CURRENT
-
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
-CLOSED / VERIFIED / CURRENT
-
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-CLOSED / VERIFIED / CURRENT
-
-GENERIC-WEB-PAGINATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-## Profiles Configuration editor contract — NEXT
-
-```text
 PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
-```
+CLOSED / VERIFIED / CURRENT
 
-Consumir contratos existentes:
-
-```text
-ProfileDefinition
-ProfileCatalog
-ProfilesConfiguration
-Profiles Source lifecycle
-atlanticus.web.pagination
-```
-
-No inventar dominio nuevo ni shared UI.
-
-El editor contract debe cerrarse antes de la Web surface.
-
-## Profiles Configuration Web surface
-
-```text
 PROFILES-CONFIGURATION-WEB-SURFACE
-PLANNED
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-PROJECTION-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-COMPOSITION
+CLOSED / VERIFIED / CURRENT
+
+USERS-PROFILES-CONTRACT-REALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-CONTRACT
+CLOSED / VERIFIED / CURRENT
 ```
 
-La presentación es Profiles-owned.
+## ADA Access Projection persistence — NEXT
 
-Puede usar paginación generic pero no importar presentación ADA.
+```text
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
+```
+
+Antes de implementar:
+
+```text
+inspect ProjectionStore / ProjectionRecord / ProjectionTarget
+inspect Profiles projection-local / projection-cosmos
+inspect Profiles durable serializer
+inspect ADA Access source_projection CURRENT
+```
+
+No copiar el serializer de Profiles sin verificar `dependencies`.
+
+No asumir package names, Cosmos topology o durable schema antes del diseño.
 
 ## navigation-manager authorization consumer
 
@@ -80,7 +56,6 @@ NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-`can_access` debe alinearse al contrato CURRENT `can_view` cuando entre al scope.
 No crear compatibility alias.
 
 ## Users Administration
@@ -90,26 +65,26 @@ USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED / SEPARATE
 ```
 
-Usar `UsersAdministrationService` y contracts actuales.
-No reintroducir Users Source/Projection.
+Usar `UserRecord.profile_key`, `UsersAdministrationService` y `ProfileCatalog`.
 
 ## ADA Access Configuration UI
 
 ```text
-PLANNED / SEPARATE INCREMENT
+PLANNED / SEPARATE
 ```
 
-Usar `AdaAccessConfiguration` y contracts actuales.
-Mantener ownership ADA.
+Usar `AdaAccessConfiguration` CURRENT.
+
+No reintroducir `UserProfileAssignment`.
 
 ## Manager final administrative composition
 
 ```text
 MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / FINAL
+PLANNED / SEPARATE
 ```
 
-Sólo después de cerrar las superficies faltantes.
+Profiles Manager composition reusable ya existe.
 
 ## Navigation runtime fallback
 
@@ -117,7 +92,7 @@ Sólo después de cerrar las superficies faltantes.
 PLANNED / SEPARATE
 ```
 
-No crear Users authority `guest` ni UserRecord ficticio.
+No crear fictitious UserRecord ni Navigation -> Users/ADA Access dependency.
 
 ## ADA Access runtime
 
@@ -125,13 +100,10 @@ No crear Users authority `guest` ni UserRecord ficticio.
 PLANNED / SEPARATE
 ```
 
-No convertirlo en dependency de Navigation.
-
 ## Entra / Directory
 
-Provider concreto:
-
 ```text
+concrete provider
 UNVERIFIED
 ```
 
@@ -144,8 +116,6 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
-Incluye deuda preexistente fuera de los incrementos funcionales cuando corresponda.
-
 ## Python baseline
 
 ```text
@@ -156,7 +126,7 @@ PLANNED / OPEN
 ## Qualification transversal
 
 ```text
-CI remote fbef06a8...
+CI remote
 UNVERIFIED
 
 full Ruff workspace

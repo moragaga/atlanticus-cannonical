@@ -10,87 +10,61 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `fbef06a8a0a587571527d9ecf131c73c5fc5f01a`
+  `a31fce11d26a7c0a554d82de1813a4311522919b`
 - Parent inmediato:
-  `9f12c41a23d69784c7c5b775a4093a94ac654d55`
+  `90e89c376dfdfd182f0380b1d407127ecb7c9711`
 - Tree:
-  `fc8c293f617aca4a53d89f687a22728e9d0fdcca`
+  `737310de59774f3033607c1ef17c1c921efe1e09`
 
-El checkpoint CURRENT contiene, entre otros hitos ya cerrados:
+El checkpoint CURRENT conserva los hitos anteriormente cerrados de Manager generic,
+Navigation, Tools, KPI Configuration, KPI Definition, Users registry/persistencia,
+Profiles extraction/lifecycle, Manager authorization, UI composition recovery y generic
+pagination.
+
+Además contiene:
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+PROFILES-CONFIGURATION-WEB-SURFACE
 CLOSED / VERIFIED / CURRENT
 
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+PROFILES-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CAPABILITY-EXTRACTION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-CLOSED / VERIFIED / CURRENT
-
-USERS-PERSISTED-DATA-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROFILES-CONFIGURATION
-CLOSED / VERIFIED / CURRENT
-
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
-CLOSED / VERIFIED / CURRENT
-
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-CLOSED / VERIFIED / CURRENT
-
-GENERIC-WEB-PAGINATION-CUTOVER
+ADA-ACCESS-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 ```
 
-Existe un conflicto implementado todavía abierto en un consumer standalone:
+Permanece un conflicto implementado previo:
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-`web/compositions/navigation-manager` llama `ManagerAuthorizationPolicy.can_access(...)`,
-pero el contrato CURRENT de `ManagerAuthorizationPolicy` expone `can_view(...)`.
-No tratar ese consumer como CLOSED hasta corregirlo y verificarlo.
+`web/compositions/navigation-manager` no debe tratarse como alineado hasta que consuma
+directamente el contrato CURRENT de autorización Manager. No crear alias/shim para
+preservar el consumer.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `4e59aa1e5160ff827ca6767fe178d3b45f4bc30d`
+  `a7adef2568d664ee31cb1b0eb1fe9f11ce2b9203`
+- Tree inspeccionado:
+  `9f8335f0de8c052e556c02be062757604c33bfcd`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -99,25 +73,19 @@ No tratar ese consumer como CLOSED hasta corregirlo y verificarlo.
 
 `moragaga/atlanticus-decisions` es **HISTORICAL**.
 
-Checkpoint inspeccionado:
+Puede aportar rationale y evidencia histórica. No puede reemplazar `atlanticus:main` ni
+`atlanticus-cannonical:main`.
 
-```text
-50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-Puede aportar rationale, UX previamente aprobada y evidencia histórica. No puede reemplazar
-`atlanticus:main` ni `atlanticus-cannonical:main`.
-
-Durante este cierre no se encontró un registro histórico relevante que contradiga el
-cutover de paginación genérica. Eso no convierte `atlanticus-decisions` en autoridad.
+Durante este cierre no se verificó un decision record histórico que contradiga o reemplace
+los contracts publicados en `atlanticus:main`.
 
 ## Jerarquía
 
 1. `atlanticus:main`: realidad implementada.
-2. `atlanticus-cannonical:main`: contratos, fronteras, roadmap y estado vigente.
+2. `atlanticus-cannonical:main`: contracts, fronteras, roadmap y estado vigente.
 3. Qualification y tests vigentes: evidencia de propiedades demostradas.
 4. Decisiones explícitas del Project todavía no formalizadas en canonical: delta temporal.
-5. `atlanticus-decisions`: referencia histórica cuando sea útil.
+5. `atlanticus-decisions`: referencia histórica.
 6. Memoria/historial conversacional: pista, nunca autoridad suficiente.
 
 ## Clasificación obligatoria
@@ -167,8 +135,11 @@ FORBIDDEN
 OLD SCHEMA RUNTIME READERS
 FORBIDDEN
 
-Global Users
-standalone / generic
+Manager exact/legacy dual contract
+REMOVED
+
+expected_source_revision
+REMOVED
 
 Users Configuration Source
 REMOVED
@@ -178,37 +149,25 @@ REMOVED
 
 Users Manager Source/Projection module
 REMOVED
-
-Managed global authority
-basic | root
-
-local
-runtime-only authority
-
-Profiles
-Atlanticus generic first-class capability
-
-ADA Access
-ADA-specific capability
-
-Navigation
-Atlanticus generic capability
-
-Navigation durable authorization
-allowed_profiles = profile keys
-
-Navigation Configuration -> Profiles core
-ALLOWED / CURRENT
-
-Navigation -> Users
-FORBIDDEN
-
-Navigation -> ADA Access
-FORBIDDEN
-
-Navigation -> Profiles Configuration
-FORBIDDEN
 ```
+
+## Source / Projection CURRENT
+
+```text
+Source generic
+web/capabilities/source
+
+Projection exact-release
+web/capabilities/projection/core
+
+ProjectionTarget
+SourceKey + SourceReleaseRef + dependencies
+```
+
+`project(target)` no reconstruye target desde una revision textual.
+
+Dependencias exactas se modelan mediante `ProjectionTarget.dependencies` cuando existen
+realmente.
 
 ## Manager authorization CURRENT
 
@@ -219,134 +178,178 @@ ManagerModule.access_key: str | None
 ManagerAuthorizationPolicy.can_view(principal, module)
 ```
 
-`DefaultManagerAuthorizationPolicy` concede acceso únicamente cuando:
-
-```text
-module.access_key is not None
-AND
-module.access_key in principal.access_keys
-```
-
 No conceden autoridad implícita:
 
 ```text
 principal.is_local
-'administrator' in principal.profile_keys
+administrator profile
 ```
 
-`is_local` permanece metadata/contexto de runtime, no permiso.
+El mismo permiso funcional del módulo protege el módulo y sus operaciones de workflow.
 
-El mismo permiso funcional del módulo protege acceso al módulo y las operaciones internas
-del workflow Manager. No existen permisos separados Manager para `validate`, `publish` o
-`project`.
+## Users / Profiles CURRENT
 
-ADA Configuration Manager CURRENT declara:
+Profiles posee definición y catálogo de perfiles.
+
+Users posee:
 
 ```text
-navigation.manage
-tools.manage
-kpis.manage
+user -> profile_key
 ```
 
-El runtime local recibe esos access keys explícitamente.
-
-## Users / Profiles / Access / Navigation CURRENT
-
-Promotion de Users no habilita el ingreso a la aplicación.
+Contrato CURRENT:
 
 ```text
-authenticated identity + no promoted UserRecord
-→ READY
-→ deterministic user_id
-→ no UsersRuntime EffectiveUser
-
-authenticated identity + promoted enabled UserRecord
-→ READY
-→ EffectiveUser available
-
-authenticated identity + promoted disabled UserRecord
-→ USER_DISABLED
-→ 403
+UserRecord.profile_key
+EffectiveUser.profile_key
 ```
 
-`USER_NOT_PROMOTED` no existe en `AccessStatus` CURRENT.
+SUPERSEDED / REMOVED:
 
-Navigation Configuration consume directamente Profiles core:
+```text
+authority_key
+authority.py
+basic|root assignable-authority mini-contract
+```
+
+Managed users pueden referenciar perfiles existentes en `ProfileCatalog` salvo `local`.
+
+`local` es runtime-only para identidades locales.
+
+Persistencia CURRENT:
+
+```text
+Blob Users Registry schema 2
+Cosmos Users schema 2
+Users session snapshot v4
+```
+
+## Profiles CURRENT
+
+```text
+profiles/core
+profiles/configuration
+profiles/projection-local
+profiles/projection-cosmos
+web/compositions/profiles-manager
+```
+
+Profiles Projection materializa `ProfileCatalog`.
+
+Los perfiles de sistema pertenecen al código de Profiles; configured profiles se conservan
+en la persistencia de Projection.
+
+La Web surface de Profiles y la composition Manager reusable están implementadas.
+
+Esto no implica que una aplicación final administrativa ya componga todas las superficies
+pendientes.
+
+## ADA Access CURRENT
+
+ADA Access es application-specific.
+
+Ownership:
+
+```text
+profile_key -> access_keys
+```
+
+SUPERSEDED / REMOVED:
+
+```text
+user_id -> profile_keys
+UserProfileAssignment
+```
+
+Contrato CURRENT:
+
+```text
+ProfileAccessGrant
+EffectiveAdaAccess(profile_key, access_keys)
+AdaAccessConfiguration(profile_access=...)
+```
+
+Source schema:
+
+```text
+ADA_ACCESS_SOURCE_SCHEMA_VERSION = 2
+```
+
+Projection CURRENT:
+
+```text
+AdaAccessProjectionBuilder
+create_ada_access_projection_service
+ProjectionRecord[AdaAccessConfiguration]
+```
+
+Dependencia exacta:
+
+```text
+Profiles ProjectionTarget
+        ↓
+ADA Access ProjectionTarget
+```
+
+ADA Access valida profile keys contra el `ProfileCatalog` de esa dependencia.
+
+## Navigation CURRENT
+
+Navigation Configuration consume Profiles core:
 
 ```text
 ProfileCatalog
 ProfileDefinition
-NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
+NavigationProfileCatalogProvider
 ```
 
-Sin provider, Navigation no inventa perfiles base. Fallos del provider no se silencian.
+Durable authorization:
+
+```text
+allowed_profiles = profile keys
+```
+
+No depende de:
+
+```text
+Users
+ADA Access
+Profiles Configuration
+```
 
 ## Paginación Web CURRENT
 
-El comportamiento transversal de paginación pertenece a Atlanticus:
-
 ```text
 atlanticus.web.pagination
-├── DEFAULT_PAGE_SIZE = 10
-├── ALLOWED_PAGE_SIZES = (10, 20)
-├── PageRequest
-├── Page
-└── paginate_items(...)
+DEFAULT_PAGE_SIZE = 10
+ALLOWED_PAGE_SIZES = (10, 20)
+PageRequest
+Page
+paginate_items(...)
 ```
 
-`Page` contiene únicamente registros reales.
-
-No pertenecen al contrato genérico:
+No pertenecen al contract generic:
 
 ```text
-markup Dash del paginador
-CSS del paginador
+markup Dash
+CSS
 placeholders visuales
 sort/filter/search
-SortDirection
 ```
 
-Cada presentación conserva ownership de su UI. La presentación de paginación que hoy usa
-ADA permanece en `ada.web.configuration.presentation` y consume el contrato genérico.
+## Modelo operacional
 
-El contrato legacy:
+No asumir automatización total.
 
-```text
-ada.web.configuration.pagination
-```
-
-fue removido sin aliases, shims ni reexports de compatibilidad.
-
-## Superficies administrativas CURRENT
-
-ADA Configuration Manager CURRENT compone:
-
-```text
-navigation
-tools
-kpis
-kpi-definitions
-```
-
-Ausencia CURRENT verificada:
-
-```text
-Profiles Configuration UI
-Users Administration UI
-ADA Access Configuration UI
-```
-
-Esto no autoriza inventar UI ni contratos. Los dominios/backend existentes deben ser la
-fuente de la futura superficie.
+Procesos automáticos, semi-automatizados y manuales controlados pueden formar parte del
+contract cuando se definan explícitamente.
 
 ## Siguiente foco único recomendado
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-Debe consumir `ProfilesConfiguration`, Profiles core/Source lifecycle y
-`atlanticus.web.pagination` sin crear UI transversal nueva.
-
-La Web surface de Profiles queda separada como incremento posterior.
+Primero verificar contracts y providers existentes. No inventar package layout, serializer,
+schema durable o Cosmos topology antes de cerrar diseño.

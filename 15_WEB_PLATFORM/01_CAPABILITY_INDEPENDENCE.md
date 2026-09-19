@@ -1,59 +1,57 @@
 # Web Platform — Capability Independence
 
-Estado: **CURRENT / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
+Estado: **CURRENT / REFINED AFTER USERS-PROFILES REALIGNMENT**
 
 ## Regla
 
-Independencia técnica de una capability no significa que toda combinación de
-capabilities sea válida operacionalmente.
+Independencia técnica no significa ausencia total de dependencias de dominio.
 
 Separar:
 
 ```text
-core dependency
+generic domain dependency
 ```
 
 de:
 
 ```text
-composition requirement
+application-specific dependency
 ```
 
-Las integrations deben permanecer en composition/binding cuando no exista una
-responsabilidad de dominio que justifique acoplar cores.
-
-## Global Users
-
-Users puede existir standalone y es independiente de una aplicación concreta.
+y de:
 
 ```text
-Global Users
-VALID
+composition-only integration
 ```
 
-Users CURRENT no es configuration Source.
+## Users
 
-Estructura:
+Users es generic Atlanticus.
+
+CURRENT dependency:
 
 ```text
-users/core
-users/blob
-users/cosmos
-users/activity
+Users -> Profiles core
 ```
 
-Global User no contiene:
+porque Users posee:
 
 ```text
-profile_key
-profile_keys
-access_keys
-app role
-Navigation configuration
-Tools configuration
-KPI configuration
-ADA-specific Access
+user -> profile_key
 ```
+
+y valida managed profile keys contra `ProfileCatalog`.
+
+Users no depende de:
+
+```text
+ADA Access
+Navigation
+Tools
+KPI
+```
+
+Global User no contiene ADA-specific access keys ni configuration de una aplicación.
 
 Strong identity:
 
@@ -63,188 +61,129 @@ issuer + subject_id
 
 ## Profiles
 
-Profiles es first-class capability generic Atlanticus.
+Profiles es first-class generic Atlanticus capability.
 
 CURRENT:
 
 ```text
 profiles/core
 profiles/configuration
+profiles/projection-local
+profiles/projection-cosmos
 ```
 
-`profiles/core` posee `ProfileDefinition` y `ProfileCatalog`.
+y existe:
 
-`profiles/configuration` posee `ProfilesConfiguration` y su Source lifecycle.
+```text
+web/compositions/profiles-manager
+```
 
-Una aplicación puede asociar Profiles a Global Users sin transferir ownership del Users
-registry hacia Profiles y sin agregar estado application-specific al Global User.
+Profiles posee definiciones/catálogo; no posee ADA access permissions.
 
-## Access
+## ADA Access
 
-Access es application-specific cuando sus permisos pertenecen a una aplicación.
+ADA Access es application-specific.
 
-ADA Access CURRENT vive bajo `scopes/ada`.
+CURRENT dependency:
 
-No agregar Access al Global `UserRecord`.
+```text
+ADA Access -> Profiles core / Profiles Projection
+```
 
-No convertir ADA Access en dependency de Navigation core/configuration.
+para validar referencias exactas.
+
+Ownership:
+
+```text
+profile_key -> access_keys
+```
+
+No posee user-to-profile assignment.
+
+No convertir ADA Access en dependency de Navigation.
 
 ## Navigation
 
-Navigation continúa siendo configuration domain generic.
+Navigation continúa generic.
 
-Estado:
-
-```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-```
-
-Boundary CURRENT:
+CURRENT:
 
 ```text
-Navigation core
-independiente de Users / Profiles lifecycle / ADA Access
-
-Navigation Configuration
-    -> Profiles core
-       ProfileCatalog / ProfileDefinition
-
-Navigation durable authorization
-    -> allowed_profiles = profile keys
+Navigation Configuration -> Profiles core
+Navigation -> Users FORBIDDEN
+Navigation -> ADA Access FORBIDDEN
+Navigation Configuration -> Profiles Configuration FORBIDDEN
 ```
 
-La integración se provee por composition mediante:
+Durable:
 
 ```text
-NavigationProfileCatalogProvider
+allowed_profiles = profile keys
 ```
-
-Navigation Configuration no depende de `profiles/configuration`.
-
-No existe catálogo paralelo local de Profiles.
-
-Removed:
-
-```text
-NavigationProfileOption
-_BASE_PROFILES
-NavigationProfileOptionsProvider
-profile_options_provider
-```
-
-Sin `ProfileCatalog` provider, Navigation no inventa perfiles de administración.
-
-Con provider, consume directamente `ProfileCatalog.all()` y valida referencias mediante
-`ProfileCatalog.require(...)`.
-
-Fallos del provider se propagan.
 
 ## Runtime authorization composition
 
-La composición exacta de `NavigationPrincipal` para identidad autenticada no promovida
-sigue OPEN / SEPARATE.
+La composición exacta de Navigation para identidad autenticada no promovida sigue OPEN /
+SEPARATE.
 
-No resolver ese punto agregando dependencias directas entre Navigation y Users/ADA Access.
+No resolver agregando dependencias directas Navigation -> Users/ADA Access.
 
 ## User Activity
 
-User Activity conserva independencia funcional respecto de Users Administration,
-Navigation y Manager salvo integrations explícitas.
-
-Su dependencia mínima puede seguir siendo:
-
-```text
-Identity
-+
-Web runtime
-```
-
-Un binding de Navigation hacia Activity puede existir sin fusionar sus domains.
+User Activity conserva independencia funcional.
 
 ## Manager
 
-Manager registra únicamente módulos de Configuration presentes en la composition.
+Manager registra módulos disponibles en composition.
 
-No obliga por sí mismo a instalar:
+Users no es `ManagerModule` Source/Projection.
 
-```text
-Users
-Profiles
-Navigation
-Tools
-KPI
-Alarm
-...
-```
+Profiles sí dispone de composition Manager porque tiene Configuration Source/Projection
+reales.
 
-Users CURRENT no es `ManagerModule`.
-
-Cada módulo administrativo conserva ownership propio.
-
-La autorización interna de Manager mantiene un gap stale de `is_local`/`administrator`;
-es un frente separado.
+La aplicación final administrativa no debe considerarse completa sólo por existir esa
+composition reusable.
 
 ## Invariante estructural
 
-Cuando varias capabilities tienen la misma responsabilidad, usar el mismo concepto.
+Usar una dependencia core sólo cuando la responsabilidad real la requiere.
 
-Para configuration domains que tengan ambas responsabilidades:
+No crear fronteras por simetría.
 
-```text
-<capability>/core
-<capability>/configuration
-```
-
-No aplicar este patrón mecánicamente a Users: `users/configuration` fue eliminado porque
-la responsabilidad no corresponde.
-
-Para Profiles CURRENT:
+CURRENT:
 
 ```text
-profiles/core
-profiles/configuration
+Users -> Profiles core
+JUSTIFIED BY user.profile_key
+
+Navigation Configuration -> Profiles core
+JUSTIFIED BY allowed_profiles
+
+ADA Access -> Profiles
+JUSTIFIED BY profile grants
+
+Navigation -> Users/ADA Access
+FORBIDDEN
 ```
-
-`profiles/management` no es parte del target.
-
-## Dashboard
-
-Dashboard puede unificar visualmente información de varias capabilities sin convertir
-esa vista en dependencia de dominio.
-
-```text
-Users data ─────┐
-Activity data ──┼──► Dashboard/read model
-Navigation ─────┘
-```
-
-Los productores preservan ownership.
 
 ## Estado de implementación
 
-En:
-
 ```text
-moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
 ```
 
-están CLOSED / VERIFIED / CURRENT:
+CLOSED / VERIFIED / CURRENT:
 
 ```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-USERS-PERSISTED-DATA-CUTOVER
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-PROFILES-CAPABILITY-EXTRACTION
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-ADA-ACCESS-PROFILES-CONFIGURATION
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
+PROFILES-MANAGER-COMPOSITION
+USERS-PROFILES-CONTRACT-REALIGNMENT
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
+ADA-ACCESS-PROJECTION-CONTRACT
 ```
 
-Siguiente gap recomendado para debate separado:
+Siguiente gap recomendado:
 
 ```text
-Manager authorization stale administrator/local semantics
-OPEN / PROPOSED NEXT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
 ```

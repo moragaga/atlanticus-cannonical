@@ -12,11 +12,11 @@ El núcleo genérico de Atlanticus no depende de ADA.
 
 ## Ownership y scopes
 
-`scopes/` contiene composiciones y capacidades específicas de un producto/proyecto cuando corresponde.
+`scopes/` contiene composiciones y capacidades específicas de producto/proyecto cuando
+corresponde.
 
-Una capability bajo `scopes/ada` puede consumir infraestructura genérica Atlanticus sin transferir su ownership al core genérico.
-
-Regla CURRENT:
+Una capability bajo `scopes/ada` puede consumir infraestructura genérica Atlanticus sin
+transferir su ownership al core genérico.
 
 ```text
 Atlanticus generic infrastructure/capabilities
@@ -26,7 +26,7 @@ ADA-specific capabilities
     Tools / KPI Configuration / KPI Definition / ADA Access / ...
 ```
 
-No generalizar una capability sólo porque reutiliza contratos genéricos.
+No generalizar una capability sólo porque reutiliza contracts genéricos.
 
 ## Planos principales
 
@@ -39,77 +39,69 @@ Capacidades transversales:
 - integrations;
 - web.
 
-`backend/` representa backend jobs y capacidades propias de esos jobs.
-
-`web/` es frontera de primer nivel para Flask/Dash, JavaScript/CSS, composición Web,
-server-side Python con responsabilidad Web y capabilities Web reutilizables.
+`web/` es frontera para Flask/Dash, JavaScript/CSS, composición Web, server-side Python con
+responsabilidad Web y capabilities Web reutilizables.
 
 Connectivity es dual-use y no adquiere ownership funcional.
 
 ### Configuration / Administration
 
-Manager administra configuración, authoring, validation, publication, history y
-projection actions para dominios que realmente sean Configuration Sources.
+Manager administra configuración, authoring, validation, publication, history y projection
+actions para domains que realmente sean Configuration Sources.
 
-Source genérico pertenece a:
+Source genérico:
 
 ```text
 web/capabilities/source/
 ```
 
-Projection genérica exact-release pertenece a:
+Projection genérica exact-release:
 
 ```text
 web/capabilities/projection/core
 ```
 
-Manager consume estos contratos genéricos directamente. No mantiene una arquitectura
-paralela `legacy` vs `exact`.
+Manager consume esos contracts directamente.
 
 No toda entidad administrable debe convertirse en Manager/Source/Projection.
 
 ### Entity lifecycle
 
-Users CURRENT pertenece a un lifecycle de entidad global, no a Configuration Source.
+Users pertenece a lifecycle global de entidad, no a Configuration Source.
 
 ```text
-Global Users Registry
+Global Users
         │
-        ├── durable registry: UsersRegistryStore / Blob provider
-        ├── promoted/runtime store: UsersAdministrationStore + UsersRuntimeStore / Cosmos
-        └── optional directory discovery: UsersDirectoryReader
+        ├── durable registry: UsersRegistryStore / Blob
+        ├── promoted/runtime: UsersAdministrationStore + UsersRuntimeStore / Cosmos
+        ├── optional directory discovery: UsersDirectoryReader
+        └── profile reference: profile_key -> Profiles core
 ```
 
-Esto es una frontera diferente de:
-
-```text
-SourceRelease
-ProjectionTarget
-ManagerModule
-```
+Users no vuelve a ser Source/Projection sólo porque su administración use UI.
 
 ### Operational Data
 
-Operational Data conserva ownership separado para sources, producers, processes,
-planner y materialization.
+Operational Data conserva ownership separado para sources, producers, processes, planner y
+materialization.
 
 ### ADA Runtime
 
-ADA Generic compone la experiencia operacional y consume capacidades Atlanticus y
-contratos ADA-specific ya resueltos.
+ADA Generic compone experiencia operacional y consume capabilities Atlanticus y contracts
+ADA-specific ya resueltos.
 
-ADA-specific authorization puede consumir contratos genéricos, pero no convertirse en
-dependencia del core Atlanticus.
+ADA-specific authorization puede consumir contracts genéricos sin convertirse en dependency
+del core Atlanticus.
 
 ## Manager vs ADA Generic
 
 ```text
-Manager      = administrar configuración Source/Projection
+Manager      = administrar Configuration Source/Projection
 ADA Generic  = consumir configuración y materializar experiencia operacional
 Users Admin  = administrar lifecycle de Users globales
 ```
 
-No fusionar estas responsabilidades por conveniencia de UI.
+No fusionar responsabilidades por conveniencia de UI.
 
 ## Configuration vs Data
 
@@ -124,48 +116,33 @@ ENTITY REGISTRY DETERMINES GLOBAL USER LIFECYCLE
 Source y Projection son responsabilidades separadas.
 
 ```text
-Source     = Local | Blob
+Source     = Local | Blob | provider equivalente
 Projection = Local | Cosmos | provider equivalente
 ```
 
 Projection representa un `SourceReleaseRef` concreto mediante `ProjectionTarget`.
+
+```text
+ProjectionTarget
+= SourceKey
++ SourceReleaseRef
++ dependencies
+```
 
 Source current nunca se determina desde Cosmos.
 
 `ProjectionTarget.dependencies` representa dependencias semánticas exactas entre
 projections cuando existen realmente.
 
-No existe un orden global obligatorio de todas las proyecciones.
+No existe un orden global obligatorio de todas las projections.
 
-Estas reglas siguen CURRENT para dominios de Configuration; no se aplican a Users
-sólo por analogía.
+Estas reglas no convierten Users en Configuration Source.
 
 ## Contrato único de Manager
 
-Cada `ManagerModule` declara:
-
-```text
-SourceKey
-source_service
-source_reader_service
-projection_service
-draft_validation_service
-source_history_service | None
-```
+Cada `ManagerModule` declara el contract generic CURRENT.
 
 No existe una segunda familia `exact_*`.
-
-### Source
-
-```text
-SourceReaderWorkflow
-SourcePublicationWorkflow
-SourceHistoryWorkflow
-```
-
-Todos transportan modelos de `source/core`.
-
-### Projection
 
 Manager consume:
 
@@ -175,55 +152,31 @@ select_current_target(source_key)
 project(ProjectionTarget)
 ```
 
-No existe adapter Manager hacia una identidad textual de revisión.
+No existe adapter Manager hacia identidad textual de revision.
 
 ## Workspace genérico
 
-`ManagerWorkspace` conserva:
+`ManagerWorkspace` conserva owner, payload local, SourceSnapshot base, revision local y
+metadata de guardado.
 
-```text
-owner
-payload local
-SourceSnapshot como BASE
-local revision
-base payload revision
-saved_at
-```
-
-Reglas:
-
-- local revision identifica payload local;
-- Source release identity permanece en `SourceSnapshot`;
-- concurrency token no se convierte en release identity;
-- no reconstruir `ProjectionTarget` desde revision.
+No reconstruir `ProjectionTarget` desde revision.
 
 ## Navigation CURRENT
 
 ```text
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 ```
 
-Navigation continúa como configuration domain genérico.
+Navigation continúa generic.
 
-Autorización core:
-
-```text
-principal.unrestricted
-OR
-principal.access_key in allowed_profiles
-```
-
-Durable configuration:
+Durable:
 
 ```text
 allowed_profiles = tuple de profile keys
 ```
 
-Navigation Configuration puede consumir Profiles core para catálogo y validación:
+Navigation Configuration consume:
 
 ```text
 ProfileCatalog
@@ -239,16 +192,9 @@ ADA Access
 Profiles Configuration
 ```
 
-El mini-modelo local `NavigationProfileOption/_BASE_PROFILES` fue eliminado.
-
 ## Users CURRENT
 
-```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-Estructura publicada:
+Estructura:
 
 ```text
 users/
@@ -266,8 +212,6 @@ users/projection-cosmos
 compositions/users-manager
 ```
 
-### Global identity
-
 Strong identity:
 
 ```text
@@ -275,90 +219,72 @@ Strong identity:
 user_id = build_user_key(issuer, subject_id)
 ```
 
-Un `UserRecord` global no contiene app profile, Navigation, Tools, KPI ni otra
-configuración de una aplicación específica.
-
-### Authorities
-
-Managed global Users:
+Contrato CURRENT:
 
 ```text
-basic
-root
+UserRecord.profile_key
+EffectiveUser.profile_key
 ```
 
-Runtime local:
+Users depende de Profiles core para validar perfiles.
+
+Global User no contiene:
 
 ```text
-local
+ADA access_keys
+Navigation configuration
+Tools/KPI configuration
+otro estado application-specific
 ```
 
-No existe compatibility alias `administrator -> root`.
+SUPERSEDED / REMOVED:
 
-### Durable registry
+```text
+authority_key
+authority.py
+basic|root authority mini-contract
+```
 
-`UsersRegistryStore` es contrato durable de registry.
+Managed users pueden referenciar perfiles existentes en `ProfileCatalog` salvo `local`.
 
-Provider Blob CURRENT:
+`local` es runtime-only.
+
+Durable registry:
 
 ```text
 BlobUsersRegistryStore
-users/users.json.gz
-atlanticus_users_registry / schema 1
+atlanticus_users_registry / schema 2
 ```
 
-El container es configuración inyectada.
-
-### Promoted/runtime state
-
-Cosmos CURRENT:
+Promoted/runtime:
 
 ```text
 CosmosUsersStore
-atlanticus_user / schema 1
+atlanticus_user / schema 2
 ```
 
-Login consulta sólo promoted state y no escribe pending.
-
-Identity autenticada sin promoted record:
+Session snapshot:
 
 ```text
-READY
+v4
 ```
 
-Promoted disabled:
-
-```text
-USER_DISABLED / 403
-```
-
-### Administration
-
-`UsersAdministrationService` compone:
-
-```text
-UsersRegistryStore
-UsersAdministrationStore
-UsersDirectoryReader | None
-```
-
-Candidate state:
-
-```text
-PROMOTABLE
-CONFLICT
-PROMOTED
-```
-
-No se introduce rollback distribuido ni adapter legacy.
+Identity autenticada sin promoted record continúa READY; promoted disabled continúa
+USER_DISABLED / 403.
 
 ## Profiles CURRENT
 
 ```text
-PROFILES-CAPABILITY-EXTRACTION
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
+PROFILES-CONFIGURATION-WEB-SURFACE
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-PROJECTION-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 ```
 
@@ -367,137 +293,149 @@ Estructura:
 ```text
 profiles/core
 profiles/configuration
+profiles/projection-local
+profiles/projection-cosmos
+web/compositions/profiles-manager
 ```
 
 Ownership:
 
 ```text
 profiles/core
-ProfileDefinition
-ProfileCatalog
+    ProfileDefinition
+    ProfileCatalog
 
 profiles/configuration
-ProfilesConfiguration
-Profiles Source lifecycle
+    ProfilesConfiguration
+    Source lifecycle
+    Projection builder / serializer contract
 ```
 
-Profiles es generic Atlanticus first-class capability.
+Projection:
 
-No agregar campos ADA-specific al modelo generic.
+```text
+ProjectionRecord[ProfileCatalog]
+```
 
-El vínculo entre Global User y estado application-specific permanece fuera de Users core.
+System profiles se reconstruyen desde código. La persistencia conserva configured profiles.
 
 ## ADA Access CURRENT
 
 ```text
-ADA-ACCESS-PROFILES-CONFIGURATION
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 ```
 
 ADA Access es application-specific bajo `scopes/ada`.
 
-Puede consumir `ProfileCatalog` para validar sus referencias.
+Ownership CURRENT:
 
-Navigation no depende de ADA Access.
+```text
+profile_key -> access_keys
+```
+
+No posee:
+
+```text
+user_id -> profile_keys
+UserProfileAssignment
+```
+
+Contracts:
+
+```text
+ProfileAccessGrant
+EffectiveAdaAccess(profile_key, access_keys)
+AdaAccessConfiguration
+AdaAccessSourceService
+AdaAccessProjectionBuilder
+```
+
+Source schema:
+
+```text
+2
+```
+
+Projection payload:
+
+```text
+AdaAccessConfiguration
+```
+
+Dependencia exacta:
+
+```text
+Profiles ProjectionTarget
+        ↓
+ADA Access ProjectionTarget
+```
+
+La persistencia física de ADA Access Projection sigue OPEN.
 
 ## Tools CURRENT
 
-Ownership:
-
-```text
-scopes/ada/web/tools
-```
-
-Tool Configuration conserva semántica ADA y consume infraestructura genérica Source/Projection.
-
-```text
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
+Tool Configuration conserva semántica ADA y consume infraestructura genérica
+Source/Projection.
 
 ## KPI Configuration CURRENT
-
-Ownership:
-
-```text
-scopes/ada/web/kpis/configuration
-```
-
-```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
 
 Dependencia exacta:
 
 ```text
 Tool ProjectionTarget
-        ↓ dependency
+        ↓
 KPI Configuration ProjectionTarget
 ```
 
 ## KPI Definition CURRENT
 
-Ownership:
-
-```text
-scopes/ada/web/kpis/definition
-```
-
-```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
 Dependencia exacta:
 
 ```text
 KPI Configuration ProjectionTarget
-        ↓ dependency
+        ↓
 KPI Definition ProjectionTarget
 ```
 
 ## ADA Configuration Manager CURRENT
 
-La composition no incluye Users.
+La aplicación final existente no debe confundirse con la disponibilidad de compositions
+reusables individuales.
 
-Módulos directos:
+Profiles dispone de `profiles-manager`.
 
-```text
-Navigation
-Tools
-KPI Configuration    optional
-KPI Definition       optional
-```
+Users sigue fuera del modelo Source/Projection Manager.
 
-Users Administration futura no debe reintroducirse como falso `ManagerModule` de
-Source/Projection.
-
-La autorización Manager actual mantiene bypass stale de `is_local`/`administrator`;
-es un gap separado y no un contrato de Navigation/Profiles.
+La composición final de todas las superficies administrativas sigue separada.
 
 ## Reglas congeladas
 
 ```text
 LEGACY                      REMOVE
 ADAPTERS / SHIMS / ALIASES FORBIDDEN
-DOBLE CONTRATO              FORBIDDEN
+DOUBLE CONTRACT             FORBIDDEN
 OLD SCHEMA READERS          FORBIDDEN IN CURRENT RUNTIME
 revision -> ProjectionTarget reconstruction REMOVE
 expected_source_revision    REMOVE
-private projection revision identity REMOVE
 
-GLOBAL USERS
-NO APP-SPECIFIC STATE
+USERS
+user -> profile_key
 
-USERS LOGIN
-READ ONLY AGAINST PROMOTED STORE
-
-USERS REGISTRY
-DURABLE + VERSIONED BY PROVIDER CONCURRENCY TOKEN, NOT SOURCE RELEASE
+USERS -> ADA-SPECIFIC STATE
+FORBIDDEN
 
 PROFILES
 GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
+
+ADA ACCESS
+profile_key -> access_keys
+
+ADA ACCESS user_id -> profile_keys
+REMOVED
 
 NAVIGATION DURABLE AUTHORIZATION
 PROFILE KEYS
@@ -512,5 +450,5 @@ NAVIGATION CONFIGURATION -> PROFILES CORE
 CURRENT
 ```
 
-No reabrir Manager core, Source/Projection core ni los dominios Configuration
-cerrados para acomodar otro lifecycle.
+No reabrir Manager core, Source/Projection core ni ownership cerrado para acomodar el
+siguiente provider de persistencia.

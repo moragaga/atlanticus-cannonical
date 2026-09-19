@@ -7,25 +7,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
+moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
 ```
 
 Parent inmediato:
 
 ```text
-9f12c41a23d69784c7c5b775a4093a94ac654d55
+90e89c376dfdfd182f0380b1d407127ecb7c9711
 ```
 
 Tree:
 
 ```text
-fc8c293f617aca4a53d89f687a22728e9d0fdcca
+737310de59774f3033607c1ef17c1c921efe1e09
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@4e59aa1e5160ff827ca6767fe178d3b45f4bc30d
+moragaga/atlanticus-cannonical@a7adef2568d664ee31cb1b0eb1fe9f11ce2b9203
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -33,25 +33,22 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado resumido
 
 ```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER                  CLOSED / VERIFIED / CURRENT
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER             CLOSED / VERIFIED / CURRENT
-PROFILES-CAPABILITY-EXTRACTION                      CLOSED / VERIFIED / CURRENT
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE               CLOSED / VERIFIED / CURRENT
-USERS-PERSISTED-DATA-CUTOVER                        CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-PROFILES-CONFIGURATION                   CLOSED / VERIFIED / CURRENT
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION             CLOSED / VERIFIED / CURRENT
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT            CLOSED / VERIFIED / CURRENT
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT           CLOSED / VERIFIED / CURRENT
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY        CLOSED / VERIFIED / CURRENT
-CONFIGURATION-UI-COMPOSITION-RECOVERY                CLOSED / VERIFIED / CURRENT
-GENERIC-WEB-PAGINATION-CUTOVER                       CLOSED / VERIFIED / CURRENT
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT  BLOCKED / VERIFIED CONFLICT
-PROFILES-CONFIGURATION-EDITOR-CONTRACT               PLANNED / NEXT
-PROFILES-CONFIGURATION-WEB-SURFACE                   PLANNED
+PROFILES-CONFIGURATION-EDITOR-CONTRACT               CLOSED / VERIFIED / CURRENT
+PROFILES-CONFIGURATION-WEB-SURFACE                   CLOSED / VERIFIED / CURRENT
+PROFILES-PROJECTION-CONTRACT                         CLOSED / VERIFIED / CURRENT
+PROFILES-MANAGER-COMPOSITION                         CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-CONTRACT-REALIGNMENT                  CLOSED / VERIFIED / CURRENT
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT             CLOSED / VERIFIED / CURRENT
+ADA-ACCESS-PROJECTION-CONTRACT                       CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-PERSISTENCE                    PLANNED / NEXT / DESIGN FIRST
+
 USERS-ADMINISTRATION-SURFACE-CUTOVER                 PLANNED / SEPARATE
 ADA-ACCESS-CONFIGURATION-UI                          PLANNED / SEPARATE
-MANAGER-FINAL-ADMIN-COMPOSITION                      PLANNED / FINAL
+MANAGER-FINAL-ADMIN-COMPOSITION                      PLANNED / SEPARATE
 ADA-ACCESS-RUNTIME-COMPOSITION                       PLANNED / SEPARATE
+
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT  BLOCKED / VERIFIED CONFLICT
 WEB-TEST-CONTRACT-CLEANUP                            PLANNED / OPEN
 PYTHON-METADATA-ALIGNMENT                            PLANNED / OPEN
 ```
@@ -63,232 +60,182 @@ PYTHON-METADATA-ALIGNMENT                            PLANNED / OPEN
 `main` está publicado exactamente en:
 
 ```text
-fbef06a8a0a587571527d9ecf131c73c5fc5f01a
+a31fce11d26a7c0a554d82de1813a4311522919b
 ```
 
-con parent:
+### Profiles administrative capability
+
+CURRENT:
 
 ```text
-9f12c41a23d69784c7c5b775a4093a94ac654d55
+profiles/core
+profiles/configuration
+profiles/projection-local
+profiles/projection-cosmos
+web/compositions/profiles-manager
 ```
 
-### Generic Web pagination
-
-El comportamiento transversal de paginación fue extraído desde ADA hacia Atlanticus:
+Contratos congelados:
 
 ```text
-web/framework/core/src/atlanticus/web/pagination.py
+ProfileCatalog
+ProfilesConfiguration
+Profiles Source lifecycle
+Profiles Projection -> ProfileCatalog
 ```
 
-Contrato CURRENT:
+La UI de Profiles es Profiles-owned. La composition reusable `profiles-manager` existe.
+La integración final de todas las superficies en una única aplicación administrativa
+permanece separada.
+
+### Users -> Profiles realignment
+
+CURRENT:
 
 ```text
-DEFAULT_PAGE_SIZE = 10
-ALLOWED_PAGE_SIZES = (10, 20)
-PageRequest(page_number=1, page_size=10)
-Page(items, total_count, request)
-paginate_items(items, request)
+UserRecord.profile_key
+EffectiveUser.profile_key
 ```
 
-`PageRequest` valida página positiva y tamaño sólo `10|20`.
-
-`Page` expone:
+SUPERSEDED / REMOVED:
 
 ```text
-page_count
-has_previous
-has_next
-start_index
-end_index
+authority_key
+authority.py
+basic|root assignable-authority mini-contract
 ```
 
-`paginate_items`:
+Users consume `ProfileCatalog` para validar perfiles de managed users.
+
+Managed users no pueden usar `local`.
+
+`local` se conserva para runtime local.
+
+Persistencia CURRENT:
 
 ```text
-- pagina una colección ya resuelta por el consumer;
-- no ordena, filtra ni busca;
-- clampa page_number a la última página válida;
-- para colección vacía resuelve page_number=1 y conserva page_size;
-- devuelve sólo items reales.
+Blob Users Registry schema 2
+Cosmos Users schema 2
+Users session snapshot v4
 ```
 
-### ADA pagination legacy removal
+No hay old-schema runtime readers.
 
-Fue removido:
-
-```text
-scopes/ada/web/configuration/core/src/ada/web/configuration/pagination.py
-```
-
-También se retiraron sus exports y su test específico legacy.
-
-No existen aliases, shims ni reexports para mantener el contrato anterior.
-
-`ada.web.configuration.presentation` permanece ADA-owned y consume:
+Qualification observada antes de publicar el cutover:
 
 ```text
-atlanticus.web.pagination.Page
-atlanticus.web.pagination.ALLOWED_PAGE_SIZES
-```
+Users core/blob/cosmos pytest
+49 PASS
 
-La presentación no fue generalizada.
-
-### KPI consumers
-
-KPI Configuration y KPI Definition consumen directamente:
-
-```text
-atlanticus.web.pagination.Page
-atlanticus.web.pagination.PageRequest
-atlanticus.web.pagination.paginate_items
-```
-
-`SortDirection` quedó local a KPI Configuration porque la trazabilidad no demostró uso
-transversal.
-
-### UI boundary recuperada
-
-Quedó congelada la distinción:
-
-```text
-TRANSVERSAL
-→ comportamiento de paginación
-
-LOCAL A CADA PRESENTACIÓN
-→ markup
-→ CSS
-→ tabla/cards/modal
-→ placeholders visuales
-→ responsive
-→ acciones de fila
-```
-
-Profiles, Users y ADA Access no deben compartir UI sólo por parecerse visualmente.
-
-### Testing policy aplicada al cutover
-
-Se removieron asserts cuyo objetivo era fijar clases/estilos CSS del paginador.
-
-El contrato genérico se prueba por comportamiento.
-
-Qualification observada contra el working tree que luego fue publicado como
-`fbef06a8...`:
-
-```text
-Atlanticus Web framework/core pytest
-53 PASS
-Ruff framework/core
-PASS
-
-ADA Configuration core pytest
-4 PASS
-Ruff core
-PASS
-
-KPI Configuration pytest
-37 PASS
-Ruff sobre archivos modificados
-PASS
-
-KPI Definition pytest
-35 PASS
-Ruff sobre archivos modificados
+Ruff
 PASS
 
 git diff --check
 PASS
 ```
 
-Total observado:
+### ADA Access ownership realignment
+
+CURRENT ownership:
 
 ```text
-129 tests PASS
+profile_key -> access_keys
 ```
 
-Los `test_web_runtime.py` de KPI Configuration y KPI Definition mostraron findings I001 de
-orden de imports al ejecutar Ruff sobre paquetes completos antes del cierre. Esos archivos
-no fueron modificados por el incremento y quedaron fuera de alcance.
-
-### Manager authorization semantics
-
-Permanece CURRENT:
+REMOVED:
 
 ```text
-ManagerModule.access_key: str | None
-ManagerAuthorizationPolicy.can_view(principal, module) -> bool
+UserProfileAssignment
+AdaAccessConfiguration.user_profiles
+user_id -> profile_keys
+EffectiveAdaAccess.user_id
+EffectiveAdaAccess.profile_keys
 ```
 
-No hay bypass por `is_local` ni profile `administrator`.
-
-### UI administrativa CURRENT
-
-ADA Configuration Manager CURRENT compone:
+Source schema CURRENT:
 
 ```text
-navigation
-tools
-kpis
-kpi-definitions
+ADA_ACCESS_SOURCE_SCHEMA_VERSION = 2
 ```
 
-Siguen ausentes:
+Qualification observada antes de publicar:
 
 ```text
-Profiles Configuration UI
-Users Administration UI
-ADA Access Configuration UI
+Access core pytest
+5 PASS
+
+Access configuration pytest
+13 PASS
+
+Ruff
+PASS
+
+git diff --check
+PASS
 ```
 
-## VERIFIED CONFLICT
+### ADA Access Projection contract
 
-### navigation-manager standalone consumer
-
-En CURRENT:
+CURRENT:
 
 ```text
-ManagerAuthorizationPolicy.can_view(...)
+AdaAccessProjectionBuilder
+create_ada_access_projection_service(...)
+AdaAccessConfigurationProjectionError
 ```
 
-pero:
+Payload:
 
 ```text
-web/compositions/navigation-manager/src/.../composition.py
+ProjectionRecord[AdaAccessConfiguration]
 ```
 
-invoca:
+Dependencia:
 
 ```text
-resolved_authorization.can_access(...)
+ADA Access ProjectionTarget
+└── exact Profiles ProjectionTarget
 ```
 
-Estado:
+La Projection valida `profile_key` contra el `ProfileCatalog` de la Projection de Profiles.
+
+Si Profiles cambia entre target selection y execution, la proyección falla.
+
+Qualification observada antes de publicar:
 
 ```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
-```
+Access configuration pytest
+20 PASS
 
-No fue parte del pagination cutover.
+Ruff
+PASS
+
+git diff --check
+PASS
+```
 
 ## INFERRED
 
-La extracción confirma una frontera reusable real: la paginación modela estado/cálculo y
-puede ser consumida por superficies distintas sin transferir ownership visual.
+Un store durable de ADA Access Projection debe preservar el `ProjectionRecord` completo,
+incluyendo `dependencies`, porque `ProjectionRecord.target` incorpora esas dependencias.
 
-La similitud de tablas entre módulos no demuestra un componente UI genérico compartido.
+El serializer de Profiles no puede copiarse mecánicamente para ADA Access: Profiles no
+tiene dependencia upstream en su record actual, ADA Access sí.
 
-Profiles puede consumir `atlanticus.web.pagination` sin depender de ADA.
+Esta inferencia debe verificarse contra los contracts genéricos y providers existentes antes
+de implementar el siguiente incremento.
 
 ## ASSUMED
 
 No se asume:
 
-- que Profiles deba copiar markup/CSS de KPI;
-- que `ada.web.configuration.presentation` deba moverse a Atlanticus;
-- que SortDirection sea genérico;
-- que Users/Profiles/ADA Access compartan lifecycle o presentación;
-- que full Ruff workspace esté limpio;
-- que CI remoto esté verde;
+- nombre físico de packages nuevos de ADA Access Projection;
+- forma final del documento durable;
+- topology Cosmos exacta;
+- que Profiles serializer sea reusable sin cambios;
+- que Manager final ya integre Profiles/Users/ADA Access;
+- que ADA Access runtime composition esté resuelta;
+- que CI remoto o full Ruff workspace estén verdes;
 - que metadata Python esté globalmente alineada.
 
 ## PROPOSED
@@ -296,42 +243,54 @@ No se asume:
 Único foco siguiente:
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-Después:
+La etapa inicial debe inspeccionar primero:
 
 ```text
-PROFILES-CONFIGURATION-WEB-SURFACE
-PLANNED
+ProjectionStore
+ProjectionRecord / ProjectionTarget
+Profiles projection-local
+Profiles projection-cosmos
+Profiles projection serializer
+ADA Access current source_projection
 ```
+
+y sólo después proponer contrato durable/providers.
 
 ## UNVERIFIED / PENDING
 
 ```text
-exact guest fallback composition for authenticated non-promoted identities
-PLANNED / SEPARATE
+exact package placement for ADA Access Projection providers
+UNVERIFIED
+
+exact durable document contract
+UNVERIFIED
+
+exact Cosmos storage topology
+UNVERIFIED
 
 Users Administration UI
-PLANNED
-
-Profiles Configuration UI
 PLANNED
 
 ADA Access Configuration UI
 PLANNED
 
-ADA Access runtime composition exacta
+Manager final administrative composition
+PLANNED
+
+ADA Access runtime composition
 PLANNED / SEPARATE
 
 concrete Entra/Graph UsersDirectoryReader provider
 UNVERIFIED
 
-full Ruff workspace de fbef06a8...
+full Ruff workspace
 UNVERIFIED
 
-CI remoto de fbef06a8...
+CI remoto
 UNVERIFIED
 
 Python metadata global 3.14.7

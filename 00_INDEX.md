@@ -7,19 +7,19 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
+moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
 ```
 
 Parent inmediato:
 
 ```text
-9f12c41a23d69784c7c5b775a4093a94ac654d55
+90e89c376dfdfd182f0380b1d407127ecb7c9711
 ```
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@4e59aa1e5160ff827ca6767fe178d3b45f4bc30d
+moragaga/atlanticus-cannonical@a7adef2568d664ee31cb1b0eb1fe9f11ce2b9203
 ```
 
 `moragaga/atlanticus-decisions` permanece HISTORICAL.
@@ -40,7 +40,7 @@ Git permanece SOLO LECTURA para el asistente.
 | `07_VALIDATION_BASELINE.md` | Evidencia de qualification y límites de validación. | CURRENT |
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items vigentes. | CURRENT |
-| `10_MANAGER/` | Manager genérico, Configuration Manager y consumers administrativos. | CURRENT |
+| `10_MANAGER/` | Manager genérico, compositions y consumers administrativos. | CURRENT |
 | `11_ADA_GENERIC/` | ADA Generic y cadena Tool → KPI → runtime. | CURRENT DIRECTION |
 | `12_SOURCE_STORAGE/` | Source/Projection exact-release y storage. | CURRENT |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
@@ -55,92 +55,58 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado de hitos relevantes
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+PROFILES-CONFIGURATION-EDITOR-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
+PROFILES-CONFIGURATION-WEB-SURFACE
 CLOSED / VERIFIED / CURRENT
 
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
+PROFILES-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
+PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CAPABILITY-EXTRACTION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-CLOSED / VERIFIED / CURRENT
-
-USERS-PERSISTED-DATA-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROFILES-CONFIGURATION
-CLOSED / VERIFIED / CURRENT
-
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
-CLOSED / VERIFIED / CURRENT
-
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-CLOSED / VERIFIED / CURRENT
-
-GENERIC-WEB-PAGINATION-CUTOVER
+ADA-ACCESS-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 ```
 
-Finding no cerrado:
+Finding previo no cerrado:
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-## Superficies administrativas faltantes CURRENT
+## Superficies administrativas
+
+CURRENT reusable:
 
 ```text
-Profiles Configuration UI
-PLANNED
-
-Users Administration UI
-PLANNED
-
-ADA Access Configuration UI
-PLANNED
+Profiles Configuration Web surface
+Profiles Manager composition
 ```
 
-La ausencia de UI no implica ausencia de dominio/backend.
+Pendientes separados:
+
+```text
+Users Administration UI
+ADA Access Configuration UI
+Manager final administrative composition
+```
 
 ## Siguiente foco recomendado
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
-PLANNED / NEXT
+ADA-ACCESS-PROJECTION-PERSISTENCE
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-Después, en incremento separado:
-
-```text
-PROFILES-CONFIGURATION-WEB-SURFACE
-PLANNED
-```
-
-No diseñar desde cero lo que ya exista en código o historial verificable.
+No diseñar desde cero lo que ya existe en código. Antes de implementar, verificar stores,
+serialización de Projection y provenance/dependencies.
