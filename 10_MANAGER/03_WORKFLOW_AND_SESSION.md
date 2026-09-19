@@ -31,9 +31,7 @@ PROJECTION
     active projection de una Source release exacta
 ```
 
-## ManagerModule
-
-Contrato vigente:
+## ManagerModule CURRENT
 
 ```text
 source_key
@@ -42,23 +40,42 @@ source_reader_service
 projection_service
 draft_validation_service
 source_history_service | None
+access_key | None
 ```
 
 No existe routing alternativo exact/legacy.
+
+## Authorization del workflow
+
+El Manager CURRENT usa una capacidad funcional del módulo:
+
+```text
+ManagerAuthorizationPolicy.can_view(principal, module)
+```
+
+El coordinator exige esa capacidad antes de todas las operaciones del módulo.
+
+No existen gates separados Manager de:
+
+```text
+can_validate
+can_publish
+can_project
+```
+
+No conceden authority implícita:
+
+```text
+is_local
+administrator profile
+```
 
 ## Source contracts
 
 ```text
 SourceReaderWorkflow
-    load_current_source() -> SourceReadResult
-
 SourcePublicationWorkflow
-    get_source_snapshot() -> SourceSnapshot
-    publish_draft(payload, expected_source_snapshot) -> SourcePublicationResult
-
 SourceHistoryWorkflow
-    list_history(limit) -> HistoryPage
-    load_history_release(release_ref: SourceReleaseRef) -> SourceHistoryReadResult
 ```
 
 Invariantes:
@@ -73,110 +90,97 @@ Invariantes:
 
 Manager transporta `ProjectionTarget` completo.
 
-Invariantes:
-
 - Manager no reconstruye target desde revision;
-- `ProjectionTarget` conserva `SourceKey`, release exacta y dependencias;
-- un target de otro `source_key` es inválido para el módulo;
-- retry no cambia silenciosamente el target seleccionado.
+- target conserva `SourceKey`, release exacta y dependencies;
+- target de otro source_key es inválido;
+- retry no cambia silenciosamente target.
 
 ## Workspace
 
 `ManagerWorkspace` mantiene identidad local del payload separada de Source identity.
 
-El Configuration Manager CURRENT usa `ManagerWorkspaceBridge`.
-
-El bridge:
-
-```text
-read browser document
-→ parse ManagerWorkspace
-→ verify owner
-→ expose payload
-
-write payload
-→ existing workspace.with_payload(...)
-or
-→ ManagerWorkspace.create(..., base=current SourceSnapshot)
-```
-
-No crea identidad Source desde una revision local.
+ADA Configuration Manager CURRENT usa `ManagerWorkspaceBridge`.
 
 ## Configuration Manager adoption
-
-Estado:
 
 ```text
 ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-El consumer final publicado compone workflows que satisfacen directamente los contratos genéricos.
-
-Para Navigation, Tools, KPI Configuration y KPI Definition existen workflows de Source y Draft Validation en el composition package.
-
-Users usa la composición Users Manager CURRENT.
-
-Es legítimo que una misma instancia implemente Source reader/publication/history y se registre bajo service keys diferentes; esto no reintroduce `workflow_service` como contrato Manager.
-
-## Contrato removido
-
-SUPERSEDED / REMOVED:
+CURRENT compone workflows Source/Draft Validation para:
 
 ```text
-ConfigurationLifecycleWorkflow
-ExactSourceReaderWorkflow
-ExactSourcePublicationWorkflow
-ExactSourceHistoryWorkflow
-ExactProjectionWorkflow
-workflow_service
-exact_source_* services
-exact_projection_service
-expected_source_revision
-source_revision como identidad ejecutable
-revision -> ProjectionTarget reconstruction
+Navigation
+Tools
+KPI Configuration
+KPI Definition
 ```
 
-## Runtime local
+Users no usa Manager Source/Projection y no es ManagerModule CURRENT.
 
-CURRENT para smoke/manual validation:
+## Runtime local CURRENT
+
+Para smoke/manual validation:
 
 ```text
 LocalSourceStore
 InProcessProjectionStore
 ```
 
-La composición local incluye Users, Navigation, Tools, KPI Configuration y KPI Definition.
-
-Esto demuestra composición ejecutable local, no E2E productivo.
-
-## Qualification del cierre
-
-Observado:
+La composition local CURRENT incluye Sources/Projection de:
 
 ```text
-static checks
-PASS
-
-local page boot
-PASS
+Navigation
+Tools
+KPI Configuration
+KPI Definition
 ```
 
-No observado:
+Principal local:
 
 ```text
-full behavioral E2E
-full package regression
-Storage/Cosmos E2E
+is_local=True
+access_keys=(navigation.manage, tools.manage, kpis.manage)
 ```
+
+`is_local` no concede permiso por sí mismo.
+
+## Callback active workflow
+
+En una transición de ruta, si el módulo no es resoluble/visible mientras Dash conserva
+outputs pattern montados, `refresh_active_workflow` ejecuta `PreventUpdate`.
+
+Esto evita cardinalidad inválida.
+
+## Contrato removido
+
+```text
+ManagerModuleAccess
+ConfigurationLifecycleWorkflow
+ExactSourceReaderWorkflow
+ExactSourcePublicationWorkflow
+ExactSourceHistoryWorkflow
+ExactProjectionWorkflow
+workflow_service
+exact_source_*
+exact_projection_service
+expected_source_revision
+revision -> ProjectionTarget reconstruction
+```
+
+## Finding consumer standalone
+
+`web/compositions/navigation-manager` CURRENT invoca `authorization.can_access(...)` y debe
+alinearse a `can_view(...)` cuando se trabaje esa composition.
+
+No crear alias de compatibilidad.
 
 ## Siguiente frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+CONFIGURATION-UI-COMPOSITION-RECOVERY
 PLANNED / NEXT
 ```
 
-No inventar una nueva familia de workflows para resolver UI.
-
-Cualquier contrato sospechoso debe contrastarse primero con este contrato CURRENT y con su implementación real.
+No inventar nueva familia de workflows para recuperar UI.

@@ -7,25 +7,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Parent inmediato:
 
 ```text
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Tree:
 
 ```text
-69386cf40e566baad2786a079029a6eea20bd8d1
+dd002b632b494065428af9dd10f1e58b7e6638d1
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@59ca0864daac7b79816974679cd4353033fe6408
+moragaga/atlanticus-cannonical@b11b6ad4fd8d32ba89d029e4d200fc42d6933091
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -41,15 +41,15 @@ USERS-PERSISTED-DATA-CUTOVER                     CLOSED / VERIFIED / CURRENT
 ADA-ACCESS-PROFILES-CONFIGURATION                CLOSED / VERIFIED / CURRENT
 NONPROMOTED-ACCESS-SEMANTICS-CORRECTION          CLOSED / VERIFIED / CURRENT
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT         CLOSED / VERIFIED / CURRENT
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT        CLOSED / VERIFIED / CURRENT
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY     CLOSED / VERIFIED / CURRENT
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT BLOCKED / VERIFIED CONFLICT
+CONFIGURATION-UI-COMPOSITION-RECOVERY             PLANNED / NEXT
 USERS-ADMINISTRATION-SURFACE-CUTOVER             PLANNED / SEPARATE
-MANAGER AUTHORIZATION STALE SEMANTICS            PLANNED / PROPOSED NEXT
+ADA-ACCESS-RUNTIME-COMPOSITION                   OPEN / SEPARATE
 WEB-TEST-CONTRACT-CLEANUP                        PLANNED / OPEN
 PYTHON-METADATA-ALIGNMENT                        PLANNED / OPEN
 ```
-
-Los hitos genéricos de Manager, Navigation, Tools, KPI Configuration,
-KPI Definition y ADA Configuration Manager cerrados anteriormente permanecen
-`CLOSED / VERIFIED / CURRENT`.
 
 ## VERIFIED
 
@@ -58,398 +58,286 @@ KPI Definition y ADA Configuration Manager cerrados anteriormente permanecen
 `main` está publicado exactamente en:
 
 ```text
+9f12c41a23d69784c7c5b775a4093a94ac654d55
+```
+
+con parent:
+
+```text
 3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
-con parent inmediato:
+### Manager authorization semantics
+
+`ManagerModuleAccess` fue removido del contrato CURRENT.
+
+`ManagerModule` expone:
 
 ```text
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+access_key: str | None
 ```
 
-El commit contiene únicamente el cutover Navigation ↔ Profiles y su qualification
-asociada; Git no fue mutado por el asistente.
-
-### Navigation / Profiles dependency alignment
-
-El mini-modelo local de Navigation Configuration fue removido.
-
-Ya no existen como contrato CURRENT:
+`ManagerAuthorizationPolicy` expone:
 
 ```text
-NavigationProfileOption
-NavigationProfileOptionsProvider
-_BASE_PROFILES
-resolve_profile_options
-selectable_profile_options
-profile_options_provider
+can_view(principal, module) -> bool
 ```
 
-Navigation Configuration declara dependencia directa:
+`DefaultManagerAuthorizationPolicy` concede acceso sólo si el `access_key` del módulo
+está presente en `principal.access_keys`.
+
+No conceden acceso por sí mismos:
 
 ```text
-atlanticus-web-profiles==0.1.0
+principal.is_local
+'administrator' in principal.profile_keys
 ```
 
-sin dependencia a:
+El coordinator usa una única verificación de acceso de módulo antes de:
 
 ```text
-atlanticus-web-profiles-configuration
-atlanticus-web-users
-ADA
+status
+projection target
+validate draft
+source snapshot/current source
+publish
+project
+history
 ```
 
-Contrato CURRENT:
+No existen permisos Manager separados por operación para validate/publish/project.
+
+### ADA Configuration Manager authorization
+
+La composition CURRENT declara access keys funcionales:
 
 ```text
-NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
+navigation.manage
+tools.manage
+kpis.manage
 ```
 
-Sin provider:
+Navigation y Tools usan sus keys respectivas.
+KPI Configuration y KPI Definition comparten `kpis.manage`.
+
+Los callbacks/domain contexts específicos usan `_has_access(principal, access_key)` y no
+bypass de `is_local` o profile `administrator`.
+
+El runtime local conserva `is_local=True` como contexto y recibe access keys explícitos.
+
+### Manager active workflow callback
+
+`refresh_active_workflow` usa `PreventUpdate` cuando durante transición de ruta no existe
+un módulo visible resoluble.
+
+Esto reemplaza el retorno de listas vacías que provocaba cardinalidad inválida con Outputs
+pattern `ALL`.
+
+Existe test de regresión específico en `test_dash_registration.py`.
+
+### Qualification observada durante el hito
+
+Antes del último delta de callback se observó:
 
 ```text
-profile_definitions() == ()
-```
+legacy Manager authorization scan
+0 matches en el scope buscado
 
-Con provider:
+Manager + navigation-manager focused pytest
+68 PASS
 
-```text
-profile_definitions(provider) == provider().all()
-```
+web full pytest
+PASS / 100%
+7 skipped
 
-Fallos del provider se propagan; no se convierten en catálogo vacío.
+ADA Configuration Manager pytest
+26 PASS
 
-### Referential validation
-
-`create_navigation_profile_catalog_validator(...)` valida cada key configurada en
-Navigation mediante:
-
-```text
-ProfileCatalog.require(profile_key)
-```
-
-Perfil desconocido produce:
-
-```text
-code = navigation.profile.unknown
-```
-
-Fallos del provider se propagan.
-
-La composición Navigation Manager construye una sola colección `validators` y la usa en:
-
-```text
-NavigationManagerDraftValidationWorkflow
-NavigationProjectionBuilder / projection service
-```
-
-Warnings no invalidan draft; issues `error` sí lo invalidan.
-
-### Durable Navigation contract
-
-No cambió el dominio durable:
-
-```text
-NavigationLinkConfiguration.allowed_profiles
-→ tuple[str, ...] de profile keys
-```
-
-Navigation no persiste copias de `ProfileDefinition`.
-
-Navigation core conserva autorización:
-
-```text
-principal.unrestricted
-OR
-principal.access_key ∈ allowed_profiles
-```
-
-### Web administration
-
-La superficie administrativa toma perfiles directamente del `ProfileCatalog` provisto
-por composition.
-
-Sin catálogo configurado muestra ausencia de catálogo; no inventa `local`,
-`administrator` ni `guest`.
-
-Los badges usan `ProfileDefinition.label/background_color/text_color` y ya no contienen
-semántica CSS `unrestricted`.
-
-### Qualification observada
-
-Entorno local reportado:
-
-```text
-Python 3.14.7
-uv
-```
-
-Resultados observados:
-
-```text
-uv lock --check
+focused Ruff / format
 PASS
 
-pytest
-capabilities/navigation/configuration/tests
-compositions/navigation-manager/tests
-PASS / 100%
+ADA Configuration Manager uv lock --check
+PASS después de alinear navigation-configuration 0.1.9
+```
 
-pytest
-capabilities/profiles/core/tests
-capabilities/navigation/core/tests
-capabilities/navigation/configuration/tests
-compositions/navigation-manager/tests
-PASS / 100%
+Después del delta final del callback se observó:
 
-ruff check
-4 archivos modificados de navigation-manager
+```text
+callbacks productive/commented AST-equivalent
 PASS
 
-ruff format --check
-4 archivos modificados de navigation-manager
+targeted callback regression tests
 PASS
 
 git diff --check
-PASS
+PASS dentro del script de reparación
 
-rg legacy navigation profile symbols
-0 matches
+manual smoke ADA Configuration Manager
+/manager carga
+navegación entre superficies responde 200/204
+sin InvalidCallbackReturnValue
+sin HTTP 500 observado
 ```
+
+No declarar que el full web pytest ni el full ADA pytest fueron rerun después del último
+delta del callback: no se observó esa ejecución final completa.
+
+### Dependency lock alignment
+
+ADA Configuration Manager fue alineado de:
+
+```text
+atlanticus-web-navigation-configuration[web]==0.1.8
+```
+
+a:
+
+```text
+atlanticus-web-navigation-configuration[web]==0.1.9
+```
+
+`uv.lock` quedó actualizado y `uv lock --check` pasó.
+
+### UI administrativa CURRENT
+
+ADA Configuration Manager CURRENT compone:
+
+```text
+navigation
+tools
+kpis
+kpi-definitions
+```
+
+El árbol CURRENT verifica que:
+
+```text
+web/capabilities/profiles/configuration
+```
+
+posee modelos y Source lifecycle, pero no superficie/editor Dash.
+
+```text
+web/capabilities/users/core
+```
+
+posee `UsersAdministrationService`, pero no superficie administrativa web.
+
+```text
+scopes/ada/web/access/configuration
+```
+
+posee modelo/configuración + Source lifecycle, pero no superficie/editor Dash.
+
+Por tanto, la ausencia CURRENT de esas tres UI está VERIFIED.
+
+## VERIFIED CONFLICT
+
+### navigation-manager standalone consumer
+
+En CURRENT:
+
+```text
+ManagerAuthorizationPolicy.can_view(...)
+```
+
+es el contrato disponible.
+
+Pero:
+
+```text
+web/compositions/navigation-manager/src/.../composition.py
+```
+
+invoca:
+
+```text
+resolved_authorization.can_access(...)
+```
+
+Ese consumer no está alineado con el contrato publicado.
+
+Estado:
+
+```text
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+```
+
+El smoke de ADA Configuration Manager no demuestra ese consumer porque ADA Configuration
+Manager compone Navigation por su propia composition.
 
 ## INFERRED
 
-La eliminación de `_BASE_PROFILES` y el consumo directo de `ProfileCatalog` demuestra
-que Navigation Configuration dejó de poseer un catálogo paralelo de Profiles.
+El contrato de autorización publicado expresa una capacidad funcional por módulo, no
+permisos por cada paso interno del workflow.
 
-La ausencia de provider no convierte Profiles en dependencia obligatoria de runtime:
-Navigation conserva keys durables y el core de autorización permanece desacoplado del
-lifecycle/storage de Profiles.
+La ausencia de superficies UI para Profiles, Users Administration y ADA Access no exige
+nuevos dominios: existe lógica/backend que la UI futura debe consumir.
 
-El mismo validator referencial en draft y projection evita reglas divergentes entre
-ambas rutas dentro de Navigation Manager.
+La recuperación de una composición visual transversal debe preferir código/histórico
+verificable antes que recreación manual.
 
 ## ASSUMED
 
-No se asume en este cierre:
+No se asume:
 
-- wiring runtime exacto `root/local -> NavigationPrincipal.unrestricted` en todas las compositions;
-- fallback exacto `guest` para identidad autenticada sin promoted `UserRecord`;
-- que ADA Access runtime deba alimentar directamente Navigation;
-- Users Administration UI;
-- concrete Entra/Graph `UsersDirectoryReader` provider;
-- full Ruff workspace limpio;
-- CI remoto PASS;
-- metadata global Python alineada a 3.14.7.
+- que una UI histórica concreta sea todavía correcta;
+- que Profiles, Users y Access deban compartir el mismo lifecycle de Manager;
+- que Users deba volver a Source/Projection;
+- que ADA Access deba depender de Navigation;
+- que el consumer standalone navigation-manager esté funcional hasta corregir `can_access`;
+- que full CI esté verde;
+- que todo Ruff workspace esté limpio;
+- que metadata Python esté globalmente alineada.
 
 ## PROPOSED
 
-Único foco recomendado para el siguiente chat:
+Único foco siguiente:
 
 ```text
-Manager authorization stale administrator/local semantics
-PLANNED / PROPOSED NEXT
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
 
-Razón: implementación CURRENT aún contiene bypass explícito de Manager mediante
-`principal.is_local` y `administrator` profile, y ADA Configuration Manager mantiene
-helpers equivalentes. El siguiente chat debe debatir ese contrato antes de editar.
-
-## SUPERSEDED / REFINED
-
-### Navigation local profile model
-
-```text
-NavigationProfileOption
-_BASE_PROFILES
-local/administrator/guest definidos dentro de Navigation Configuration
-```
-
-queda:
-
-```text
-SUPERSEDED / REMOVED
-```
-
-### `administrator` como profile especial de Navigation Configuration
-
-Queda removido del catálogo/configuration boundary.
-
-No se introduce mapping:
-
-```text
-administrator -> root
-```
-
-### `local` como ProfileDefinition especial de Navigation Configuration
-
-Queda removido.
-
-`local` continúa siendo concern de runtime/composition donde corresponda; no es un
-`ProfileDefinition` inventado por Navigation Configuration.
-
-### Provider anterior
-
-```text
-NavigationProfileOptionsProvider
-profile_options_provider
-```
-
-queda reemplazado por:
-
-```text
-NavigationProfileCatalogProvider
-profile_catalog_provider
-```
-
-sin shim ni alias.
-
-### Validator naming
-
-El parámetro de composición `projection_validators` quedó reemplazado por `validators`
-porque el mismo contrato aplica a draft y projection.
-
-No se conserva alias legacy.
+Debe comenzar por inventario y recuperación, no por diseño nuevo.
 
 ## UNVERIFIED / OPEN
 
-### Manager authorization stale semantics
-
-CURRENT todavía debe revisar:
-
 ```text
-principal.is_local -> Manager full access
-'administrator' in principal.profile_keys -> Manager full access
-```
+visualizaciones/composiciones UI históricas concretas a recuperar
+UNVERIFIED HISTORICAL
 
-y helpers equivalentes en ADA Configuration Manager.
-
-Estado:
-
-```text
-OPEN / SEPARATE / PROPOSED NEXT
-```
-
-### Non-promoted Navigation fallback
-
-La entrada de identidades autenticadas no promovidas está cerrada a nivel Identity/Users,
-pero la materialización exacta del `NavigationPrincipal`/perfil de fallback sigue fuera de
-este hito.
-
-Estado:
-
-```text
+exact guest fallback composition for authenticated non-promoted identities
 OPEN / SEPARATE
-```
 
-No resolver creando `guest` authority en Users ni un `UserRecord` ficticio.
+Users Administration UI
+PLANNED
 
-### Users Administration
+Profiles Configuration UI
+PLANNED
 
-```text
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / SEPARATE
-```
+ADA Access Configuration UI
+PLANNED
 
-### ADA Access runtime composition
-
-No se modificó en este hito.
-
-```text
+ADA Access runtime composition exacta
 OPEN / SEPARATE
-```
 
-### Web test contract cleanup
-
-Ruff sobre los directorios completos encontró formato/lint preexistente en:
-
-```text
-capabilities/navigation/configuration/tests/test_web_contract.py
-capabilities/navigation/configuration/tests/test_web_source_contract.py
-```
-
-No fueron modificados oportunistamente.
-
-```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / OPEN
-```
-
-### Python metadata
-
-Baseline del Project:
-
-```text
-Python 3.14.7
-python:3.14.7-slim-trixie
-```
-
-El package Navigation Configuration CURRENT todavía declara:
-
-```text
-requires-python = "==3.14.2"
-```
-
-```text
-PYTHON-METADATA-ALIGNMENT
-PLANNED / OPEN
-```
-
-### CI / full lint
-
-No se verificó CI remoto ni full Ruff workspace para `3eb46dac...`.
-
-```text
+concrete Entra/Graph UsersDirectoryReader provider
 UNVERIFIED
-```
 
-## Conflictos canonical detectados antes de este reemplazo
+full web pytest después del último callback delta
+UNVERIFIED
 
-Canonical `59ca0864...` todavía afirmaba:
+full ADA pytest después del último callback delta
+UNVERIFIED
 
-```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-PLANNED / NEXT
+CI remoto de 9f12c41...
+UNVERIFIED
 
-NavigationProfileOption / _BASE_PROFILES
-CURRENT
+full Ruff workspace de 9f12c41...
+UNVERIFIED
 
-Navigation integration
-pending
-```
-
-Implementación CURRENT demuestra:
-
-```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-NavigationProfileOption / _BASE_PROFILES
-REMOVED
-
-Navigation Configuration -> Profiles core
-CURRENT
-```
-
-Además, documentos canonical anteriores mantenían estados históricos ya superados de
-Users/Profiles/Persisted Data; estos reemplazos deben reflejar los cierres ya recogidos
-en `00_AUTHORITY.md` y `15_WEB_PLATFORM/12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md`.
-
-## Siguiente frontera
-
-```text
-Manager authorization stale administrator/local semantics
-PLANNED / PROPOSED NEXT
-```
-
-No mezclar:
-
-```text
-Navigation guest fallback runtime composition
-ADA Access runtime composition
-Users Administration UI/repair
-Python metadata
-Web test cleanup
-Command Center
-unrelated Ruff cleanup
+Python metadata global 3.14.7
+OPEN / SEPARATE
 ```

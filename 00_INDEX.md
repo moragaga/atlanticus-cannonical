@@ -7,19 +7,19 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Parent inmediato:
 
 ```text
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@59ca0864daac7b79816974679cd4353033fe6408
+moragaga/atlanticus-cannonical@b11b6ad4fd8d32ba89d029e4d200fc42d6933091
 ```
 
 `moragaga/atlanticus-decisions` permanece HISTORICAL.
@@ -41,7 +41,7 @@ Git permanece SOLO LECTURA para el asistente.
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items vigentes. | CURRENT |
 | `10_MANAGER/` | Manager genérico, Configuration Manager y consumers administrativos. | CURRENT |
-| `11_ADA_GENERIC/` | ADA Generic, ownership ADA y cadena Tool → KPI → runtime. | CURRENT DIRECTION |
+| `11_ADA_GENERIC/` | ADA Generic y cadena Tool → KPI → runtime. | CURRENT DIRECTION |
 | `12_SOURCE_STORAGE/` | Source/Projection exact-release y storage. | CURRENT |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
 | `14_ADA_COMMAND_CENTER/` | Command Center y Alarm ownership. | CURRENT DIRECTION |
@@ -76,9 +76,6 @@ CLOSED / VERIFIED / CURRENT
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
 PROFILES-CAPABILITY-EXTRACTION
 CLOSED / VERIFIED / CURRENT
 
@@ -97,42 +94,40 @@ CLOSED / VERIFIED / CURRENT
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / SEPARATE
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / OPEN
-
-PYTHON-METADATA-ALIGNMENT
-PLANNED / OPEN
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Navigation / Profiles CURRENT
-
-Navigation Configuration depende únicamente de Profiles core para catálogo/definiciones.
+Finding no cerrado:
 
 ```text
-Navigation -> Profiles core
-CURRENT
-
-Navigation -> Profiles Configuration
-FORBIDDEN
-
-Navigation -> Users
-FORBIDDEN
-
-Navigation -> ADA Access
-FORBIDDEN
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
 
-El contrato durable de Navigation conserva `allowed_profiles` como tuple de profile keys.
+## Superficies administrativas faltantes CURRENT
+
+```text
+Profiles Configuration UI
+PLANNED
+
+Users Administration UI
+PLANNED
+
+ADA Access Configuration UI
+PLANNED
+```
+
+La ausencia de UI no implica ausencia de dominio/backend.
 
 ## Siguiente foco recomendado
 
 ```text
-Manager authorization stale administrator/local semantics
-PLANNED / PROPOSED NEXT
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
 
-Debe revisarse primero contra `atlanticus:main` y canonical; no mezclar con runtime
-fallback guest, Users Administration, Python metadata o test cleanup.
+No diseñar desde cero lo que ya exista en código o historial verificable.

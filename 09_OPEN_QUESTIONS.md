@@ -4,114 +4,101 @@ Estado: **CANONICAL OPEN ITEMS**
 
 Los puntos aquí no reabren contratos CLOSED.
 
-## CLOSED — Manager generic core
+## CLOSED — Manager authorization semantics
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 ```
 
-No están OPEN:
+Ya no están OPEN:
 
 ```text
-double routing exact/legacy
-workflow_service lifecycle
-ExactProjectionWorkflow
-expected_source_revision
-revision -> ProjectionTarget reconstruction
-compatibility shims/adapters
+si is_local debe conceder acceso Manager
+si administrator profile debe conceder acceso Manager
+si ManagerModuleAccess debe separar view/validate/publish/project
+cómo obtiene permisos el runtime local
 ```
 
-## CLOSED — Configuration domains
+CURRENT:
 
 ```text
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+ManagerModule.access_key
+ManagerAuthorizationPolicy.can_view
+explicit principal.access_keys
+```
 
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+`is_local` no concede autoridad y el runtime local recibe capabilities explícitas.
 
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+## CLOSED — Manager callback cardinality
 
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+```text
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
 CLOSED / VERIFIED / CURRENT
 ```
 
-## CLOSED — Users / Profiles / Access / Navigation alignment sequence
+La transición sin módulo resoluble usa `PreventUpdate`.
+
+## OPEN — navigation-manager authorization consumer mismatch
+
+Implementación CURRENT contiene:
 
 ```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-PERSISTED-DATA-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CAPABILITY-EXTRACTION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROFILES-CONFIGURATION
-CLOSED / VERIFIED / CURRENT
-
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
+ManagerAuthorizationPolicy.can_view(...)
 ```
 
-Ya no está OPEN cómo Navigation Configuration obtiene Profiles para administración y
-validación: consume `ProfileCatalog` desde Profiles core mediante composition.
-
-Tampoco están OPEN:
+pero `web/compositions/navigation-manager` llama:
 
 ```text
-NavigationProfileOption
-_BASE_PROFILES
-NavigationProfileOptionsProvider
-profile_options_provider
-Navigation -> Users profile options
-Navigation -> ADA Access authorization dependency
+resolved_authorization.can_access(...)
 ```
-
-## OPEN — Manager authorization stale semantics
-
-Implementación CURRENT todavía contiene en `DefaultManagerAuthorizationPolicy`:
-
-```text
-principal.is_local
-OR
-'administrator' in principal.profile_keys
-→ full Manager access
-```
-
-ADA Configuration Manager mantiene helpers `_can_manage_navigation`, `_can_manage_tools`
-y `_can_manage_kpis` con bypass equivalente.
-
-Preguntas obligatorias del siguiente chat recomendado:
-
-1. ¿Cuál es el contrato final de `ManagerPrincipal` para autorización?
-2. ¿Debe `ManagerModuleAccess` ser la única fuente funcional de permisos por módulo?
-3. ¿Cómo obtiene permisos explícitos el runtime local sin inventar `administrator`?
-4. ¿Qué responsabilidad pertenece al generic Manager y cuál a la composition ADA?
-5. ¿Qué tests de comportamiento deben proteger el contrato final?
-6. ¿Qué referencias `administrator`/`is_local` quedan realmente legacy y cuáles son runtime concerns legítimos?
-
-No implementar hasta revisar código CURRENT y consumers.
 
 Estado:
 
 ```text
-OPEN / PROPOSED NEXT
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
 
-## OPEN — exact Navigation fallback para identidad no promovida
+No introducir `can_access` como alias de compatibilidad.
+Cuando ese consumer forme parte del siguiente foco, debe alinearse directamente al contrato CURRENT.
+
+## OPEN — configuration UI composition recovery
+
+Ausencia CURRENT verificada:
+
+```text
+Profiles Configuration UI
+Users Administration UI
+ADA Access Configuration UI
+```
+
+Pregunta del siguiente chat:
+
+1. ¿Qué primitives/composiciones UI transversales CURRENT ya existen y deben reutilizarse?
+2. ¿Qué visualizaciones realmente desaparecieron frente a una versión histórica verificable?
+3. ¿Qué código histórico sigue siendo útil sólo como referencia y qué contrato CURRENT debe preservar?
+4. ¿Cuál es el primer módulo faltante que puede cerrarse como incremento aislado?
+5. ¿Qué comportamiento pertenece al Manager shell y cuál al dominio concreto?
+
+Reglas:
+
+```text
+no inventar UI desde memoria
+no restaurar legacy
+no crear adapters/shims
+no forzar Users a Source/Projection
+no fusionar Profiles/Users/Access por simetría
+```
+
+Estado:
+
+```text
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
+```
+
+## OPEN — Navigation fallback para identidad no promovida
 
 La entrada a la aplicación ya es CURRENT para identidad autenticada no promovida.
 
@@ -126,12 +113,6 @@ Navigation -> Users dependency
 Navigation -> ADA Access dependency
 ```
 
-Estado:
-
-```text
-OPEN / SEPARATE
-```
-
 ## OPEN — Users Administration surface
 
 ```text
@@ -139,7 +120,39 @@ USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED / SEPARATE
 ```
 
-No reintroducir Users en Configuration Manager como Source/Projection.
+El core de administración existe. Falta superficie UI.
+
+No reintroducir Users Source/Projection.
+
+## OPEN — Profiles Configuration UI
+
+Profiles core + configuration + Source lifecycle existen.
+
+Falta editor/surface administrativa.
+
+```text
+PLANNED / SEPARATE INCREMENT
+```
+
+## OPEN — ADA Access Configuration UI
+
+ADA Access core + configuration + Source lifecycle existen.
+
+Falta editor/surface administrativa.
+
+```text
+PLANNED / SEPARATE INCREMENT
+```
+
+No confundir esta UI con el wiring runtime exacto de ADA Access.
+
+## OPEN — ADA Access runtime composition
+
+```text
+OPEN / SEPARATE
+```
+
+No convertir ADA Access en dependency de Navigation.
 
 ## OPEN — concrete Entra directory discovery
 
@@ -157,35 +170,11 @@ UNVERIFIED
 
 No inventar tenant settings, Graph permissions, credential flow ni endpoints.
 
-## OPEN — ADA Access runtime composition
-
-ADA Access domain/configuration está cerrado.
-
-El wiring runtime exacto permanece separado de Navigation Configuration y no fue
-modificado en este hito.
-
-Estado:
-
-```text
-OPEN / SEPARATE
-```
-
 ## OPEN — Python package metadata alignment
 
-Canonical fija:
+Canonical fija Python 3.14.7.
 
-```text
-Python 3.14.7
-```
-
-Navigation Configuration CURRENT:
-
-```text
-requires-python = "==3.14.2"
-```
-
-La qualification local del último cutover usó Python 3.14.7, pero la metadata continúa
-inconsistente.
+Packages CURRENT aún contienen metadata 3.14.2.
 
 ```text
 PYTHON-METADATA-ALIGNMENT
@@ -199,37 +188,15 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
-Durante qualification del último hito quedaron findings fuera de alcance en:
-
-```text
-capabilities/navigation/configuration/tests/test_web_contract.py
-capabilities/navigation/configuration/tests/test_web_source_contract.py
-```
-
-No fueron modificados oportunistamente.
+No mezclar con UI recovery salvo bloqueo directo.
 
 ## UNVERIFIED
 
-- concrete Entra/Graph directory provider;
-- full Ruff workspace después de `3eb46dac...`;
-- CI remoto para `3eb46dac...`;
-- Python metadata/Trixie global qualification;
-- exact runtime fallback guest composition;
-- exact local Manager authorization composition después del futuro cutover.
-
-## Siguiente foco recomendado
-
 ```text
-Manager authorization stale administrator/local semantics
+visualizaciones históricas concretas reportadas como perdidas
+full web pytest después del callback final
+full ADA pytest después del callback final
+CI remoto de 9f12c41...
+full Ruff workspace
+Python/Trixie global qualification
 ```
-
-Fuentes obligatorias:
-
-```text
-moragaga/atlanticus:main
-moragaga/atlanticus-cannonical:main
-```
-
-`moragaga/atlanticus-decisions` es sólo HISTORICAL.
-
-Git sólo lectura para el asistente.

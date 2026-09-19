@@ -10,11 +10,11 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `3eb46dac80f23d438774e3afa39999dc96f592d7`
+  `9f12c41a23d69784c7c5b775a4093a94ac654d55`
 - Parent inmediato:
-  `0fba548329afd9bc9dee92ea6caa53d1aaa69eb0`
+  `3eb46dac80f23d438774e3afa39999dc96f592d7`
 - Tree:
-  `69386cf40e566baad2786a079029a6eea20bd8d1`
+  `dd002b632b494065428af9dd10f1e58b7e6638d1`
 
 El checkpoint CURRENT contiene, entre otros hitos ya cerrados:
 
@@ -60,16 +60,33 @@ CLOSED / VERIFIED / CURRENT
 
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
+
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
+CLOSED / VERIFIED / CURRENT
 ```
+
+Existe un conflicto implementado todavía abierto en un consumer standalone:
+
+```text
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+```
+
+`web/compositions/navigation-manager` llama `ManagerAuthorizationPolicy.can_access(...)`,
+pero el contrato CURRENT de `ManagerAuthorizationPolicy` expone `can_view(...)`.
+No tratar ese consumer como CLOSED hasta corregirlo y verificarlo.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `59ca0864daac7b79816974679cd4353033fe6408`
-- Parent inmediato:
-  `179a151d24074e9d4cb8c5f16bdcd6ef49308929`
+  `b11b6ad4fd8d32ba89d029e4d200fc42d6933091`
+- Tree inspeccionado:
+  `8888d64f8eeda582d114c4d37ebd0a1a75ec6cf5`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -78,7 +95,13 @@ CLOSED / VERIFIED / CURRENT
 
 `moragaga/atlanticus-decisions` es **HISTORICAL**.
 
-Puede aportar rationale y evidencia histórica. No puede reemplazar
+Checkpoint inspeccionado:
+
+```text
+50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+```
+
+Puede aportar rationale, UX previamente aprobada y evidencia histórica. No puede reemplazar
 `atlanticus:main` ni `atlanticus-cannonical:main`.
 
 ## Jerarquía
@@ -87,12 +110,10 @@ Puede aportar rationale y evidencia histórica. No puede reemplazar
 2. `atlanticus-cannonical:main`: contratos, fronteras, roadmap y estado vigente.
 3. Qualification y tests vigentes: evidencia de propiedades demostradas.
 4. Decisiones explícitas del Project todavía no formalizadas en canonical: delta temporal.
-5. Referencias históricas indicadas por el usuario.
+5. `atlanticus-decisions`: referencia histórica cuando sea útil.
 6. Memoria/historial conversacional: pista, nunca autoridad suficiente.
 
 ## Clasificación obligatoria
-
-Distinguir hechos y decisiones con:
 
 ```text
 VERIFIED
@@ -102,7 +123,7 @@ PROPOSED
 UNVERIFIED
 ```
 
-Y estado con:
+Estados:
 
 ```text
 CURRENT
@@ -113,24 +134,43 @@ BLOCKED
 CLOSED
 ```
 
-Si implementación y canonical se contradicen, exponer el conflicto y actualizar
-canonical; nunca retroceder implementación CURRENT para satisfacer documentación
-obsoleta.
+Si implementación y canonical se contradicen, exponer el conflicto y actualizar canonical;
+nunca retroceder implementación CURRENT para satisfacer documentación obsoleta.
 
 ## Git
 
 Git es **READ ONLY** por defecto.
 
-No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización
-explícita.
+No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización explícita.
 
 ## Continuidad congelada
 
 No reabrir sin conflicto demostrado:
 
 ```text
+LEGACY
+REMOVE
+
+ADAPTERS / SHIMS / ALIASES
+FORBIDDEN
+
+DOUBLE CONTRACT
+FORBIDDEN
+
+OLD SCHEMA RUNTIME READERS
+FORBIDDEN
+
 Global Users
 standalone / generic
+
+Users Configuration Source
+REMOVED
+
+Users generic Projection
+REMOVED
+
+Users Manager Source/Projection module
+REMOVED
 
 Managed global authority
 basic | root
@@ -150,7 +190,7 @@ Atlanticus generic capability
 Navigation durable authorization
 allowed_profiles = profile keys
 
-Navigation configuration -> Profiles core
+Navigation Configuration -> Profiles core
 ALLOWED / CURRENT
 
 Navigation -> Users
@@ -161,33 +201,61 @@ FORBIDDEN
 
 Navigation -> Profiles Configuration
 FORBIDDEN
-
-Users login write/pending
-FORBIDDEN
-
-OLD SCHEMA RUNTIME READERS
-FORBIDDEN
-
-ADAPTERS / SHIMS / ALIASES
-FORBIDDEN
-
-DOUBLE CONTRACT
-FORBIDDEN
 ```
 
-Promotion de Users no habilita el ingreso a la aplicación.
+## Manager authorization CURRENT
 
-El contrato CURRENT de acceso permanece:
+Contrato CURRENT:
+
+```text
+ManagerModule.access_key: str | None
+ManagerAuthorizationPolicy.can_view(principal, module)
+```
+
+`DefaultManagerAuthorizationPolicy` concede acceso únicamente cuando:
+
+```text
+module.access_key is not None
+AND
+module.access_key in principal.access_keys
+```
+
+No conceden autoridad implícita:
+
+```text
+principal.is_local
+'administrator' in principal.profile_keys
+```
+
+`is_local` permanece metadata/contexto de runtime, no permiso.
+
+El mismo permiso funcional del módulo protege acceso al módulo y las operaciones internas
+del workflow Manager. No existen permisos separados Manager para `validate`, `publish` o
+`project`.
+
+ADA Configuration Manager CURRENT declara:
+
+```text
+navigation.manage
+tools.manage
+kpis.manage
+```
+
+El runtime local recibe esos access keys explícitamente.
+
+## Users / Profiles / Access / Navigation CURRENT
+
+Promotion de Users no habilita el ingreso a la aplicación.
 
 ```text
 authenticated identity + no promoted UserRecord
 → READY
 → deterministic user_id
-→ no UsersRuntime user
+→ no UsersRuntime EffectiveUser
 
 authenticated identity + promoted enabled UserRecord
 → READY
-→ EffectiveUser available in UsersRuntime
+→ EffectiveUser available
 
 authenticated identity + promoted disabled UserRecord
 → USER_DISABLED
@@ -196,107 +264,53 @@ authenticated identity + promoted disabled UserRecord
 
 `USER_NOT_PROMOTED` no existe en `AccessStatus` CURRENT.
 
-## Navigation / Profiles CURRENT
-
-Navigation Configuration consume directamente el contrato generic de Profiles core:
+Navigation Configuration consume directamente Profiles core:
 
 ```text
 ProfileCatalog
 ProfileDefinition
-```
-
-Contrato de integración:
-
-```text
 NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
 ```
 
-Sin provider configurado:
+Sin provider, Navigation no inventa perfiles base. Fallos del provider no se silencian.
+
+## Superficies administrativas CURRENT
+
+ADA Configuration Manager CURRENT compone:
 
 ```text
-profile_definitions() -> ()
-Navigation no inventa perfiles base
+navigation
+tools
+kpis
+kpi-definitions
 ```
 
-Con provider configurado:
+Ausencia CURRENT verificada:
 
 ```text
-ProfileCatalog.all()
-→ perfiles disponibles en la superficie administrativa
-
-ProfileCatalog.require(profile_key)
-→ validación referencial de allowed_profiles
+Profiles Configuration UI
+Users Administration UI
+ADA Access Configuration UI
 ```
 
-Fallos del provider no se silencian.
+Esto no autoriza inventar UI ni contratos. Los dominios/backend existentes deben ser la
+fuente de la futura superficie.
 
-El mismo conjunto de `NavigationProjectionValidator` se usa en validación de draft y
-en Projection cuando la composition lo configura.
-
-## Targets superseded
-
-Quedan históricos o reemplazados:
-
-```text
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / SUPERSEDED
-
-USERS-CLEAN-CUTOVER-COMPLETION
-CLOSED / SUPERSEDED
-
-USERS-CONFIGURATION-LEGACY-CONTRACT-REMOVAL
-CLOSED / SUPERSEDED
-
-USERS-STANDALONE-AUTHORITY-CUTOVER
-CLOSED / SUPERSEDED BY USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
-SUPERSEDED / NOT EXECUTED AS FINAL TARGET
-
-USERS-PROFILES-COMPOSITION-CUTOVER
-SUPERSEDED AS PREVIOUS MODEL
-
-ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access capability
-SUPERSEDED / REJECTED BEFORE INTEGRATION
-
-USER_NOT_PROMOTED -> 403
-SUPERSEDED / REMOVED
-
-NavigationProfileOption
-SUPERSEDED / REMOVED
-
-NavigationProfileOptionsProvider
-SUPERSEDED / REMOVED
-
-_BASE_PROFILES
-SUPERSEDED / REMOVED
-
-resolve_profile_options / selectable_profile_options
-SUPERSEDED / REMOVED
-
-profile_options_provider
-SUPERSEDED / REMOVED
-```
+Que existieran visualizaciones o composiciones transversales anteriores se considera
+**UNVERIFIED HISTORICAL** hasta localizar evidencia concreta en Git/histórico indicado.
 
 ## Siguiente foco único recomendado
 
 ```text
-Manager authorization stale administrator/local semantics
-PLANNED / PROPOSED NEXT
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
 
-El nombre de incremento puede fijarse en el siguiente chat; no se considera contrato
-CURRENT hasta revisar implementación, canonical y consumers.
+Objetivo del siguiente foco:
 
-No mezclar:
+1. inspeccionar la composición UI CURRENT y sus fronteras transversales;
+2. localizar evidencia histórica de visualizaciones/composiciones perdidas sin tratarlas como autoridad automática;
+3. resolver cualquier incompatibilidad CURRENT que bloquee reutilización, empezando por el finding `can_access`/`can_view` si afecta el camino elegido;
+4. definir el primer incremento UI faltante a partir de lógica existente, no de contratos inventados.
 
-```text
-exact guest fallback composition for authenticated non-promoted identities
-ADA Access runtime composition
-Users Administration UI/repair
-Python metadata alignment
-WEB-TEST-CONTRACT-CLEANUP
-CI/global lint cleanup
-```
-
-No inventar contratos nuevos cuando el código CURRENT ya provee una frontera suficiente.
+No implementar Profiles + Users + Access simultáneamente.

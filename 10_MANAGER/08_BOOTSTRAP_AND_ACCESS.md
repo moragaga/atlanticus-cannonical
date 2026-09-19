@@ -1,18 +1,10 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT DIRECTION / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
+Estado: **CURRENT / AUTHORIZATION SEMANTICS ALIGNED**
 
 ## Alcance
 
-Este documento conserva la frontera entre Bootstrap Access y Manager Access y registra
-el gap CURRENT de autorización de Manager.
-
-El cierre `NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT` no modifica la autorización interna
-de Manager.
-
-## Bootstrap Access
-
-Bootstrap puede existir antes de que otras capabilities de aplicación estén listas.
+Bootstrap Access y Manager Access son fronteras distintas.
 
 ```text
 BOOTSTRAP ACCESS
@@ -20,7 +12,7 @@ BOOTSTRAP ACCESS
 MANAGER ACCESS
 ```
 
-Producción utiliza identidad autenticada mediante el provider configurado.
+## Bootstrap Access
 
 Identity/Users CURRENT distingue:
 
@@ -35,62 +27,72 @@ valid authenticated identity without promoted UserRecord
 → READY
 ```
 
-La promoción de Users no es el gate de entrada a la aplicación.
+Promotion de Users no es gate básico de entrada.
 
 ## Manager Access CURRENT
 
-Manager utiliza:
+Manager usa:
 
 ```text
 ManagerPrincipal
-ManagerModuleAccess
+ManagerModule.access_key
 ManagerAuthorizationPolicy
 ```
 
-Sin embargo `DefaultManagerAuthorizationPolicy` CURRENT todavía concede acceso total si:
+No existe `ManagerModuleAccess` CURRENT.
+
+`DefaultManagerAuthorizationPolicy`:
+
+```text
+required = module.access_key
+required is None -> deny
+required in principal.access_keys -> allow
+otherwise -> deny
+```
+
+No existen bypass CURRENT por:
 
 ```text
 principal.is_local
-OR
 'administrator' in principal.profile_keys
 ```
-
-antes de evaluar el access key requerido por `ManagerModuleAccess`.
-
-Estado:
-
-```text
-VERIFIED CURRENT IMPLEMENTATION
-OPEN CONTRACT CLEANUP
-```
-
-Este documento no redefine silenciosamente la política final.
 
 ## ADA Configuration Manager CURRENT
 
-La composition ADA mantiene helpers:
+Capabilities funcionales:
 
 ```text
-_can_manage_navigation
-_can_manage_tools
-_can_manage_kpis
+navigation.manage
+tools.manage
+kpis.manage
 ```
 
-con semántica equivalente:
+Los contexts específicos usan la misma semántica explícita:
 
 ```text
-principal.is_local
-OR
-'administrator' in principal.profile_keys
-OR
-required access key in principal.access_keys
+access_key in principal.access_keys
 ```
 
-Ese duplicado pertenece al mismo frente futuro de autorización Manager.
+No usan Profiles ni `is_local` como privilegios.
 
-## Local
+## Local runtime
 
-Provider local y autoridad local son runtime concerns.
+CURRENT:
+
+```text
+ManagerPrincipal(
+    subject_id='local',
+    display_name='Administrador local',
+    access_keys=(
+        navigation.manage,
+        tools.manage,
+        kpis.manage,
+    ),
+    is_local=True,
+)
+```
+
+`is_local=True` conserva contexto de ejecución local; no reemplaza `access_keys`.
 
 No existe mapping contractual:
 
@@ -99,56 +101,31 @@ local -> administrator
 administrator -> root
 ```
 
-El siguiente incremento debe verificar cómo se otorgan permisos Manager explícitos en
-runtime local antes de remover cualquier bypass.
+## Functional permission boundary
 
-No inventar access keys ni mappings sin inspeccionar consumers CURRENT.
+Manager permission responde a:
 
-## Navigation / Profiles
+> ¿puede este principal administrar esta función/módulo?
 
-Estado:
+No responde a:
 
-```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
-```
+> ¿puede ejecutar específicamente validate vs publish vs project?
 
-Manager puede componer Navigation con un provider opcional de `ProfileCatalog`:
+Los pasos Source/Projection siguen siendo mecanismos internos del workflow del módulo.
 
-```text
-Profiles core
-    ↓
-NavigationProfileCatalogProvider
-    ↓
-Navigation Manager draft validation + Projection validation + admin options
-```
+No derivar permisos de Manager desde Profiles o ADA Access sin requisito explícito de
+composición de producto.
 
-Navigation no requiere Users ni ADA Access.
+## Finding CURRENT
 
-No usar:
+`web/compositions/navigation-manager` llama `can_access(...)`, pero el protocolo actual
+declara `can_view(...)`.
+
+No introducir alias. Alinear directamente cuando ese consumer entre al scope.
+
+## Siguiente frontera
 
 ```text
-Users -> Navigation profile options
-ADA Access -> Navigation authorization
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
-
-Navigation conserva sus `allowed_profiles` como referencias por key.
-
-## Siguiente frontera recomendada
-
-```text
-Manager authorization stale administrator/local semantics
-PLANNED / PROPOSED NEXT
-```
-
-Debate obligatorio antes de implementación:
-
-1. `ManagerPrincipal` CURRENT.
-2. `ManagerModuleAccess` CURRENT.
-3. `DefaultManagerAuthorizationPolicy` CURRENT.
-4. consumers/compositions ADA CURRENT.
-5. runtime local CURRENT.
-6. tests de comportamiento existentes.
-
-No mezclar con guest fallback de Navigation, Users Administration, ADA Access runtime,
-Python metadata ni cleanup transversal de tests.

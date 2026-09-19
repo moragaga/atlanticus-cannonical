@@ -27,55 +27,40 @@ CLOSED / VERIFIED / CURRENT
 
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
+
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
+CLOSED / VERIFIED / CURRENT
 ```
 
-Ya no son open items:
+## Configuration UI composition recovery — NEXT
 
 ```text
-Users Source/Projection lifecycle
-UsersProfilesConfiguration
-pending/resolved runtime dual schema
-Profiles extraction/source lifecycle
-NavigationProfileOption
-_BASE_PROFILES
-NavigationProfileOptionsProvider
-Navigation -> Users profile options
-Navigation -> ADA Access authorization dependency
-Navigation Configuration -> Profiles catalog alignment
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
 
-## Manager authorization — PROPOSED NEXT
+Open dentro de ese foco de diseño/inventario:
 
-Open:
+1. inspeccionar Manager shell/home/sidebar/workflow CURRENT;
+2. inventariar primitives/composiciones UI reutilizables CURRENT;
+3. localizar evidencia histórica concreta de visualizaciones reportadas como perdidas;
+4. distinguir comportamiento reusable de estilos/implementación obsoleta;
+5. no copiar una composición histórica como autoridad automática;
+6. resolver incompatibilidades CURRENT que bloqueen reutilización sin aliases/shims;
+7. elegir un único primer módulo UI faltante para el incremento posterior.
 
-1. revisar `ManagerPrincipal` CURRENT;
-2. revisar `ManagerModuleAccess` CURRENT;
-3. revisar `DefaultManagerAuthorizationPolicy` CURRENT;
-4. determinar si `is_local` sigue siendo bypass válido o debe convertirse en permisos explícitos;
-5. eliminar o justificar `administrator` dentro de Manager sin mapping hacia `root`;
-6. revisar helpers `_can_manage_navigation/_tools/_kpis` de ADA Configuration Manager;
-7. verificar composition local antes de remover bypass;
-8. definir tests de comportamiento final sin congelar implementación interna.
-
-Estado:
+## navigation-manager authorization consumer
 
 ```text
-Manager authorization stale administrator/local semantics
-OPEN / PROPOSED NEXT
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
 
-## Navigation runtime fallback
-
-9. resolver composition exacta para identidad autenticada sin promoted `UserRecord`;
-10. definir `NavigationPrincipal` efectivo sin crear UserRecord ficticio;
-11. usar `guest` sólo como profile normal si existe en `ProfileCatalog`;
-12. no crear dependency Navigation -> Users/ADA Access.
-
-Estado:
-
-```text
-OPEN / SEPARATE
-```
+`can_access` debe alinearse al contrato CURRENT `can_view` cuando entre al scope.
+No crear compatibility alias.
 
 ## Users Administration
 
@@ -84,60 +69,52 @@ USERS-ADMINISTRATION-SURFACE-CUTOVER
 PLANNED / SEPARATE
 ```
 
-Open:
-
-13. UI/surface para lifecycle actual de Users;
-14. explicit promote/update/repair operations según contratos existentes;
-15. concrete Directory provider wiring cuando exista evidencia suficiente.
-
+Usar `UsersAdministrationService` y contracts actuales.
 No reintroducir Users Source/Projection.
 
-## Entra / Directory
-
-16. localizar provider existente si existe;
-17. si no existe, diseñar sólo desde configuración/credenciales reales;
-18. no inventar Graph scopes, tenant ids, credential type ni endpoints.
-
-Estado:
+## Profiles Configuration UI
 
 ```text
-UNVERIFIED
+PLANNED / SEPARATE INCREMENT
 ```
 
-## ADA Access runtime
+Usar `ProfileCatalog`, `ProfilesConfiguration` y Profiles Source lifecycle actuales.
+No agregar permisos ADA a Profiles generic.
 
-19. verificar wiring runtime real;
-20. no convertir ADA Access en dependency de Navigation;
-21. no mover Access application-specific a Atlanticus generic sin evidencia de reutilización.
+## ADA Access Configuration UI
 
-Estado:
+```text
+PLANNED / SEPARATE INCREMENT
+```
+
+Usar `AdaAccessConfiguration` y contracts actuales.
+Mantener ownership ADA.
+
+## Navigation runtime fallback
 
 ```text
 OPEN / SEPARATE
 ```
 
-## User Activity
+No crear Users authority `guest` ni UserRecord ficticio.
 
-22. Freeze `UserPageActivity` shape.
-23. Freeze partition key.
-24. Freeze deterministic ID strategy.
-25. Verificar/aplicar `default_ttl_seconds=86400`.
-26. Freeze semantics de active time y visit_count.
-27. Freeze comportamiento de browser reload/client_session_id.
-28. Definir dashboard query contract.
+## ADA Access runtime
 
-## Resource plan
+```text
+OPEN / SEPARATE
+```
 
-29. Freeze `ApplicationResourcePlan` cuando corresponda.
-30. Freeze external/backend resource declaration.
-31. Definir owner/required/optional semantics.
-32. Definir named connection resolution.
+No convertirlo en dependency de Navigation.
 
-## Readiness
+## Entra / Directory
 
-33. Freeze READY/DEGRADED/ERROR semantics.
-34. Definir dependencies required por aplicación.
-35. Definir health/readiness endpoints/surface.
+Provider concreto:
+
+```text
+UNVERIFIED
+```
+
+No inventar Graph settings/scopes/endpoints.
 
 ## Test contract cleanup
 
@@ -146,17 +123,25 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / OPEN
 ```
 
-36. remover/reemplazar tests que congelen implementación interna sin comportamiento;
-37. revisar findings preexistentes en `test_web_contract.py` y `test_web_source_contract.py`;
-38. no crear validaciones automatizadas de CSS visual/responsive/spacing/branding;
-39. conservar checks de assets sólo cuando su carga sea contractual.
-
 ## Python baseline
 
-40. alinear metadata `requires-python` con Python 3.14.7 en incremento separado;
-41. qualificar globalmente `python:3.14.7-slim-trixie`.
+```text
+PYTHON-METADATA-ALIGNMENT
+PLANNED / OPEN
+```
 
-## CI / lint transversal
+## Qualification transversal
 
-42. qualificar CI remoto para un checkpoint CURRENT cuando exista evidence;
-43. tratar Ruff global preexistente en incremento separado.
+```text
+full web pytest after final callback delta
+UNVERIFIED
+
+full ADA pytest after final callback delta
+UNVERIFIED
+
+CI remote
+UNVERIFIED
+
+full Ruff workspace
+UNVERIFIED
+```

@@ -6,203 +6,156 @@ Estado: **CURRENT**
 
 Qualification y tests son evidencia de propiedades del contrato CURRENT.
 
-No son autoridad para conservar contratos, schemas o adapters SUPERSEDED.
+No son autoridad para conservar contratos, schemas, adapters o aliases SUPERSEDED.
 
-No inventar un PASS cuando no existe resultado de ejecución observado.
+No inventar un PASS cuando no existe resultado observado.
 
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Parent:
 
 ```text
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Tree:
 
 ```text
-69386cf40e566baad2786a079029a6eea20bd8d1
+dd002b632b494065428af9dd10f1e58b7e6638d1
 ```
 
 ## Hitos contractuales relevantes
 
 ```text
-USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CAPABILITY-EXTRACTION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-CLOSED / VERIFIED / CURRENT
-
-USERS-PERSISTED-DATA-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROFILES-CONFIGURATION
-CLOSED / VERIFIED / CURRENT
-
-NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-CLOSED / VERIFIED / CURRENT
-
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
+
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
+CLOSED / VERIFIED / CURRENT
 ```
 
-Los hitos genéricos de Manager, Navigation, Tools, KPI Configuration, KPI Definition
-y ADA Configuration Manager previamente cerrados permanecen CURRENT.
+## Manager authorization — evidencia observada
 
-## Navigation / Profiles alignment — evidencia observada
-
-Entorno reportado por el usuario:
+Durante el incremento se observó:
 
 ```text
-Fedora
-Python 3.14.7
-uv
+rg stale Manager authorization symbols
+0 matches en el scope ejecutado
+
+uv lock --check [web]
+PASS
+
+pytest capabilities/manager/tests compositions/navigation-manager/tests
+68 PASS
+
+ruff check focused Manager + navigation-manager files
+PASS
+
+ruff format --check focused Manager + navigation-manager files
+PASS
+
+full web pytest
+PASS / 100%
+7 skipped
 ```
 
-### Lock
+La suite full web anterior fue ejecutada antes del último delta de callback. Por tanto no
+atribuir ese full PASS específicamente al estado posterior al `PreventUpdate` sin rerun.
+
+## ADA Configuration Manager — evidencia observada
+
+Después de alinear:
+
+```text
+atlanticus-web-navigation-configuration[web]==0.1.9
+```
+
+se observó:
 
 ```text
 uv lock --check
-Resolved 77 packages
 PASS
+
+focused Ruff
+PASS
+
+focused format --check
+PASS
+
+pytest
+26 PASS
 ```
 
-### Tests focalizados
+Ese full ADA pytest también precede al último delta del callback genérico.
+
+## Callback cardinality regression
+
+Problema observado antes del fix:
 
 ```text
-uv run --locked pytest \
-  capabilities/navigation/configuration/tests \
-  compositions/navigation-manager/tests \
-  -q
+InvalidCallbackReturnValue
+Expected 1, got 0
 ```
 
-Resultado:
+sobre outputs pattern `ALL` de `refresh_active_workflow`.
+
+Fix CURRENT:
 
 ```text
-PASS / 100%
+route/module no resoluble o no visible
+→ raise PreventUpdate
 ```
 
-### Regresión Profiles + Navigation
+Después del fix se observó:
 
 ```text
-uv run --locked pytest \
-  capabilities/profiles/core/tests \
-  capabilities/navigation/core/tests \
-  capabilities/navigation/configuration/tests \
-  compositions/navigation-manager/tests \
-  -q
-```
+productive/commented callbacks AST-equivalent
+PASS
 
-Resultado:
+targeted callback regression tests
+PASS
 
-```text
-PASS / 100%
-```
-
-### Ruff sobre archivos modificados del incremento
-
-Después de aplicar formatter únicamente a los cuatro archivos Navigation Manager
-modificados por este incremento:
-
-```text
-uv run --locked ruff check \
-  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/composition.py \
-  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/workflows.py \
-  compositions/navigation-manager/tests/test_composition.py \
-  compositions/navigation-manager/tests/test_workflows.py
-```
-
-Resultado:
-
-```text
-All checks passed!
-```
-
-Y:
-
-```text
-uv run --locked ruff format --check \
-  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/composition.py \
-  compositions/navigation-manager/src/atlanticus/web/compositions/navigation_manager/workflows.py \
-  compositions/navigation-manager/tests/test_composition.py \
-  compositions/navigation-manager/tests/test_workflows.py
-```
-
-Resultado:
-
-```text
-4 files already formatted
-```
-
-### Git diff check
-
-```text
 git diff --check
-PASS
+PASS dentro del repair script
+
+manual smoke /manager
+HTTP 200/204
+sin 500 observado
+sin InvalidCallbackReturnValue observado
 ```
 
-### Legacy symbol scan
+## Conflict detectado durante cierre documental
 
-Búsqueda ejecutada:
+Inspección de `main@9f12c41...` demuestra:
 
 ```text
-NavigationProfileOption
-NavigationProfileOptionsProvider
-profile_options_provider
-_BASE_PROFILES
-resolve_profile_options
-selectable_profile_options
-profile--unrestricted
-projection_validators
+ManagerAuthorizationPolicy
+→ can_view(...)
 ```
 
-Scope:
+pero:
 
 ```text
-capabilities/navigation/configuration
-compositions/navigation-manager
+web/compositions/navigation-manager
+→ resolved_authorization.can_access(...)
 ```
-
-Resultado:
-
-```text
-0 matches
-```
-
-## Ruff global / cleanup transversal
-
-Antes de limitar Ruff al ownership real del incremento se observaron findings fuera del
-scope inmediato:
-
-```text
-capabilities/navigation/configuration/tests/test_web_contract.py
-capabilities/navigation/configuration/tests/test_web_source_contract.py
-```
-
-El primer archivo produjo un `I001`; ambos aparecieron en `ruff format --check` del
-directorio completo.
-
-No fueron modificados oportunistamente.
 
 Estado:
 
 ```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / OPEN
-
-full Ruff workspace
-UNVERIFIED / NOT CLAIMED PASS
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
+
+Los tests ejecutados no demostraron el callback `can_manage` de ese consumer standalone.
+No considerar el consumer funcional por inferencia.
 
 ## Política de tests Web
 
@@ -229,48 +182,36 @@ existencia/no existencia de funciones o clases
 source token presence/absence
 import presence/absence
 AST/module structure
-detalles internos
 ```
 
-CSS/branding/responsive/spacing se validan visualmente salvo comportamiento
-funcional automatizable.
-
-Assets JS/CSS sólo se automatizan por existencia/carga cuando esa carga sea parte
-real del contrato.
-
-## CI remoto
-
-No se verificaron status checks/workflow runs asociados a `3eb46dac...` durante este
-cierre.
-
-Estado:
-
-```text
-UNVERIFIED
-```
+El check AST usado durante reparación del espejo fue una verificación de entrega puntual,
+no un contrato de producto que deba proliferar como test permanente.
 
 ## Python metadata
 
-Canonical fija:
+Baseline:
 
 ```text
 Python 3.14.7
 ```
 
-La qualification local de este incremento se ejecutó bajo 3.14.7.
+El entorno observado ejecutó Python 3.14.7.
 
-Navigation Configuration CURRENT todavía contiene:
-
-```text
-requires-python = "==3.14.2"
-```
-
-Estado:
+Permanece metadata `==3.14.2` en packages CURRENT.
 
 ```text
-VERIFIED CONFLICT / OPEN
+PYTHON-METADATA-ALIGNMENT
+PLANNED / OPEN
 ```
 
-## Git
+## UNVERIFIED
+
+```text
+full web pytest después del último callback delta
+full ADA pytest después del último callback delta
+full Ruff workspace
+CI remoto de 9f12c41...
+python:3.14.7-slim-trixie global qualification
+```
 
 Git continúa SOLO LECTURA para el asistente.

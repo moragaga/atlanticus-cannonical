@@ -15,13 +15,13 @@ No mezclar cleanup transversal con el incremento funcional activo.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
 Parent:
 
 ```text
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 ## Hitos cerrados relevantes
@@ -51,9 +51,6 @@ CLOSED / VERIFIED / CURRENT
 USERS-PERSISTED-DATA-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
 PROFILES-CAPABILITY-EXTRACTION
 CLOSED / VERIFIED / CURRENT
 
@@ -68,79 +65,107 @@ CLOSED / VERIFIED / CURRENT
 
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
+
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## Hitos superados
 
 ```text
-USERS-STANDALONE-AUTHORITY-CUTOVER
-CLOSED / SUPERSEDED BY USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
+ManagerModuleAccess
+SUPERSEDED / REMOVED
 
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
-SUPERSEDED / NOT FINAL TARGET
+per-operation Manager validate/publish/project access fields
+SUPERSEDED / REMOVED
 
-USERS-PROFILES-COMPOSITION-CUTOVER
-SUPERSEDED AS PREVIOUS MODEL
+is_local Manager authorization bypass
+SUPERSEDED / REMOVED
 
-ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access target
-SUPERSEDED / NOT ADOPTED
+administrator profile Manager authorization bypass
+SUPERSEDED / REMOVED
 
 Navigation local profile mini-model
 SUPERSEDED / REMOVED
+
+Users Source/Projection Manager model
+SUPERSEDED / REMOVED
 ```
 
-## Navigation / Profiles CURRENT
+## Finding CURRENT no cerrado
 
 ```text
-Navigation Configuration -> Profiles core
-CURRENT
-
-Navigation -> Users
-FORBIDDEN
-
-Navigation -> ADA Access
-FORBIDDEN
-
-Navigation -> Profiles Configuration
-FORBIDDEN
-
-Navigation durable profile references
-allowed_profiles = profile keys
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
 
-No existe catálogo local `_BASE_PROFILES` ni adapter equivalente.
+No resolver con alias/shim `can_access`.
+
+## UI administrativa CURRENT
+
+Presentes:
+
+```text
+Navigation
+Tools
+KPI Configuration
+KPI Definition
+```
+
+Faltantes:
+
+```text
+Profiles Configuration UI
+Users Administration UI
+ADA Access Configuration UI
+```
+
+Backend/lógica existente:
+
+```text
+Profiles Configuration
+→ ProfilesConfiguration + Profiles Source lifecycle
+
+Users Administration
+→ UsersAdministrationService + stores/contracts actuales
+
+ADA Access Configuration
+→ AdaAccessConfiguration + ADA Access Source lifecycle
+```
+
+No diseñar nuevos dominios para crear esas superficies.
 
 ## Siguiente foco único recomendado
 
 ```text
-Manager authorization stale administrator/local semantics
-PLANNED / PROPOSED NEXT
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
 
 Primera etapa obligatoria:
 
 ```text
-inspect ManagerPrincipal contract
-inspect ManagerModuleAccess contract
-inspect DefaultManagerAuthorizationPolicy behavior
-inspect ADA Configuration Manager duplicated _can_manage_* helpers
-identify exact local-development composition requirements
-freeze final authorization semantics before implementation
+inspect CURRENT admin composition and Manager shell
+inventory reusable UI/composition primitives already implemented
+locate historical transversal UI/composition evidence when available
+identify visualizations that are actually missing in CURRENT
+expose current conflicts instead of adding compatibility
+freeze one reusable composition boundary only if evidence requires it
+choose one first missing UI increment
 ```
 
-No asumir que `local`, `root`, Profiles o ADA Access deban mapearse automáticamente a
-Manager permissions.
+No implementar las tres UI faltantes en un solo incremento.
 
-No conservar compatibility con `administrator` si el contrato final lo elimina.
+No crear un framework transversal nuevo sin evidencia de reutilización o código previo.
 
 ## Frentes separados que permanecen abiertos
 
 ```text
 exact guest fallback composition for authenticated non-promoted identities
 OPEN / SEPARATE
-
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / SEPARATE
 
 ADA Access runtime composition
 OPEN / SEPARATE
@@ -156,23 +181,4 @@ PLANNED / OPEN
 
 CI remote
 UNVERIFIED
-```
-
-## No mezclar en el siguiente chat
-
-- Navigation Configuration redesign;
-- Navigation guest fallback runtime composition;
-- Users Administration UI/repair;
-- ADA Access runtime composition;
-- Python metadata cleanup;
-- Web test cleanup global;
-- unrelated Ruff cleanup;
-- Command Center;
-- Operational Data;
-- rediseño de Source/Projection core.
-
-Único foco recomendado:
-
-```text
-Manager authorization stale administrator/local semantics
 ```

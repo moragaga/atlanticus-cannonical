@@ -1,17 +1,17 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT GENERIC CORE / AUTHORIZATION CLEANUP OPEN**
+Estado: **CURRENT GENERIC CORE / AUTHORIZATION ALIGNED / UI RECOVERY NEXT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
 | `01_APPLICATION_BOUNDARY.md` | Manager como capability independiente. | CURRENT |
 | `02_NAVIGATION_AND_HOME.md` | Home, sidebar y navegación administrativa. | CURRENT |
 | `03_WORKFLOW_AND_SESSION.md` | WORKSPACE/SOURCE/PROJECTION y consumer final. | CURRENT |
-| `04_TOOL_CONFIGURATION.md` | Herramienta, Component/Subcomponent y contrato Source/Projection CURRENT. | FROZEN/CURRENT |
+| `04_TOOL_CONFIGURATION.md` | Tool Configuration y contrato Source/Projection. | FROZEN/CURRENT |
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Testing contractual. | CURRENT POLICY |
 | `07_SOURCE_LEDGER.md` | Fuentes/checkpoints/evidencia. | AUDIT LEDGER |
-| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access y gap de autorización stale. | CURRENT DIRECTION / OPEN GAP |
+| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access. | CURRENT |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos y warmup. | CONTRACT DESIGN |
 
 ## Contrato Manager CURRENT
@@ -23,62 +23,48 @@ ManagerModule
 ├── source_reader_service
 ├── projection_service
 ├── draft_validation_service
-└── source_history_service | None
+├── source_history_service | None
+└── access_key | None
 ```
 
 Manager no declara:
 
 ```text
+ManagerModuleAccess
 workflow_service
 exact_source_*
 exact_projection_service
 expected_source_revision
 ```
 
-## Consumers/contratos cerrados
+## Authorization CURRENT
 
 ```text
-Navigation Manager adoption
-CLOSED / VERIFIED / CURRENT
-
-Tools Source/Projection
-CLOSED / VERIFIED / CURRENT
-
-KPI Configuration Source/Projection
-CLOSED / VERIFIED / CURRENT
-
-KPI Definition Source/Projection
-CLOSED / VERIFIED / CURRENT
-
-ADA Configuration Manager final generic cutover
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
+ManagerAuthorizationPolicy.can_view(principal, module)
 ```
 
-Users Manager composition no es CURRENT: fue removida cuando Users dejó de ser
-Configuration Source.
+Default:
+
+```text
+module.access_key in principal.access_keys
+```
+
+No bypass:
+
+```text
+is_local
+administrator profile
+```
 
 ## Configuration Manager CURRENT
 
-Checkpoint global de referencia:
+Checkpoint:
 
 ```text
-moragaga/atlanticus@3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
-El consumer registra contratos genéricos separados por módulo:
-
-```text
-source
-source-reader
-source-history
-projection
-draft-validation
-```
-
-La surface CURRENT incluye:
+Surface CURRENT:
 
 ```text
 navigation
@@ -87,60 +73,30 @@ kpis                 optional
 kpi-definitions      optional
 ```
 
-Users no es `ManagerModule`.
+Users no es `ManagerModule` Source/Projection.
 
-## Navigation Manager CURRENT
+Profiles y ADA Access tienen configuration lifecycle propio, pero no UI Manager CURRENT.
 
-Navigation Manager puede recibir:
-
-```text
-profile_catalog_provider: NavigationProfileCatalogProvider | None
-validators: tuple[NavigationProjectionValidator, ...]
-```
-
-Si hay `ProfileCatalog`, la misma validación referencial participa en draft y Projection.
-
-Navigation Manager no obtiene perfiles desde Users ni ADA Access.
-
-## Legacy consumer removal
-
-SUPERSEDED / REMOVED:
+## Finding CURRENT
 
 ```text
-ToolLifecycleServices
-KpiConfigurationServices
-KpiDefinitionServices
-KpiDefinitionAuthorityProvider
-NavigationConfigurationServices
-ExactProjectionWorkflow
-workflow_service
-exact_source_*
-expected_source_revision
-revision-string workflow adapters
-NavigationProfileOptionsProvider
-profile_options_provider
-projection_validators parameter name
+web/compositions/navigation-manager
 ```
 
-No reintroducirlos para corregir UI o autorización.
-
-## Gap CURRENT
-
-`DefaultManagerAuthorizationPolicy` todavía contiene bypass:
+usa `authorization.can_access(...)`, incompatible con el protocolo CURRENT `can_view(...)`.
 
 ```text
-principal.is_local
-OR
-'administrator' in principal.profile_keys
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
 
-ADA Configuration Manager conserva helpers equivalentes.
+No añadir shim/alias.
 
-Estado:
+## Siguiente frontera
 
 ```text
-Manager authorization stale administrator/local semantics
-OPEN / PROPOSED NEXT
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 ```
 
-No resolver sin inspeccionar runtime local y consumers.
+Manager shell/workflow sigue siendo generic. Cada editor concreto sigue siendo owned por su dominio.

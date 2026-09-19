@@ -1,57 +1,45 @@
 # Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER NAVIGATION-PROFILES ALIGNMENT**
+Estado: **CURRENT DECISION / REFINED AFTER MANAGER AUTHORIZATION ALIGNMENT**
 
 ## Propósito
 
-Este documento fija la frontera CURRENT entre:
+Fijar frontera CURRENT entre:
 
 ```text
 Global Users
 Generic Profiles
-Application-specific Access
+Application-specific ADA Access
 Generic Navigation
+Manager administrative shell
 ```
 
-sin reintroducir Users Configuration Source, estado app-specific dentro de Global User,
-un Access generic no demostrado ni un catálogo paralelo de Profiles dentro de Navigation.
+sin reintroducir Users Configuration Source, estado app-specific en Global User, Access
+generic no demostrado, catálogo paralelo de Profiles ni permissions internas de Manager
+modeladas como perfiles.
 
 ## Autoridad de implementación
 
-CURRENT inspeccionado:
-
 ```text
-moragaga/atlanticus:main
-3eb46dac80f23d438774e3afa39999dc96f592d7
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
-Parent inmediato:
+Parent:
 
 ```text
-0fba548329afd9bc9dee92ea6caa53d1aaa69eb0
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
 Tree:
 
 ```text
-69386cf40e566baad2786a079029a6eea20bd8d1
+dd002b632b494065428af9dd10f1e58b7e6638d1
 ```
-
-Canonical base inspeccionado antes de este reemplazo:
-
-```text
-moragaga/atlanticus-cannonical@59ca0864daac7b79816974679cd4353033fe6408
-```
-
-Git permanece SOLO LECTURA para el asistente.
 
 ## Estado del frente
 
 ```text
 USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CONFIGURATION-BOUNDARY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
 PROFILES-CAPABILITY-EXTRACTION
@@ -72,232 +60,99 @@ CLOSED / VERIFIED / CURRENT
 NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / SEPARATE
-
-Manager authorization stale administrator/local semantics
-OPEN / PROPOSED NEXT
-```
-
-Quedan SUPERSEDED:
-
-```text
-USERS-PROFILES-SOURCE-OWNERSHIP-CUTOVER
-USERS-PROFILES-COMPOSITION-CUTOVER as previous Source-centric model
-ACCESS-PROFILES-CONFIGURATION as generic Atlanticus Access target
-USER_NOT_PROMOTED -> 403
-NavigationProfileOption
-NavigationProfileOptionsProvider
-_BASE_PROFILES
-resolve_profile_options
-selectable_profile_options
-profile_options_provider
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## Regla principal
 
-Atlanticus es una base generic reusable.
-
-Global Users no conoce aplicaciones concretas.
+### Global Users
 
 ```text
-Global Users
-    identity + lifecycle + global base authority
+identity + lifecycle + global base authority
 ```
 
-Profiles es generic y reusable:
+No contiene profile/access app-specific.
+
+### Profiles
 
 ```text
-Profiles
-    profile definition + catalog + configuration + Source lifecycle
+profile definition + catalog + configuration + Source lifecycle
 ```
 
-Access pertenece a la aplicación cuando sus permisos son application-specific:
+Generic y reusable.
+
+### ADA Access
 
 ```text
-ADA
-    user -> profiles
-    profile -> ADA access keys
+user_id -> profile_keys
+profile_key -> ADA access_keys
 ```
 
-Navigation es generic y consume profile keys; no importa Users ni ADA Access para
-resolver rutas.
+Application-specific.
 
-## Users
-
-Users puede existir standalone.
-
-CURRENT estructura:
+### Navigation
 
 ```text
-web/capabilities/users/
-├── activity
-├── blob
-├── core
-└── cosmos
+allowed_profiles = profile keys
 ```
 
-No existen CURRENT:
+Generic. No importa Users ni ADA Access para resolver rutas.
+
+### Manager authorization
 
 ```text
-users/configuration
-users/projection-cosmos
-users-manager composition
+ManagerModule.access_key
+principal.access_keys
 ```
 
-### Strong identity
+Es una frontera funcional administrativa del Manager/composition y no cambia ownership de
+Users, Profiles, ADA Access o Navigation.
+
+No interpretar:
 
 ```text
-issuer
-subject_id
-user_id = build_user_key(issuer, subject_id)
+navigation.manage
+tools.manage
+kpis.manage
 ```
 
-Email/display name no autorizan merge automático entre strong identities distintas.
+como Profiles ni como Users authorities.
 
-### UserRecord
+## Users CURRENT
 
-```text
-user_id
-issuer
-subject_id
-display_name
-email
-enabled
-authority_key
-avatar_background_color
-avatar_text_color
-```
-
-No contiene:
-
-```text
-profile_key
-profile_keys
-access_keys
-app_id
-navigation role
-ADA Access
-Tools/KPI configuration
-```
-
-### Authorities
-
-Managed global:
+Managed authorities:
 
 ```text
 basic
 root
 ```
 
-Runtime local:
+Runtime local authority:
 
 ```text
 local
 ```
 
-`administrator` no pertenece a Users CURRENT.
-
-`guest` no pertenece al Users authority contract CURRENT.
-
-No existe mapping:
+No Users authorities:
 
 ```text
-administrator -> root
+guest
+administrator
 ```
 
-### Login / access semantics
+Login read-only; not promoted no bloquea entrada; disabled -> 403.
 
-Login continúa siendo read-only sobre el promoted store:
+Administration core existe y UI sigue pendiente.
 
-```text
-resolve only
-no observe
-no pending write
-```
-
-La ausencia de un promoted User no bloquea el ingreso.
-
-CURRENT:
-
-```text
-record absent
-→ AccessStatus.READY
-→ deterministic user_id
-→ UsersRuntime has no EffectiveUser for that load
-
-record present + enabled=True
-→ AccessStatus.READY
-→ EffectiveUser stored in UsersRuntime
-
-record present + enabled=False
-→ AccessStatus.USER_DISABLED
-→ 403
-```
-
-`AccessStatus.USER_NOT_PROMOTED` fue eliminado.
-
-Promotion significa administración/control y disponibilidad de `EffectiveUser`, no
-permiso básico para entrar a la aplicación.
-
-Legacy documents `pending` / `resolved` no son aceptados por el store CURRENT.
-
-## Users Registry / Administration
-
-Durable contract:
-
-```text
-UsersRegistryStore
-```
-
-Provider CURRENT:
-
-```text
-BlobUsersRegistryStore
-```
-
-Default blob:
-
-```text
-users/users.json.gz
-```
-
-Documento:
-
-```text
-document_type = atlanticus_users_registry
-schema_version = 1
-```
-
-Administration core continúa separado del login runtime.
-
-No reintroducir pending writes durante login.
-
-## Profiles
-
-Profiles es generic Atlanticus first-class capability.
-
-CURRENT:
+## Profiles CURRENT
 
 ```text
 web/capabilities/profiles/core
 web/capabilities/profiles/configuration
 ```
 
-Ownership:
-
-```text
-profiles/core
-ProfileDefinition
-ProfileCatalog
-profile domain invariants
-
-profiles/configuration
-ProfilesConfiguration
-Profiles Source lifecycle
-```
-
-`ProfileDefinition` CURRENT:
+`ProfileDefinition`:
 
 ```text
 key
@@ -306,119 +161,37 @@ background_color
 text_color
 ```
 
-Source contract CURRENT:
+Source lifecycle CURRENT.
 
-```text
-document_type = atlanticus_profiles_configuration_release
-schema_version = 1
-resource_path = profiles/configuration.json.gz
-```
+No UI administrativa CURRENT.
 
-Source Store es injected y generic; Profiles no hardcodea proveedor Blob/Cosmos.
-
-No agregar permisos ADA ni un campo arbitrario `options` al modelo generic.
-
-## ADA Access
-
-Generic Atlanticus Access fue rechazado antes de integración por falta de evidencia de
-reutilización.
-
-El owner CURRENT es ADA:
+## ADA Access CURRENT
 
 ```text
 scopes/ada/web/access/core
 scopes/ada/web/access/configuration
 ```
 
-Contratos CURRENT:
+Contracts:
 
 ```text
 UserProfileAssignment
-    user_id
-    profile_keys
-
 ProfileAccessGrant
-    profile_key
-    access_keys
-
 EffectiveAdaAccess
-    user_id
-    profile_keys
-    access_keys
-
 AdaAccessConfiguration
-    user_profiles
-    profile_access
 ```
 
-ADA Access valida referencias contra `ProfileCatalog` de forma explícita.
+Source lifecycle CURRENT.
 
-Un `user_id` sin assignment devuelve acceso ADA efectivo vacío; no crea asignación ni
-perfil por defecto dentro de `AdaAccessConfiguration`.
+No UI administrativa CURRENT.
+No Projection CURRENT.
+Runtime composition exacta sigue separada/open.
 
-Source contract CURRENT:
-
-```text
-document_type = ada_access_configuration_release
-schema_version = 1
-resource_path = access/configuration.json.gz
-```
-
-No existe Projection de ADA Access CURRENT.
-
-No inventar una hasta que un consumidor real justifique esa segunda persistencia.
-
-## Navigation
-
-Navigation permanece generic configuration domain.
-
-CURRENT autorización de rutas:
-
-```text
-NavigationPrincipal.access_key
-        ∈
-NavigationRouteMatch.allowed_profiles
-```
-
-`NavigationPrincipal.unrestricted=True` omite el filtro por profile key para rutas
-habilitadas.
-
-Navigation no necesita Users ni ADA Access para ese contrato.
-
-### Durable configuration
-
-Navigation conserva:
-
-```text
-NavigationLinkConfiguration.allowed_profiles
-= tuple[str, ...]
-```
-
-Esas strings son referencias de profile key.
-
-Navigation no persiste `ProfileDefinition`.
-
-### Profiles core dependency
-
-Navigation Configuration CURRENT declara:
-
-```text
-atlanticus-web-profiles==0.1.0
-```
-
-Y no declara:
-
-```text
-atlanticus-web-profiles-configuration
-atlanticus-web-users
-ADA dependency
-```
-
-Boundary CURRENT:
+## Navigation CURRENT
 
 ```text
 Navigation Configuration -> Profiles core
-ALLOWED / CURRENT
+CURRENT
 
 Navigation Configuration -> Profiles Configuration
 FORBIDDEN
@@ -430,190 +203,76 @@ Navigation -> ADA Access
 FORBIDDEN
 ```
 
-### Profile catalog provider
-
-Contrato CURRENT:
+Durable:
 
 ```text
-NavigationProfileCatalogProvider = Callable[[], ProfileCatalog]
+NavigationLinkConfiguration.allowed_profiles
+= tuple[str, ...] profile keys
 ```
 
-Sin provider:
+`NavigationProfileCatalogProvider` consume `ProfileCatalog` opcionalmente.
+No inventa profiles base.
+
+## Manager / application composition CURRENT
+
+ADA Configuration Manager compone:
 
 ```text
-profile_definitions() -> ()
-```
-
-La superficie administrativa no inventa perfiles base.
-
-Con provider:
-
-```text
-profile_definitions(provider) -> provider().all()
-```
-
-Los `ProfileDefinition` provistos aportan:
-
-```text
-key
-label
-background_color
-text_color
-```
-
-para la UI administrativa.
-
-Fallos del provider se propagan; no se ocultan devolviendo catálogo vacío.
-
-### Referential validation
-
-`create_navigation_profile_catalog_validator(...)` recorre
-`NavigationConfigurationCatalog.configured_profiles()` y resuelve cada key mediante:
-
-```text
-ProfileCatalog.require(profile_key)
-```
-
-Unknown key produce:
-
-```text
-NavigationProjectionIssue
-code = navigation.profile.unknown
-level = error
-```
-
-La composition Navigation Manager construye una única colección `validators`.
-
-La misma colección se entrega a:
-
-```text
-NavigationManagerDraftValidationWorkflow
-create_navigation_projection_service / NavigationProjectionBuilder
-```
-
-Un warning se preserva sin invalidar el draft; un error lo invalida.
-
-### Removed local mini-model
-
-Ya no existen:
-
-```text
-NavigationProfileOption
-_BASE_PROFILES
-resolve_profile_options
-selectable_profile_options
-NavigationProfileOptionsProvider
-profile_options_provider
-```
-
-Navigation Configuration no crea perfiles especiales `local`, `administrator` ni `guest`.
-
-`administrator` no recibe acceso unrestricted por configuración.
-
-No existe mapping:
-
-```text
-administrator -> root
-```
-
-`local` no es un `ProfileDefinition` especial de Navigation Configuration.
-
-### root / local / guest
-
-`NavigationPrincipal.unrestricted` sigue siendo el mecanismo generic del core para
-acceso total.
-
-La composición de `root`/`local` hacia `unrestricted` pertenece al runtime/composition y
-no se representa creando `ProfileDefinition` artificiales.
-
-`guest` es un profile normal sólo si existe en el `ProfileCatalog` provisto.
-
-La composition exacta para identidad autenticada no promovida sigue OPEN / SEPARATE.
-
-No resolver creando:
-
-```text
-guest authority en Users
-UserRecord ficticio
-Navigation -> Users dependency
-Navigation -> ADA Access dependency
-```
-
-## Source / Projection
-
-Source/Projection aplica por capability sólo cuando el contrato lo requiere.
-
-CURRENT:
-
-```text
-Profiles
-Source lifecycle: YES
-Projection: NO
-
-ADA Access
-Source lifecycle: YES
-Projection: NO
-
 Navigation
-existing generic configuration Source/Projection contract: YES
-profile referential validator: CURRENT
-
-Global Users
-Configuration Source: NO
-Generic Projection: NO
+Tools
+KPI Configuration
+KPI Definition
 ```
 
-No restaurar simetría artificial entre domains.
-
-## UI
-
-Legacy Users configuration UI permanece eliminada.
-
-Users Administration UI sigue pendiente y debe consumir el lifecycle de administración,
-no reconstruir la antigua Users Configuration.
-
-Profiles UI debe ser Profiles-owned cuando exista.
-
-Navigation UI permanece Navigation-owned y usa `ProfileCatalog` provisto por composition.
-
-ADA Access UI, si se introduce, debe ser ADA-owned.
-
-No fusionar estas superficies sólo porque convivan en una misma aplicación.
-
-## Persisted data
-
-El código CURRENT no lee legacy Users schemas.
-
-Durante el cierre de persisted-data se confirmó que no existían datos reales ya
-persistidos que requirieran migración; por tanto no se creó reader legacy, migrador ni
-compatibilidad temporal.
-
-Ese frente permanece CLOSED.
-
-## Testing rules
-
-Automatizar:
+Manager access:
 
 ```text
-behavior
-contracts
-invariants
-regressions
-critical flows
+navigation.manage
+tools.manage
+kpis.manage
 ```
 
-No automatizar como contract tests:
+No bypass por `is_local` ni `administrator`.
+
+Users no vuelve a ser Manager Source/Projection module.
+
+Profiles Configuration y ADA Access Configuration pueden recibir superficies administrativas
+futuras sin cambiar ownership de dominio.
+
+Users Administration puede convivir en una aplicación administrativa, pero debe consumir
+su lifecycle propio en lugar de fingir Source/Projection.
+
+## UI recovery boundary
+
+Ausencia CURRENT verificada:
 
 ```text
-CSS visual
-responsive
-spacing
-branding
-source token scans
-import scans
-existence/non-existence of functions/classes
-implementation internals
+Profiles Configuration UI
+Users Administration UI
+ADA Access Configuration UI
 ```
+
+El usuario reporta que hubo composiciones/visualizaciones transversales anteriores que se
+perdieron. Su existencia y shape exactos son históricos UNVERIFIED hasta localizar código o
+evidencia concreta.
+
+Regla para recovery:
+
+```text
+CURRENT contracts first
+historical code second as reference
+no memory-driven reconstruction
+no legacy resurrection
+no adapters/shims/aliases
+one UI increment at a time
+```
+
+## Known consumer conflict
+
+`web/compositions/navigation-manager` usa `can_access(...)` aunque
+`ManagerAuthorizationPolicy` CURRENT expone `can_view(...)`.
+
+Debe alinearse directamente cuando entre al scope.
 
 ## Reglas congeladas
 
@@ -626,9 +285,6 @@ REQUIRED
 
 Global Users app-specific state
 FORBIDDEN
-
-Global User strong identity
-issuer + subject_id
 
 Managed authority
 basic | root
@@ -648,32 +304,14 @@ REMOVED
 Users generic Projection
 REMOVED
 
-Users Manager module
+Users Manager Source/Projection module
 REMOVED
 
 Users login write/pending
 FORBIDDEN
 
-not promoted -> 403
-REMOVED
-
-promoted disabled -> 403
-CURRENT
-
-OLD SCHEMA RUNTIME READERS
-FORBIDDEN
-
-ADAPTERS / SHIMS / ALIASES
-FORBIDDEN
-
-DOUBLE CONTRACT
-FORBIDDEN
-
 Profiles
 GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
-
-Generic Access
-NOT ADOPTED
 
 ADA Access
 APPLICATION-SPECIFIC / CURRENT
@@ -681,14 +319,8 @@ APPLICATION-SPECIFIC / CURRENT
 Navigation authorization input
 PROFILE KEY
 
-Navigation durable profile reference
-allowed_profiles
-
 Navigation Configuration -> Profiles core
 CURRENT
-
-Navigation -> Profiles Configuration
-FORBIDDEN
 
 Navigation dependency on Users
 FORBIDDEN
@@ -696,62 +328,55 @@ FORBIDDEN
 Navigation dependency on ADA Access
 FORBIDDEN
 
-Navigation local profile mini-model
+Manager authorization
+EXPLICIT MODULE ACCESS KEY
+
+Manager is_local/admin implicit bypass
+FORBIDDEN
+
+Manager per-operation permission split
 REMOVED
-```
 
-## Orden de implementación refinado
+ADAPTERS / SHIMS / ALIASES
+FORBIDDEN
 
-```text
-1. USERS-GLOBAL-REGISTRY-ROOT-CUTOVER
-   CLOSED / VERIFIED / CURRENT
-
-2. USERS-PERSISTED-DATA-CUTOVER
-   CLOSED / VERIFIED / CURRENT
-
-3. PROFILES-CAPABILITY-EXTRACTION
-   CLOSED / VERIFIED / CURRENT
-
-4. PROFILES-INDEPENDENT-SOURCE-LIFECYCLE
-   CLOSED / VERIFIED / CURRENT
-
-5. ADA-ACCESS-PROFILES-CONFIGURATION
-   CLOSED / VERIFIED / CURRENT
-
-6. NONPROMOTED-ACCESS-SEMANTICS-CORRECTION
-   CLOSED / VERIFIED / CURRENT
-
-7. NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-   CLOSED / VERIFIED / CURRENT
+DOUBLE CONTRACT
+FORBIDDEN
 ```
 
 ## Pendientes explícitos
 
 ```text
-Manager authorization stale administrator/local semantics
-OPEN / PROPOSED NEXT
+CONFIGURATION-UI-COMPOSITION-RECOVERY
+PLANNED / NEXT
 
-exact guest fallback composition for authenticated non-promoted identities
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+
+Profiles Configuration UI
+PLANNED
+
+Users Administration UI
+PLANNED
+
+ADA Access Configuration UI
+PLANNED
+
+exact guest fallback composition
 OPEN / SEPARATE
-
-Users Administration UI/repair
-PLANNED / SEPARATE
 
 ADA Access runtime composition
 OPEN / SEPARATE
 
-concrete Entra/Graph Directory provider
+concrete Entra/Graph provider
 UNVERIFIED
 
-local selector composition wiring
-UNVERIFIED
-
-Python 3.14.7 metadata alignment
+Python metadata alignment
 OPEN / SEPARATE
 
 WEB-TEST-CONTRACT-CLEANUP
 OPEN / SEPARATE
 
-CI remote / full Ruff workspace
+CI remote / full Ruff
 UNVERIFIED
 ```

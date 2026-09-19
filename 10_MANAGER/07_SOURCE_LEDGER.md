@@ -12,168 +12,168 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint publicado de este cierre
 
 ```text
-moragaga/atlanticus@ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+moragaga/atlanticus@9f12c41a23d69784c7c5b775a4093a94ac654d55
 ```
 
-Parent inmediato:
+Parent:
 
 ```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+3eb46dac80f23d438774e3afa39999dc96f592d7
 ```
 
-## Manager core
+Tree:
 
 ```text
-MANAGER-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+dd002b632b494065428af9dd10f1e58b7e6638d1
 ```
 
-Contrato:
+## Manager authorization semantics
 
 ```text
-ManagerModule
-source_key
-source_service
-source_reader_service
-projection_service
-draft_validation_service
-source_history_service | None
-```
-
-## Configuration domains
-
-```text
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-USERS-MANAGER-GENERIC-CONTRACT-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
+MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
 CLOSED / VERIFIED / CURRENT
 ```
 
-## ADA Configuration Manager final consumer
-
-Publicado en:
+Implementado:
 
 ```text
-ee9a0401c7947f2bf61abc0a783dfa905443b6b1
+ManagerModuleAccess REMOVED
+ManagerModule.access_key CURRENT
+ManagerAuthorizationPolicy.can_view CURRENT
+Default authorization = explicit access key membership
+is_local bypass REMOVED
+administrator profile bypass REMOVED
+per-operation validate/publish/project Manager permissions REMOVED
+```
+
+ADA Configuration Manager:
+
+```text
+navigation.manage
+tools.manage
+kpis.manage
+```
+
+Local runtime recibe esas capabilities explícitamente.
+
+## Manager active workflow callback
+
+```text
+MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
+CLOSED / VERIFIED / CURRENT
+```
+
+Problema reproducido:
+
+```text
+InvalidCallbackReturnValue
+Expected 1, got 0
+```
+
+Fix:
+
+```text
+unresolvable/non-visible active module
+→ PreventUpdate
+```
+
+Targeted regression + manual smoke posterior: PASS observado.
+
+## Dependency alignment incidental necesaria
+
+ADA Configuration Manager fue alineado a:
+
+```text
+atlanticus-web-navigation-configuration[web]==0.1.9
+```
+
+Su lock fue actualizado y `uv lock --check` pasó.
+
+## Qualification observada
+
+Durante el hito:
+
+```text
+legacy scan scoped                         0
+Manager + navigation-manager tests         68 PASS
+web full pytest before final callback fix  PASS / 7 skipped
+ADA Configuration Manager pytest           26 PASS
+focused Ruff/format                        PASS
+callbacks commented mirror AST             PASS
+callback targeted regression               PASS
+manual /manager smoke after final fix       PASS
+HTTP 500 after final fix                    not observed
+InvalidCallbackReturnValue after final fix  not observed
+```
+
+No declarar full web/ADA pytest rerun después del delta final del callback.
+
+## Finding descubierto durante cierre documental
+
+```text
+ManagerAuthorizationPolicy.can_view(...)
+```
+
+vs:
+
+```text
+web/compositions/navigation-manager
+resolved_authorization.can_access(...)
 ```
 
 Estado:
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
 ```
 
-Verificado por inspección:
+El consumer no fue demostrado por el smoke ADA Configuration Manager.
+
+## UI CURRENT observada
+
+Configuration Manager compone:
 
 ```text
-ConfigurationManagerDependencies usa contracts CURRENT
-composition.py registra source/reader/history/projection/validation
-Users usa users-manager CURRENT
-Navigation usa NavigationSourceService + Projection service
-Tools usa ToolSourceService + Projection service
-KPI usa KpiSourceService + Projection service
-KPI Definition usa KpiDefinitionSourceService + Projection service
-ManagerWorkspaceBridge presente
-local_runtime.py presente
-__main__.py presente
+navigation
+tools
+kpis
+kpi-definitions
 ```
 
-Removido del consumer:
+No compone actualmente:
 
 ```text
-kpi_authority.py
-KpiDefinitionAuthorityProvider
-ToolLifecycleServices
-KpiConfigurationServices
-KpiDefinitionServices
-NavigationConfigurationServices
-ExactProjectionWorkflow
-workflow_service
-exact_source_*
-expected_source_revision
-revision-string projection adapters
+Profiles Configuration
+Users Administration
+ADA Access Configuration
 ```
 
-## Evidencia observada
-
-Antes de publicación:
-
-```text
-git diff --check
-PASS
-
-legacy token scan scoped
-0 matches
-
-compileall scoped
-PASS
-```
-
-Después:
-
-```text
-Configuration Manager local page boot
-PASS / manual observation
-```
+El backend/lifecycle de esos dominios existe en sus fronteras actuales; la ausencia es de
+surface/composition, no una autorización para reconstruir dominios.
 
 ## Qualification pendiente
 
 ```text
-full Ruff
+full web pytest después del delta final
 UNVERIFIED
 
-full pytest
+full ADA pytest después del delta final
 UNVERIFIED
 
-full ADA regression
-UNVERIFIED
-
-local behavioral E2E
-UNVERIFIED
-
-Storage/Cosmos Docker E2E
+full Ruff workspace
 UNVERIFIED
 
 CI remote
 UNVERIFIED
-```
 
-## Python metadata
-
-Configuration Manager CURRENT:
-
-```text
-requires-python = "==3.14.2"
-```
-
-Canonical baseline:
-
-```text
-Python 3.14.7
-```
-
-Estado:
-
-```text
-OPEN
+Storage/Cosmos E2E
+UNVERIFIED
 ```
 
 ## Próxima frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-UI-CLEANUP
+CONFIGURATION-UI-COMPOSITION-RECOVERY
 PLANNED / NEXT
 ```
-
-No mezclar E2E, Storage/Cosmos Docker ni Python metadata en ese incremento salvo bloqueo directo.
