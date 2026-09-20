@@ -15,24 +15,30 @@ Estado: **CURRENT**
 | `09_CURRENT_GAPS.md` | Diferencias entre `main` y objetivos abiertos. | CURRENT |
 | `10_SOURCE_LEDGER.md` | Evidencia recuperada del código auditado. | AUDIT LEDGER |
 | `11_OPEN_ITEMS.md` | Contracts todavía abiertos. | OPEN |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/Access/Navigation/Manager. | CURRENT DECISION |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/Access/Navigation/Manager. | CURRENT DECISION / REFINED |
 
 Checkpoint de implementación CURRENT:
 
 ```text
-moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
+moragaga/atlanticus@ce07ada07e3f4f100b97ad2ac5e7285b54419c20
 ```
 
 Parent:
 
 ```text
-31723a108ddd2f49346fdcbb844db9891eb08f4b
+df5b99502265758e873e0565abf2176cc617104b
 ```
 
-Canonical inspeccionado antes del reemplazo:
+Tree:
 
 ```text
-moragaga/atlanticus-cannonical@07a0582c7acdd5c9b93f2a1bb02651e8c5302448
+825dbaffba30b42199c54dbd4da9ba234f3ef437
+```
+
+Canonical inspeccionado antes de este reemplazo:
+
+```text
+moragaga/atlanticus-cannonical@50e364bc4bd61b1ecbd9c3aebb5ad4b8e4ee8e4f
 ```
 
 Estado relevante:
@@ -50,6 +56,12 @@ CLOSED / VERIFIED / CURRENT
 USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
+USERS-MANAGER-UI-REVIEW
+CLOSED / CURRENT / ACCEPTED WITH NON-BLOCKING POLISH
+
+USERS-GUEST-ASSIGNMENT-BOUNDARY
+CURRENT / IMPLEMENTED
+
 ADA-ACCESS-PROJECTION-PERSISTENCE
 CLOSED / VERIFIED / CURRENT
 
@@ -66,15 +78,28 @@ NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: USERS
+CLOSED FOR CURRENT V1 / NON-BLOCKING POLISH DEFERRED
 
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-Navigation Configuration no depende de Profiles core.
+Users continúa siendo una `ManagerEntry`: no recibe Source/Projection sintético ni workflow global de
+borrador/publicación.
 
-Profiles UI continúa owned por Profiles; su cierre no movió presentación al Manager.
+La administración de Users opera con commits explícitos por usuario:
 
-El siguiente trabajo es Users UI page-by-page; no abre un nuevo backend contract ni convierte
-Users en Source/Projection.
+```text
+Promover
+→ operación inmediata de promoción
+
+Editar → Guardar
+→ operación inmediata de actualización
+```
+
+`guest` puede representar estado transitorio previo a la promoción, pero no es un perfil
+administrativo asignable. `local` continúa siendo runtime-only.
+
+La qualification automática posterior al correctivo final de Users y la qualification de wiring
+productivo Blob/Cosmos permanecen explícitamente abiertas; no bloquean el cambio de foco hacia
+backend ADA, pero tampoco deben declararse verificadas sin evidencia.

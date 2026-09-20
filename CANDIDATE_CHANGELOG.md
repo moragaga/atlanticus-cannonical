@@ -73,3 +73,88 @@ Checkpoint establishing the KPI Configuration cutover:
 ```text
 moragaga/atlanticus@4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
 ```
+
+## Execution refinement — 2026-09-20 — Users Administration V1
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@ce07ada07e3f4f100b97ad2ac5e7285b54419c20
+```
+
+Users Administration closes its current V1 blocking flow without converting Users into a generic
+Manager Source/Projection module.
+
+CURRENT:
+
+```text
+Users
+→ ManagerEntry
+
+Users synthetic Source/Projection
+FORBIDDEN
+```
+
+The UI is split into two internal views:
+
+```text
+Usuarios
+Por promover
+```
+
+`Usuarios` is the default view.
+
+Promotion remains intentionally singular:
+
+```text
+candidate
+→ choose assignable profile
+→ Promover
+→ immediate administrative commit
+```
+
+Existing managed users use:
+
+```text
+Editar
+→ profile / enabled
+→ Guardar
+→ immediate administrative commit
+```
+
+No global Users draft/publication workflow is introduced.
+
+Profile boundary refined from implementation findings:
+
+```text
+guest
+valid transient/pending UserRecord profile
+not administratively assignable
+
+local
+runtime-local only
+not administratively assignable
+
+basic / root / configured profiles
+administratively assignable
+```
+
+An intermediate attempt to reject `guest` in `normalize_managed_profile_key()` was superseded because
+it invalidated legitimate pending `UserRecord` state.
+
+CURRENT enforcement is at the assignment boundary:
+
+```text
+require_managed_profile('guest')
+→ reject
+
+available_managed_profiles()
+→ exclude guest + local
+```
+
+The UI review is accepted for the current V1 with minor non-blocking polish deferred.
+
+The final automated requalification after the Guest-boundary corrective remains UNVERIFIED and must
+not be recorded as GREEN without a later test result.
+
+The production Blob/Cosmos wiring for Users Administration also remains a separate qualification.
