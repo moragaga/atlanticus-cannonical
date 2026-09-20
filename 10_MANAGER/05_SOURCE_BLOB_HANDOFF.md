@@ -12,7 +12,8 @@ Azure Blob Storage
 
 Local conserva semántica equivalente de desarrollo/QA.
 
-SharePoint/Power Automate pueden permanecer sólo donde consumidores todavía no hayan migrado; no son autoridad donde Blob ya lo sea.
+SharePoint/Power Automate pueden permanecer sólo donde consumers todavía no hayan migrado;
+no son autoridad donde Blob ya lo sea.
 
 ## Source Core
 
@@ -36,35 +37,21 @@ ProjectionTarget =
     SourceKey
     +
     SourceReleaseRef
+    +
+    dependencies exactas cuando correspondan
 ```
 
 `project(target)` ejecuta el target exacto.
 
-Dependencies exactas forman parte del `ProjectionTarget` cuando el dominio las requiere.
-
 ## Manager generic adoption
 
-Manager CURRENT expone:
-
-```text
-SourceReaderWorkflow
-SourcePublicationWorkflow
-SourceHistoryWorkflow
-```
-
-y consume Projection mediante:
-
-```text
-get_status(source_key)
-select_current_target(source_key)
-project(ProjectionTarget)
-```
+`ManagerModule` CURRENT expone/consume los workflows genéricos Source/Projection.
 
 No convierte identidad Source/Projection a contratos legacy de revisión textual.
 
-## Consumers CURRENT
+`ManagerEntry` no participa de este handoff y no debe recibir Source/Projection ficticios.
 
-Estado verificado:
+## Consumers Source/Projection CURRENT
 
 ```text
 Profiles          CLOSED / VERIFIED / CURRENT
@@ -72,6 +59,7 @@ Navigation        CLOSED / VERIFIED / CURRENT
 Tools             CLOSED / VERIFIED / CURRENT
 KPI Configuration CLOSED / VERIFIED / CURRENT
 KPI Definition    CLOSED / VERIFIED / CURRENT
+ADA Access        SOURCE/PROJECTION CURRENT
 ```
 
 Profiles se integra mediante:
@@ -82,17 +70,52 @@ web/compositions/profiles-manager
 
 y su `ManagerModule` ya forma parte de ADA Configuration Manager.
 
-Users no pertenece a este handoff Source/Projection:
+## Users boundary
+
+Users no pertenece al handoff Source/Projection.
 
 ```text
 Users Administration
 SEPARATE ADMIN LIFECYCLE
 ```
 
+Su integración Manager ya es CURRENT mediante:
+
+```text
+web/compositions/users-manager
+→ ManagerEntry
+```
+
+Estado:
+
+```text
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
+```
+
 No crear Source/Projection ficticios para Users.
 
-ADA Access sí posee Source/Projection y su persistencia Projection ya es CURRENT, pero su
-superficie administrativa Manager sigue pendiente.
+## ADA Access boundary
+
+ADA Access sí posee Source/Projection reales.
+
+CURRENT incluye:
+
+```text
+AdaAccessSourceService
+AdaAccessProjectionBuilder
+ProjectionRecord[AdaAccessConfiguration]
+projection-local
+projection-cosmos
+exact Profiles ProjectionTarget dependency
+```
+
+Su superficie administrativa Manager no existe todavía.
+
+```text
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+PLANNED / NEXT / DESIGN FIRST
+```
 
 ## Navigation adoption
 
@@ -120,7 +143,7 @@ CosmosNavigationProjectionStore
  <- SourceProjectionService
 ```
 
-No existen adapters Navigation para conservar los stores legacy eliminados.
+No existen adapters Navigation para conservar stores legacy eliminados.
 
 Estado:
 
@@ -129,46 +152,55 @@ NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## Checkpoint CURRENT de este cierre
+## Checkpoint CURRENT
 
 ```text
-415c8263c15bae2b5d3c01b734b0f1e0101a7242
+783d3578da52aeb5cf831999a7717dc8b79f2fb0
 ```
 
 Parent:
 
 ```text
-9b623d67e253413f6b0d894e10d9cc15735b553d
+e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
 ```
 
 Tree:
 
 ```text
-ff81bcd74b5e844604ca656562f9aaf398946d67
+5ed091d5477b8ca041ddd669de8217028ec72f35
 ```
 
-Qualification observada en los scopes modificados:
+El parent contiene la implementación Users Manager.
+El checkpoint CURRENT elimina únicamente el lockfile anidado accidental de esa composition.
+
+## Qualification relevante observada antes del cleanup
 
 ```text
-profiles-manager tests            8 passed
-ADA Configuration Manager tests  26 passed
-Ruff changed-scope                PASS
-git diff --check                  PASS
+Users core tests                    46 passed
+Manager tests                       62 passed
+users-manager tests                  1 passed
+ADA Configuration Manager tests    26 passed
+
+Web scoped combined                 109 passed
+ADA Configuration Manager           26 passed
+git diff --check                    PASS
 ```
+
+El cleanup posterior no modifica código ni contracts.
 
 No se afirma:
 
-- full Web GREEN;
+- full monorepo pytest GREEN;
 - full ADA GREEN;
+- full Ruff workspace GREEN;
 - Docker E2E;
-- Python 3.14.7 qualification global;
 - CI remote GREEN.
 
 ## Siguiente frontera administrativa
 
 ```text
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
-PLANNED / NEXT
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-No es un cutover Source/Projection.
+No mezclar con ADA Access runtime composition.

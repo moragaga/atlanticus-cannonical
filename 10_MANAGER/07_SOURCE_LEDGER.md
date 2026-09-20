@@ -9,25 +9,38 @@ Estado: **AUDIT LEDGER**
 - `moragaga/atlanticus-decisions` = HISTORICAL.
 - Git permanece SOLO LECTURA para el asistente.
 
-## Checkpoint publicado de este cierre
+## Checkpoint publicado CURRENT
 
 ```text
-moragaga/atlanticus@415c8263c15bae2b5d3c01b734b0f1e0101a7242
+moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
 ```
 
 Parent:
 
 ```text
-9b623d67e253413f6b0d894e10d9cc15735b553d
+e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
 ```
 
 Tree:
 
 ```text
-ff81bcd74b5e844604ca656562f9aaf398946d67
+5ed091d5477b8ca041ddd669de8217028ec72f35
 ```
 
-## Cierres anteriores relevantes ya CURRENT
+El parent `e0dca2d9...` introdujo Users Manager.
+`783d3578...` elimina únicamente:
+
+```text
+web/compositions/users-manager/uv.lock
+```
+
+La autoridad de lock del workspace Web es:
+
+```text
+web/uv.lock
+```
+
+## Cierres relevantes CURRENT
 
 ```text
 ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
@@ -36,131 +49,232 @@ CLOSED / VERIFIED / CURRENT
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-```
-
-## Profiles -> ADA Configuration Manager
-
-Estado:
-
-```text
 PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
+
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
 ```
+
+## ManagerEntry
+
+CURRENT añadido al core Manager:
+
+```text
+ManagerEntry
+```
+
+Campos CURRENT:
+
+```text
+key
+group_key
+title
+route
+order
+layout
+description
+access_key
+web_module
+```
+
+`ManagerModuleRegistry` conserva `modules` y añade `entries` / `items`.
+
+El conjunto combinado exige key y route únicos.
+
+Authorization acepta:
+
+```text
+ManagerModule | ManagerEntry
+```
+
+El coordinator Source/Projection continúa resolviendo sólo `ManagerModule`.
+
+## Users -> ADA Configuration Manager
 
 Implementado:
 
 ```text
-compose_profiles_manager(...)
-→ produce ManagerModule existente
-→ ManagerModule.web_module registra Source/Projection/Validation
-→ registro ocurre sobre el ServiceRegistry real de Atlanticus Web
+web/compositions/users-manager
+→ recibe UsersAdministrationService
+→ produce ManagerEntry
+→ registra users.administration mediante WebModule
+→ usa ManagerAuthorizationPolicy.can_view(...)
+```
 
-ADA Configuration Manager
-→ recibe profiles_module
-→ lo incluye en ManagerSurfaceDefinition
+ADA Configuration Manager CURRENT:
+
+```text
+group administration
+    Users
+
+group configuration
+    Profiles
+    Navigation
+    Tools
+    KPI
+    KPI Definition
+```
+
+Capability funcional Users:
+
+```text
+users.manage
+```
+
+Ruta:
+
+```text
+/manager/users
 ```
 
 No implementado:
 
 ```text
-registry temporal
-adapter de integración
+Users Source
+Users Projection
+Users ManagerModule Source/Projection
+adapter
 shim
 alias
-segundo contrato Manager para Profiles
+doble lifecycle
 ```
 
-Capability funcional:
+## Users Web surface CURRENT
+
+Incluye:
 
 ```text
-profiles.manage
+candidate/promote
+promoted/edit
+search/filter
+conflict visibility
+profile selection
+enabled state
+pagination 10/20
+explicit Refresh
 ```
 
-Local runtime CURRENT:
+Sólo son administrables:
 
 ```text
-profiles.manage
-navigation.manage
-tools.manage
-kpis.manage
+profile_key
+enabled
 ```
+
+Read-only:
+
+```text
+user_id
+issuer
+subject_id
+display_name
+email
+```
+
+Persistencia:
+
+```text
+UsersAdministrationService only
+```
+
+Profiles options usan snapshot de page load y sólo se reemplazan mediante Refresh explícito.
 
 ## Qualification observada
 
-Durante este cierre:
+En el árbol integrado antes de publicar:
 
 ```text
-profiles-manager pytest             8 PASS
-ADA Configuration Manager pytest   26 PASS
-Ruff sobre archivos del incremento  PASS
-git diff --check                    PASS
+targeted integration                  23 passed
+ADA Configuration Manager             26 passed
+Users core                             46 passed
+Manager                                62 passed
+users-manager                           1 passed
+Web scoped combined                   109 passed
+git diff --check                      PASS
+uv lock / uv sync                     PASS
 ```
-
-El commit publicado fue verificado remotamente.
 
 No declarar:
 
 ```text
-full Web pytest GREEN
-full ADA pytest GREEN
+full monorepo pytest GREEN
 full Ruff workspace GREEN
 CI remote GREEN
-Storage/Cosmos E2E GREEN
-Python 3.14.7 global qualification
+Docker E2E GREEN
 ```
 
-salvo evidencia posterior.
+Se intentó una recolección pytest desde la raíz del monorepo y produjo errores de entornos,
+dependencias y nombres de tests entre proyectos independientes. Esa ejecución no constituye
+qualification válida del incremento y no se usa como evidencia de regresión Users.
 
-## ADA Access Projection persistence
+## ADA Access CURRENT observado
 
-Checkpoint parent:
+Packages:
 
 ```text
-9b623d67e253413f6b0d894e10d9cc15735b553d
+scopes/ada/web/access/core
+scopes/ada/web/access/configuration
+scopes/ada/web/access/projection-local
+scopes/ada/web/access/projection-cosmos
 ```
 
-Estado:
+Ownership CURRENT:
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
+profile_key -> access_keys
 ```
 
-CURRENT incluye:
+Contracts CURRENT:
 
 ```text
-durable ProjectionRecord[AdaAccessConfiguration] serialization
-exact recursive ProjectionTarget dependencies
-local projection provider
-Cosmos projection provider
-standalone storage topology
+ProfileAccessGrant
+EffectiveAdaAccess
+AdaAccessConfiguration
+AdaAccessSourceService
+AdaAccessProjectionBuilder
 ```
 
-No reconstruir provenance desde CURRENT Profiles después de restart.
-
-## UI CURRENT observada
-
-ADA Configuration Manager compone:
+Source schema:
 
 ```text
-profiles
-navigation
-tools
-kpis
-kpi-definitions
+2
 ```
 
-Todavía no compone:
+Projection:
 
 ```text
-Users Administration
-ADA Access Configuration
+exact Profiles ProjectionTarget dependency
+durable ProjectionRecord[AdaAccessConfiguration]
+local provider
+Cosmos provider
 ```
 
-La ausencia es de superficie/composition administrativa.
-No autoriza reconstruir dominios ni inventar contracts paralelos.
+No existe package/directorio Web UI de ADA Access ni dependencia Dash en estos packages.
+
+El historial inspeccionado de commits que introdujeron y modificaron
+`scopes/ada/web/access` tampoco muestra una Web surface de Access.
+
+## Requirement fijado para la próxima frontera
+
+El siguiente chat debe diseñar, antes de implementar, cómo representar:
+
+```text
+definición/creación controlada de accesos
+asignación de accesos a Profiles
+identificador estable consumible manualmente por desarrolladores
+```
+
+CURRENT sólo contiene strings `access_keys`; no existe catálogo de definiciones de acceso.
+
+No inventar clase, schema, storage, route o nombre de identificador antes de inspeccionar
+consumers reales.
+
+La integración en funcionalidades Web será manual/controlada por desarrolladores; no se
+requiere wiring automático.
 
 ## Finding pendiente separado
 
@@ -169,39 +283,18 @@ NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-`web/compositions/navigation-manager` usa un consumer desalineado respecto de
-`ManagerAuthorizationPolicy.can_view(...)`.
-
 No introducir alias.
 
 ## Próxima frontera
 
 ```text
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 PLANNED / NEXT / DESIGN FIRST
 ```
 
-CURRENT Users ya tiene:
+Después:
 
 ```text
-UsersAdministrationService
-```
-
-y no tiene:
-
-```text
-users-manager composition
-Users Manager Source/Projection module
-```
-
-La etapa siguiente debe seguir ese lifecycle existente.
-
-## Después
-
-```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED
-
 MANAGER-FINAL-ADMIN-COMPOSITION
 PLANNED
 ```

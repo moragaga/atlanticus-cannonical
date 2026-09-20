@@ -1,27 +1,65 @@
 # Manager — Navigation and Home
 
-Estado: **CURRENT**
+Estado: **CURRENT / MODULES + ENTRIES**
 
 ## `/manager`
 
 `/manager` es una Home real.
 
-No representa el primer módulo y no redirige implícitamente a Users/Navigation/Tools.
+No representa el primer item administrativo y no redirige implícitamente a
+Users/Profiles/Navigation/Tools.
 
 ## Registry
 
-`ManagerModuleRegistry` es la fuente de módulos visibles y rutas administrativas.
+`ManagerModuleRegistry` es la fuente única de items administrativos visibles y rutas.
 
-Home y sidebar deben derivar del mismo registry para evitar divergencia.
+Mantiene:
+
+```text
+modules
+entries
+items = modules + entries
+```
+
+Home, sidebar y routing derivan del mismo registry para evitar divergencia.
+
+## Visibilidad
+
+La secuencia CURRENT es:
+
+```text
+ManagerModuleRegistry
+        ↓
+visible_items(principal, policy)
+        ↓
+render Home / sidebar
+```
+
+Las vistas específicas siguen disponibles:
+
+```text
+visible_modules(...)
+visible_entries(...)
+```
+
+No renderizar un item antes de comprobar autorización.
 
 ## Home
 
 Responsabilidad:
-- descubrir configuraciones disponibles;
-- mostrar estado resumido;
-- abrir módulo.
+
+- descubrir items administrativos visibles;
+- mostrar estado resumido cuando exista;
+- abrir la capability correspondiente.
 
 No debe absorber workflow de edición/publicación.
+
+### Estado
+
+`ManagerModule` puede mostrar estado Source/Projection porque ese lifecycle existe.
+
+`ManagerEntry` no debe recibir un badge Projection ficticio sólo para mantener simetría
+visual.
 
 ## Navegación Manager
 
@@ -29,21 +67,43 @@ Manager conserva navegación administrativa propia:
 
 - botón/trigger lateral;
 - Home;
-- módulos;
+- grupos;
+- items administrativos;
 - retorno explícito a Manager Home;
 - sidebar administrativa.
 
 No fusionar este mecanismo con la navegación operacional principal de ADA.
 
+## Grupos CURRENT en ADA Configuration Manager
+
+La composition CURRENT registra:
+
+```text
+administration
+configuration
+```
+
+Users pertenece a `administration`.
+
+Profiles, Navigation, Tools, KPI Configuration y KPI Definition pertenecen al flujo de
+configuration según la composition CURRENT.
+
+Los grupos responden a una necesidad real de organización y no crean nuevas fronteras de
+dominio.
+
 ## Paginación
 
-La Home actual implementa page size 6.
+La Home mantiene page size 6.
 
-La paginación de presentación no debe provocar lecturas repetidas de Source cuando el snapshot ya está hidratado.
+La paginación de presentación no debe provocar lecturas repetidas de Source cuando el
+snapshot ya está hidratado.
+
+La paginación específica de Users es responsabilidad de su Web surface y usa el contrato
+genérico de paginación Web ya existente.
 
 ## Principio
 
-La navegación de Manager organiza capacidades administrativas.
+La navegación Manager organiza capacidades administrativas.
 
 La navegación ADA organiza herramientas/superficies operacionales.
 

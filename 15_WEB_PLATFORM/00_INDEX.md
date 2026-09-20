@@ -15,18 +15,18 @@ Estado: **CURRENT**
 | `09_CURRENT_GAPS.md` | Diferencias entre `main` y objetivos abiertos. | CURRENT |
 | `10_SOURCE_LEDGER.md` | Evidencia recuperada del código auditado. | AUDIT LEDGER |
 | `11_OPEN_ITEMS.md` | Contracts todavía abiertos. | OPEN |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/ADA Access/Navigation. | CURRENT DECISION / REFINED |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/ADA Access/Navigation/Manager. | CURRENT DECISION / REFINED |
 
-Checkpoint de implementación de referencia:
+Checkpoint de implementación CURRENT:
 
 ```text
-moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
+moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
 ```
 
-Canonical base inspeccionado antes de este reemplazo:
+Canonical base reemplazada:
 
 ```text
-moragaga/atlanticus-cannonical@a7adef2568d664ee31cb1b0eb1fe9f11ce2b9203
+moragaga/atlanticus-cannonical@0aa49ba1cdfc76754d4ec1ef4d169b6360f4da14
 ```
 
 Estado relevante:
@@ -38,6 +38,9 @@ CLOSED / VERIFIED / CURRENT
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
+
 ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
@@ -45,6 +48,9 @@ ADA-ACCESS-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 PLANNED / NEXT / DESIGN FIRST
 
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
@@ -56,3 +62,8 @@ PLANNED / OPEN
 PYTHON-METADATA-ALIGNMENT
 PLANNED / OPEN
 ```
+
+ADA Access no tiene Web surface CURRENT.
+
+El próximo diseño debe preservar que el consumo de access identifiers por funcionalidades
+Web es manual/controlado por desarrolladores, no automático.

@@ -2,116 +2,263 @@
 
 Estado: **AUDIT LEDGER**
 
-Corte:
-`moragaga/atlanticus@d63886d8d42688e3d03d680f0a3d7b92cd3863ed`
+## Corte CURRENT
+
+```text
+moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+```
+
+Parent:
+
+```text
+e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
+```
+
+Tree:
+
+```text
+5ed091d5477b8ca041ddd669de8217028ec72f35
+```
 
 ## Users
 
-`web/capabilities/users/`
+CURRENT packages relevantes:
 
-- `core`
-- `configuration`
-- `activity`
-- `cosmos`
+```text
+web/capabilities/users/core
+web/capabilities/users/activity
+web/capabilities/users/blob
+web/capabilities/users/cosmos
+web/compositions/users-manager
+```
 
-Verificado en el corte actual:
-- `UsersRuntimeStore` expone `resolve/observe`;
-- `PendingUsersReader` expone `list_pending`;
-- `users.runtime` es el único recurso durable Users confirmado;
-- Pending y Managed comparten el mismo recurso;
-- `CosmosUsersRuntimeStore` implementa ambos contratos;
-- `resolve()` usa point-read;
-- `observe()` usa create-only + conflict reread;
-- `list_pending()` usa query cross-partition y orden determinista;
-- Users Configuration mantiene `UsersProjectionRepository.load_state/project/health_check`;
-- permanece sin cerrar el writer durable Managed desde Projection hacia `users.runtime`.
+CURRENT ownership:
+
+```text
+identity
+lifecycle
+user -> profile_key
+```
+
+No existe CURRENT:
+
+```text
+authority_key
+users/configuration
+Users generic Projection
+Users Manager Source/Projection module
+```
+
+`UsersAdministrationService` es el lifecycle administrativo.
+
+Users Manager integra ese service mediante `ManagerEntry`.
+
+Capability:
+
+```text
+users.manage
+```
+
+Web surface CURRENT administra únicamente:
+
+```text
+profile_key
+enabled
+```
+
+Identity/directory facts son read-only.
+
+## Profiles
+
+CURRENT:
+
+```text
+profiles/core
+profiles/configuration
+profiles/projection-local
+profiles/projection-cosmos
+web/compositions/profiles-manager
+```
+
+Profiles es generic Atlanticus y posee `ProfileCatalog`.
+
+Users consume Profiles core para validar/seleccionar profiles.
+
+## ADA Access
+
+CURRENT packages:
+
+```text
+scopes/ada/web/access/core
+scopes/ada/web/access/configuration
+scopes/ada/web/access/projection-local
+scopes/ada/web/access/projection-cosmos
+```
+
+Models verificados:
+
+```text
+ProfileAccessGrant(profile_key, access_keys)
+EffectiveAdaAccess(profile_key, access_keys)
+AdaAccessConfiguration(profile_access)
+```
+
+Ownership:
+
+```text
+profile_key -> access_keys
+```
+
+`access_key` se normaliza como string con formato:
+
+```text
+[a-z0-9][a-z0-9._-]*
+```
+
+No existe catálogo de definiciones de acceso CURRENT.
+
+Source:
+
+```text
+AdaAccessSourceService
+schema_version = 2
+resource = access/configuration.json.gz
+```
+
+Projection:
+
+```text
+AdaAccessProjectionBuilder
+exactly one Profiles dependency
+dependency must match active exact Profiles ProjectionTarget
+payload = AdaAccessConfiguration
+```
+
+Persistencia:
+
+```text
+ProjectionRecord[AdaAccessConfiguration]
+recursive exact dependencies
+projection-local
+projection-cosmos
+```
+
+No reconstruir provenance desde Profiles CURRENT después de restart.
+
+## ADA Access Web evidence
+
+CURRENT no contiene package/directorio de Web UI Access.
+
+Los `pyproject.toml` de Access core/configuration/projection-local/projection-cosmos no
+declaran Dash ni una extra Web.
+
+La historia inspeccionada de commits que tocaron `scopes/ada/web/access` desde su creación
+muestra únicamente domain/configuration/source/projection/persistence; no muestra una Web
+surface Access.
+
+Por tanto:
+
+```text
+ADA Access Web surface
+NOT IMPLEMENTED / PLANNED
+```
+
+No asumir callbacks, layout, route, CSS, IDs ni composition existentes.
 
 ## Navigation
 
-`web/capabilities/navigation/`
+CURRENT:
 
-- `core`
-- `configuration`
+```text
+Navigation Configuration -> Profiles core
+Navigation -> Users FORBIDDEN
+Navigation -> ADA Access FORBIDDEN
+```
 
-## Optional composition precedent
-
-`web/compositions/navigation-activity/`
-
-Integra:
-
-- Navigation;
-- User Activity;
-
-sin acoplar los packages core.
-
-## User Activity
-
-Inspeccionado:
-
-- `models.py`
-- `services.py`
-- Cosmos adapter.
-
-Verificado:
-
-- session summary;
-- route aggregates;
-- route change events;
-- Identity usage;
-- falta page visit history ordenada.
-
-## Cosmos
-
-Inspeccionado:
-
-- `CosmosProvisioner`;
-- `CosmosContainerSpec`;
-- Web Storage Topology;
-- Web Cosmos Storage Bridge.
-
-Verificado:
-
-- ensure database;
-- ensure containers;
-- validate containers;
-- partition key mismatch;
-- TTL mismatch;
-- `ResolvedStoragePlan` → `CosmosContainerSpec`;
-- múltiples provisioners nombrados por `connection_ref`;
-- bridge sin DB creation, secrets, raw settings ni Azure SDK;
-- errores locales detectables antes del provider I/O.
-
-## Storage
-
-Inspeccionado tree de `connectivity/storage`.
-
-No se encontró provisioner equivalente a `CosmosProvisioner`.
+`allowed_profiles` contiene profile keys.
 
 ## Manager
 
-Inspeccionado:
+CURRENT core distingue:
 
-- `authorization.py`;
-- ADA Manager composition;
-- application;
-- `/manager` page.
+```text
+ManagerModule
+ManagerEntry
+```
 
-Verificado:
+Registry:
 
-- bypass `principal.is_local`;
-- Navigation profile options leídas desde Users en composición ADA;
-- no existe pre-Manager bootstrap page.
+```text
+modules
+entries
+items
+```
 
-## Qualification incorporada al ledger
+Authorization:
 
-`STORAGE-PREFLIGHT-COSMOS-BRIDGE`:
-- 17 focalizados;
-- 51 con Storage Topology;
-- 87 con Users core;
-- 448 passed / 7 skipped Web en su checkpoint.
+```text
+can_view(principal, ManagerModule | ManagerEntry)
+```
 
-`COSMOS-USERS-RUNTIME-ADAPTER`:
-- 23 focalizados;
-- 110 combinados;
-- 471 passed / 7 skipped Web final;
-- Ruff/format/lock/public API/`git diff --check` GREEN.
+ADA Configuration Manager CURRENT compone:
+
+```text
+Administration:
+- Users
+
+Configuration:
+- Profiles
+- Navigation
+- Tools
+- KPI
+- KPI Definition
+```
+
+## Qualification Users Manager observada
+
+Antes del publish funcional:
+
+```text
+23 targeted passed
+26 ADA Configuration Manager passed
+46 Users core passed
+62 Manager passed
+1 users-manager passed
+109 Web scoped combined passed
+git diff --check PASS
+uv lock / uv sync PASS
+```
+
+El commit `e0dca2d9...` publicó la implementación.
+
+El commit CURRENT `783d3578...` elimina únicamente
+`web/compositions/users-manager/uv.lock`.
+
+No se usa como evidencia el intento de ejecutar pytest desde la raíz del monorepo, porque
+recolectó proyectos independientes con entornos/dependencias distintos y produjo colisiones
+de módulos de test.
+
+## Requirement próximo
+
+Para ADA Access Manager, el producto requiere un flujo manual/controlado:
+
+```text
+1. definir/crear un acceso
+2. disponer de un identificador estable
+3. asignar acceso(s) a Profile(s)
+4. resolver Profile -> access identifiers
+5. el desarrollador referencia manualmente el identificador en la Web/funcionalidad
+```
+
+Los pasos 1 y 2 no tienen modelo CURRENT equivalente.
+
+No inventar su shape antes del diseño.
+
+## Finding pendiente
+
+```text
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
+BLOCKED / VERIFIED CONFLICT
+```
+
+No añadir alias.

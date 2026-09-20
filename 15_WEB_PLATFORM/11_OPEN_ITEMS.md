@@ -19,7 +19,13 @@ CLOSED / VERIFIED / CURRENT
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
+PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
+
 USERS-PROFILES-CONTRACT-REALIGNMENT
+CLOSED / VERIFIED / CURRENT
+
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
@@ -27,27 +33,79 @@ CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
 ```
 
-## ADA Access Projection persistence — NEXT
+## ADA Access Configuration Manager integration — NEXT
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 PLANNED / NEXT / DESIGN FIRST
 ```
 
 Antes de implementar:
 
 ```text
-inspect ProjectionStore / ProjectionRecord / ProjectionTarget
-inspect Profiles projection-local / projection-cosmos
-inspect Profiles durable serializer
-inspect ADA Access source_projection CURRENT
+inspect ADA Access core models CURRENT
+inspect AdaAccessConfiguration CURRENT
+inspect AdaAccessSourceService CURRENT
+inspect AdaAccessProjectionBuilder CURRENT
+inspect projection-local / projection-cosmos CURRENT
+inspect ManagerModule / ManagerEntry CURRENT
+inspect ADA Configuration Manager composition CURRENT
+inspect real access-key consumers before defining identifier semantics
 ```
 
-No copiar el serializer de Profiles sin verificar `dependencies`.
+No existe Web surface Access CURRENT.
 
-No asumir package names, Cosmos topology o durable schema antes del diseño.
+No copiar una UI de otro módulo por simetría.
+
+No asumir todavía si la superficie final se materializa exclusivamente como `ManagerModule`
+o requiere contracts adicionales; Access sí tiene Source/Projection reales, pero el nuevo
+requisito de definición de access permissions debe resolverse primero contra el dominio
+CURRENT.
+
+### Requerimiento de producto a diseñar
+
+El flujo esperado es manual/controlado:
+
+```text
+crear/definir un acceso
+→ obtener un identificador estable
+→ asignarlo a uno o más Profiles
+→ la runtime projection entrega profile -> access identifiers
+→ el desarrollador usa manualmente el identificador para proteger/habilitar funcionalidades
+```
+
+CURRENT ya resuelve:
+
+```text
+profile_key -> access_keys
+```
+
+CURRENT no resuelve explícitamente:
+
+```text
+catálogo/definición de access permissions
+creación de access permissions
+metadata de access permissions
+identidad durable de una definición distinta de la string access_key
+```
+
+La forma exacta permanece OPEN.
+
+No implementar autodescubrimiento ni modificación automática del código Web.
+
+## Manager final administrative composition
+
+```text
+MANAGER-FINAL-ADMIN-COMPOSITION
+PLANNED / AFTER ADA ACCESS
+```
+
+Users y Profiles ya están integrados.
 
 ## navigation-manager authorization consumer
 
@@ -58,33 +116,13 @@ BLOCKED / VERIFIED CONFLICT
 
 No crear compatibility alias.
 
-## Users Administration
-
-```text
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / SEPARATE
-```
-
-Usar `UserRecord.profile_key`, `UsersAdministrationService` y `ProfileCatalog`.
-
-## ADA Access Configuration UI
+## ADA Access runtime
 
 ```text
 PLANNED / SEPARATE
 ```
 
-Usar `AdaAccessConfiguration` CURRENT.
-
-No reintroducir `UserProfileAssignment`.
-
-## Manager final administrative composition
-
-```text
-MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / SEPARATE
-```
-
-Profiles Manager composition reusable ya existe.
+No mezclar con el editor/Manager.
 
 ## Navigation runtime fallback
 
@@ -93,12 +131,6 @@ PLANNED / SEPARATE
 ```
 
 No crear fictitious UserRecord ni Navigation -> Users/ADA Access dependency.
-
-## ADA Access runtime
-
-```text
-PLANNED / SEPARATE
-```
 
 ## Entra / Directory
 

@@ -1,6 +1,6 @@
 # Web Platform — Capability Independence
 
-Estado: **CURRENT / REFINED AFTER USERS-PROFILES REALIGNMENT**
+Estado: **CURRENT / REFINED AFTER USERS MANAGER INTEGRATION**
 
 ## Regla
 
@@ -59,6 +59,17 @@ Strong identity:
 issuer + subject_id
 ```
 
+La Web surface administrativa Users permanece dentro de Users.
+
+La integración al shell Manager ocurre mediante:
+
+```text
+web/compositions/users-manager
+→ ManagerEntry
+```
+
+Esto es composition-only; no convierte Users en Source/Projection.
+
 ## Profiles
 
 Profiles es first-class generic Atlanticus capability.
@@ -70,11 +81,6 @@ profiles/core
 profiles/configuration
 profiles/projection-local
 profiles/projection-cosmos
-```
-
-y existe:
-
-```text
 web/compositions/profiles-manager
 ```
 
@@ -92,7 +98,7 @@ ADA Access -> Profiles core / Profiles Projection
 
 para validar referencias exactas.
 
-Ownership:
+Ownership CURRENT:
 
 ```text
 profile_key -> access_keys
@@ -101,6 +107,23 @@ profile_key -> access_keys
 No posee user-to-profile assignment.
 
 No convertir ADA Access en dependency de Navigation.
+
+CURRENT packages:
+
+```text
+scopes/ada/web/access/core
+scopes/ada/web/access/configuration
+scopes/ada/web/access/projection-local
+scopes/ada/web/access/projection-cosmos
+```
+
+No existe Web surface ADA Access CURRENT.
+
+CURRENT tampoco define un catálogo independiente de accesos: `access_keys` son strings
+normalizadas almacenadas en grants por profile.
+
+La necesidad de definir/crear accesos y producir un identificador estable consumible por
+desarrolladores es una frontera de diseño futura, no un contract ya implementado.
 
 ## Navigation
 
@@ -134,15 +157,19 @@ User Activity conserva independencia funcional.
 
 ## Manager
 
-Manager registra módulos disponibles en composition.
+Manager registra items administrativos disponibles en composition:
 
-Users no es `ManagerModule` Source/Projection.
+```text
+ManagerModule
+ManagerEntry
+```
 
-Profiles sí dispone de composition Manager porque tiene Configuration Source/Projection
-reales.
+Users usa `ManagerEntry`.
 
-La aplicación final administrativa no debe considerarse completa sólo por existir esa
-composition reusable.
+Profiles usa `ManagerModule` porque posee Source/Projection reales.
+
+La aplicación final administrativa no debe considerarse completa hasta integrar ADA Access
+y cerrar explícitamente la composition final.
 
 ## Invariante estructural
 
@@ -169,7 +196,7 @@ FORBIDDEN
 ## Estado de implementación
 
 ```text
-moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
+moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
 ```
 
 CLOSED / VERIFIED / CURRENT:
@@ -177,13 +204,15 @@ CLOSED / VERIFIED / CURRENT:
 ```text
 PROFILES-MANAGER-COMPOSITION
 USERS-PROFILES-CONTRACT-REALIGNMENT
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
 ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
 ADA-ACCESS-PROJECTION-CONTRACT
+ADA-ACCESS-PROJECTION-PERSISTENCE
 ```
 
 Siguiente gap recomendado:
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 PLANNED / NEXT / DESIGN FIRST
 ```
