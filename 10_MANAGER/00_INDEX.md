@@ -11,19 +11,19 @@ Estado: **CURRENT GENERIC CORE / FINAL ADMIN COMPOSITION INTEGRATED / UI REVIEW 
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Testing contractual y frontera visual. | CURRENT POLICY |
 | `07_SOURCE_LEDGER.md` | Fuentes/checkpoints/evidencia. | AUDIT LEDGER |
-| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access. | CURRENT |
+| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access y ADA Access CURRENT. | CURRENT |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos y warmup. | CONTRACT DESIGN |
 
 ## Autoridad de implementación verificada
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Parent inmediato:
 
 ```text
-856498c52f182cd531deae845c25bd51ae2ff4ea
+29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 ## Contratos Manager CURRENT
@@ -60,13 +60,16 @@ Administración
 └── Users
 
 Configuraciones
-├── Profiles
+├── Perfiles
 ├── Accesos
 ├── Navegación
 ├── Herramienta
 ├── KPI
 └── Definiciones KPI
 ```
+
+`Perfiles` es el título application-specific usado por ADA para la capability generic Profiles.
+El default generic no fue renombrado.
 
 ## Navigation Manager Configuration CURRENT
 
@@ -84,6 +87,26 @@ y, cuando existe, instala validation basada en `NavigationProfileOption`.
 
 ADA Configuration Manager hace la adaptación Profiles -> Navigation.
 
+## ADA Access CURRENT
+
+Access sigue siendo application-specific ADA.
+
+CURRENT:
+
+```text
+access_keys
+profile_access
+
+root/local
+unrestricted
+
+basic/guest/custom
+explicit grants
+```
+
+La UI Manager de Access está cerrada y usa los tabs `Accesos / Perfiles`, paginación generic
+`10 / 20` y modal estable de asignación.
+
 ## UI review
 
 ```text
@@ -91,18 +114,23 @@ MANAGER-UI-CONSISTENCY-REVIEW
 IN PROGRESS
 ```
 
-Slice cerrado:
+Slices cerrados:
 
 ```text
 Navigation
+CLOSED / VERIFIED MANUAL / CURRENT
+
+Accesos
 CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
 Siguiente página:
 
 ```text
-Herramienta
+Perfiles
 ```
+
+`Herramienta` permanece OPEN / DEFERRED.
 
 Orden dentro del review:
 
@@ -114,20 +142,19 @@ Orden dentro del review:
 
 ## Qualification conocida
 
-Antes de los últimos cambios visuales:
+Access fue validado focalmente durante el hito y el usuario confirmó el resultado final antes
+de publicar `31723a1...`.
+
+También se observó:
 
 ```text
-Navigation core                           22 passed
-Navigation Configuration                 42 passed
-Navigation Manager                       10 passed
-ADA Configuration Manager focused         5 passed
+ADA Configuration Manager
+31 passed
 ```
 
-Post-`29bbf6d8...` targeted qualification:
+El Ruff package-wide de ese package mantiene tres `I001` fuera del hito Access.
 
-```text
-UNVERIFIED
-```
+La qualification transversal completa continúa pendiente.
 
 ## Finding separado
 

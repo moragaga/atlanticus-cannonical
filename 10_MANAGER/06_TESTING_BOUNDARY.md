@@ -29,6 +29,7 @@ Probar comportamiento real:
 - backend concurrency contract;
 - paginación funcional: page calculation, límites, cambios de página y callbacks cuando sean
   contractualmente relevantes;
+- invariantes de Access como grants prohibidos para `root/local`;
 - carga de un asset JS/CSS sólo cuando su presencia/carga sea parte explícita del contract.
 
 ## No congelar con tests
@@ -86,6 +87,10 @@ Orden:
 3. ejecutar qualification final y limpiar tests inválidos
 ```
 
+Navigation y Accesos ya tienen cierre visual manual.
+
+El siguiente slice es Perfiles.
+
 No anticipar la fase 3 cambiando UI para complacer tests visuales.
 
 ## Qualification visual
@@ -104,28 +109,46 @@ Se valida visualmente:
 - consistencia entre superficies;
 - presentación de paginación.
 
-## Qualification automatizada conocida
+## Qualification Access observada
 
-Antes de la patch visual final de Navigation:
-
-```text
-Navigation core                           22 passed
-Navigation Configuration                 42 passed
-Navigation Manager                       10 passed
-ADA Configuration Manager focused         5 passed
-```
-
-Post-checkpoint CURRENT:
+Antes de la última corrección mínima:
 
 ```text
-targeted pytest
-UNVERIFIED
-
-targeted Ruff
-UNVERIFIED
+ADA Access Configuration
+46 passed + 1 failing test
 ```
 
-No declarar final qualification hasta PHASE 3.
+El fallo fue `dash.html.Input`, corregido a `dbc.Checkbox`.
+
+El usuario confirmó después que el resultado final quedó OK.
+
+Además:
+
+```text
+ADA Configuration Manager
+31 passed
+
+git diff --check
+PASS
+```
+
+Ruff package-wide de `ada-configuration-manager` reportó tres `I001` fuera del hito:
+
+```text
+kpi_definitions.py
+kpis.py
+workflows.py
+```
+
+No son evidencia contra Access y no deben mezclarse con el siguiente slice de Perfiles.
+
+Sigue pendiente:
+
+```text
+remote CI
+full monorepo pytest
+full workspace Ruff
+```
 
 ## Después
 

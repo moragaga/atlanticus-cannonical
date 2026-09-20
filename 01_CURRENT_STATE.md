@@ -7,25 +7,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Parent inmediato:
 
 ```text
-856498c52f182cd531deae845c25bd51ae2ff4ea
+29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 Tree:
 
 ```text
-3f27ad599c6dec610dff5317494a73b276d2ebc4
+4213a0dd11abbc9cb22fb02ed4a60d08bf0f87c5
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@deb493659b41c0d8fea5c70674002486b3b92cbc
+moragaga/atlanticus-cannonical@a48ae6d1433b5ae39288d3b41002782efa10c9cd
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -39,6 +39,8 @@ USERS-PROFILES-CONTRACT-REALIGNMENT                   CLOSED / VERIFIED / CURREN
 USERS-ADMINISTRATION-MANAGER-INTEGRATION              CLOSED / VERIFIED / CURRENT
 ADA-ACCESS-PROJECTION-PERSISTENCE                     CLOSED / VERIFIED / CURRENT
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION          CLOSED / VERIFIED / CURRENT
+ACCESS-UNRESTRICTED-PROFILES-CONTRACT                 CLOSED / VERIFIED / CURRENT
+ACCESS-MANAGER-UI-REVIEW                              CLOSED / VERIFIED MANUAL / CURRENT
 MANAGER-FINAL-ADMIN-COMPOSITION                       CLOSED / VERIFIED / CURRENT
 
 NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER           CLOSED / VERIFIED / CURRENT
@@ -56,6 +58,96 @@ PYTHON-METADATA-ALIGNMENT                             PLANNED / SEPARATE
 ```
 
 ## VERIFIED
+
+### ADA Access unrestricted profile semantics
+
+CURRENT:
+
+```text
+root
+→ todos los access_keys definidos
+→ grants explícitos rechazados
+
+local
+→ todos los access_keys definidos
+→ grants explícitos rechazados
+
+basic / guest / custom
+→ grants explícitos configurables
+```
+
+`AdaAccessConfiguration` sigue persistiendo solamente:
+
+```text
+access_keys
+profile_access
+```
+
+No se añadió flag `unrestricted`, alias, reader legacy ni segundo schema.
+
+### ADA Access admin UI
+
+CURRENT:
+
+```text
+tabs
+Accesos / Perfiles
+
+access creation UI
+Ámbito + Permiso -> access_key
+
+durable access identity
+single string access_key
+
+pagination
+atlanticus.web.pagination
+
+page sizes
+10 / 20
+
+profiles fallback without active Profiles Projection
+ProfileCatalog() system catalog
+
+assignable system profiles in fallback
+basic / guest
+
+root / local
+not assignable in UI
+
+profile assignment row
+stable summary + Configurar
+
+profile editor
+viewport-centered modal + dbc.Checkbox
+
+no access keys
+Configurar disabled; empty modal does not open
+
+assignment state
+directly in editable AdaAccessConfiguration
+
+horizontal overflow
+cause-contained at Dash page-size control
+
+footer
+aligned with qualified Manager surfaces
+```
+
+La UI de Access conserva la reserva vertical paginada usada en las surfaces ya corregidas.
+
+Desktop, mobile, modal y estado sin accesos fueron aceptados manualmente por el usuario antes
+del checkpoint CURRENT.
+
+### Profiles title in ADA Configuration Manager
+
+La composition local ADA invoca:
+
+```text
+compose_profiles_manager(..., title='Perfiles', ...)
+```
+
+Esto cambia el título visible en la aplicación ADA sin cambiar el default generic
+`title='Profiles'` de `compose_profiles_manager`.
 
 ### Navigation runtime authorization semantics
 
@@ -100,78 +192,6 @@ Provider is optional.
 
 Validation of referenced profile keys is installed only when a provider is supplied.
 
-### ADA composition
-
-ADA Configuration Manager is the integration point that knows Profiles and Navigation
-simultaneously.
-
-It maps the active `ProfileCatalog` to `NavigationProfileOption`.
-
-If there is no active Profiles Projection, it falls back to the system `ProfileCatalog`.
-
-The Navigation assignment selector excludes:
-
-```text
-root
-local
-```
-
-Navigation generic does not special-case those keys.
-
-### Navigation admin UI
-
-CURRENT behavior:
-
-```text
-profiles card separate
-REMOVED
-
-profile assignment
-inside link editor only
-
-guest auto-selection
-REMOVED
-
-empty allowed profiles
-displayed as public
-
-top-level pagination
-CURRENT
-
-page sizes
-10 / 20
-
-default page size
-10
-
-section children
-not counted in top-level total
-
-sections
-collapsed initially
-
-expanded section
-shows all child links
-
-expanded state
-ephemeral UI state, not Source
-```
-
-The empty state uses the reserved page area and is centered.
-
-The Dash dropdown focus target is width-contained by Navigation's Dash adapter to avoid
-horizontal overflow.
-
-User confirmed the Navigation page looked correct on the CURRENT checkpoint.
-
-### Boundary-test correction
-
-`test_navigation_configuration_is_independent_from_profiles_users_and_ada` now parses Python
-imports with `ast`.
-
-The previous substring search for `ada.` was SUPERSEDED because it produced a false positive
-on UI text such as `configurada.`.
-
 ### Shared Manager CSS finding
 
 CURRENT implementation contains:
@@ -190,55 +210,62 @@ CURRENT implementation contains:
 
 This is implemented reality.
 
-Its correctness across Manager pages and breakpoints is not yet qualified.
+Its correctness across all Manager pages and breakpoints is not yet qualified as a shared
+responsive decision.
 
 ## Qualification evidence
 
-Observed before the final visual-only patch:
+Durante Access se observó:
 
 ```text
-Navigation core                           22 passed
-Navigation Configuration                 42 passed
-Navigation Manager                       10 passed
-ADA Configuration Manager focused         5 passed
-TOTAL                                    79 passed
+ADA Access Configuration
+46 passed + 1 failing test
 ```
 
-Ruff scoped was also observed passing for Navigation Configuration during the increment.
+El fallo correspondía únicamente a `dash.html.Input`. La implementación se corrigió a
+`dbc.Checkbox`, y el usuario confirmó posteriormente que todo quedó OK antes de publicar
+`31723a1...`.
 
-Not observed after the final CURRENT checkpoint:
+También se observó:
 
 ```text
-post-29bb scoped pytest
-UNVERIFIED
+ADA Configuration Manager
+31 passed
 
-post-29bb scoped Ruff
-UNVERIFIED
+git diff --check
+PASS
+```
 
+El Ruff package-wide de `ada-configuration-manager` reportó tres `I001` en:
+
+```text
+kpi_definitions.py
+kpis.py
+workflows.py
+```
+
+Esos archivos no forman parte del commit CURRENT y no fueron modificados en este hito.
+
+Permanece UNVERIFIED:
+
+```text
 remote CI
-UNVERIFIED
-
 full monorepo pytest
-UNVERIFIED
-
 full workspace Ruff
-UNVERIFIED
 ```
 
 ## INFERRED
 
-No new architecture is required to continue the Manager UI review.
+No se necesita arquitectura nueva para revisar la página Manager de Perfiles.
 
-The next corrections should remain capability-local unless a genuinely shared Manager surface
-defect is demonstrated.
+Las correcciones del siguiente foco deberían permanecer en la capability/composition que las
+posee, salvo que se demuestre un defecto transversal real de Manager.
 
 ## ASSUMED
 
-No assumption is made that current media queries are correct merely because the desktop page
-looks correct.
+No se asume que la UI de Perfiles esté correcta por compartir shell con Navigation o Access.
 
-No assumption is made that the final CURRENT commit is fully qualified by the earlier 79-test
-run.
+No se asume que los tres `I001` externos deban resolverse durante la revisión de Perfiles.
 
 ## PROPOSED
 
@@ -246,35 +273,35 @@ Single next focus:
 
 ```text
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: HERRAMIENTA
+IN PROGRESS / NEXT PAGE: PERFILES
 ```
 
-Ordered phases:
+Orden:
 
 ```text
 PHASE 1
-continue visual review page-by-page
+revisar Perfiles visualmente y corregir sólo su slice
 
 PHASE 2
-audit responsive/media queries after desktop surfaces are coherent
+auditar responsive/media queries cuando las páginas desktop estén coherentes
 
 PHASE 3
-run final behavior-focused tests and remove invalid structural/visual tests
+qualification final behavior-focused y cleanup de tests inválidos
 ```
 
 ## UNVERIFIED / PENDING
 
 ```text
-Herramienta final visual consistency
+Perfiles final visual consistency
 UNVERIFIED / NEXT
+
+Herramienta final visual consistency
+OPEN / DEFERRED
 
 remaining Manager pages visual consistency
 UNVERIFIED
 
 shared and local media-query correctness
-UNVERIFIED
-
-final post-29bb targeted qualification
 UNVERIFIED
 
 Manager real persistence flows

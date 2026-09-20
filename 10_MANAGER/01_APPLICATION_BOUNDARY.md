@@ -55,7 +55,7 @@ CURRENT:
 
 ```text
 ManagerModule:
-- Profiles
+- Profiles / título ADA: Perfiles
 - Accesos
 - Navigation
 - Tools
@@ -70,6 +70,9 @@ Access es application-specific ADA.
 
 Profiles, Users y Navigation son generic Atlanticus.
 
+La composition ADA puede localizar títulos visibles sin cambiar el default generic de la
+capability.
+
 ## Navigation configuration boundary
 
 La UI/configuration de Navigation pertenece a Navigation.
@@ -80,6 +83,20 @@ Navigation.
 Navigation Configuration no depende de Profiles; la adaptación de profile options ocurre en
 la application/composition que conoce ambas capabilities.
 
+## Access configuration boundary
+
+La UI/configuration de ADA Access pertenece a Access.
+
+Manager provee shell/workflow/composition, no ownership de la presentación específica de
+Access.
+
+Access puede consumir `ProfileCatalog` porque esa dependencia pertenece a su contrato de
+dominio. Esto no autoriza mover Profiles dentro de Manager ni crear una dependencia inversa
+desde Profiles hacia ADA Access.
+
+La UI de Access puede usar el catálogo de sistema como fallback de presentación; la validation
+de draft sigue exigiendo Profiles Projection activa.
+
 ## UI qualification boundary
 
 ```text
@@ -87,11 +104,25 @@ MANAGER-UI-CONSISTENCY-REVIEW
 IN PROGRESS
 ```
 
+Slices ya cerrados:
+
+```text
+Navigation
+Accesos
+```
+
+Siguiente slice:
+
+```text
+Perfiles
+```
+
 Corregir shared Manager CSS sólo cuando el problema sea realmente transversal.
 
 No mover CSS capability-local a Manager por simetría.
 
-La fase responsive/media-query se ejecuta después de coherencia visual desktop de las páginas.
+La fase responsive/media-query transversal se ejecuta después de coherencia visual de las
+páginas.
 
 ## Bootstrap boundary
 

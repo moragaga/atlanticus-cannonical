@@ -1,6 +1,6 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT / AUTHORIZATION SEMANTICS ALIGNED / USERS + PROFILES CAPABILITIES ADDED**
+Estado: **CURRENT / ADA ACCESS INTEGRATED / ACCESS UI CLOSED**
 
 ## Alcance
 
@@ -71,6 +71,7 @@ Capabilities funcionales:
 ```text
 users.manage
 profiles.manage
+access.manage
 navigation.manage
 tools.manage
 kpis.manage
@@ -81,9 +82,9 @@ composition reusable.
 
 Users usa la misma semántica mediante `web/compositions/users-manager`.
 
-Los contexts específicos existentes conservan capacidad explícita.
+Access conserva su context application-specific y exige explícitamente `access.manage`.
 
-No usan Profiles ni `is_local` como privilegios implícitos.
+No usan Profiles ni `is_local` como privilegios implícitos de Manager.
 
 ## Local runtime
 
@@ -96,6 +97,7 @@ ManagerPrincipal(
     access_keys=(
         users.manage,
         profiles.manage,
+        access.manage,
         navigation.manage,
         tools.manage,
         kpis.manage,
@@ -127,23 +129,88 @@ Los pasos Source/Projection siguen siendo mecanismos internos de `ManagerModule`
 
 `ManagerEntry` puede tener lifecycle de dominio propio, como Users Administration.
 
-No derivar permisos Manager desde Profiles o ADA Access sin requisito explícito de
-composición de producto.
+No derivar permisos Manager desde Profiles o ADA Access sin requisito explícito de composición
+de producto.
 
-## ADA Access distinction
+## ADA Access CURRENT
 
 Las `access_keys` de `ManagerPrincipal` son inputs de authorization del Manager.
 
-El dominio ADA Access CURRENT también modela:
+El dominio ADA Access modela por separado:
 
 ```text
-profile_key -> ADA access_keys
+AdaAccessConfiguration
+├── access_keys
+└── profile_access
 ```
 
-No asumir que ambos contracts deban unificarse automáticamente.
+No se unifican automáticamente ambos contracts.
 
-La futura integración ADA Access debe revisar consumers reales antes de decidir cómo sus
-access identifiers participan en superficies Web o Manager.
+Semántica de Profiles en ADA Access:
+
+```text
+root
+→ unrestricted
+→ todos los access_keys definidos
+→ no explicit grants
+
+local
+→ unrestricted
+→ todos los access_keys definidos
+→ no explicit grants
+
+basic / guest / custom
+→ explicit grants
+```
+
+La identidad durable sigue siendo un único string `access_key`.
+
+La UI de creación usa `Ámbito + Permiso` para componer `ámbito.permiso`, sin crear un segundo
+schema durable.
+
+## ADA Access Manager surface CURRENT
+
+```text
+Accesos
+├── access catalog
+└── pagination 10 / 20
+
+Perfiles
+├── basic / guest / custom assignable
+├── root / local excluded
+├── compact assignment summary
+└── Configurar -> modal
+```
+
+Si no existe Profiles Projection activa, la UI puede mostrar el catálogo de sistema
+`ProfileCatalog()`; al excluir `root` y `local`, quedan `basic` y `guest`.
+
+La validación de draft conserva la exigencia de Profiles Projection activa.
+
+El modal:
+
+- no abre sin access keys;
+- se centra respecto del viewport;
+- usa `dbc.Checkbox`;
+- escribe la asignación confirmada directamente en la configuración editable.
+
+No existe un overlay durable ni un segundo contrato de asignaciones.
+
+La paginación reutiliza `atlanticus.web.pagination`.
+
+El overflow horizontal se corrige en su causa local; no se oculta globalmente.
+
+## UI localization CURRENT
+
+ADA Configuration Manager compone la capability generic Profiles con:
+
+```text
+title='Perfiles'
+```
+
+Esto es application-specific.
+
+El default generic de `compose_profiles_manager` sigue siendo `Profiles`.
 
 ## Finding CURRENT
 
@@ -159,22 +226,22 @@ BLOCKED / VERIFIED CONFLICT
 
 No introducir alias.
 
-## Próxima frontera
+## Siguiente frontera
+
+Access UI está cerrada.
+
+El siguiente foco único acordado es:
 
 ```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS / NEXT PAGE: PERFILES
 ```
 
-No existe Web surface ADA Access CURRENT.
-
-La próxima etapa debe diseñar la creación/definición de accesos, su asignación a Profiles y
-el identificador estable que el desarrollador utilizará manualmente en funcionalidades Web,
-sin inventar wiring automático.
-
-Después:
+No abrir durante ese foco:
 
 ```text
-MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED
+ADA Access runtime composition
+Manager real persistence qualification
+Navigation authorization alignment
+global cleanup
 ```

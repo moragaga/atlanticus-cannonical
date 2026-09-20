@@ -83,6 +83,96 @@ administrator/root aliases
 
 Managed users consumen `ProfileCatalog`; `local` no es managed assignment.
 
+## ADA Access
+
+CURRENT/FROZEN:
+
+```text
+AdaAccessConfiguration
+├── access_keys
+└── profile_access
+```
+
+La identidad durable de un acceso continúa siendo un único `access_key`.
+
+La UI de creación compone:
+
+```text
+ámbito + permiso
+→ ámbito.permiso
+```
+
+Eso no crea entidades durables separadas `scope` o `permission`.
+
+Profiles irrestrictos CURRENT:
+
+```text
+root
+local
+```
+
+Semántica:
+
+```text
+resolve(root|local)
+→ todos los access_keys definidos
+
+explicit grant root|local
+→ reject
+```
+
+Los demás profiles usan grants explícitos.
+
+No persistir grants redundantes para `root` o `local`.
+
+La UI de Access puede usar `ProfileCatalog()` como fallback de sistema cuando no existe una
+Profiles Projection activa. Al excluir `root` y `local`, `basic` y `guest` permanecen
+asignables.
+
+La validación del draft continúa requiriendo una Profiles Projection activa; el fallback de UI
+no reemplaza esa dependencia de validación.
+
+## ADA Access UI
+
+CURRENT/FROZEN para el slice cerrado:
+
+```text
+tabs
+Accesos / Perfiles
+
+pagination
+10 / 20, mediante atlanticus.web.pagination
+
+profile row
+summary + Configurar
+
+inline growing multiselect
+REMOVED
+
+empty assignment modal
+FORBIDDEN
+
+profile assignment editor
+viewport-centered modal
+
+checkbox implementation
+dbc.Checkbox
+
+assignment state
+single editable AdaAccessConfiguration
+
+generic overflow hiding
+FORBIDDEN
+
+horizontal overflow
+fix cause locally
+```
+
+La reserva vertical paginada se mantiene consistente con las surfaces ya corregidas.
+
+El título visible `Perfiles` se localiza en la composition ADA; no se cambia el default generic
+de `compose_profiles_manager`.
+
 ## Navigation standalone boundary
 
 CURRENT/FROZEN:
@@ -175,6 +265,21 @@ CURRENT decision:
 3. behavior-focused test qualification and invalid-test cleanup
 ```
 
+Slices CURRENT ya cerrados:
+
+```text
+Navigation
+Accesos
+```
+
+Siguiente slice acordado:
+
+```text
+Perfiles
+```
+
+`Herramienta` sigue OPEN / DEFERRED; no está cerrada ni superseded.
+
 Do not mix persistence qualification into UI review.
 
 Do not modify code merely to satisfy tests that freeze CSS, markup, internal classes/functions
@@ -222,5 +327,5 @@ No crear alias para conservar el consumer.
 
 ```text
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: HERRAMIENTA
+IN PROGRESS / NEXT PAGE: PERFILES
 ```

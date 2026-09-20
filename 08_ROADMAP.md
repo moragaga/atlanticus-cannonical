@@ -15,13 +15,13 @@ No mezclar cleanup transversal con el incremento funcional activo.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Parent:
 
 ```text
-856498c52f182cd531deae845c25bd51ae2ff4ea
+29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 ## Hitos cerrados relevantes
@@ -47,6 +47,12 @@ CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
+
+ACCESS-UNRESTRICTED-PROFILES-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-FINAL-ADMIN-COMPOSITION
 CLOSED / VERIFIED / CURRENT
@@ -81,6 +87,15 @@ SUPERSEDED / REMOVED
 
 Navigation boundary test based on raw "ada." substring
 SUPERSEDED / REMOVED
+
+Access root/local explicit grants
+SUPERSEDED / FORBIDDEN
+
+Access inline profile multiselect
+SUPERSEDED / REMOVED
+
+Access profile assignment overlay store
+SUPERSEDED / REMOVED
 ```
 
 ## Finding no cerrado
@@ -99,13 +114,20 @@ MANAGER-UI-CONSISTENCY-REVIEW
 IN PROGRESS
 ```
 
-Navigation ya cerró su slice visual.
-
-Siguiente página:
+Slices cerrados:
 
 ```text
-Herramienta
+Navigation
+Accesos
 ```
+
+Siguiente página acordada:
+
+```text
+Perfiles
+```
+
+`Herramienta` continúa pendiente y se retoma después; el cambio de orden no la supersede.
 
 ## Secuencia interna del foco activo
 

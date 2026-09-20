@@ -12,109 +12,129 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint CURRENT
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Parent:
 
 ```text
-856498c52f182cd531deae845c25bd51ae2ff4ea
+29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 Tree:
 
 ```text
-3f27ad599c6dec610dff5317494a73b276d2ebc4
+4213a0dd11abbc9cb22fb02ed4a60d08bf0f87c5
 ```
 
 ## Incremento cerrado
 
 ```text
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
+ACCESS-UNRESTRICTED-PROFILES-CONTRACT
 CLOSED / VERIFIED / CURRENT
+
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
-Cambios de ownership/boundary:
+## Access contract CURRENT
 
 ```text
-Navigation Configuration -> Profiles core
-REMOVED
-
-NavigationProfileOption
-CURRENT
-
-NavigationProfileOptionsProvider
-CURRENT / OPTIONAL
-
-Profiles adaptation
-APPLICATION/COMPOSITION BOUNDARY
+AdaAccessConfiguration
+├── access_keys
+└── profile_access
 ```
 
-## Navigation access semantics
+Semántica:
 
 ```text
-allowed_profiles = ()
-PUBLIC WITHIN NAVIGATION AUTHORIZATION
+root/local
+→ todos los access_keys definidos
+→ explicit grants forbidden
 
-allowed_profiles = non-empty
-RESTRICTED
-
-enabled = False
-DENY
+basic/guest/custom
+→ explicit grants
 ```
 
-## ADA composition
+No se agregó un schema nuevo para representar irrestricción.
 
-ADA Configuration Manager adapta `ProfileCatalog` a `NavigationProfileOption`.
-
-No expone `root` ni `local` como opciones asignables de Navigation.
-
-## Navigation UI evidence
+## Access UI evidence
 
 CURRENT incluye:
 
-- top-level pagination `10 / 20`;
-- sections collapsed initially;
-- all children shown on expansion;
-- empty state centered in reserved page area;
-- page-size dropdown focus-target containment;
-- no standalone profiles card;
-- no guest auto-selection.
+- tabs secundarios `Accesos / Perfiles`;
+- creación visual `Ámbito + Permiso -> access_key`;
+- paginación `10 / 20` para accesos y perfiles;
+- fallback de catálogo de sistema para mostrar `basic` y `guest` cuando no hay Profiles
+  Projection activa;
+- `root` y `local` fuera de la asignación;
+- filas compactas de perfiles con resumen y `Configurar`;
+- modal viewport-centered;
+- `dbc.Checkbox` para el editor de asignaciones;
+- botón `Configurar` deshabilitado sin access keys;
+- estado editable único en `AdaAccessConfiguration`;
+- Source/Projection con el patrón visual ya usado en Navigation;
+- containment local del dropdown de page size para evitar overflow horizontal;
+- footer `Borrador local · accesos` alineado;
+- ajuste mobile de filas de asignación.
 
-El usuario confirmó manualmente que el resultado visual final quedó correcto.
+El usuario confirmó manualmente el resultado visual final.
+
+## ADA composition
+
+ADA Configuration Manager compone Profiles con:
+
+```text
+title='Perfiles'
+```
+
+No se cambió el default generic de `compose_profiles_manager`.
 
 ## Qualification observada
 
-Antes de los ajustes visuales finales:
+Durante el hito:
 
 ```text
-Navigation core                           22 passed
-Navigation Configuration                 42 passed
-Navigation Manager                       10 passed
-ADA Configuration Manager focused         5 passed
+ADA Access Configuration
+46 passed + 1 failing test
 ```
 
-El checkpoint final también contiene el reemplazo del boundary test textual por inspección AST.
+Ese único fallo correspondía a `dash.html.Input` y fue corregido a `dbc.Checkbox`.
 
-No se observó una ejecución post-`29bbf6d8...` completa en este cierre.
+El usuario confirmó después que todo quedó OK antes de publicar el checkpoint CURRENT.
+
+También:
+
+```text
+ADA Configuration Manager
+31 passed
+
+git diff --check
+PASS
+```
+
+Ruff package-wide del application package mostró tres `I001` en archivos no modificados por
+este hito:
+
+```text
+kpi_definitions.py
+kpis.py
+workflows.py
+```
+
+No se corrigieron por estar fuera de alcance.
 
 ## Shared Manager CSS finding
 
-`29bbf6d8...` también modifica:
+El cambio previo en:
 
 ```text
 web/capabilities/manager/src/atlanticus/web/manager/resources/css/10_surface.css
 ```
 
-Cambio CURRENT:
+continúa CURRENT.
 
-```text
-module-page bottom padding -> 0
-mobile module-page bottom padding -> 0
-```
-
-La correctness responsive/global permanece UNVERIFIED y se revisará en la fase 2 del UI
-review.
+La correctness responsive/global transversal permanece para PHASE 2 del UI review.
 
 ## Conflict separado
 
@@ -141,7 +161,9 @@ No añadir alias.
 
 ```text
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: HERRAMIENTA
+IN PROGRESS / NEXT PAGE: PERFILES
 ```
 
-No abrir persistencia ni runtime authorization durante esta frontera.
+`Herramienta` permanece OPEN / DEFERRED.
+
+No abrir persistencia, Access runtime composition ni cleanup transversal durante esta frontera.

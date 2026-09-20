@@ -10,13 +10,13 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85`
+  `31723a108ddd2f49346fdcbb844db9891eb08f4b`
 - Parent inmediato verificado:
-  `856498c52f182cd531deae845c25bd51ae2ff4ea`
+  `29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85`
 - Tree verificado:
-  `3f27ad599c6dec610dff5317494a73b276d2ebc4`
+  `4213a0dd11abbc9cb22fb02ed4a60d08bf0f87c5`
 - Fecha del commit:
-  `2026-09-20T04:04:29Z`
+  `2026-09-20T17:27:18Z`
 
 Estado acumulado relevante:
 
@@ -48,6 +48,12 @@ CLOSED / VERIFIED / CURRENT
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
+ACCESS-UNRESTRICTED-PROFILES-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+
 MANAGER-FINAL-ADMIN-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
@@ -78,7 +84,7 @@ No resolver mediante alias, shim ni doble contrato.
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `deb493659b41c0d8fea5c70674002486b3b92cbc`
+  `a48ae6d1433b5ae39288d3b41002782efa10c9cd`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -90,9 +96,8 @@ No resolver mediante alias, shim ni doble contrato.
 Puede aportar rationale y evidencia histórica. No puede reemplazar `atlanticus:main` ni
 `atlanticus-cannonical:main`.
 
-No se verificó durante este cierre un decision record histórico que contradiga el contrato
-CURRENT de Navigation. Cualquier afirmación adicional sobre `atlanticus-decisions` permanece
-UNVERIFIED.
+No se inspeccionó `atlanticus-decisions` durante este cierre. Por tanto, cualquier conflicto
+nuevo con decisiones históricas permanece **UNVERIFIED**.
 
 ## Jerarquía
 
@@ -249,8 +254,71 @@ La surface administrativa CURRENT:
 - el dropdown de page size contiene su focus target interno y no debe producir overflow
   horizontal.
 
-El cierre visual de Navigation fue confirmado manualmente por el usuario sobre el checkpoint
-CURRENT.
+El cierre visual de Navigation fue confirmado manualmente por el usuario.
+
+## ADA Access CURRENT
+
+Contrato durable CURRENT:
+
+```text
+AdaAccessConfiguration
+├── access_keys: tuple[str, ...]
+└── profile_access: tuple[ProfileAccessGrant, ...]
+```
+
+`access_key` sigue siendo una identidad estable única. La UI CURRENT crea nuevas keys mediante:
+
+```text
+ámbito + permiso
+→ ámbito.permiso
+```
+
+No existe una entidad durable separada `scope`, `grant`, `label` o `display_name`.
+
+Semántica de profiles CURRENT:
+
+```text
+root
+→ todos los access_keys definidos
+→ explicit grants forbidden
+
+local
+→ todos los access_keys definidos
+→ explicit grants forbidden
+
+basic / guest / custom profiles
+→ grants explícitos configurables
+```
+
+`remove_access_key(...)` continúa rechazando eliminar una key todavía asignada.
+
+La validación de draft de Access continúa dependiendo de una Profiles Projection activa.
+La UI, cuando no existe Profiles Projection activa, puede mostrar el catálogo de sistema
+proporcionado por `ProfileCatalog()`; al excluir `root` y `local`, permanecen `basic` y `guest`
+como perfiles asignables.
+
+## ADA Access Manager UI CURRENT
+
+La surface administrativa CURRENT:
+
+- usa tabs secundarios `Accesos` y `Perfiles`;
+- pagina ambos listados mediante `atlanticus.web.pagination`;
+- page sizes `10 / 20`, default `10`;
+- conserva la reserva vertical de página coherente con las surfaces ya calificadas;
+- corrige la causa del overflow horizontal del dropdown sin ocultarlo globalmente;
+- usa el mismo lenguaje visual de Source/Projection ya validado en Navigation;
+- muestra cada perfil como fila estable con resumen `N accesos` y acción `Configurar`;
+- no usa multiselect inline creciente;
+- `Configurar` queda deshabilitado cuando no existen accesos definidos;
+- el modal de asignación se centra respecto del viewport;
+- el modal usa `dbc.Checkbox`, no `dcc.Checklist`;
+- las asignaciones confirmadas modifican directamente la configuración editable;
+- no existe un segundo contrato durable ni un overlay persistente de grants;
+- el footer `Borrador local · accesos` conserva la alineación de las demás surfaces;
+- la presentación mobile de filas de perfiles quedó revisada y aceptada manualmente.
+
+En ADA Configuration Manager, el título visible de la capability generic Profiles se compone
+como `Perfiles`; el default generic de `compose_profiles_manager` no fue cambiado.
 
 ## Manager UI review CURRENT
 
@@ -259,12 +327,30 @@ MANAGER-UI-CONSISTENCY-REVIEW
 IN PROGRESS
 ```
 
-El review continúa page-by-page.
+Slices cerrados:
+
+```text
+Navigation
+CLOSED / VERIFIED MANUAL / CURRENT
+
+Accesos
+CLOSED / VERIFIED MANUAL / CURRENT
+```
+
+El siguiente foco acordado por el usuario es:
+
+```text
+Perfiles
+NEXT
+```
+
+`Herramienta` continúa pendiente dentro del review. El cambio de orden no la cierra ni la
+supersede.
 
 Secuencia congelada dentro del mismo foco:
 
 ```text
-1. presentación desktop/visual de las páginas restantes
+1. presentación desktop/visual page-by-page
 2. auditoría responsive/media queries compartidas y capability-locales
 3. cleanup/qualification de tests según la frontera vigente
 ```
@@ -280,8 +366,8 @@ web/capabilities/manager/src/atlanticus/web/manager/resources/css/10_surface.css
 donde `.atlanticus-manager__module-page` usa bottom padding `0` tanto en regla base como en
 `@media (max-width: 48rem)`.
 
-La corrección visual de esa decisión no está calificada todavía. Debe revisarse en la fase
-responsive/media-query; no revertir ni extender a ciegas.
+La corrección visual global de esa decisión todavía no está calificada como fase transversal.
+Debe revisarse en la fase responsive/media-query; no revertir ni extender a ciegas.
 
 ## Testing Web CURRENT
 
@@ -309,44 +395,45 @@ requisito contractual real.
 
 Paginación sí puede probarse como comportamiento funcional.
 
-El boundary test de Navigation Configuration usa análisis AST de imports; no busca substrings
-arbitrarios dentro del source.
+## Qualification observada durante el hito Access
 
-## Qualification observada durante el incremento
-
-Antes de los últimos ajustes exclusivamente visuales se observó:
+Evidencia explícita observada antes de la última corrección mínima:
 
 ```text
-Navigation core
-22 passed
-
-Navigation Configuration
-42 passed
-
-Navigation Manager
-10 passed
-
-ADA Configuration Manager focused
-5 passed
-
-Total observado
-79 passed
+ADA Access Configuration
+46 passed + 1 failing test
 ```
 
-También se observó Ruff scoped PASS en Navigation Configuration durante el incremento.
+El único fallo era el uso de `dash.html.Input`, no disponible en el runtime instalado.
+Fue reemplazado por `dbc.Checkbox`.
 
-No se recibió en este cierre una ejecución automatizada completa posterior al checkpoint
-`29bbf6d8...`.
+El usuario confirmó después que la corrección final quedó completamente OK antes de publicar
+el checkpoint `31723a1...`.
 
-Por tanto:
+También se observó:
 
 ```text
-post-29bb scoped pytest
-UNVERIFIED
+ADA Configuration Manager
+31 passed
 
-post-29bb scoped Ruff
-UNVERIFIED
+git diff --check
+PASS
+```
 
+El Ruff completo de `ada-configuration-manager` reportó tres `I001` en archivos no modificados
+por este hito:
+
+```text
+kpi_definitions.py
+kpis.py
+workflows.py
+```
+
+No fueron corregidos porque estaban fuera de alcance.
+
+Permanece:
+
+```text
 remote CI
 UNVERIFIED
 
@@ -357,18 +444,17 @@ full workspace Ruff
 UNVERIFIED
 ```
 
-La validación visual final de Navigation sí quedó confirmada manualmente.
-
 ## Siguiente foco único
 
 ```text
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: HERRAMIENTA
+IN PROGRESS / NEXT PAGE: PERFILES
 ```
 
 No abrir durante ese foco:
 
 ```text
+Herramienta en paralelo
 Manager real persistence qualification
 ADA Access runtime authorization/composition
 Navigation operational authorization alignment

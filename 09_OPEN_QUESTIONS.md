@@ -29,6 +29,26 @@ guest auto-selection
 empty profile list as implicit deny
 ```
 
+## CLOSED — ADA Access Manager UI
+
+```text
+ACCESS-UNRESTRICTED-PROFILES-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+```
+
+No reabrir sin conflicto demostrado:
+
+```text
+root/local explicit grants
+inline growing profile multiselect
+empty assignment modal
+assignment overlay store
+global overflow hiding
+```
+
 ## OPEN — Manager UI consistency
 
 ```text
@@ -36,15 +56,21 @@ MANAGER-UI-CONSISTENCY-REVIEW
 IN PROGRESS
 ```
 
-Navigation está cerrado dentro de este review.
+Navigation y Accesos están cerrados dentro de este review.
 
-Siguiente página:
+Siguiente página acordada:
 
 ```text
-Herramienta
+Perfiles
 ```
 
-La fase actual sólo debe resolver presentación/consistencia de páginas Manager.
+`Herramienta` continúa:
+
+```text
+OPEN / DEFERRED
+```
+
+La fase actual sólo debe resolver presentación/consistencia de la página activa.
 
 ## OPEN — Responsive/media queries
 
@@ -56,7 +82,7 @@ PLANNED / PHASE 2
 Existe código CURRENT en shared Manager CSS con bottom padding `0` en
 `.atlanticus-manager__module-page`, incluida la regla `@media (max-width: 48rem)`.
 
-La intención visual global de ese cambio no fue calificada en este cierre.
+La intención visual global de ese cambio no está todavía calificada como decisión transversal.
 
 No asumirlo correcto ni incorrecto sin revisar las páginas y breakpoints.
 
@@ -101,29 +127,32 @@ No resolver durante Manager UI review.
 
 ## OPEN — Final automated qualification
 
-La última evidencia automatizada observada antes de los ajustes visuales finales fue:
+Access quedó validado de forma focal y visual durante este hito.
+
+Permanece pendiente la qualification transversal final:
 
 ```text
-Navigation core                           22 passed
-Navigation Configuration                 42 passed
-Navigation Manager                       10 passed
-ADA Configuration Manager focused         5 passed
-```
-
-Post-checkpoint CURRENT:
-
-```text
-post-29bb targeted pytest
-UNVERIFIED
-
-post-29bb targeted Ruff
-UNVERIFIED
-
 remote CI
 UNVERIFIED
+
+full monorepo pytest
+UNVERIFIED
+
+full workspace Ruff
+UNVERIFIED
 ```
 
-Esto se cierra en PHASE 3 del UI review, no antes.
+Además, el Ruff package-wide observado en `ada-configuration-manager` reportó tres `I001`
+fuera del hito activo:
+
+```text
+kpi_definitions.py
+kpis.py
+workflows.py
+```
+
+No resolverlos dentro de la revisión de Perfiles salvo que pasen a ser parte del alcance por
+una decisión explícita posterior.
 
 ## OPEN — Real persistence qualification
 
