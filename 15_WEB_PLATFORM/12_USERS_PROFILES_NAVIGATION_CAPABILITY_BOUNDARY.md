@@ -1,6 +1,6 @@
 # Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER USERS MANAGER INTEGRATION**
+Estado: **CURRENT DECISION / REFINED AFTER ADA ACCESS MANAGER INTEGRATION**
 
 ## Propósito
 
@@ -20,19 +20,13 @@ catálogos paralelos de Profiles ni contracts legacy.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+moragaga/atlanticus@6032cf84e8a5ad1f7a4cde4333513a04bcdd659a
 ```
 
-Parent:
+Parent inmediato verificado:
 
 ```text
-e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
-```
-
-Tree:
-
-```text
-5ed091d5477b8ca041ddd669de8217028ec72f35
+783d3578da52aeb5cf831999a7717dc8b79f2fb0
 ```
 
 ## Estado del frente
@@ -59,6 +53,9 @@ CLOSED / VERIFIED / CURRENT
 USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
+USERS-MANAGER-CHECKLIST-COMPATIBILITY
+CLOSED / VERIFIED / CURRENT
+
 ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
@@ -69,7 +66,19 @@ ADA-ACCESS-PROJECTION-PERSISTENCE
 CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-FINAL-ADMIN-COMPOSITION
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-ALL-SURFACES-RENDERABLE
+CLOSED / VERIFIED MANUAL / CURRENT
+
+MANAGER-UI-CONSISTENCY-REVIEW
+PLANNED / NEXT
+
+MANAGER-REAL-PERSISTENCE-QUALIFICATION
+PLANNED / AFTER UI REVIEW
 ```
 
 ## Regla principal
@@ -95,7 +104,8 @@ No contiene ADA-specific access state.
 ### ADA Access
 
 ```text
-profile_key -> ADA access_keys
+declared access_keys
+profile_key -> access_keys
 ```
 
 Application-specific.
@@ -158,6 +168,9 @@ Identity/directory fields permanecen read-only.
 
 Profiles options se congelan al cargar la página y sólo se reemplazan con Refresh explícito.
 
+El fix CURRENT para dbc 2.0.4 mantiene el mismo comportamiento y sólo corrige el render del
+Checklist de `enabled`.
+
 No existe CURRENT:
 
 ```text
@@ -205,10 +218,9 @@ La Web surface de Profiles es CURRENT.
 
 Profiles Manager es CURRENT y ADA Configuration Manager consume su `ManagerModule`.
 
-Services de Profiles se registran a través del `ManagerModule.web_module` sobre el
-`ServiceRegistry` real.
-
 ## ADA Access CURRENT
+
+Packages:
 
 ```text
 scopes/ada/web/access/core
@@ -217,51 +229,58 @@ scopes/ada/web/access/projection-local
 scopes/ada/web/access/projection-cosmos
 ```
 
-Contracts:
-
-```text
-ProfileAccessGrant
-EffectiveAdaAccess(profile_key, access_keys)
-AdaAccessConfiguration(profile_access=...)
-AdaAccessSourceService
-AdaAccessProjectionBuilder
-```
-
 Ownership:
 
 ```text
 profile_key -> access_keys
 ```
 
+Contracts:
+
+```text
+ProfileAccessGrant
+EffectiveAdaAccess(profile_key, access_keys)
+
+AdaAccessConfiguration
+├── access_keys
+└── profile_access
+```
+
+`access_key` es la identidad estable.
+
 No existe CURRENT:
 
 ```text
 UserProfileAssignment
 user_id -> profile_keys
-access-definition catalog
-Access Web surface
-Access Manager composition
+AccessDefinition entity paralela
+access_id
+permission_id
 ```
 
-`access_key` CURRENT es una string normalizada. No hay metadata/catálogo de access
-permissions independiente.
+Las access keys se normalizan y son únicas.
 
-Source schema:
+Cada grant sólo puede referenciar access keys declaradas.
+
+Una access key asignada debe desasignarse antes de eliminarla.
+
+Source:
 
 ```text
-2
+ADA_ACCESS_SOURCE_SCHEMA_VERSION = 3
 ```
 
-Projection:
+No existe decoder de compatibilidad para schemas anteriores.
+
+Projection durable:
 
 ```text
+ADA_ACCESS_PROJECTION_SCHEMA_VERSION = 2
 payload = AdaAccessConfiguration
 dependency = exact Profiles ProjectionTarget
 ```
 
-ADA Access valida las profile keys contra el `ProfileCatalog` de esa dependencia.
-
-Persistencia CURRENT:
+Persistencia:
 
 ```text
 ProjectionRecord[AdaAccessConfiguration]
@@ -272,41 +291,63 @@ Cosmos provider
 
 No reconstruir provenance desde la Profiles Projection CURRENT después de restart.
 
-## ADA Access Web boundary — NEXT
+## ADA Access Web / Manager CURRENT
 
-No existe ni se debe asumir una Web Access previa.
+La Web surface está implementada en el package existente de Access Configuration.
 
-La historia inspeccionada del path `scopes/ada/web/access` desde su introducción no muestra
-una Web surface; el próximo incremento parte desde cero en presentación, pero no desde cero
-en dominio/Source/Projection.
+No se creó una capability generic nueva ni una composition Atlanticus genérica para Access.
 
-Requerimiento funcional a diseñar:
+Manager:
 
 ```text
-crear/definir accesos
-asignar accesos a Profiles
-obtener un identificador estable para cada acceso
-usar ese identificador manualmente desde código Web/funcionalidades
+ManagerModule
+key = access
+title = Accesos
+group = configuration
+route = /access
+effective route = /manager/access
+order = 15
+access_key = access.manage
 ```
 
-El sistema no debe editar automáticamente funcionalidades ni descubrir permisos por magia.
-
-La forma exacta de:
+La UI:
 
 ```text
-definición de acceso
-identificador
-metadata
-schema
-storage
-UI
-callbacks
-route
+define access key
+remove unassigned access key
+assign declared access keys to projected Profiles
+save browser draft through Manager workspace
 ```
 
-permanece OPEN hasta inspeccionar consumidores reales.
+Los Profiles disponibles provienen de la Profiles Projection.
 
-No inventar una clase o contrato sólo para anticipar la UI.
+La draft validation requiere Profiles Projection y valida referencias contra su
+`ProfileCatalog`.
+
+No existe asociación durable:
+
+```text
+user -> access_keys
+```
+
+Users conserva únicamente:
+
+```text
+user -> profile_key
+```
+
+La futura resolución runtime prevista sigue la frontera:
+
+```text
+authenticated user
+→ Users profile_key
+→ ADA Access projection
+→ EffectiveAdaAccess/access_keys
+→ runtime/session/request memory
+→ Web consumers
+```
+
+Ese runtime no fue implementado en este incremento.
 
 ## Navigation CURRENT
 
@@ -350,20 +391,23 @@ Administración:
 
 Configuraciones:
 - Profiles
-- Navigation
-- Tools
-- KPI Configuration
-- KPI Definition
+- Accesos
+- Navegación
+- Herramienta
+- KPI
+- Definiciones KPI
 ```
 
 Profiles usa `web/compositions/profiles-manager`.
 
 Users usa `web/compositions/users-manager`.
 
+Access usa su Source/Projection real y un `ManagerModule` application-specific construido
+dentro de ADA Configuration Manager.
+
 Users no es Source/Projection Manager module.
 
-ADA Access tiene Source/Projection y persistencia CURRENT; su Web/composition
-administrativa sigue pendiente.
+Todas las superficies fueron observadas como visibles/renderizables durante el cierre.
 
 ## UI composition boundary
 
@@ -373,6 +417,33 @@ presentation remains local to each capability
 ```
 
 No transferir ownership visual por simetría.
+
+La siguiente etapa puede corregir presentación y paginación visual, pero no debe crear
+arquitectura nueva para homogeneizar UI.
+
+## Testing boundary congelado
+
+Durante UI review:
+
+```text
+behavior tests
+KEEP
+
+CSS/style/visual structure tests
+REMOVE
+
+JS internal structure/content tests
+REMOVE
+
+tests for existence/non-existence of internal classes/functions
+REMOVE
+```
+
+Assets sólo pueden comprobarse como presentes/cargables si su carga es contractualmente
+relevante.
+
+Paginación funcional sí puede probarse; la forma visual de la paginación se valida
+visualmente.
 
 ## Known consumer conflict
 
@@ -422,45 +493,48 @@ CURRENT VIA EXISTING PROFILES MANAGER COMPOSITION
 ADA Access
 APPLICATION-SPECIFIC
 
+ADA Access access_keys catalog
+CURRENT
+
 ADA Access profile_key -> access_keys
 CURRENT
 
 ADA Access user_id -> profile_keys
 REMOVED
 
+ADA Access user durable access_keys
+FORBIDDEN
+
 ADA Access Projection provenance
 EXACT / DURABLE
 
 ADA Access Web surface
-NOT IMPLEMENTED / NEXT DESIGN
-
-Navigation authorization input
-PROFILE KEY
-
-Navigation Configuration -> Profiles core
 CURRENT
 
-Navigation dependency on Users
-FORBIDDEN
-
-Navigation dependency on ADA Access
-FORBIDDEN
+ADA Access Manager integration
+CURRENT
 
 ADAPTERS / SHIMS / ALIASES
 FORBIDDEN
 
 DOUBLE CONTRACT
 FORBIDDEN
+
+LEGACY SCHEMA READERS
+FORBIDDEN
 ```
 
 ## Pendientes explícitos y orden
 
 ```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+MANAGER-UI-CONSISTENCY-REVIEW
+PLANNED / NEXT
 
-MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / AFTER ADA ACCESS
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / NEXT / COUPLED TO UI REVIEW
+
+MANAGER-REAL-PERSISTENCE-QUALIFICATION
+PLANNED / AFTER UI REVIEW
 
 ADA Access runtime composition
 PLANNED / SEPARATE
@@ -477,9 +551,6 @@ UNVERIFIED
 Python metadata alignment
 PLANNED / SEPARATE
 
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / SEPARATE
-
-CI remote / full Ruff / full workspace qualification
+CI remote / full global qualification
 UNVERIFIED
 ```

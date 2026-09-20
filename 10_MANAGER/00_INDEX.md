@@ -1,6 +1,6 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT GENERIC CORE / PROFILES + USERS ADMIN INTEGRATED / ADA ACCESS NEXT**
+Estado: **CURRENT GENERIC CORE / FINAL ADMIN COMPOSITION INTEGRATED / UI REVIEW NEXT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -9,7 +9,7 @@ Estado: **CURRENT GENERIC CORE / PROFILES + USERS ADMIN INTEGRATED / ADA ACCESS 
 | `03_WORKFLOW_AND_SESSION.md` | WORKSPACE/SOURCE/PROJECTION para módulos y frontera de entries administrativos. | CURRENT |
 | `04_TOOL_CONFIGURATION.md` | Tool Configuration y contrato Source/Projection. | FROZEN/CURRENT |
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
-| `06_TESTING_BOUNDARY.md` | Testing contractual. | CURRENT POLICY |
+| `06_TESTING_BOUNDARY.md` | Testing contractual y frontera visual. | CURRENT POLICY |
 | `07_SOURCE_LEDGER.md` | Fuentes/checkpoints/evidencia. | AUDIT LEDGER |
 | `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access. | CURRENT |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos y warmup. | CONTRACT DESIGN |
@@ -17,25 +17,16 @@ Estado: **CURRENT GENERIC CORE / PROFILES + USERS ADMIN INTEGRATED / ADA ACCESS 
 ## Autoridad de implementación verificada
 
 ```text
-moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+moragaga/atlanticus@6032cf84e8a5ad1f7a4cde4333513a04bcdd659a
 ```
 
-Parent:
+Parent inmediato verificado:
 
 ```text
-e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
+783d3578da52aeb5cf831999a7717dc8b79f2fb0
 ```
 
-Tree:
-
-```text
-5ed091d5477b8ca041ddd669de8217028ec72f35
-```
-
-El parent `e0dca2d9...` contiene la implementación funcional Users Manager.
-El checkpoint CURRENT `783d3578...` elimina únicamente el `uv.lock` anidado accidental de
-`web/compositions/users-manager`; la autoridad de lock del workspace Web permanece en
-`web/uv.lock`.
+El checkpoint CURRENT está un commit por delante de `783d3578...`.
 
 ## Contratos Manager CURRENT
 
@@ -79,8 +70,8 @@ ManagerEntry
 └── web_module | None
 ```
 
-`ManagerModule` y `ManagerEntry` comparten navegación, routing, authorization y lifecycle
-de `WebModule`, pero sólo `ManagerModule` participa del coordinator Source/Projection.
+`ManagerModule` y `ManagerEntry` comparten navegación, routing, authorization y lifecycle de
+`WebModule`, pero sólo `ManagerModule` participa del coordinator Source/Projection.
 
 No existe dual contract legacy/exact.
 
@@ -147,8 +138,6 @@ PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 ```
 
-ADA Configuration Manager consume el `ManagerModule` producido por la composition existente.
-
 Capability explícita:
 
 ```text
@@ -177,7 +166,7 @@ Capability explícita:
 users.manage
 ```
 
-Ruta CURRENT dentro de ADA Configuration Manager:
+Ruta CURRENT:
 
 ```text
 /manager/users
@@ -188,7 +177,13 @@ Estado:
 ```text
 USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
+
+USERS-MANAGER-CHECKLIST-COMPATIBILITY
+CLOSED / VERIFIED / CURRENT
 ```
+
+El fix de compatibilidad con `dash-bootstrap-components==2.0.4` mueve el estado disabled del
+`dbc.Checklist` a su option. No cambia dominio, callbacks ni persistencia.
 
 No crear para Users:
 
@@ -204,49 +199,120 @@ segundo lifecycle administrativo
 
 ## ADA Access CURRENT
 
-ADA Access es application-specific y ya posee Source/Projection CURRENT.
+ADA Access es application-specific.
 
-Su Projection dispone de persistencia durable local y Cosmos preservando
-`ProjectionTarget` y dependencies exactas.
+Contrato CURRENT:
+
+```text
+AdaAccessConfiguration
+├── access_keys
+└── profile_access
+```
+
+`access_key` es la identidad estable. No existe una entidad `AccessDefinition` separada ni
+un identificador paralelo.
+
+Source/Projection:
+
+```text
+ADA_ACCESS_SOURCE_SCHEMA_VERSION = 3
+ADA_ACCESS_PROJECTION_SCHEMA_VERSION = 2
+```
+
+Stores local y Cosmos preservan `ProjectionTarget` y dependencies exactas.
 
 Estado:
 
 ```text
 ADA-ACCESS-PROJECTION-PERSISTENCE
 CLOSED / VERIFIED / CURRENT
-```
 
-No existe una Web/UI administrativa de ADA Access en la implementación CURRENT.
-
-La historia inspeccionada de `scopes/ada/web/access` desde su introducción contiene core,
-configuration, Source/Projection y stores local/Cosmos, pero no una Web surface de Access.
-
-Siguiente frontera:
-
-```text
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+CLOSED / VERIFIED / CURRENT
 ```
 
-El próximo diseño debe partir del contrato CURRENT:
+Web surface CURRENT:
 
 ```text
-profile_key -> access_keys
+scopes/ada/web/access/configuration/.../web
 ```
 
-y del requerimiento de producto fijado para el siguiente incremento:
+Manager contract:
 
 ```text
-crear/definir accesos de forma controlada
-asignar accesos definidos a perfiles
-obtener/usar un identificador estable de acceso para consumo manual por desarrolladores
+ManagerModule
+key = access
+title = Accesos
+route = /access
+effective route = /manager/access
+order = 15
+access_key = access.manage
 ```
 
-La forma exacta de ese identificador, catálogo, lifecycle y UI permanece OPEN y debe
-derivarse del código CURRENT y de consumidores reales. No inventarla antes de diseño.
+La UI permite:
 
-La integración del desarrollador es manual/controlada: no se requiere autodescubrimiento
-ni modificación automática de funcionalidades Web.
+```text
+definir access keys
+eliminar access keys no asignadas
+asignar access keys a Profiles proyectados
+guardar el payload en el workspace Manager
+```
+
+La validation del draft exige Profiles Projection disponible y valida las profile keys
+contra su `ProfileCatalog`.
+
+No existe autodescubrimiento de permisos ni asociación automática con features Web.
+
+## Final admin composition CURRENT
+
+ADA Configuration Manager compone:
+
+```text
+Administración
+└── Users
+
+Configuraciones
+├── Profiles
+├── Accesos
+├── Navegación
+├── Herramienta
+├── KPI
+└── Definiciones KPI
+```
+
+Estado:
+
+```text
+MANAGER-FINAL-ADMIN-COMPOSITION
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-ALL-SURFACES-RENDERABLE
+CLOSED / VERIFIED MANUAL / CURRENT
+```
+
+Durante el cierre se observó manualmente que todas las superficies son visibles/renderizables.
+
+Ese finding no califica calidad visual ni demuestra persistencia real.
+
+## Qualification ejecutada
+
+```text
+ADA Access Configuration
+37 passed
+Ruff scoped PASS
+Ruff format scoped PASS
+
+Projection Local
+4 passed
+
+Projection Cosmos
+6 passed
+
+ADA Configuration Manager
+31 passed
+Ruff scoped PASS
+Ruff format scoped PASS
+```
 
 ## Finding separado
 
@@ -260,23 +326,41 @@ BLOCKED / VERIFIED CONFLICT
 
 No añadir shim/alias.
 
-## Secuencia congelada de continuación
+## Siguiente foco único
 
 ```text
-1. ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-   PLANNED / NEXT / DESIGN FIRST
-
-2. MANAGER-FINAL-ADMIN-COMPOSITION
-   PLANNED / AFTER ADA ACCESS
+MANAGER-UI-CONSISTENCY-REVIEW
+PLANNED / NEXT
 ```
 
-No mezclar en esos incrementos:
+Debe revisar todas las superficies Manager ya compuestas y visibles, incluyendo paginación.
+
+Durante ese incremento:
+
+- corregir UI/responsive/spacing/overflow/paginación visual;
+- validar visualmente presentación;
+- preservar contratos backend y callbacks funcionales salvo defecto demostrado;
+- eliminar inmediatamente tests cuyo único objetivo sea validar CSS, estilos, estructura JS,
+  clases/funciones internas o estructura visual accidental;
+- no crear tests nuevos para congelar markup o CSS.
+
+Después:
 
 ```text
-ADA Access runtime composition
+MANAGER-REAL-PERSISTENCE-QUALIFICATION
+PLANNED / AFTER UI REVIEW
+```
+
+La qualification posterior comprobará comportamiento real de guardar/publicar/proyectar/
+recargar.
+
+No mezclar en UI review:
+
+```text
+ADA Access runtime authorization
 Navigation operational authorization alignment
 Navigation disabled-route surface
 concrete Entra/Graph provider
 Python metadata alignment
-global CI/test cleanup
+global CI/test cleanup no relacionado
 ```
