@@ -30,6 +30,7 @@ Probar comportamiento real:
 - paginación funcional: page calculation, límites, cambios de página y callbacks cuando sean
   contractualmente relevantes;
 - invariantes de Access como grants prohibidos para `root/local`;
+- helpers de identidad visual sólo cuando representan comportamiento explícito, no CSS;
 - carga de un asset JS/CSS sólo cuando su presencia/carga sea parte explícita del contract.
 
 ## No congelar con tests
@@ -62,16 +63,6 @@ Navigation Configuration
 must not import Profiles / Users / ADA
 ```
 
-La implementación usa AST para inspeccionar imports.
-
-SUPERSEDED:
-
-```text
-buscar substrings arbitrarios como "ada." en todo el source
-```
-
-porque puede coincidir con copy de UI sin representar una dependencia.
-
 ## UI review actual
 
 ```text
@@ -87,9 +78,9 @@ Orden:
 3. ejecutar qualification final y limpiar tests inválidos
 ```
 
-Navigation y Accesos ya tienen cierre visual manual.
+Navigation, Accesos y Perfiles ya tienen cierre visual manual.
 
-El siguiente slice es Perfiles.
+El siguiente slice es Users.
 
 No anticipar la fase 3 cambiando UI para complacer tests visuales.
 
@@ -109,45 +100,44 @@ Se valida visualmente:
 - consistencia entre superficies;
 - presentación de paginación.
 
-## Qualification Access observada
+## Qualification Profiles observada
 
-Antes de la última corrección mínima:
+El usuario confirmó manualmente el resultado visual final publicado en:
 
 ```text
-ADA Access Configuration
-46 passed + 1 failing test
+df5b99502265758e873e0565abf2176cc617104b
 ```
 
-El fallo fue `dash.html.Input`, corregido a `dbc.Checkbox`.
-
-El usuario confirmó después que el resultado final quedó OK.
-
-Además:
+El commit contiene tests focales para:
 
 ```text
-ADA Configuration Manager
-31 passed
-
-git diff --check
-PASS
+profile avatar initial
+local identity avatar initials
+pagination 10 / 20
+source/projection labels
+system profile context
+composition metadata propagation
 ```
 
-Ruff package-wide de `ada-configuration-manager` reportó tres `I001` fuera del hito:
+La existencia de esos tests en el commit no demuestra su ejecución.
+
+Permanece:
 
 ```text
-kpi_definitions.py
-kpis.py
-workflows.py
-```
+post-df5b targeted pytest
+UNVERIFIED
 
-No son evidencia contra Access y no deben mezclarse con el siguiente slice de Perfiles.
+post-df5b targeted Ruff
+UNVERIFIED
 
-Sigue pendiente:
-
-```text
 remote CI
+UNVERIFIED
+
 full monorepo pytest
+UNVERIFIED
+
 full workspace Ruff
+UNVERIFIED
 ```
 
 ## Después
@@ -157,4 +147,4 @@ MANAGER-REAL-PERSISTENCE-QUALIFICATION
 PLANNED / AFTER UI REVIEW
 ```
 
-No usar el UI review para abrir persistencia real ni otros frentes backend.
+No usar Users UI review para abrir persistencia real ni otros frentes backend.

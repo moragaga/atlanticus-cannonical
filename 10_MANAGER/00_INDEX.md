@@ -11,19 +11,25 @@ Estado: **CURRENT GENERIC CORE / FINAL ADMIN COMPOSITION INTEGRATED / UI REVIEW 
 | `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Testing contractual y frontera visual. | CURRENT POLICY |
 | `07_SOURCE_LEDGER.md` | Fuentes/checkpoints/evidencia. | AUDIT LEDGER |
-| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap separado de Manager Access y ADA Access CURRENT. | CURRENT |
+| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap, Manager Access y slices UI cerrados. | CURRENT |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos y warmup. | CONTRACT DESIGN |
 
 ## Autoridad de implementación verificada
 
 ```text
-moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
+moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
 ```
 
 Parent inmediato:
 
 ```text
-29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+31723a108ddd2f49346fdcbb844db9891eb08f4b
+```
+
+Tree:
+
+```text
+de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
 ```
 
 ## Contratos Manager CURRENT
@@ -71,32 +77,56 @@ Configuraciones
 `Perfiles` es el título application-specific usado por ADA para la capability generic Profiles.
 El default generic no fue renombrado.
 
+## Profiles CURRENT
+
+Profiles sigue siendo generic Atlanticus y mantiene ownership de su UI.
+
+CURRENT:
+
+```text
+source/projection context
+composition-driven
+
+pagination
+10 / 20
+
+profile editor
+viewport-centered capability-local modal
+
+configured preview
+single uppercase initial
+
+local presentation
+local identities with first+last initials
+```
+
+La composition reusable acepta `description`, `source_name` y `projection_name` sin cambiar
+los defaults generic.
+
+ADA local usa:
+
+```text
+title = Perfiles
+source = Local Source
+projection = In-process Projection
+```
+
+El usuario confirmó manualmente el resultado final.
+
 ## Navigation Manager Configuration CURRENT
 
 Navigation generic mantiene Source/Projection reales y composition Manager reusable.
 
-Navigation Configuration ya no depende de Profiles.
+Navigation Configuration no depende de Profiles.
 
-La composition acepta opcionalmente:
-
-```text
-profile_options_provider
-```
-
-y, cuando existe, instala validation basada en `NavigationProfileOption`.
-
-ADA Configuration Manager hace la adaptación Profiles -> Navigation.
+La composition acepta opcionalmente `profile_options_provider` y ADA adapta Profiles al
+contrato neutral de Navigation.
 
 ## ADA Access CURRENT
 
 Access sigue siendo application-specific ADA.
 
-CURRENT:
-
 ```text
-access_keys
-profile_access
-
 root/local
 unrestricted
 
@@ -104,8 +134,7 @@ basic/guest/custom
 explicit grants
 ```
 
-La UI Manager de Access está cerrada y usa los tabs `Accesos / Perfiles`, paginación generic
-`10 / 20` y modal estable de asignación.
+La UI Manager de Access permanece cerrada y aceptada manualmente.
 
 ## UI review
 
@@ -122,37 +151,38 @@ CLOSED / VERIFIED MANUAL / CURRENT
 
 Accesos
 CLOSED / VERIFIED MANUAL / CURRENT
+
+Perfiles
+CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
 Siguiente página:
 
 ```text
-Perfiles
+Users
 ```
 
-`Herramienta` permanece OPEN / DEFERRED.
+`Users` es `ManagerEntry`; no añadirle Source/Projection para uniformar la UI.
 
-Orden dentro del review:
+`Herramienta` permanece `OPEN / DEFERRED`.
 
-```text
-1. visual/page consistency
-2. responsive/media-query audit
-3. test-contract cleanup + targeted qualification
-```
+El usuario indicó que después de Users se cerrará el trabajo actual de Manager por ahora;
+frentes diferidos conservan su estado.
 
 ## Qualification conocida
 
-Access fue validado focalmente durante el hito y el usuario confirmó el resultado final antes
-de publicar `31723a1...`.
-
-También se observó:
+Para el checkpoint `df5b995...`:
 
 ```text
-ADA Configuration Manager
-31 passed
-```
+Profiles visual review
+VERIFIED MANUAL
 
-El Ruff package-wide de ese package mantiene tres `I001` fuera del hito Access.
+post-df5b targeted pytest
+UNVERIFIED
+
+post-df5b targeted Ruff
+UNVERIFIED
+```
 
 La qualification transversal completa continúa pendiente.
 

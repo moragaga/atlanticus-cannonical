@@ -12,22 +12,29 @@ Estado: **AUDIT LEDGER**
 ## Checkpoint CURRENT
 
 ```text
-moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
+moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
 ```
 
 Parent:
 
 ```text
-29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Tree:
 
 ```text
-4213a0dd11abbc9cb22fb02ed4a60d08bf0f87c5
+de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
 ```
 
 ## Incremento cerrado
+
+```text
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+```
+
+El cierre anterior de Access permanece:
 
 ```text
 ACCESS-UNRESTRICTED-PROFILES-CONTRACT
@@ -37,92 +44,82 @@ ACCESS-MANAGER-UI-REVIEW
 CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
-## Access contract CURRENT
-
-```text
-AdaAccessConfiguration
-├── access_keys
-└── profile_access
-```
-
-Semántica:
-
-```text
-root/local
-→ todos los access_keys definidos
-→ explicit grants forbidden
-
-basic/guest/custom
-→ explicit grants
-```
-
-No se agregó un schema nuevo para representar irrestricción.
-
-## Access UI evidence
+## Profiles UI evidence
 
 CURRENT incluye:
 
-- tabs secundarios `Accesos / Perfiles`;
-- creación visual `Ámbito + Permiso -> access_key`;
-- paginación `10 / 20` para accesos y perfiles;
-- fallback de catálogo de sistema para mostrar `basic` y `guest` cuando no hay Profiles
-  Projection activa;
-- `root` y `local` fuera de la asignación;
-- filas compactas de perfiles con resumen y `Configurar`;
-- modal viewport-centered;
-- `dbc.Checkbox` para el editor de asignaciones;
-- botón `Configurar` deshabilitado sin access keys;
-- estado editable único en `AdaAccessConfiguration`;
-- Source/Projection con el patrón visual ya usado en Navigation;
-- containment local del dropdown de page size para evitar overflow horizontal;
-- footer `Borrador local · accesos` alineado;
-- ajuste mobile de filas de asignación.
+- Source y Projection visibles mediante metadata inyectada;
+- defaults generic `Profiles Source` / `Profiles Projection`;
+- provider local `Local Source` / `Local Projection`;
+- provider Azure `Blob Storage` / `Cosmos DB`;
+- ADA local `Local Source` / `In-process Projection`;
+- paginación generic `10 / 20`, navegación numerada y summary;
+- reserva visual de página controlada por CSS capability-local;
+- empty state propio;
+- modal capability-local respecto del viewport;
+- preview del perfil y valores hex actuales en el editor;
+- avatar de perfil normal con una inicial mayúscula;
+- `local` como única excepción visual, mostrando identidades locales;
+- identidad local con inicial del primer nombre + inicial del último nombre en mayúsculas;
+- `Jane Doe` y `John Doe` representables ambos como `JD`, diferenciados por color;
+- copy explicativo para system profiles;
+- footer sin espacio vacío artificial.
 
-El usuario confirmó manualmente el resultado visual final.
+El usuario confirmó manualmente el resultado visual final y declaró Perfiles cerrado.
 
-## ADA composition
+## Profiles contract preservation
 
-ADA Configuration Manager compone Profiles con:
+No se modificó el contrato durable de Profiles para soportar la presentación.
+
+```text
+ProfileDefinition
+ProfileCatalog
+ProfilesConfiguration
+```
+
+continúan siendo los contratos de dominio relevantes.
+
+`compose_profiles_manager(...)` fue refinado para propagar metadata visible:
+
+```text
+description
+source_name
+projection_name
+```
+
+con defaults generic conservados.
+
+## ADA local composition
+
+CURRENT:
 
 ```text
 title='Perfiles'
+description='Define los perfiles disponibles y su presentación visual dentro del sistema.'
+source_name='Local Source'
+projection_name='In-process Projection'
 ```
-
-No se cambió el default generic de `compose_profiles_manager`.
 
 ## Qualification observada
 
-Durante el hito:
+VERIFIED:
 
 ```text
-ADA Access Configuration
-46 passed + 1 failing test
+checkpoint CURRENT publicado
+manual visual acceptance by user
 ```
 
-Ese único fallo correspondía a `dash.html.Input` y fue corregido a `dbc.Checkbox`.
-
-El usuario confirmó después que todo quedó OK antes de publicar el checkpoint CURRENT.
-
-También:
+UNVERIFIED:
 
 ```text
-ADA Configuration Manager
-31 passed
-
-git diff --check
-PASS
+post-df5b targeted pytest
+post-df5b targeted Ruff
+remote CI
+full monorepo pytest
+full workspace Ruff
 ```
 
-Ruff package-wide del application package mostró tres `I001` en archivos no modificados por
-este hito:
-
-```text
-kpi_definitions.py
-kpis.py
-workflows.py
-```
-
-No se corrigieron por estar fuera de alcance.
+No declarar PASS automatizado sin salida observada.
 
 ## Shared Manager CSS finding
 
@@ -134,7 +131,8 @@ web/capabilities/manager/src/atlanticus/web/manager/resources/css/10_surface.css
 
 continúa CURRENT.
 
-La correctness responsive/global transversal permanece para PHASE 2 del UI review.
+La correctness responsive/global transversal permanece para una fase separada; no reabrirla
+durante Users salvo defecto compartido demostrado.
 
 ## Conflict separado
 
@@ -160,10 +158,11 @@ No añadir alias.
 ## Próxima frontera
 
 ```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: PERFILES
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
 ```
 
-`Herramienta` permanece OPEN / DEFERRED.
+`Herramienta` permanece `OPEN / DEFERRED`.
 
-No abrir persistencia, Access runtime composition ni cleanup transversal durante esta frontera.
+No abrir persistencia, Access runtime composition, Navigation authorization alignment ni
+cleanup transversal durante Users.

@@ -7,25 +7,25 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
 ```
 
 Parent inmediato:
 
 ```text
-856498c52f182cd531deae845c25bd51ae2ff4ea
+31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Tree:
 
 ```text
-3f27ad599c6dec610dff5317494a73b276d2ebc4
+de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
 ```
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@deb493659b41c0d8fea5c70674002486b3b92cbc
+moragaga/atlanticus-cannonical@07a0582c7acdd5c9b93f2a1bb02651e8c5302448
 ```
 
 `moragaga/atlanticus-decisions` permanece HISTORICAL.
@@ -67,6 +67,9 @@ CLOSED / VERIFIED / CURRENT
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
@@ -79,6 +82,9 @@ CLOSED / VERIFIED / CURRENT
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+
 MANAGER-FINAL-ADMIN-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
@@ -89,7 +95,7 @@ NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
+IN PROGRESS / NEXT PAGE: USERS
 ```
 
 Finding no cerrado:
@@ -98,6 +104,13 @@ Finding no cerrado:
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
+
+## Profiles CURRENT
+
+Profiles mantiene ownership de definición, catálogo, configuración, Source y Projection.
+
+El cierre `df5b995...` es presentación/capability composition: no redefine el contrato de dominio.
+La UI final de Perfiles fue aceptada manualmente por el usuario.
 
 ## Navigation CURRENT
 
@@ -117,16 +130,12 @@ ADA Configuration Manager adapta Profiles a ese contrato.
 ## Siguiente foco
 
 ```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: HERRAMIENTA
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
 ```
 
-Secuencia del mismo foco:
+Users debe mantenerse como `ManagerEntry` y conservar su lifecycle de administración propio.
 
-```text
-visual desktop/page consistency
-→ responsive/media-query audit
-→ final test-contract cleanup/qualification
-```
-
-No abrir persistencia real, runtime authorization ni otros frentes backend durante este review.
+Después de Users, el usuario desea cerrar el trabajo actual de Manager por ahora. Cualquier
+frente diferido, incluido `Herramienta`, permanece explícitamente OPEN/DEFERRED y no se
+considera qualified por ese cierre de alcance.

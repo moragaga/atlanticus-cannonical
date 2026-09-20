@@ -1,6 +1,6 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT / ADA ACCESS INTEGRATED / ACCESS UI CLOSED**
+Estado: **CURRENT / ADA ACCESS INTEGRATED / NAVIGATION + ACCESS + PROFILES UI CLOSED**
 
 ## Alcance
 
@@ -77,8 +77,7 @@ tools.manage
 kpis.manage
 ```
 
-Profiles usa la misma semántica `ManagerAuthorizationPolicy.can_view(...)` mediante su
-composition reusable.
+Profiles usa `ManagerAuthorizationPolicy.can_view(...)` mediante su composition reusable.
 
 Users usa la misma semántica mediante `web/compositions/users-manager`.
 
@@ -108,29 +107,15 @@ ManagerPrincipal(
 
 `is_local=True` conserva contexto de ejecución local; no reemplaza `access_keys`.
 
-No existe mapping contractual:
-
-```text
-local -> administrator
-administrator -> root
-```
-
 ## Functional permission boundary
 
 Manager permission responde a:
 
 > ¿puede este principal administrar esta capability/item?
 
-No responde a:
-
-> ¿puede ejecutar específicamente validate vs publish vs project?
-
-Los pasos Source/Projection siguen siendo mecanismos internos de `ManagerModule`.
+No responde a permisos internos específicos de cada workflow.
 
 `ManagerEntry` puede tener lifecycle de dominio propio, como Users Administration.
-
-No derivar permisos Manager desde Profiles o ADA Access sin requisito explícito de composición
-de producto.
 
 ## ADA Access CURRENT
 
@@ -144,17 +129,10 @@ AdaAccessConfiguration
 └── profile_access
 ```
 
-No se unifican automáticamente ambos contracts.
-
 Semántica de Profiles en ADA Access:
 
 ```text
-root
-→ unrestricted
-→ todos los access_keys definidos
-→ no explicit grants
-
-local
+root / local
 → unrestricted
 → todos los access_keys definidos
 → no explicit grants
@@ -163,54 +141,29 @@ basic / guest / custom
 → explicit grants
 ```
 
-La identidad durable sigue siendo un único string `access_key`.
-
-La UI de creación usa `Ámbito + Permiso` para componer `ámbito.permiso`, sin crear un segundo
-schema durable.
-
-## ADA Access Manager surface CURRENT
-
-```text
-Accesos
-├── access catalog
-└── pagination 10 / 20
-
-Perfiles
-├── basic / guest / custom assignable
-├── root / local excluded
-├── compact assignment summary
-└── Configurar -> modal
-```
-
-Si no existe Profiles Projection activa, la UI puede mostrar el catálogo de sistema
-`ProfileCatalog()`; al excluir `root` y `local`, quedan `basic` y `guest`.
-
-La validación de draft conserva la exigencia de Profiles Projection activa.
-
-El modal:
-
-- no abre sin access keys;
-- se centra respecto del viewport;
-- usa `dbc.Checkbox`;
-- escribe la asignación confirmada directamente en la configuración editable.
-
-No existe un overlay durable ni un segundo contrato de asignaciones.
-
-La paginación reutiliza `atlanticus.web.pagination`.
-
-El overflow horizontal se corrige en su causa local; no se oculta globalmente.
-
-## UI localization CURRENT
+## Profiles UI localization CURRENT
 
 ADA Configuration Manager compone la capability generic Profiles con:
 
 ```text
 title='Perfiles'
+description='Define los perfiles disponibles y su presentación visual dentro del sistema.'
+source_name='Local Source'
+projection_name='In-process Projection'
 ```
 
 Esto es application-specific.
 
-El default generic de `compose_profiles_manager` sigue siendo `Profiles`.
+Defaults generic de `compose_profiles_manager`:
+
+```text
+title='Profiles'
+description=''
+source_name='Profiles Source'
+projection_name='Profiles Projection'
+```
+
+La UI de Profiles está cerrada y aceptada manualmente en `df5b995...`.
 
 ## Finding CURRENT
 
@@ -228,18 +181,17 @@ No introducir alias.
 
 ## Siguiente frontera
 
-Access UI está cerrada.
-
-El siguiente foco único acordado es:
-
 ```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: PERFILES
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
 ```
+
+Users debe conservar su forma de `ManagerEntry` y su `UsersAdministrationService` existente.
 
 No abrir durante ese foco:
 
 ```text
+Herramienta en paralelo
 ADA Access runtime composition
 Manager real persistence qualification
 Navigation authorization alignment

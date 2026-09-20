@@ -1,6 +1,6 @@
 # Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER NAVIGATION STANDALONE CUTOVER**
+Estado: **CURRENT DECISION / REFINED AFTER PROFILES UI CLOSURE**
 
 ## Propósito
 
@@ -20,13 +20,19 @@ innecesarias ni contracts legacy.
 ## Autoridad de implementación
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
 ```
 
 Parent:
 
 ```text
-856498c52f182cd531deae845c25bd51ae2ff4ea
+31723a108ddd2f49346fdcbb844db9891eb08f4b
+```
+
+Tree:
+
+```text
+de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
 ```
 
 ## Estado del frente
@@ -34,6 +40,9 @@ Parent:
 ```text
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
@@ -46,6 +55,9 @@ CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
+
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-FINAL-ADMIN-COMPOSITION
 CLOSED / VERIFIED / CURRENT
@@ -63,7 +75,7 @@ NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
+IN PROGRESS / NEXT PAGE: USERS
 
 MANAGER-REAL-PERSISTENCE-QUALIFICATION
 PLANNED / AFTER UI REVIEW
@@ -123,6 +135,23 @@ Managed profiles usan `ProfileCatalog`.
 
 `local` permanece runtime-only y no es managed assignment.
 
+Users Administration CURRENT:
+
+```text
+UsersAdministrationService
+├── discover
+├── promote
+└── update
+```
+
+Manager integration:
+
+```text
+Users
+→ ManagerEntry
+→ no synthetic Source/Projection
+```
+
 ## Profiles CURRENT
 
 System profiles:
@@ -137,6 +166,30 @@ local
 Profiles posee el catálogo.
 
 Eso no obliga a cada consumer a exponer todos los profiles como opciones de UI.
+
+El cierre visual CURRENT no cambia esa frontera.
+
+Profiles UI CURRENT:
+
+```text
+normal profile visual
+one uppercase initial
+
+local visual
+local identities
+first + last initials
+
+source/projection labels
+composition-driven
+
+profile editor
+capability-local viewport modal
+
+pagination
+10 / 20 via atlanticus.web.pagination
+```
+
+`local` como excepción visual no crea un nuevo dominio de profile identities.
 
 ## ADA Access CURRENT
 
@@ -154,12 +207,6 @@ user -> access_keys
 
 ## Navigation CURRENT
 
-SUPERSEDED:
-
-```text
-Navigation Configuration -> Profiles core
-```
-
 CURRENT:
 
 ```text
@@ -173,25 +220,11 @@ NavigationProfileOptionsProvider
 optional
 ```
 
-El provider opcional es un contract neutral de Navigation.
-
 Una application/composition que conoce Profiles puede adaptar:
 
 ```text
 ProfileCatalog
 → tuple[NavigationProfileOption, ...]
-```
-
-Si no hay provider:
-
-```text
-Navigation Configuration sigue siendo operable
-```
-
-Si hay provider:
-
-```text
-se puede validar que allowed_profiles sólo use keys conocidas
 ```
 
 ## Navigation access semantics CURRENT
@@ -234,39 +267,6 @@ Esta exclusión pertenece a la composition ADA.
 
 Navigation generic no contiene lógica especial para `root` ni `local`.
 
-## Navigation Configuration UI CURRENT
-
-```text
-standalone profiles card
-REMOVED
-
-profiles
-link editor only
-
-guest implicit selection
-REMOVED
-
-empty allowed profiles label
-Acceso: Público
-```
-
-Paginación:
-
-```text
-top-level nodes only
-page size 10 / 20
-sections count as one
-children do not count
-expanded section shows all children
-multiple sections may remain expanded
-expanded state is ephemeral
-```
-
-El empty state conserva altura de página y centra su contenido.
-
-La corrección de overflow horizontal está contenida en el adapter Dash de Navigation; no se
-usa un hide global como sustituto.
-
 ## Manager / composition CURRENT
 
 Manager core sigue generic.
@@ -278,8 +278,8 @@ Administración:
 - Users
 
 Configuraciones:
-- Profiles
-- Access
+- Perfiles
+- Accesos
 - Navigation
 - Tools
 - KPI
@@ -287,6 +287,9 @@ Configuraciones:
 ```
 
 La UI específica permanece en cada capability.
+
+Profiles composition puede recibir metadata visible de runtime sin transferir ownership a
+Manager.
 
 ## Testing boundary
 
@@ -330,8 +333,17 @@ CURRENT
 Users app-specific access state
 FORBIDDEN
 
+Users Manager integration
+ManagerEntry
+
+Users synthetic Manager Source/Projection
+FORBIDDEN
+
 Profiles
 GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
+
+Profiles UI ownership
+PROFILES CAPABILITY
 
 ADA Access
 APPLICATION-SPECIFIC
@@ -364,8 +376,14 @@ FORBIDDEN
 ## Pendientes explícitos
 
 ```text
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
+
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: HERRAMIENTA
+IN PROGRESS / NEXT PAGE: USERS
+
+Herramienta final visual consistency
+OPEN / DEFERRED
 
 MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT
 PLANNED / PHASE 2

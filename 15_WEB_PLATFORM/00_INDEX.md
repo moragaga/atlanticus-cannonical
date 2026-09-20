@@ -20,13 +20,19 @@ Estado: **CURRENT**
 Checkpoint de implementación CURRENT:
 
 ```text
-moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
+```
+
+Parent:
+
+```text
+31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 Canonical inspeccionado antes del reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@deb493659b41c0d8fea5c70674002486b3b92cbc
+moragaga/atlanticus-cannonical@07a0582c7acdd5c9b93f2a1bb02651e8c5302448
 ```
 
 Estado relevante:
@@ -34,6 +40,9 @@ Estado relevante:
 ```text
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
@@ -47,6 +56,9 @@ CLOSED / VERIFIED / CURRENT
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
+ACCESS-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+
 NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
@@ -54,7 +66,7 @@ NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
+IN PROGRESS / NEXT PAGE: USERS
 
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
@@ -62,4 +74,7 @@ BLOCKED / VERIFIED CONFLICT
 
 Navigation Configuration no depende de Profiles core.
 
-El siguiente trabajo continúa Manager UI page-by-page; no abre un nuevo backend contract.
+Profiles UI continúa owned por Profiles; su cierre no movió presentación al Manager.
+
+El siguiente trabajo es Users UI page-by-page; no abre un nuevo backend contract ni convierte
+Users en Source/Projection.

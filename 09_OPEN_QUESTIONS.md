@@ -20,15 +20,6 @@ NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
-No reabrir:
-
-```text
-Navigation Configuration -> Profiles core hard dependency
-separate profiles context card
-guest auto-selection
-empty profile list as implicit deny
-```
-
 ## CLOSED — ADA Access Manager UI
 
 ```text
@@ -39,15 +30,25 @@ ACCESS-MANAGER-UI-REVIEW
 CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
+## CLOSED — Profiles Manager UI
+
+```text
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
+```
+
 No reabrir sin conflicto demostrado:
 
 ```text
-root/local explicit grants
-inline growing profile multiselect
-empty assignment modal
-assignment overlay store
-global overflow hiding
+profile domain contract
+profile key/color durable schema
+Manager ownership of Profiles presentation
+legacy modal compatibility
+legacy pagination presentation
 ```
+
+El cierre visual CURRENT mantiene la presentación dentro de Profiles y la metadata de entorno en
+la composition.
 
 ## OPEN — Manager UI consistency
 
@@ -56,12 +57,18 @@ MANAGER-UI-CONSISTENCY-REVIEW
 IN PROGRESS
 ```
 
-Navigation y Accesos están cerrados dentro de este review.
+Slices cerrados:
+
+```text
+Navigation
+Accesos
+Perfiles
+```
 
 Siguiente página acordada:
 
 ```text
-Perfiles
+Users
 ```
 
 `Herramienta` continúa:
@@ -70,7 +77,25 @@ Perfiles
 OPEN / DEFERRED
 ```
 
-La fase actual sólo debe resolver presentación/consistencia de la página activa.
+Después de Users, el usuario desea cerrar el alcance actual de Manager por ahora. El cierre no
+debe declarar `Herramienta` ni otros frentes diferidos como VERIFIED.
+
+## OPEN — Users Manager UI
+
+```text
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
+```
+
+Congelado antes de comenzar:
+
+```text
+Users = ManagerEntry
+UsersAdministrationService = domain/application administration lifecycle
+no synthetic Source/Projection
+managed users consume ProfileCatalog
+local is not a managed assignment
+```
 
 ## OPEN — Responsive/media queries
 
@@ -79,12 +104,7 @@ MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT
 PLANNED / PHASE 2
 ```
 
-Existe código CURRENT en shared Manager CSS con bottom padding `0` en
-`.atlanticus-manager__module-page`, incluida la regla `@media (max-width: 48rem)`.
-
-La intención visual global de ese cambio no está todavía calificada como decisión transversal.
-
-No asumirlo correcto ni incorrecto sin revisar las páginas y breakpoints.
+No mezclarlo con Users salvo defecto transversal demostrado.
 
 ## OPEN — Test contract cleanup
 
@@ -93,7 +113,7 @@ WEB-TEST-CONTRACT-CLEANUP
 PLANNED / PHASE 3
 ```
 
-En la etapa final del UI review:
+En la etapa final del alcance actual:
 
 - ejecutar targeted tests y Ruff;
 - conservar behavior/contracts/invariants;
@@ -123,15 +143,19 @@ web/compositions/navigation-manager
 
 No añadir compatibility alias.
 
-No resolver durante Manager UI review.
+No resolver durante Users UI review.
 
 ## OPEN — Final automated qualification
 
-Access quedó validado de forma focal y visual durante este hito.
-
-Permanece pendiente la qualification transversal final:
+Para el checkpoint final de Perfiles permanece:
 
 ```text
+post-df5b targeted pytest
+UNVERIFIED
+
+post-df5b targeted Ruff
+UNVERIFIED
+
 remote CI
 UNVERIFIED
 
@@ -142,17 +166,7 @@ full workspace Ruff
 UNVERIFIED
 ```
 
-Además, el Ruff package-wide observado en `ada-configuration-manager` reportó tres `I001`
-fuera del hito activo:
-
-```text
-kpi_definitions.py
-kpis.py
-workflows.py
-```
-
-No resolverlos dentro de la revisión de Perfiles salvo que pasen a ser parte del alcance por
-una decisión explícita posterior.
+La aceptación manual de Perfiles no sustituye esa evidencia.
 
 ## OPEN — Real persistence qualification
 

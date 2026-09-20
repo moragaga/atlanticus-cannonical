@@ -10,13 +10,13 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `31723a108ddd2f49346fdcbb844db9891eb08f4b`
+  `df5b99502265758e873e0565abf2176cc617104b`
 - Parent inmediato verificado:
-  `29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85`
+  `31723a108ddd2f49346fdcbb844db9891eb08f4b`
 - Tree verificado:
-  `4213a0dd11abbc9cb22fb02ed4a60d08bf0f87c5`
+  `de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0`
 - Fecha del commit:
-  `2026-09-20T17:27:18Z`
+  `2026-09-20T18:26:04Z`
 
 Estado acumulado relevante:
 
@@ -32,6 +32,9 @@ CLOSED / VERIFIED / CURRENT
 
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
@@ -64,7 +67,7 @@ NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
 
 MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
+IN PROGRESS / NEXT PAGE: USERS
 ```
 
 Permanece un conflicto implementado previo y separado:
@@ -84,7 +87,7 @@ No resolver mediante alias, shim ni doble contrato.
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `a48ae6d1433b5ae39288d3b41002782efa10c9cd`
+  `07a0582c7acdd5c9b93f2a1bb02651e8c5302448`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -171,6 +174,51 @@ Users Manager Source/Projection module
 REMOVED
 ```
 
+## Profiles CURRENT
+
+Profiles continúa siendo capability generic Atlanticus.
+
+Contrato de dominio congelado:
+
+```text
+ProfileDefinition
+ProfileCatalog
+ProfilesConfiguration
+```
+
+System profiles CURRENT:
+
+```text
+basic
+root
+guest
+local
+```
+
+El incremento de cierre visual no modifica ese dominio ni introduce estado durable adicional.
+
+La surface administrativa CURRENT:
+
+- muestra `Fuente de verdad` y `Proyección` mediante nombres inyectados por composition;
+- conserva defaults generic `Profiles Source` / `Profiles Projection`;
+- los providers generic declaran `Local Source` / `Local Projection` y
+  `Blob Storage` / `Cosmos DB` según la topología real;
+- ADA local compone `Perfiles`, la descripción visible del módulo, `Local Source` e
+  `In-process Projection`;
+- los perfiles configurados usan `atlanticus.web.pagination`, page sizes `10 / 20`, botones de
+  página y resumen `Mostrando X–Y de Z`;
+- el editor usa un modal capability-local centrado respecto del viewport, con backdrop;
+- el editor muestra preview del nombre, color de fondo, color de texto y valores hex actuales;
+- un perfil normal usa una única inicial mayúscula como avatar visual;
+- `local` es el único caso visual especial: no se representa como un único color fijo, sino a
+  través de las identidades locales disponibles;
+- una identidad local usa inicial del primer nombre + inicial del último nombre en mayúsculas;
+- `Jane Doe` y `John Doe` pueden mostrar ambos `JD`; sus colores distinguen las identidades;
+- el footer no reserva espacio vacío cuando no existe resultado.
+
+El usuario confirmó manualmente el resultado final sobre la implementación publicada
+`df5b995...` y declaró Perfiles cerrado.
+
 ## Navigation CURRENT
 
 Navigation es generic Atlanticus y debe poder componerse sin Profiles.
@@ -208,53 +256,9 @@ NavigationProfileOptionsProvider
 
 El provider es opcional.
 
-Si no existe provider:
-
-```text
-Navigation sigue operando de forma autónoma
-```
-
-Si existe provider:
-
-```text
-la composition externa adapta su catálogo a NavigationProfileOption
-la validation de profile keys puede instalarse
-```
-
-No existe CURRENT:
-
-```text
-Navigation Configuration -> Profiles core dependency
-Navigation -> Users dependency
-Navigation -> ADA Access dependency
-```
-
 En ADA Configuration Manager, la composition adapta Profiles a opciones de Navigation y
 excluye `root` y `local` del selector de asignación. Navigation generic no conoce esas keys
 como casos especiales.
-
-## Navigation Configuration UI CURRENT
-
-La surface administrativa CURRENT:
-
-- no contiene card separada de profiles;
-- asigna profiles únicamente dentro del editor de enlace;
-- no autoselecciona `guest`;
-- muestra enlace sin profiles como `Acceso: Público`;
-- pagina únicamente nodos top-level;
-- una sección cuenta como un item top-level;
-- hijos de sección no cuentan para el total de página;
-- page size: `10 / 20`, default `10`;
-- secciones colapsadas inicialmente;
-- expansión de sección muestra todos sus hijos;
-- múltiples secciones pueden permanecer expandidas;
-- el estado expandido es UI efímero y no entra al Source;
-- el orden durable global no se redefine por paginación;
-- el empty state reserva la superficie de página y se centra;
-- el dropdown de page size contiene su focus target interno y no debe producir overflow
-  horizontal.
-
-El cierre visual de Navigation fue confirmado manualmente por el usuario.
 
 ## ADA Access CURRENT
 
@@ -266,23 +270,10 @@ AdaAccessConfiguration
 └── profile_access: tuple[ProfileAccessGrant, ...]
 ```
 
-`access_key` sigue siendo una identidad estable única. La UI CURRENT crea nuevas keys mediante:
-
-```text
-ámbito + permiso
-→ ámbito.permiso
-```
-
-No existe una entidad durable separada `scope`, `grant`, `label` o `display_name`.
-
 Semántica de profiles CURRENT:
 
 ```text
-root
-→ todos los access_keys definidos
-→ explicit grants forbidden
-
-local
+root / local
 → todos los access_keys definidos
 → explicit grants forbidden
 
@@ -290,35 +281,7 @@ basic / guest / custom profiles
 → grants explícitos configurables
 ```
 
-`remove_access_key(...)` continúa rechazando eliminar una key todavía asignada.
-
-La validación de draft de Access continúa dependiendo de una Profiles Projection activa.
-La UI, cuando no existe Profiles Projection activa, puede mostrar el catálogo de sistema
-proporcionado por `ProfileCatalog()`; al excluir `root` y `local`, permanecen `basic` y `guest`
-como perfiles asignables.
-
-## ADA Access Manager UI CURRENT
-
-La surface administrativa CURRENT:
-
-- usa tabs secundarios `Accesos` y `Perfiles`;
-- pagina ambos listados mediante `atlanticus.web.pagination`;
-- page sizes `10 / 20`, default `10`;
-- conserva la reserva vertical de página coherente con las surfaces ya calificadas;
-- corrige la causa del overflow horizontal del dropdown sin ocultarlo globalmente;
-- usa el mismo lenguaje visual de Source/Projection ya validado en Navigation;
-- muestra cada perfil como fila estable con resumen `N accesos` y acción `Configurar`;
-- no usa multiselect inline creciente;
-- `Configurar` queda deshabilitado cuando no existen accesos definidos;
-- el modal de asignación se centra respecto del viewport;
-- el modal usa `dbc.Checkbox`, no `dcc.Checklist`;
-- las asignaciones confirmadas modifican directamente la configuración editable;
-- no existe un segundo contrato durable ni un overlay persistente de grants;
-- el footer `Borrador local · accesos` conserva la alineación de las demás surfaces;
-- la presentación mobile de filas de perfiles quedó revisada y aceptada manualmente.
-
-En ADA Configuration Manager, el título visible de la capability generic Profiles se compone
-como `Perfiles`; el default generic de `compose_profiles_manager` no fue cambiado.
+La UI Manager de Access permanece cerrada y visualmente aceptada.
 
 ## Manager UI review CURRENT
 
@@ -335,39 +298,27 @@ CLOSED / VERIFIED MANUAL / CURRENT
 
 Accesos
 CLOSED / VERIFIED MANUAL / CURRENT
+
+Perfiles
+CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
-El siguiente foco acordado por el usuario es:
+Siguiente foco único:
 
 ```text
-Perfiles
+Users
 NEXT
 ```
 
-`Herramienta` continúa pendiente dentro del review. El cambio de orden no la cierra ni la
-supersede.
+`Users` continúa siendo `ManagerEntry`, no `ManagerModule`; no inventar Source/Projection para
+hacerlo parecerse a las páginas de configuración.
 
-Secuencia congelada dentro del mismo foco:
+`Herramienta` permanece **OPEN / DEFERRED** y no queda implícitamente calificada por el cierre
+de Perfiles ni por el futuro cierre de Users.
 
-```text
-1. presentación desktop/visual page-by-page
-2. auditoría responsive/media queries compartidas y capability-locales
-3. cleanup/qualification de tests según la frontera vigente
-```
-
-No convertir esta secuencia en tres arquitecturas ni mezclar persistencia/runtime.
-
-Existe un cambio CURRENT en:
-
-```text
-web/capabilities/manager/src/atlanticus/web/manager/resources/css/10_surface.css
-```
-
-donde `.atlanticus-manager__module-page` usa bottom padding `0` tanto en regla base como en
-`@media (max-width: 48rem)`.
-
-La corrección visual global de esa decisión todavía no está calificada como fase transversal.
-Debe revisarse en la fase responsive/media-query; no revertir ni extender a ciegas.
+El usuario indicó que, después de Users, desea cerrar el trabajo de Manager **por ahora**.
+Eso debe interpretarse como un punto de cierre del alcance actual, no como qualification
+implícita de frentes diferidos.
 
 ## Testing Web CURRENT
 
@@ -395,60 +346,34 @@ requisito contractual real.
 
 Paginación sí puede probarse como comportamiento funcional.
 
-## Qualification observada durante el hito Access
+## Qualification de este cierre
 
-Evidencia explícita observada antes de la última corrección mínima:
+VERIFIED:
 
 ```text
-ADA Access Configuration
-46 passed + 1 failing test
+atlanticus:main = df5b99502265758e873e0565abf2176cc617104b
+parent = 31723a108ddd2f49346fdcbb844db9891eb08f4b
+tree = de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
+Profiles final visual review = accepted manually by user
 ```
 
-El único fallo era el uso de `dash.html.Input`, no disponible en el runtime instalado.
-Fue reemplazado por `dbc.Checkbox`.
-
-El usuario confirmó después que la corrección final quedó completamente OK antes de publicar
-el checkpoint `31723a1...`.
-
-También se observó:
+UNVERIFIED para el checkpoint final:
 
 ```text
-ADA Configuration Manager
-31 passed
-
-git diff --check
-PASS
-```
-
-El Ruff completo de `ada-configuration-manager` reportó tres `I001` en archivos no modificados
-por este hito:
-
-```text
-kpi_definitions.py
-kpis.py
-workflows.py
-```
-
-No fueron corregidos porque estaban fuera de alcance.
-
-Permanece:
-
-```text
+post-df5b targeted pytest execution
+post-df5b targeted Ruff execution
 remote CI
-UNVERIFIED
-
 full monorepo pytest
-UNVERIFIED
-
 full workspace Ruff
-UNVERIFIED
 ```
+
+No convertir ausencia de evidencia automatizada en un PASS implícito.
 
 ## Siguiente foco único
 
 ```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: PERFILES
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
 ```
 
 No abrir durante ese foco:

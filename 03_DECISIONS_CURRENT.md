@@ -83,6 +83,64 @@ administrator/root aliases
 
 Managed users consumen `ProfileCatalog`; `local` no es managed assignment.
 
+Users Administration permanece `ManagerEntry`; no crear Source/Projection artificial para
+alinearlo visualmente con `ManagerModule`.
+
+## Profiles UI CURRENT
+
+El cierre visual de Profiles no cambia el dominio durable.
+
+CURRENT/FROZEN para la surface cerrada:
+
+```text
+source/projection labels
+composition-driven
+
+pagination
+10 / 20 via atlanticus.web.pagination
+
+configured profile avatar
+single uppercase initial
+
+local profile presentation
+special local identity list
+
+local identity avatar
+first + last initials, uppercase
+
+profile editor
+viewport modal owned by Profiles
+
+color feedback
+live preview + current hex values
+
+footer empty spacing
+removed
+```
+
+La excepción visual de `local` no crea un nuevo profile contract ni un estado durable por
+identidad local.
+
+`compose_profiles_manager(...)` puede recibir `description`, `source_name` y
+`projection_name`; sus defaults siguen siendo generic. ADA localiza título/descripción y
+nombres de runtime desde la composition.
+
+SUPERSEDED dentro de la UI Profiles:
+
+```text
+dbc.Modal dependency for profile editor
+SUPERSEDED / REMOVED
+
+previous/next-only profile pagination presentation
+SUPERSEDED
+
+single Source-only runtime context
+SUPERSEDED
+
+Local as one fixed-color visual badge
+SUPERSEDED
+```
+
 ## ADA Access
 
 CURRENT/FROZEN:
@@ -92,17 +150,6 @@ AdaAccessConfiguration
 ├── access_keys
 └── profile_access
 ```
-
-La identidad durable de un acceso continúa siendo un único `access_key`.
-
-La UI de creación compone:
-
-```text
-ámbito + permiso
-→ ámbito.permiso
-```
-
-Eso no crea entidades durables separadas `scope` o `permission`.
 
 Profiles irrestrictos CURRENT:
 
@@ -123,56 +170,6 @@ explicit grant root|local
 
 Los demás profiles usan grants explícitos.
 
-No persistir grants redundantes para `root` o `local`.
-
-La UI de Access puede usar `ProfileCatalog()` como fallback de sistema cuando no existe una
-Profiles Projection activa. Al excluir `root` y `local`, `basic` y `guest` permanecen
-asignables.
-
-La validación del draft continúa requiriendo una Profiles Projection activa; el fallback de UI
-no reemplaza esa dependencia de validación.
-
-## ADA Access UI
-
-CURRENT/FROZEN para el slice cerrado:
-
-```text
-tabs
-Accesos / Perfiles
-
-pagination
-10 / 20, mediante atlanticus.web.pagination
-
-profile row
-summary + Configurar
-
-inline growing multiselect
-REMOVED
-
-empty assignment modal
-FORBIDDEN
-
-profile assignment editor
-viewport-centered modal
-
-checkbox implementation
-dbc.Checkbox
-
-assignment state
-single editable AdaAccessConfiguration
-
-generic overflow hiding
-FORBIDDEN
-
-horizontal overflow
-fix cause locally
-```
-
-La reserva vertical paginada se mantiene consistente con las surfaces ya corregidas.
-
-El título visible `Perfiles` se localiza en la composition ADA; no se cambia el default generic
-de `compose_profiles_manager`.
-
 ## Navigation standalone boundary
 
 CURRENT/FROZEN:
@@ -192,12 +189,6 @@ external profile catalog adaptation
 belongs to application/composition boundary
 ```
 
-SUPERSEDED:
-
-```text
-Navigation Configuration -> Profiles core
-```
-
 Navigation durable access rule:
 
 ```text
@@ -212,47 +203,6 @@ DENY
 
 principal.unrestricted
 PROFILE-RESTRICTION BYPASS ONLY
-```
-
-Navigation generic does not know `basic`, `root`, `guest` or `local` as special keys.
-
-ADA composition currently filters `root` and `local` from assignable Navigation profile
-options.
-
-## Navigation UI decisions
-
-CURRENT/FROZEN:
-
-```text
-separate profiles context card
-REMOVED
-
-profiles
-EDITED ONLY INSIDE LINK EDITOR
-
-guest auto-selection
-REMOVED
-
-pagination
-TOP-LEVEL NODES ONLY
-
-section
-COUNTS AS ONE TOP-LEVEL ITEM
-
-section children
-DO NOT COUNT TOWARD PAGE TOTAL
-
-expanded section
-SHOW ALL CHILDREN
-
-page sizes
-10 / 20
-
-expanded state
-EPHEMERAL / NOT SOURCE
-
-horizontal overflow
-FIX CAUSE; DO NOT HIDE GENERICALLY
 ```
 
 ## Manager UI qualification order
@@ -270,20 +220,21 @@ Slices CURRENT ya cerrados:
 ```text
 Navigation
 Accesos
+Perfiles
 ```
 
 Siguiente slice acordado:
 
 ```text
-Perfiles
+Users
 ```
 
 `Herramienta` sigue OPEN / DEFERRED; no está cerrada ni superseded.
 
-Do not mix persistence qualification into UI review.
+El usuario indicó que después de Users se puede cerrar el trabajo actual de Manager por ahora.
+Ese cierre no convierte frentes diferidos en VERIFIED.
 
-Do not modify code merely to satisfy tests that freeze CSS, markup, internal classes/functions
-or visual structure.
+Do not mix persistence qualification into UI review.
 
 ## Testing
 
@@ -326,6 +277,6 @@ No crear alias para conservar el consumer.
 ## Siguiente foco
 
 ```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: PERFILES
+USERS-MANAGER-UI-REVIEW
+PLANNED / NEXT
 ```

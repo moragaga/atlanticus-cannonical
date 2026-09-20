@@ -70,8 +70,30 @@ Access es application-specific ADA.
 
 Profiles, Users y Navigation son generic Atlanticus.
 
-La composition ADA puede localizar títulos visibles sin cambiar el default generic de la
-capability.
+La composition ADA puede localizar títulos, descripciones y nombres de runtime visibles sin
+cambiar los defaults generic de la capability.
+
+## Profiles configuration boundary
+
+La UI/configuration de Profiles pertenece a Profiles.
+
+Manager provee shell/workflow/composition, no ownership de la presentación específica de
+Profiles.
+
+El cierre visual de `df5b995...` permanece capability-local:
+
+```text
+Profiles UI
+owns cards / profile previews / modal / pagination presentation
+
+profiles-manager composition
+owns runtime metadata injection
+
+ADA local composition
+owns localized title/description and local runtime labels
+```
+
+No se añadió estado visual al dominio durable Profiles.
 
 ## Navigation configuration boundary
 
@@ -94,8 +116,14 @@ Access puede consumir `ProfileCatalog` porque esa dependencia pertenece a su con
 dominio. Esto no autoriza mover Profiles dentro de Manager ni crear una dependencia inversa
 desde Profiles hacia ADA Access.
 
-La UI de Access puede usar el catálogo de sistema como fallback de presentación; la validation
-de draft sigue exigiendo Profiles Projection activa.
+## Users administration boundary
+
+Users permanece `ManagerEntry`.
+
+Su lifecycle CURRENT es `UsersAdministrationService`, no Source/Projection Manager.
+
+El siguiente review puede corregir presentación de Users, pero no debe fabricar
+`ManagerModule`, Source ni Projection para obtener simetría visual.
 
 ## UI qualification boundary
 
@@ -109,20 +137,23 @@ Slices ya cerrados:
 ```text
 Navigation
 Accesos
+Perfiles
 ```
 
 Siguiente slice:
 
 ```text
-Perfiles
+Users
 ```
+
+`Herramienta` permanece `OPEN / DEFERRED`.
 
 Corregir shared Manager CSS sólo cuando el problema sea realmente transversal.
 
 No mover CSS capability-local a Manager por simetría.
 
-La fase responsive/media-query transversal se ejecuta después de coherencia visual de las
-páginas.
+El usuario prevé cerrar el alcance actual del Manager después de Users; cualquier frente
+diferido debe seguir documentado como tal.
 
 ## Bootstrap boundary
 

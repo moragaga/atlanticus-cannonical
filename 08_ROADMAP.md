@@ -15,13 +15,13 @@ No mezclar cleanup transversal con el incremento funcional activo.
 ## Checkpoint publicado de referencia
 
 ```text
-moragaga/atlanticus@31723a108ddd2f49346fdcbb844db9891eb08f4b
+moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
 ```
 
 Parent:
 
 ```text
-29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
+31723a108ddd2f49346fdcbb844db9891eb08f4b
 ```
 
 ## Hitos cerrados relevantes
@@ -35,6 +35,9 @@ CLOSED / VERIFIED / CURRENT
 
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
+
+PROFILES-MANAGER-UI-REVIEW
+CLOSED / VERIFIED MANUAL / CURRENT
 
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
@@ -96,6 +99,12 @@ SUPERSEDED / REMOVED
 
 Access profile assignment overlay store
 SUPERSEDED / REMOVED
+
+Profiles dbc.Modal editor dependency
+SUPERSEDED / REMOVED
+
+Profiles previous/next-only pagination presentation
+SUPERSEDED
 ```
 
 ## Finding no cerrado
@@ -119,15 +128,16 @@ Slices cerrados:
 ```text
 Navigation
 Accesos
+Perfiles
 ```
 
 Siguiente página acordada:
 
 ```text
-Perfiles
+Users
 ```
 
-`Herramienta` continúa pendiente y se retoma después; el cambio de orden no la supersede.
+`Herramienta` continúa `OPEN / DEFERRED`; el cambio de orden no la supersede ni la cierra.
 
 ## Secuencia interna del foco activo
 
@@ -136,29 +146,36 @@ PHASE 1 — PAGE VISUAL REVIEW
 CURRENT / IN PROGRESS
 ```
 
-Revisar las páginas Manager una por una hasta que desktop/presentación principal sea coherente.
+Siguiente slice: Users.
 
 ```text
 PHASE 2 — RESPONSIVE / MEDIA QUERY AUDIT
 PLANNED
 ```
 
-Revisar shared Manager CSS y CSS capability-local.
-
-No conservar cambios arbitrarios por inercia.
-
-No revertir a ciegas: comparar comportamiento visual esperado y ownership real.
+No abrir transversalmente durante el slice Users salvo defecto compartido demostrado.
 
 ```text
 PHASE 3 — TEST CONTRACT QUALIFICATION
 PLANNED
 ```
 
-Ejecutar targeted suites y Ruff.
+Ejecutar targeted suites y Ruff cuando corresponda al cierre del alcance actual.
 
 Eliminar tests que sólo congelen CSS, markup, clases/funciones internas o detalles visuales.
 
-Conservar/reemplazar únicamente cuando exista comportamiento contractual real detrás.
+## Punto de cierre después de Users
+
+El usuario indicó que, una vez cerrado Users, desea cerrar el trabajo de Manager **por ahora**.
+
+Ese punto de cierre debe registrar explícitamente qué frentes quedan diferidos. En particular:
+
+```text
+Herramienta visual review
+OPEN / DEFERRED
+```
+
+No convertir ese diferimiento en un cierre ficticio.
 
 ## Después del UI review
 
@@ -167,18 +184,7 @@ MANAGER-REAL-PERSISTENCE-QUALIFICATION
 PLANNED / AFTER UI REVIEW
 ```
 
-Debe comprobar:
-
-```text
-edit
-save draft
-validate
-publish Source
-project
-reload
-persistence
-conflicts/retry where applicable
-```
+No abrirlo durante Users.
 
 ## Frentes separados
 
