@@ -4,194 +4,116 @@ Estado: **CANONICAL OPEN ITEMS**
 
 Los puntos aquí no reabren contracts CLOSED.
 
-## CLOSED — Navigation standalone configuration
+## CLOSED — KPI Registry
 
 ```text
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
+KPI-REGISTRY-CAPABILITY-CUTOVER
 CLOSED / VERIFIED / CURRENT
+```
 
-NAVIGATION-PUBLIC-ACCESS-CONTRACT
+No reabrir:
+
+```text
+KpiRegistry naming
+SourceKey('kpis')
+core/configuration/projection-local/projection-cosmos structure
+Tool exact ProjectionTarget dependency
+Cosmos storage contract
+```
+
+## CLOSED — KPI Definition
+
+```text
+KPI-DEFINITION-CAPABILITY-CUTOVER
 CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILE-OPTIONS-DECOUPLING
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-CONFIGURATION-UI-PASS
-CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
-## CLOSED — ADA Access Manager UI
+No reabrir:
 
 ```text
-ACCESS-UNRESTRICTED-PROFILES-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
-ACCESS-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
+KpiDefinition domain
+SourceKey('kpi-definitions')
+core/configuration/projection-local/projection-cosmos structure
+Registry exact ProjectionTarget dependency
+Cosmos storage contract
 ```
 
-## CLOSED — Profiles Manager UI
+## OPEN — KPI Runtime recovery
 
 ```text
-PROFILES-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-```
-
-No reabrir sin conflicto demostrado:
-
-```text
-profile domain contract
-profile key/color durable schema
-Manager ownership of Profiles presentation
-legacy modal compatibility
-legacy pagination presentation
-```
-
-El cierre visual CURRENT mantiene la presentación dentro de Profiles y la metadata de entorno en
-la composition.
-
-## OPEN — Manager UI consistency
-
-```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
-```
-
-Slices cerrados:
-
-```text
-Navigation
-Accesos
-Perfiles
-```
-
-Siguiente página acordada:
-
-```text
-Users
-```
-
-`Herramienta` continúa:
-
-```text
-OPEN / DEFERRED
-```
-
-Después de Users, el usuario desea cerrar el alcance actual de Manager por ahora. El cierre no
-debe declarar `Herramienta` ni otros frentes diferidos como VERIFIED.
-
-## OPEN — Users Manager UI
-
-```text
-USERS-MANAGER-UI-REVIEW
+KPI-RUNTIME-REPROCESS-CURRENT
 PLANNED / NEXT
 ```
 
-Congelado antes de comenzar:
+Debe implementar únicamente el bypass de `observed == committed` con `REPROCESS_CURRENT=true`.
+
+## OPEN — Delivery Registry consumption
 
 ```text
-Users = ManagerEntry
-UsersAdministrationService = domain/application administration lifecycle
-no synthetic Source/Projection
-managed users consume ProfileCatalog
-local is not a managed assignment
+KPI-DELIVERY-REGISTRY-CONSUMPTION
+PLANNED
 ```
 
-## OPEN — Responsive/media queries
+CURRENT backend todavía consume `ada_kpi_configuration_projection`.
+
+Debe migrar al Registry durable sin dual reader.
+
+## OPEN — Timeseries Registry consumption
 
 ```text
-MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT
-PLANNED / PHASE 2
+KPI-TIMESERIES-REGISTRY-CONSUMPTION
+PLANNED
 ```
 
-No mezclarlo con Users salvo defecto transversal demostrado.
+Mismo conflicto de contrato que Delivery.
 
-## OPEN — Test contract cleanup
+## OPEN — Historian recovery
 
 ```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / PHASE 3
+KPI-HISTORIAN-REPROCESS-CURRENT
+PLANNED
 ```
 
-En la etapa final del alcance actual:
+Forced-current requiere full replay hasta committed.
 
-- ejecutar targeted tests y Ruff;
-- conservar behavior/contracts/invariants;
-- eliminar tests cuyo único propósito sea CSS, visual structure, selectors, clases internas,
-  funciones internas o implementación accidental;
-- no modificar la UI para satisfacer un test visual inválido.
-
-## OPEN — Navigation Manager authorization consumer
+## BLOCKED — ADA Generic Collector
 
 ```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
+ADA-GENERIC-COLLECTOR-CLOSURE
+BLOCKED
 ```
 
-CURRENT:
+Espera cierre de la cadena backend KPI.
+
+## OPEN — KPI Inspection stale Definition consumer
 
 ```text
-ManagerAuthorizationPolicy.can_view(...)
+KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT
+OPEN / SEPARATE
 ```
 
-Consumer actual:
+CURRENT aún declara `ada-web-kpi-definition==0.1.0` y consume un repository contract histórico.
+
+No resolver durante backend recovery salvo que se demuestre dependencia directa.
+
+## OPEN — Python metadata
 
 ```text
-web/compositions/navigation-manager
-→ authorization.can_access(...)
+Project baseline
+3.14.7
+
+observed KPI/Web package metadata
+==3.14.2
 ```
 
-No añadir compatibility alias.
+Mantener separado.
 
-No resolver durante Users UI review.
-
-## OPEN — Final automated qualification
-
-Para el checkpoint final de Perfiles permanece:
+## PROPOSED / DEFERRED
 
 ```text
-post-df5b targeted pytest
-UNVERIFIED
-
-post-df5b targeted Ruff
-UNVERIFIED
-
-remote CI
-UNVERIFIED
-
-full monorepo pytest
-UNVERIFIED
-
-full workspace Ruff
-UNVERIFIED
+Latest Delivery REPROCESS_CURRENT
+Timeseries Delivery REPROCESS_CURRENT
+reprocess_from optimization
 ```
 
-La aceptación manual de Perfiles no sustituye esa evidencia.
-
-## OPEN — Real persistence qualification
-
-```text
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / AFTER UI REVIEW
-```
-
-No confundir render/UI correctness con persistencia real.
-
-## Separados
-
-```text
-ADA Access runtime composition
-PLANNED / SEPARATE
-
-Navigation disabled-route surface
-PLANNED / SEPARATE
-
-concrete Entra/Graph provider
-UNVERIFIED
-
-Python metadata alignment
-PLANNED / SEPARATE
-
-global CI/workspace cleanup
-PLANNED / SEPARATE
-```
+No autorizados en la secuencia actual.

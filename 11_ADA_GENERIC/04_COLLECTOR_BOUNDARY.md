@@ -1,6 +1,6 @@
 # ADA Generic — Collector Boundary
 
-Estado: **SEMANTICS FROZEN / PHYSICAL MAPPING OPEN**
+Estado: **SEMANTICS FROZEN / IMPLEMENTATION BLOCKED BY KPI BACKEND FLOW**
 
 ## Semántica congelada
 
@@ -23,61 +23,63 @@ Subcomponent:
 
 Regla:
 
-`N Subcomponents != N Stores != N Collectors`
+```text
+N Subcomponents != N Stores != N Collectors
+```
 
 ## Collector no equivale automáticamente a Producer
 
-Actualmente `main` no contiene una capability top-level llamada literalmente `collectors`.
+No renombrar Producer a Collector.
 
-Sí contiene Operational Data Producers, Sources y Processes.
+No crear un wheel `collectors` por coincidencia terminológica.
 
-El Producer auditado de Fabrica compone:
+No duplicar sources/materializers ya válidos.
 
-- conexiones Storage;
-- `FabricaStorageSource`;
-- `FabricaMaterializer`;
-- `DatasetRuntime`;
-- producer state;
-- `FabricaJob`.
+ADA Generic no debe conocer productores concretos.
 
-Su materializer transforma una fuente operacional y publica datasets mediante `DatasetRuntime`.
+## Gate CURRENT
 
-Eso prueba que Producer es una capacidad física de ingestión/materialización, pero NO demuestra por sí mismo que sea el Collector contractual de un Component ADA.
+La implementación del Collector queda bloqueada hasta cerrar:
 
-El core de producers auditado expone `SourceScopeProvider`; no existe allí todavía un contrato genérico `ComponentCollector`.
+```text
+KPI-RUNTIME-REPROCESS-CURRENT
+KPI-DELIVERY-REGISTRY-CONSUMPTION
+KPI-TIMESERIES-REGISTRY-CONSUMPTION
+KPI-HISTORIAN-REPROCESS-CURRENT
+```
 
-## Regla de diseño
+Razón:
 
-No:
+la frontera final del flujo KPI debe estar calificada antes de fijar el mapping físico del Collector.
 
-- renombrar Producer a Collector;
-- crear un nuevo wheel `collectors` por coincidencia terminológica;
-- duplicar sources/materializers ya válidos;
-- hacer que ADA Generic conozca productores concretos.
+## Después del gate
 
-Sí:
+Para la primera Tool/Component real:
 
-1. seleccionar una Tool/Component real;
-2. identificar su Source operacional;
-3. identificar quién materializa su Store/dataset;
-4. identificar scheduling/runtime;
-5. contrastar eso con el contrato funcional del Component;
-6. definir el adaptador/frontera mínima sólo si existe un gap real.
+```text
+1. identificar Source operacional
+2. identificar materialización Store/dataset
+3. identificar scheduling/runtime
+4. identificar entrada/salida KPI final
+5. contrastar con Component contract
+6. introducir sólo el gap mínimo real
+```
 
-## Posibles resultados del mapping
+Posibles resultados:
 
-El barrido puede concluir que:
+```text
+Producer existente cumple Collector contract
+Producer alimenta Collector delgado
+varios Producers alimentan un Collector
+Collector es sólo contrato/configuración
+falta una responsabilidad nueva
+```
 
-- un Producer existente cumple directamente el Collector contract;
-- un Producer expone datos que un Collector delgado consume;
-- varios Producers alimentan un Collector;
-- el Collector es sólo un contrato/configuración sobre capacidades existentes;
-- falta una responsabilidad nueva.
+No elegir antes de mapear la vertical real.
 
-No elegir una opción antes de mapear una Tool real.
+## Estado
 
-## Consecuencia para el primer entregable
-
-La primera vertical debe utilizar un Component concreto.
-
-El mapping `Component -> Collector contract -> capacidad física de datos` debe quedar explícito y verificable antes de generalizar la solución.
+```text
+ADA-GENERIC-COLLECTOR-CLOSURE
+BLOCKED / AFTER KPI BACKEND FLOW
+```

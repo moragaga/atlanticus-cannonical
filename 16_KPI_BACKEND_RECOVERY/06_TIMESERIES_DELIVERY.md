@@ -1,42 +1,66 @@
-# KPI Backend Reprocessing — Timeseries Delivery
+# KPI Backend Recovery — Timeseries Delivery
 
-Estado: **PROPOSED**
+Estado: **PLANNED — REGISTRY CONSUMER ALIGNMENT**
 
-## Gate actual
+## CURRENT conflict
 
-Timeseries Delivery salta cuando:
-
-```text
-checkpoint == aligned historian watermark
-AND
-configuration revision == current
-```
-
-## Con REPROCESS_CURRENT
-
-Ignorar sólo ese gate.
-
-Luego:
+`kpi-timeseries-delivery` todavía consume el projection document legacy:
 
 ```text
-read historian authority
-→ read history window
-→ project timeseries
-→ publish
-→ commit same checkpoint
+ada_kpi_configuration_projection
 ```
 
-## Uso
+con payload:
 
-Permite reconstruir:
+```text
+configuration.bindings
+binding.key
+```
 
-- snapshot eliminado;
-- publicación de prueba;
-- resultado después de rematerializar Historian.
+El Registry CURRENT usa:
+
+```text
+ada_kpi_registry_projection_record
+payload.bindings
+binding.kpi_key
+```
+
+## Cambio autorizado
+
+```text
+KPI-TIMESERIES-REGISTRY-CONSUMPTION
+PLANNED
+```
+
+Timeseries debe cargar el KPI Registry durable desde Cosmos al inicio del flujo.
+
+No dual reader.
+
+No legacy fallback.
+
+No copiar el Registry a otro documento sólo para Timeseries.
+
+## Reprocess
+
+La propuesta histórica:
+
+```text
+Timeseries Delivery REPROCESS_CURRENT
+```
+
+queda:
+
+```text
+PROPOSED / DEFERRED / NOT AUTHORIZED
+```
+
+No mezclar con el cambio de configuration consumer.
 
 ## No cambia
 
-- missing Historian authority sigue sin producir series válidas;
-- authority regression sigue ERROR;
-- aligned watermark sigue siendo el mismo;
-- no se fabrica historia.
+```text
+Historian authority
+aligned timeseries watermark
+checkpoint authority validation
+publish/checkpoint fencing
+```

@@ -1,45 +1,90 @@
 # ADA Web — Qualification History
 
-Estado: **HISTORICAL BASELINE**
+Estado: **CURRENT HISTORY**
 
-Fuente principal:
-checkpoint de continuidad ADA Web del 31-08-2026.
+## Checkpoints históricos preservados
 
-## Cerrados históricamente
+Los GREEN históricos de Session/PWA/Wake/Activity/Card/Header siguen preservados según los
+checkpoints anteriores.
 
-### Session / Runtime
+No reabrirlos sin finding real.
 
-- SESSION-AUTO-000-001
-- SESSION-AUTO-000-002
-- SESSION-AUTO-000-003
-- SESSION-AUTO-000-004
-- SESSION-AUTO-000-005
-- WAKE-PULSE-001
-- PAGE-READY-001
-- WAKE-LOCK-001
-- ACTIVITY-001
+## KPI Registry capability cutover
 
-### Surface
+Observed:
 
-- PWA-SURFACE-001
-- CARD-DISPLAY-001
-- RESPONSIVE-HEADER-001
+```text
+Registry Core                  6 PASS
+Registry Configuration       30 PASS
+Registry Projection Local     2 PASS
+Registry Projection Cosmos    3 PASS
+Definition alignment         35 PASS
+Configuration Manager        32 PASS
 
-## No promover sin closure
+TOTAL
+108 PASS
+```
 
-`RESPONSIVE-TIME-001` figuraba como candidato en ese checkpoint.
+UI invariant:
 
-La existencia actual de `ada-web-ui-time-status==0.1.15` prueba implementación/versionado, no por sí sola qualification GREEN.
+```text
+CSS identical
+css.list identical
+IDs identical
+```
+
+Status:
+
+```text
+KPI-REGISTRY-CAPABILITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
+
+## KPI Definition capability cutover
+
+Observed:
+
+```text
+Definition Core              14 PASS
+Definition Configuration     23 PASS
+Definition Projection Local   3 PASS
+Definition Projection Cosmos  4 PASS
+Configuration Manager        32 PASS
+
+TOTAL
+76 PASS
+```
+
+UI invariant:
+
+```text
+CSS identical
+css.list identical
+IDs identical
+```
+
+`git diff --check`:
+
+```text
+PASS
+```
+
+Status:
+
+```text
+KPI-DEFINITION-CAPABILITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+```
 
 ## Uso correcto
 
-Estos checkpoints ayudan a evitar regresiones y trabajo duplicado.
+Qualification demuestra comportamiento observado del scope probado.
 
-No obligan a conservar:
+No declara automáticamente:
 
-- tests CSS obsoletos;
-- estructura de archivos histórica;
-- versiones antiguas;
-- decisiones reemplazadas posteriormente.
-
-La propiedad validada se conserva; la implementación puede evolucionar.
+```text
+remote CI
+full monorepo pytest
+full Ruff workspace
+Azure deployment qualification
+```

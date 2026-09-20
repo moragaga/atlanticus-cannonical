@@ -1,73 +1,132 @@
 # ADA Web — Current Baseline
 
-Estado: **CANDIDATE**
+Estado: **CURRENT**
 
-## Implementación actual
+## Implementación auditada
 
-`scopes/ada/web/` contiene fronteras dedicadas para, entre otras:
+```text
+moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+```
 
-- alarms;
-- application;
-- branding;
-- components;
-- configuration;
-- content-state;
-- inspection;
-- kpis;
-- operational-render-binding;
-- operational-state;
-- runtime-experience;
-- shell.
+## KPI Registry
 
-`ada-generic-application` actual está en versión `1.0.6` en el commit auditado.
+```text
+scopes/ada/web/kpis/registry/
+├── core
+├── configuration
+├── projection-local
+└── projection-cosmos
+```
 
-Consume capacidades versionadas como:
+Packages:
 
-- `ada-web-alarms-management==0.1.6`;
-- `ada-web-alarms-status==0.1.6`;
-- `ada-web-branding==0.2.0`;
-- `ada-web-content-state==0.1.0`;
-- `ada-web-operational-render-binding==0.1.1`;
-- `ada-web-operational-state==0.1.0`;
-- `ada-web-runtime-experience==0.1.0`;
-- `ada-web-shell==0.4.2`;
-- `ada-web-ui-nav==0.4.1`;
-- `ada-web-ui-time-status==0.1.15`;
-- `atlanticus-web==0.8.4`.
+```text
+ada-web-kpi-registry==0.1.0
+ada-web-kpi-registry-configuration==0.1.0
+ada-web-kpi-registry-projection-local==0.1.0
+ada-web-kpi-registry-projection-cosmos==0.1.0
+```
+
+Projection:
+
+```text
+ProjectionRecord[KpiRegistry]
+```
+
+Cosmos contract:
+
+```text
+logical_id = ada.kpis.registry.projection
+physical   = ada-kpi-registry-projection
+document_type = ada_kpi_registry_projection_record
+```
+
+## KPI Definition
+
+```text
+scopes/ada/web/kpis/definition/
+├── core
+├── configuration
+├── projection-local
+└── projection-cosmos
+```
+
+Packages:
+
+```text
+ada-web-kpi-definition==0.6.0
+ada-web-kpi-definition-configuration==0.1.0
+ada-web-kpi-definition-projection-local==0.1.0
+ada-web-kpi-definition-projection-cosmos==0.1.0
+```
+
+Projection:
+
+```text
+ProjectionRecord[KpiDefinitionCatalog]
+```
+
+Cosmos contract:
+
+```text
+logical_id = ada.kpis.definition.projection
+physical   = ada-kpi-definition-projection
+document_type = ada_kpi_definition_projection_record
+```
+
+## Dependency chain
+
+```text
+Tool ProjectionTarget
+        ↓
+KPI Registry ProjectionTarget
+        ↓
+KPI Definition ProjectionTarget
+```
+
+## Configuration Manager local runtime
+
+Registry y Definition usan projection stores locales durables.
+
+No usan in-process projection para esas dos capabilities.
+
+## UI invariant
+
+Durante ambos cutovers:
+
+```text
+CSS
+css.list
+IDs
+```
+
+fueron preservados byte a byte.
+
+No interpretar namespace/import changes como cambios visuales.
 
 ## Python
 
-El paquete actual aún declara Python `>=3.14.2,<3.15`.
+Project baseline:
 
-La baseline objetivo del Project es Python 3.14.7/Trixie.
+```text
+3.14.7
+```
+
+Packages CURRENT observados:
+
+```text
+requires-python ==3.14.2
+```
 
 Clasificación:
 
-`DECIDED / NOT YET IMPLEMENTED`
+```text
+PYTHON-METADATA-ALIGNMENT
+OPEN / SEPARATE
+```
 
-## Checkpoint histórico
+## Conflict separado
 
-El checkpoint del 31-08-2026 registró como GREEN, entre otros:
+KPI Inspection Definition provider aún consume un Definition contract histórico.
 
-- SESSION-AUTO-000-001..005;
-- WAKE-PULSE-001;
-- PWA-SURFACE-001;
-- PAGE-READY-001;
-- WAKE-LOCK-001;
-- ACTIVITY-001;
-- CARD-DISPLAY-001;
-- RESPONSIVE-HEADER-001.
-
-En ese documento:
-
-`RESPONSIVE-TIME-001`
-
-seguía como candidato, aunque la capability `ada-web-ui-time-status==0.1.15` sí está físicamente presente en `main` actual.
-
-No declarar `RESPONSIVE-TIME-001` GREEN sin evidencia de closure posterior.
-
-## Regla
-
-No reabrir incrementos históricos GREEN sin finding real.
-
-Pero un checkpoint histórico no sustituye verificación contra `main` para conocer versiones y composición vigentes.
+No forma parte del baseline KPI Registry/Definition cerrado.

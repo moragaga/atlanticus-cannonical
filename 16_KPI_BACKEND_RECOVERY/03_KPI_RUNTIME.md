@@ -1,95 +1,92 @@
-# KPI Backend Reprocessing — KPI Runtime
+# KPI Backend Recovery — KPI Runtime
 
-Estado: **PROPOSED**
+Estado: **PLANNED / NEXT**
 
-## Gate actual
+## CURRENT
 
-`KpiRuntimeJob` corta cuando:
-
-```text
-observed == committed
-```
-
-con:
-
-```text
-reason = up_to_date
-```
-
-## Con REPROCESS_CURRENT
-
-Sólo para:
+`KpiRuntimeJob` hace:
 
 ```text
 observed == committed
+→ up_to_date
+→ skip
 ```
 
-se ignora ese shortcut.
+Settings CURRENT no exponen `REPROCESS_CURRENT`.
 
-El job continúa:
+## Cambio autorizado
+
+Agregar:
+
+```text
+REPROCESS_CURRENT=false
+```
+
+y entregarlo al job por el wiring CURRENT.
+
+Cuando:
+
+```text
+REPROCESS_CURRENT=true
+AND observed == committed
+```
+
+omitir sólo el shortcut `up_to_date`.
+
+Continuar:
 
 ```text
 load(as_of=observed)
-→ evaluate KPI
-→ build KpiEvaluationBatch
+→ evaluate base KPI
+→ evaluate over KPI
+→ KpiEvaluationBatch
 → KpiPersistence.commit(same watermark)
 ```
 
-## Persistencia actual
+## Casos obligatorios
 
-`KpiPersistence.commit()` permite el mismo watermark.
-
-Sólo prohíbe:
-
-```text
-batch.watermark < committed
-```
-
-y `write_once` conserva integridad del batch.
-
-Por tanto:
-
-### Batch eliminado
+Batch faltante:
 
 ```text
 committed = T
 source = T
 batch T missing
-
-REPROCESS_CURRENT
-→ evaluate T
-→ write batch T
-→ committed permanece T
+→ rebuild T
 ```
 
-### Batch existente e idéntico
+Batch existente e idéntico:
 
 ```text
 → write_once unchanged
-→ committed permanece T
 ```
 
-### Batch existente pero contenido distinto
+Batch incompatible:
 
 ```text
 → durable conflict
 ```
 
-No reemplazar automáticamente.
+Regression:
 
-Si se está probando una corrección de lógica para el mismo watermark:
+```text
+observed < committed
+→ error aunque forced
+```
 
-1. eliminar explícitamente el batch defectuoso en el entorno de prueba;
-2. conservar committed watermark;
-3. activar `REPROCESS_CURRENT`;
-4. reconstruir.
+Missing source watermark:
 
-Esto reduce el borrado manual sin debilitar la autoridad durable.
+```text
+→ no source fabrication
+```
 
 ## No cambia
 
-- missing source watermark sigue EMPTY;
-- source regression sigue ERROR;
-- no KPI sigue EMPTY;
-- lease/fencing permanece;
-- no se avanza watermark ficticiamente.
+```text
+catalog semantics
+DataLoadPlan
+source authority
+lease
+fencing
+cancellation
+KpiPersistence conflict semantics
+```

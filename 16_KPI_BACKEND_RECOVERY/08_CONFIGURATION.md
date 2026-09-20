@@ -1,30 +1,30 @@
-# KPI Backend Reprocessing — Configuration
+# KPI Backend Recovery — Configuration
 
-Estado: **CURRENT DIRECTION / BASELINE 1.0**
+Estado: **DECIDED / BASELINE 1.0**
 
-Cada job tiene su propia configuración y se despliega/ejecuta de forma independiente.
+Cada job tiene configuración independiente.
 
-Por tanto no se necesita un nombre ENV diferente por proceso.
+## REPROCESS_CURRENT
 
-## Variable común
+Variable común sólo para jobs que hayan sido autorizados a soportarla:
 
 ```text
 REPROCESS_CURRENT=false
 ```
 
-La misma variable existe dentro del contrato de cada job que soporte reproceso.
-
-Ejemplos:
+Autorizados ahora:
 
 ```text
 kpi-runtime
-  REPROCESS_CURRENT=true
-
 kpi-historian
-  REPROCESS_CURRENT=true
 ```
 
-No existe un flag global que afecte simultáneamente todos los procesos.
+No autorizados todavía:
+
+```text
+kpi-delivery
+kpi-timeseries-delivery
+```
 
 ## Semántica
 
@@ -33,20 +33,22 @@ false
 → comportamiento productivo normal
 
 true
-→ omite únicamente el shortcut "already current"
+→ bypass exclusivamente del shortcut already-current
 ```
 
 No se mezcla con:
 
-- DEBUG;
-- logging;
-- observability;
-- run_once;
-- poll interval.
+```text
+DEBUG
+logging
+observability
+run_once
+poll interval
+```
 
 ## Ejecución controlada
 
-Para repair/testing puntual se recomienda:
+Para repair/testing puntual:
 
 ```text
 REPROCESS_CURRENT=true
@@ -56,4 +58,18 @@ REPROCESS_CURRENT=true
 
 cuando corresponda.
 
-Si un job continuo mantiene la variable en true, reprocesará current en cada ciclo; esa conducta es explícita y no se auto-resetea desde código.
+## Registry consumer settings
+
+Delivery y Timeseries deben migrar sus settings desde el contrato histórico de:
+
+```text
+KPI_DELIVERY_CONFIGURATION_CONTAINER
+KPI_DELIVERY_CONFIGURATION_ITEM_ID
+KPI_DELIVERY_CONFIGURATION_PARTITION_KEY
+```
+
+hacia el resource/identity real del KPI Registry durable CURRENT.
+
+La forma exacta de settings debe partir del storage contract y composition CURRENT.
+
+No inventar un segundo Registry contract.

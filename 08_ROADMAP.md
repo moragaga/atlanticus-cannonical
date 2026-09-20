@@ -1,6 +1,6 @@
 # Atlanticus — Roadmap
 
-Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
+Estado: **CURRENT EXECUTION ROADMAP**
 
 ## Regla
 
@@ -10,203 +10,93 @@ Cerrar cada frontera con evidencia suficiente.
 
 No conservar legacy para sostener consumers o tests anteriores.
 
-No mezclar cleanup transversal con el incremento funcional activo.
-
-## Checkpoint publicado de referencia
+## Checkpoint publicado
 
 ```text
-moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
+moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
 ```
 
-Parent:
+## Hitos KPI cerrados
 
 ```text
-31723a108ddd2f49346fdcbb844db9891eb08f4b
+KPI-REGISTRY-CAPABILITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+KPI-DEFINITION-CAPABILITY-CUTOVER
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Hitos cerrados relevantes
+La precondición Web/durable para recovery y configuración backend ya está disponible.
+
+## Secuencia NEXT
+
+### 1. KPI Runtime
 
 ```text
-GENERIC-WEB-PAGINATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-MANAGER-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-USERS-PROFILES-CONTRACT-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-ACCESS-UNRESTRICTED-PROFILES-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
-ACCESS-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-MANAGER-FINAL-ADMIN-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PUBLIC-ACCESS-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILE-OPTIONS-DECOUPLING
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-CONFIGURATION-UI-PASS
-CLOSED / VERIFIED MANUAL / CURRENT
+KPI-RUNTIME-REPROCESS-CURRENT
+PLANNED / NEXT
 ```
 
-## Hitos superados
+Agregar `REPROCESS_CURRENT=false` y permitir reevaluar exactamente el watermark current sin
+relajar authority, lease, fencing o conflict checks.
+
+### 2. Delivery + Timeseries
 
 ```text
-Navigation Configuration -> Profiles core hard dependency
-SUPERSEDED / REMOVED
+KPI-DELIVERY-REGISTRY-CONSUMPTION
+PLANNED
 
-Navigation empty allowed_profiles denies ordinary principals
-SUPERSEDED
-
-Navigation separate profiles card
-SUPERSEDED / REMOVED
-
-Navigation guest auto-selection
-SUPERSEDED / REMOVED
-
-Navigation boundary test based on raw "ada." substring
-SUPERSEDED / REMOVED
-
-Access root/local explicit grants
-SUPERSEDED / FORBIDDEN
-
-Access inline profile multiselect
-SUPERSEDED / REMOVED
-
-Access profile assignment overlay store
-SUPERSEDED / REMOVED
-
-Profiles dbc.Modal editor dependency
-SUPERSEDED / REMOVED
-
-Profiles previous/next-only pagination presentation
-SUPERSEDED
-```
-
-## Finding no cerrado
-
-```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
-```
-
-No resolver con alias/shim.
-
-## Foco activo
-
-```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
-```
-
-Slices cerrados:
-
-```text
-Navigation
-Accesos
-Perfiles
-```
-
-Siguiente página acordada:
-
-```text
-Users
-```
-
-`Herramienta` continúa `OPEN / DEFERRED`; el cambio de orden no la supersede ni la cierra.
-
-## Secuencia interna del foco activo
-
-```text
-PHASE 1 — PAGE VISUAL REVIEW
-CURRENT / IN PROGRESS
-```
-
-Siguiente slice: Users.
-
-```text
-PHASE 2 — RESPONSIVE / MEDIA QUERY AUDIT
+KPI-TIMESERIES-REGISTRY-CONSUMPTION
 PLANNED
 ```
 
-No abrir transversalmente durante el slice Users salvo defecto compartido demostrado.
+Reemplazar consumo del documento legacy `ada_kpi_configuration_projection` por el KPI Registry
+durable CURRENT desde Cosmos.
+
+No dual reader.
+
+No schema legacy fallback.
+
+### 3. Historian
 
 ```text
-PHASE 3 — TEST CONTRACT QUALIFICATION
+KPI-HISTORIAN-REPROCESS-CURRENT
 PLANNED
 ```
 
-Ejecutar targeted suites y Ruff cuando corresponda al cierre del alcance actual.
+Forced-current relee todos los evaluation batches durables desde inicio hasta KPI committed.
 
-Eliminar tests que sólo congelen CSS, markup, clases/funciones internas o detalles visuales.
-
-## Punto de cierre después de Users
-
-El usuario indicó que, una vez cerrado Users, desea cerrar el trabajo de Manager **por ahora**.
-
-Ese punto de cierre debe registrar explícitamente qué frentes quedan diferidos. En particular:
+### 4. Collector
 
 ```text
-Herramienta visual review
-OPEN / DEFERRED
+ADA-GENERIC-COLLECTOR-CLOSURE
+BLOCKED / AFTER KPI BACKEND FLOW
 ```
 
-No convertir ese diferimiento en un cierre ficticio.
-
-## Después del UI review
-
-```text
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / AFTER UI REVIEW
-```
-
-No abrirlo durante Users.
+Cerrar sólo después de conocer y calificar el extremo final del flujo KPI.
 
 ## Frentes separados
 
 ```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
-
-ADA Access runtime composition
-PLANNED / SEPARATE
-
-Navigation disabled-route surface
-PLANNED / SEPARATE
-
-concrete Entra/Graph provider
-UNVERIFIED
+KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT
+OPEN / SEPARATE
 
 PYTHON-METADATA-ALIGNMENT
-PLANNED / SEPARATE
+OPEN / SEPARATE
 
-CI remote
+remote CI
 UNVERIFIED
 
 full workspace qualification
 UNVERIFIED
+```
+
+## No incluir en la secuencia autorizada
+
+```text
+Latest Delivery REPROCESS_CURRENT
+PROPOSED / DEFERRED
+
+Timeseries Delivery REPROCESS_CURRENT
+PROPOSED / DEFERRED
 ```

@@ -2,24 +2,65 @@
 
 Estado: **AUDIT LEDGER**
 
-## Evidencia histórica
+## Implementación CURRENT auditada
 
-- `Atlanticus_ADA_Web_Checkpoint_Continuidad_v1.3.0.docx`
-  - checkpoint 31-08-2026;
-  - baseline GREEN de session/PWA/wake/activity/card/header;
-  - Responsive Time todavía candidato en ese corte.
+```text
+moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+```
 
-## Implementación actual auditada
+### KPI Registry
 
-- `scopes/ada/web/application/ada-generic-application/pyproject.toml`
-- `scopes/ada/web/application/ada-generic-application/src/.../application.py`
-- `scopes/ada/web/application/ada-generic-application/src/.../composition.py`
-- `scopes/ada/web/application/ada-generic-application/src/.../runtime.py`
-- `scopes/ada/web/application/ada-configuration-manager`
-- `web/capabilities/manager`
+```text
+scopes/ada/web/kpis/registry/core
+scopes/ada/web/kpis/registry/configuration
+scopes/ada/web/kpis/registry/projection-local
+scopes/ada/web/kpis/registry/projection-cosmos
+```
 
-## Search actual
+Especialmente:
 
-No se encontró `validate_css_tokens` en `atlanticus:main` auditado.
+```text
+configuration/projection_record.py
+projection-cosmos/store.py
+projection-cosmos/storage.py
+```
 
-No usar ausencia de un script como única razón de política; la política nueva de tests ya fue acordada explícitamente.
+### KPI Definition
+
+```text
+scopes/ada/web/kpis/definition/core
+scopes/ada/web/kpis/definition/configuration
+scopes/ada/web/kpis/definition/projection-local
+scopes/ada/web/kpis/definition/projection-cosmos
+```
+
+Especialmente:
+
+```text
+configuration/projection_record.py
+projection-cosmos/storage.py
+```
+
+### Configuration Manager
+
+```text
+scopes/ada/web/application/ada-configuration-manager
+```
+
+`local_runtime.py` demuestra durable local projections para Registry y Definition.
+
+## Conflict ledger
+
+Inspection:
+
+```text
+scopes/ada/web/inspection/providers/kpi-definition
+```
+
+continúa referenciando un contract histórico de Definition.
+
+Clasificación:
+
+```text
+OPEN / SEPARATE / PREEXISTING
+```

@@ -1,64 +1,71 @@
-# KPI Backend Reprocessing — Latest Delivery
+# KPI Backend Recovery — Latest Delivery
 
-Estado: **PROPOSED**
+Estado: **PLANNED — REGISTRY CONSUMER ALIGNMENT**
 
-## Gate actual
+## CURRENT conflict
 
-Latest Delivery salta cuando:
-
-```text
-checkpoint.watermark == KPI committed
-AND
-checkpoint.configuration_revision == current config
-```
-
-## Con REPROCESS_CURRENT
-
-Ignorar únicamente `SKIPPED_CURRENT`.
-
-Luego:
+`kpi-delivery` todavía consume:
 
 ```text
-read committed batch
-→ project latest
-→ publish snapshot
-→ commit same checkpoint
+document_type = ada_kpi_configuration_projection
+configuration.bindings
+binding.key
+revision
+tool_projection_revision
 ```
 
-## Casos
-
-### Snapshot fue eliminado
+KPI Registry CURRENT publica:
 
 ```text
-checkpoint current
-snapshot missing
-
-REPROCESS_CURRENT
-→ republish
+document_type = ada_kpi_registry_projection_record
+payload.bindings
+binding.kpi_key
+source_release_id
+dependencies
 ```
 
-### Snapshot todavía existe e idéntico
-
-Publisher puede devolver:
+## Cambio autorizado en la secuencia actual
 
 ```text
-UNCHANGED
+KPI-DELIVERY-REGISTRY-CONSUMPTION
+PLANNED
 ```
 
-y el checkpoint sigue igual.
+Delivery debe cargar desde Cosmos el KPI Registry durable al inicio del flujo y dejar de usar el
+projection document legacy.
 
-### Evaluation batch falta
-
-Sigue siendo error:
+No:
 
 ```text
-KPI evaluation batch is missing
+dual reader
+legacy fallback
+compatibility alias
+secondary backend configuration projection
 ```
 
-No inventar datos de Delivery.
+La configuración efectiva de Delivery debe derivarse desde el contrato Registry CURRENT dentro
+de la frontera del consumer existente.
+
+No inventar otra authority.
+
+## Reprocess
+
+La propuesta histórica:
+
+```text
+Latest Delivery REPROCESS_CURRENT
+```
+
+queda:
+
+```text
+PROPOSED / DEFERRED / NOT AUTHORIZED
+```
+
+No implementarla junto con el Registry cutover.
 
 ## Authority
 
-Delivery nunca lidera al KPI committed watermark.
+Delivery continúa sin poder liderar KPI committed watermark.
 
-La validación de autoridad se mantiene.
+El cambio de configuración no altera checkpoint/fencing/authority semantics existentes.

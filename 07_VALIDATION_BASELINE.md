@@ -2,191 +2,93 @@
 
 Estado: **CURRENT**
 
+## Autoridad de implementación
+
+```text
+moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+```
+
+Parent:
+
+```text
+107c7570061e0d31828b1d3e9b9fc6336a698809
+```
+
+Tree:
+
+```text
+41c299861d14a9691cbd3461dbca8bb466dfc156
+```
+
 ## Regla
 
 Qualification y tests son evidencia de propiedades del contrato CURRENT.
 
 No son autoridad para conservar contratos, schemas, adapters o aliases SUPERSEDED.
 
-No inventar un PASS cuando no existe resultado observado.
+No inventar un PASS no observado.
 
-## Autoridad de implementación
+## KPI Registry cutover — evidencia observada
 
 ```text
-moragaga/atlanticus@fbef06a8a0a587571527d9ecf131c73c5fc5f01a
+Registry Core                  6 PASS
+Registry Configuration       30 PASS
+Registry Projection Local     2 PASS
+Registry Projection Cosmos    3 PASS
+Definition alignment         35 PASS
+Configuration Manager        32 PASS
+
+TOTAL
+108 PASS
 ```
 
-Parent:
+Además se verificó:
 
 ```text
-9f12c41a23d69784c7c5b775a4093a94ac654d55
+legacy symbol scan
+clean en alcance migrado
+
+Registry CSS
+byte-identical
+
+Registry css.list
+byte-identical
+
+Registry IDs
+byte-identical
 ```
 
-Tree:
+## KPI Definition cutover — evidencia observada
 
 ```text
-fc8c293f617aca4a53d89f687a22728e9d0fdcca
+Definition Core              14 PASS
+Definition Configuration     23 PASS
+Definition Projection Local   3 PASS
+Definition Projection Cosmos  4 PASS
+Configuration Manager        32 PASS
+
+TOTAL
+76 PASS
 ```
 
-## Hitos contractuales relevantes
+Además se verificó:
 
 ```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
+legacy monolithic import scan
+clean en Definition + Manager
 
-MANAGER-AUTHORIZATION-SEMANTICS-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
+Definition CSS
+byte-identical
 
-MANAGER-ACTIVE-WORKFLOW-CALLBACK-CARDINALITY
-CLOSED / VERIFIED / CURRENT
+Definition css.list
+byte-identical
 
-CONFIGURATION-UI-COMPOSITION-RECOVERY
-CLOSED / VERIFIED / CURRENT
+Definition IDs
+byte-identical
 
-GENERIC-WEB-PAGINATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-## Generic Web pagination — evidencia observada
-
-### Atlanticus Web
-
-Ejecutado desde `web/`:
-
-```text
-uv run pytest framework/core/tests
-53 PASS
-
-uv run ruff check framework/core
-PASS
-```
-
-### ADA Configuration
-
-Ejecutado desde `scopes/ada/web/configuration/core`:
-
-```text
-uv run pytest
-4 PASS
-
-uv run ruff check .
-PASS
-```
-
-### KPI Configuration
-
-Ejecutado desde `scopes/ada/web/kpis/configuration`:
-
-```text
-uv run pytest
-37 PASS
-```
-
-Ruff completo mostró inicialmente dos I001:
-
-```text
-src/.../web/presentation.py
-→ modificado por el cutover
-
-tests/test_web_runtime.py
-→ no modificado por el cutover
-```
-
-Se corrigió exclusivamente el archivo modificado y su espejo comentado.
-
-Validación final dirigida:
-
-```text
-ruff check callbacks.py presentation.py query.py tests/test_web_query.py
-PASS
-
-pytest
-37 PASS
-```
-
-### KPI Definition
-
-Ejecutado desde `scopes/ada/web/kpis/definition`:
-
-```text
-uv run pytest
-35 PASS
-```
-
-Ruff completo mostró inicialmente cuatro I001:
-
-```text
-callbacks.py
-presentation.py
-query.py
-→ modificados por el cutover
-
-tests/test_web_runtime.py
-→ no modificado por el cutover
-```
-
-Se corrigieron exclusivamente los tres archivos modificados y sus espejos comentados.
-
-Validación final dirigida:
-
-```text
-ruff check callbacks.py presentation.py query.py tests/test_web_query.py
-PASS
-
-pytest
-35 PASS
-```
-
-### Total observado
-
-```text
-53 + 4 + 37 + 35 = 129 tests PASS
-```
-
-Desde la raíz:
-
-```text
 git diff --check
 PASS
 ```
-
-El commit publicado `fbef06a8...` fue verificado en `main` después de la qualification.
-
-## Propiedades demostradas del contrato
-
-Los tests de `atlanticus.web.pagination` demuestran:
-
-```text
-default page size = 10
-allowed page sizes = 10 | 20
-other page sizes rejected
-range/page-count/previous-next correct on final page
-empty result resolves to page 1 and preserves page size
-```
-
-Los tests de presentación ADA demuestran interacción funcional:
-
-```text
-page metadata
-previous / next enabled state
-page size options 10 / 20
-```
-
-No se conservan asserts de estilo/clases CSS como contrato.
-
-## Manager authorization — evidencia previa preservada
-
-Permanece la evidencia del checkpoint anterior sobre:
-
-```text
-ManagerAuthorizationPolicy.can_view
-explicit access_keys
-PreventUpdate cardinality fix
-ADA Configuration Manager smoke
-```
-
-No reinterpretar esa evidencia como qualification del consumer standalone
-`navigation-manager`, que sigue en conflicto `can_access`/`can_view`.
 
 ## Política de tests Web
 
@@ -210,42 +112,42 @@ branding
 apariencia
 estructura visual
 existencia/no existencia de funciones o clases
-source token presence/absence
-import presence/absence
-AST/module structure
+implementación accidental
 ```
 
-Los checks AST de mirrors son verificación de entrega donde ya existen, no motivo para
-crear nuevos tests de estructura interna.
+Los mirrors pedagógicos existentes pueden verificar equivalencia cuando esa entrega es una regla
+explícita del módulo.
 
 ## Python metadata
 
-Baseline:
+Baseline Project:
 
 ```text
 Python 3.14.7
 ```
 
-Los comandos observados durante el cutover ejecutaron Python 3.14.7.
+Packages KPI CURRENT observados:
 
-Permanece metadata `==3.14.2` en packages CURRENT.
+```text
+requires-python ==3.14.2
+```
+
+Estado:
 
 ```text
 PYTHON-METADATA-ALIGNMENT
-PLANNED / OPEN
+OPEN / SEPARATE
 ```
 
 ## UNVERIFIED
 
 ```text
-CI remoto de fbef06a8...
-full Ruff workspace de fbef06a8...
-full package Ruff de KPI Configuration después del fix fuera de los archivos dirigidos
-full package Ruff de KPI Definition después del fix fuera de los archivos dirigidos
+remote CI
+full monorepo pytest
+full workspace Ruff
+targeted Ruff de los dos cutovers KPI
 python:3.14.7-slim-trixie global qualification
+Azure productive wiring de nuevos resources Cosmos KPI
 ```
-
-Los findings I001 preexistentes de `tests/test_web_runtime.py` están fuera del alcance de
-`GENERIC-WEB-PAGINATION-CUTOVER`.
 
 Git continúa SOLO LECTURA para el asistente.

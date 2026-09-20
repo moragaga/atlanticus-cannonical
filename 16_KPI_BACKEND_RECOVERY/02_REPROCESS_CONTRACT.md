@@ -1,18 +1,23 @@
-# KPI Backend Reprocessing — Common Contract
+# KPI Backend Recovery — Common Reprocess Contract
 
-Estado: **PROPOSED**
+Estado: **DECIDED / PLANNED**
 
-## Nombre conceptual
+## Nombre
 
-`REPROCESS_CURRENT`
+```text
+REPROCESS_CURRENT
+```
 
 No llamarlo `DEBUG_MODE`.
 
-Debug describe observabilidad/desarrollo.
+## Jobs autorizados en esta secuencia
 
-Este contrato describe:
+```text
+KPI Runtime
+Historian
+```
 
-> ignorar únicamente el shortcut de "ya está current" y volver a materializar usando la authority upstream actual.
+Delivery y Timeseries reprocess NO están autorizados en esta secuencia.
 
 ## Default
 
@@ -20,79 +25,77 @@ Este contrato describe:
 false
 ```
 
-Siempre.
+## Semántica
 
-Producción normal no cambia.
-
-## Semántica transversal
-
-Con `REPROCESS_CURRENT=false`:
+Con `false`:
 
 ```text
 current checkpoint
+→ comportamiento normal
 → skip
 ```
 
-Con `REPROCESS_CURRENT=true`:
+Con `true`:
 
 ```text
 current checkpoint
-→ ejecutar nuevamente
+→ bypass sólo del shortcut already-current
+→ volver a materializar con authority upstream actual
 ```
 
-Pero se conservan:
+## Nunca bypass
 
-- source authority;
-- watermark ordering;
-- committed watermark;
-- lease checks;
-- cancellation;
-- fencing;
-- referential/config validation;
-- write conflict detection.
+```text
+source/authority regression
+missing upstream authority
+lease
+cancellation
+fencing
+referential validation
+write conflict detection
+```
 
 ## No retroceso
 
-Nunca permite:
-
 ```text
-upstream watermark < committed/checkpoint
-→ continuar
+upstream < committed/checkpoint
+→ error
 ```
-
-Los errores de regresión siguen siendo errores.
 
 ## No source inventado
 
-No permite:
-
 ```text
-source watermark missing
-→ fabricar watermark
+upstream missing
+→ no fabricar watermark
 ```
-
-El reproceso trabaja con authority existente.
 
 ## Idempotencia
 
-Si el materializado todavía existe y su contenido es idéntico:
+Contenido ya existente e idéntico:
 
 ```text
-reprocess
-→ unchanged / merge idempotente
+→ unchanged / convergente
 ```
 
-Si falta:
+Contenido faltante:
 
 ```text
-reprocess
 → rebuild
 ```
 
-Si existe contenido durable incompatible donde el contrato exige write-once:
+Contenido incompatible bajo write-once:
 
 ```text
 → conflict
 ```
 
-No sobrescribir silenciosamente.
+## Ejecución controlada
+
+Preferir:
+
+```text
+REPROCESS_CURRENT=true
+--run-once
+```
+
+para repair/testing puntual.

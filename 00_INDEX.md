@@ -1,31 +1,31 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
+Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ## Autoridad
 
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
+moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
 ```
 
 Parent inmediato:
 
 ```text
-31723a108ddd2f49346fdcbb844db9891eb08f4b
+107c7570061e0d31828b1d3e9b9fc6336a698809
 ```
 
 Tree:
 
 ```text
-de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
+41c299861d14a9691cbd3461dbca8bb466dfc156
 ```
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@07a0582c7acdd5c9b93f2a1bb02651e8c5302448
+moragaga/atlanticus-cannonical@a3e77aafe5e97bd4e2e10a9d9b24be9ff0486471
 ```
 
 `moragaga/atlanticus-decisions` permanece HISTORICAL.
@@ -43,99 +43,45 @@ Git permanece SOLO LECTURA para el asistente.
 | `04_ALARM_ENGINE/` | Alarm Engine + qualification/preservation. | CURRENT + PRESERVATION |
 | `05_ENGINEERING_BASELINE.md` | Baseline técnica. | CURRENT |
 | `06_OPERATING_MODEL.md` | Modelo operativo/deployment. | CURRENT |
-| `07_VALIDATION_BASELINE.md` | Evidencia de qualification y límites de validación. | CURRENT |
-| `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
+| `07_VALIDATION_BASELINE.md` | Evidencia de qualification y límites. | CURRENT |
+| `08_ROADMAP.md` | Orden de ejecución. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items vigentes. | CURRENT |
-| `10_MANAGER/` | Manager genérico, compositions y consumers administrativos. | CURRENT / UI REVIEW IN PROGRESS |
-| `11_ADA_GENERIC/` | ADA Generic y cadena Tool → KPI → runtime. | CURRENT DIRECTION |
+| `10_MANAGER/` | Manager y compositions administrativas. | CURRENT |
+| `11_ADA_GENERIC/` | ADA Generic y cadena Tool → KPI → runtime. | CURRENT / COLLECTOR BLOCKED |
 | `12_SOURCE_STORAGE/` | Source/Projection exact-release y storage. | CURRENT |
-| `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
+| `13_ADA_WEB/` | ADA Web, KPI Registry y KPI Definition. | CURRENT |
 | `14_ADA_COMMAND_CENTER/` | Command Center y Alarm ownership. | CURRENT DIRECTION |
 | `15_WEB_PLATFORM/` | Web platform, Users, Profiles, Access, Navigation y runtime. | CURRENT |
-| `16_KPI_BACKEND_RECOVERY/` | Reprocessing/recovery KPI. | CURRENT DIRECTION |
+| `16_KPI_BACKEND_RECOVERY/` | KPI backend recovery + Registry consumption. | PLANNED / NEXT |
 | `17_DISTRIBUTION_AND_TOOLING/` | Generators, artifacts, scripts, docs y services. | CURRENT DIRECTION |
 | `18_UNIVERSITY/` | Casos pedagógicos reales. | CURRENT DIRECTION |
 | `ATLANTICUS_ENGINEERING_RULES.md` | Reglas de ingeniería. | CURRENT |
 | `BASELINE_CLOSURE.md` | Qué queda congelado y qué no. | CURRENT |
 
-## Estado de hitos relevantes
+## Hitos KPI cerrados
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
+KPI-REGISTRY-CAPABILITY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-MANAGER-COMPOSITION
+KPI-DEFINITION-CAPABILITY-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-USERS-PROFILES-CONTRACT-REALIGNMENT
+KPI-MANAGER-REGISTRY-WIRING
 CLOSED / VERIFIED / CURRENT
 
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
+KPI-MANAGER-DEFINITION-WIRING
 CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-ACCESS-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-MANAGER-FINAL-ADMIN-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-CONFIGURATION-UI-PASS
-CLOSED / VERIFIED MANUAL / CURRENT
-
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS / NEXT PAGE: USERS
 ```
 
-Finding no cerrado:
+## Próxima secuencia
 
 ```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
+1. KPI-RUNTIME-REPROCESS-CURRENT
+2. KPI-DELIVERY-REGISTRY-CONSUMPTION
+   + KPI-TIMESERIES-REGISTRY-CONSUMPTION
+3. KPI-HISTORIAN-REPROCESS-CURRENT
+4. ADA-GENERIC-COLLECTOR-CLOSURE
 ```
 
-## Profiles CURRENT
-
-Profiles mantiene ownership de definición, catálogo, configuración, Source y Projection.
-
-El cierre `df5b995...` es presentación/capability composition: no redefine el contrato de dominio.
-La UI final de Perfiles fue aceptada manualmente por el usuario.
-
-## Navigation CURRENT
-
-Navigation Configuration no depende de Profiles core.
-
-La integración con profiles usa un contrato neutral opcional:
-
-```text
-NavigationProfileOption
-NavigationProfileOptionsProvider
-```
-
-ADA Configuration Manager adapta Profiles a ese contrato.
-
-`allowed_profiles=()` significa público dentro de la autorización Navigation.
-
-## Siguiente foco
-
-```text
-USERS-MANAGER-UI-REVIEW
-PLANNED / NEXT
-```
-
-Users debe mantenerse como `ManagerEntry` y conservar su lifecycle de administración propio.
-
-Después de Users, el usuario desea cerrar el trabajo actual de Manager por ahora. Cualquier
-frente diferido, incluido `Herramienta`, permanece explícitamente OPEN/DEFERRED y no se
-considera qualified por ese cierre de alcance.
+`ADA-GENERIC-COLLECTOR-CLOSURE` permanece bloqueado hasta cerrar la cadena backend KPI.

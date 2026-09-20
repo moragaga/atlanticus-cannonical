@@ -1,18 +1,15 @@
-# KPI Backend Reprocessing — Historian
+# KPI Backend Recovery — Historian
 
-Estado: **PROPOSED**
+Estado: **DECIDED / PLANNED**
 
-## Gate actual
+## CURRENT
 
 Historian salta cuando:
 
 ```text
 historian authority == KPI committed
+→ SKIPPED_CURRENT
 ```
-
-## Particularidad
-
-No basta con ignorar `SKIPPED_CURRENT`.
 
 El algoritmo normal usa:
 
@@ -20,19 +17,24 @@ El algoritmo normal usa:
 read_after(historian_before, through=committed)
 ```
 
-Si historian_before == committed:
+Por eso simplemente omitir el skip no basta:
 
 ```text
 read_after(committed, committed)
 → empty
 ```
 
-## Semántica de repair
+## Cambio autorizado
 
-Con `REPROCESS_CURRENT=true`:
+Agregar:
 
 ```text
-ignore historian progress only for read range
+REPROCESS_CURRENT=false
+```
+
+Con forced-current:
+
+```text
 after = None
 through = KPI committed
 ```
@@ -41,37 +43,31 @@ Luego:
 
 ```text
 read all durable evaluation batches
-→ historian materializer
-→ merge history/errors
+→ materialize history/errors
 → commit authority = same KPI committed
 ```
 
-## Por qué full rebuild
+## Razón
 
-Si el materializado histórico fue borrado o quedó inconsistente, no sabemos qué subconjunto falta.
+Si history fue borrado o quedó inconsistente, la primera versión de repair no conoce qué
+subconjunto falta.
 
-La authority KPI sí conoce el límite válido.
+La authority KPI define el límite válido.
 
-Los persisted evaluation batches son la fuente durable para reconstrucción.
-
-Por tanto, la primera versión de repair favorece:
+Los evaluation batches persistidos son la fuente de reconstrucción.
 
 ```text
 correctness > optimization
 ```
 
-y reconstruye todo hasta current.
-
-Más adelante puede existir `reprocess_from`, pero no es necesario para el primer contrato.
-
-## Idempotencia
-
-El materializer actual usa merge con keys estables.
-
-Reprocesar contenido existente debe converger sin duplicarlo.
-
 ## No cambia
 
-- KPI committed missing → EMPTY/error según contrato actual;
-- historian authority ahead of KPI committed → ERROR;
-- lease/cancellation/fencing permanece.
+```text
+KPI committed missing behavior
+historian authority ahead of KPI → error
+lease
+cancellation
+fencing
+```
+
+`reprocess_from` queda fuera de alcance.

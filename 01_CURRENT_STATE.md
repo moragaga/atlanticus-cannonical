@@ -7,25 +7,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@df5b99502265758e873e0565abf2176cc617104b
+moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
 ```
 
 Parent inmediato:
 
 ```text
-31723a108ddd2f49346fdcbb844db9891eb08f4b
+107c7570061e0d31828b1d3e9b9fc6336a698809
 ```
 
 Tree:
 
 ```text
-de1151ba72d44bc8ac6b6f2cfd6f57eb7e80c0a0
+41c299861d14a9691cbd3461dbca8bb466dfc156
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@07a0582c7acdd5c9b93f2a1bb02651e8c5302448
+moragaga/atlanticus-cannonical@a3e77aafe5e97bd4e2e10a9d9b24be9ff0486471
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -33,246 +33,212 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado resumido
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT                CLOSED / VERIFIED / CURRENT
-PROFILES-MANAGER-COMPOSITION                          CLOSED / VERIFIED / CURRENT
-PROFILES-MANAGER-UI-REVIEW                            CLOSED / VERIFIED MANUAL / CURRENT
-USERS-PROFILES-CONTRACT-REALIGNMENT                   CLOSED / VERIFIED / CURRENT
-USERS-ADMINISTRATION-MANAGER-INTEGRATION              CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-PROJECTION-PERSISTENCE                     CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION          CLOSED / VERIFIED / CURRENT
-ACCESS-UNRESTRICTED-PROFILES-CONTRACT                 CLOSED / VERIFIED / CURRENT
-ACCESS-MANAGER-UI-REVIEW                              CLOSED / VERIFIED MANUAL / CURRENT
-MANAGER-FINAL-ADMIN-COMPOSITION                       CLOSED / VERIFIED / CURRENT
+KPI-REGISTRY-CAPABILITY-CUTOVER                 CLOSED / VERIFIED / CURRENT
+KPI-DEFINITION-CAPABILITY-CUTOVER               CLOSED / VERIFIED / CURRENT
+KPI-MANAGER-REGISTRY-WIRING                     CLOSED / VERIFIED / CURRENT
+KPI-MANAGER-DEFINITION-WIRING                   CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER           CLOSED / VERIFIED / CURRENT
-NAVIGATION-PUBLIC-ACCESS-CONTRACT                     CLOSED / VERIFIED / CURRENT
-NAVIGATION-PROFILE-OPTIONS-DECOUPLING                 CLOSED / VERIFIED / CURRENT
-NAVIGATION-CONFIGURATION-UI-PASS                      CLOSED / VERIFIED MANUAL / CURRENT
+KPI-RUNTIME-REPROCESS-CURRENT                   PLANNED / NEXT
+KPI-DELIVERY-REGISTRY-CONSUMPTION               PLANNED
+KPI-TIMESERIES-REGISTRY-CONSUMPTION             PLANNED
+KPI-HISTORIAN-REPROCESS-CURRENT                 PLANNED
 
-MANAGER-UI-CONSISTENCY-REVIEW                         IN PROGRESS / NEXT PAGE: USERS
-USERS-MANAGER-UI-REVIEW                               PLANNED / NEXT
-MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT                  PLANNED / PHASE 2
-WEB-TEST-CONTRACT-CLEANUP                             PLANNED / PHASE 3
+ADA-GENERIC-COLLECTOR-CLOSURE                   BLOCKED / AFTER KPI BACKEND FLOW
 
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT   BLOCKED / VERIFIED CONFLICT
-MANAGER-REAL-PERSISTENCE-QUALIFICATION                PLANNED / AFTER UI REVIEW
-PYTHON-METADATA-ALIGNMENT                             PLANNED / SEPARATE
+KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT  OPEN / SEPARATE
+PYTHON-METADATA-ALIGNMENT                       OPEN / SEPARATE
 ```
 
-## VERIFIED
-
-### Profiles Manager UI
-
-CURRENT en `df5b995...`:
+## KPI Registry CURRENT
 
 ```text
-ownership
-Profiles capability + profiles-manager composition
-
-source/projection context
-visible and composition-driven
-
-pagination
-atlanticus.web.pagination
-10 / 20
-numbered pages
-Mostrando X–Y de Z
-
-configured profile preview
-single uppercase initial + configured colors
-
-system profiles
-basic / root / guest / local
-
-local visual exception
-local identities instead of one fixed profile color
-
-local avatar text
-first-name initial + last-name initial, uppercase
-
-profile editor
-capability-local viewport modal
-backdrop + close/cancel/save
-live preview + visible hex values
-
-footer
-no empty result spacing
+scopes/ada/web/kpis/registry/
+├── core
+├── configuration
+├── projection-local
+└── projection-cosmos
 ```
 
-`ProfileDefinition`, `ProfileCatalog` y `ProfilesConfiguration` no fueron reemplazados ni
-extendidos con estado visual.
-
-### Profiles composition metadata
-
-`compose_profiles_manager(...)` conserva defaults generic:
+Domain:
 
 ```text
-title='Profiles'
-description=''
-source_name='Profiles Source'
-projection_name='Profiles Projection'
+KpiRegistry
+KpiRegistryBinding
 ```
 
-Providers generic CURRENT:
+Source:
 
 ```text
-local provider
-Local Source / Local Projection
-
-azure provider
-Blob Storage / Cosmos DB
+SourceKey('kpis')
 ```
 
-ADA local runtime CURRENT:
+Projection:
 
 ```text
-title
-Perfiles
-
-description
-Define los perfiles disponibles y su presentación visual dentro del sistema.
-
-source
-Local Source
-
-projection
-In-process Projection
+ProjectionRecord[KpiRegistry]
 ```
 
-### Profiles manual qualification
-
-El usuario revisó la UI final y declaró Perfiles cerrado sobre el checkpoint CURRENT.
-
-Estado:
+Dependency:
 
 ```text
-PROFILES-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
+Tool ProjectionTarget
+→ KPI Registry ProjectionTarget
 ```
 
-### Users boundary para el siguiente foco
-
-CURRENT:
+Cosmos:
 
 ```text
-Users
-ManagerEntry
-
-UsersAdministrationService
-discover / promote / update
-
-managed user profile
-UserRecord.profile_key
-
-profile catalog
-injected ProfileCatalog
-
-local profile
-not a managed assignment
+logical_id = ada.kpis.registry.projection
+physical   = ada-kpi-registry-projection
+partition  = /partition_key
+TTL        = None
+document_type = ada_kpi_registry_projection_record
 ```
 
-No inventar Source/Projection para Users.
-
-### Navigation runtime authorization semantics
-
-CURRENT:
+## KPI Definition CURRENT
 
 ```text
-disabled
-→ deny
-
-enabled + allowed_profiles = ()
-→ allow for restricted principals
-
-enabled + allowed_profiles = non-empty
-→ require principal access/profile membership
-
-principal.unrestricted
-→ allow profile restriction bypass, except disabled route remains denied
+scopes/ada/web/kpis/definition/
+├── core
+├── configuration
+├── projection-local
+└── projection-cosmos
 ```
 
-### ADA Access unrestricted profile semantics
-
-CURRENT:
+Domain:
 
 ```text
-root / local
-→ todos los access_keys definidos
-→ grants explícitos rechazados
-
-basic / guest / custom
-→ grants explícitos configurables
+KpiDefinition
+KpiDefinitionConfiguration
+KpiDefinitionCatalog
 ```
 
-## INFERRED
-
-No se necesita una arquitectura nueva para revisar Users.
-
-La siguiente revisión debe permanecer dentro de Users + users-manager composition salvo que se
-demuestre un defecto transversal real de Manager.
-
-## ASSUMED
-
-No se asume que la UI actual de Users esté visualmente correcta por compartir shell Manager.
-
-No se asume que el cierre manual de Perfiles demuestre un PASS de suites automatizadas en el
-checkpoint `df5b995...`.
-
-No se asume que `Herramienta` quede qualified por cerrar el alcance actual del Manager después
-de Users.
-
-## PROPOSED
-
-Single next focus:
+Source:
 
 ```text
-USERS-MANAGER-UI-REVIEW
+SourceKey('kpi-definitions')
+resource = kpis/definition.json.gz
+```
+
+Projection:
+
+```text
+ProjectionRecord[KpiDefinitionCatalog]
+```
+
+Dependency:
+
+```text
+KPI Registry ProjectionTarget
+→ KPI Definition ProjectionTarget
+```
+
+Cosmos:
+
+```text
+logical_id = ada.kpis.definition.projection
+physical   = ada-kpi-definition-projection
+partition  = /partition_key
+TTL        = None
+document_type = ada_kpi_definition_projection_record
+```
+
+## Local Manager CURRENT
+
+Registry y Definition usan projection stores locales durables.
+
+No dependen de `InProcessProjectionStore` para esas dos projections.
+
+La UI fue preservada visualmente durante ambos cutovers.
+
+## Backend CURRENT
+
+### KPI Runtime
+
+CURRENT todavía corta:
+
+```text
+observed == committed
+→ reason=up_to_date
+→ skip
+```
+
+No existe todavía `REPROCESS_CURRENT`.
+
+### Historian
+
+CURRENT todavía corta:
+
+```text
+historian authority == KPI committed
+→ SKIPPED_CURRENT
+```
+
+No existe todavía `REPROCESS_CURRENT`.
+
+### Delivery / Timeseries
+
+CURRENT todavía consume:
+
+```text
+document_type = ada_kpi_configuration_projection
+payload = configuration.bindings
+binding identity = key
+```
+
+Eso entra en conflicto con KPI Registry CURRENT:
+
+```text
+document_type = ada_kpi_registry_projection_record
+payload = payload.bindings
+binding identity = kpi_key
+```
+
+El consumer backend debe migrar sin dual reader ni legacy compatibility.
+
+## Qualification observada
+
+Registry cutover:
+
+```text
+108 tests passed
+```
+
+Definition cutover:
+
+```text
+76 tests passed
+```
+
+Además:
+
+```text
+git diff --check
+PASS observado
+
+Registry UI assets
+byte-identical
+
+Definition UI assets
+byte-identical
+```
+
+No declarar Ruff remoto/full workspace/CI como PASS.
+
+## Conflicto separado CURRENT
+
+KPI Inspection Definition provider continúa referenciando un contrato histórico de Definition:
+
+```text
+ada-web-kpi-definition==0.1.0
+KpiDefinitionProjectionRepository
+```
+
+No fue parte de este cierre.
+
+## Siguiente foco único
+
+```text
+KPI-RUNTIME-REPROCESS-CURRENT
 PLANNED / NEXT
-```
-
-Orden del siguiente chat:
-
-```text
-1. inspeccionar contrato y surface CURRENT de Users
-2. revisar visualmente la página Users
-3. acordar cambios capability-locales
-4. implementar incrementalmente sólo tras consenso
-5. validar y decidir cierre del alcance actual de Manager
-```
-
-## UNVERIFIED / PENDING
-
-```text
-post-df5b targeted pytest
-UNVERIFIED
-
-post-df5b targeted Ruff
-UNVERIFIED
-
-remote CI
-UNVERIFIED
-
-full monorepo pytest
-UNVERIFIED
-
-full workspace Ruff
-UNVERIFIED
-
-Users final visual consistency
-NEXT / UNVERIFIED
-
-Herramienta final visual consistency
-OPEN / DEFERRED
-
-shared and local media-query correctness
-UNVERIFIED
-
-Manager real persistence flows
-PLANNED / AFTER UI REVIEW
-
-Navigation Manager authorization consumer alignment
-BLOCKED / SEPARATE
-
-Python metadata global 3.14.7
-PLANNED / SEPARATE
 ```
