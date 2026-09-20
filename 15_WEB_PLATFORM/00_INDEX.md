@@ -4,7 +4,7 @@ Estado: **CURRENT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_CAPABILITY_INDEPENDENCE.md` | Fronteras CURRENT de Users / Profiles / ADA Access / Navigation. | CURRENT / REFINED |
+| `01_CAPABILITY_INDEPENDENCE.md` | Fronteras de capabilities Web. | CURRENT / REFINED |
 | `02_USER_ACTIVITY_HISTORY.md` | Historia ordenada por página y TTL 24 h. | CURRENT DIRECTION / CONTRACT DESIGN |
 | `03_RESOURCE_PROVISIONING.md` | Provisionamiento de Cosmos/Storage y ownership. | CURRENT DIRECTION |
 | `04_WEB_READINESS_AND_DECOUPLING.md` | Web disponible aun sin datos/backend/infra. | CURRENT DIRECTION |
@@ -15,18 +15,18 @@ Estado: **CURRENT**
 | `09_CURRENT_GAPS.md` | Diferencias entre `main` y objetivos abiertos. | CURRENT |
 | `10_SOURCE_LEDGER.md` | Evidencia recuperada del código auditado. | AUDIT LEDGER |
 | `11_OPEN_ITEMS.md` | Contracts todavía abiertos. | OPEN |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/ADA Access/Navigation/Manager. | CURRENT DECISION / REFINED |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/Access/Navigation/Manager. | CURRENT DECISION |
 
 Checkpoint de implementación CURRENT:
 
 ```text
-moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
-Canonical base reemplazada:
+Canonical inspeccionado antes del reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@0aa49ba1cdfc76754d4ec1ef4d169b6360f4da14
+moragaga/atlanticus-cannonical@deb493659b41c0d8fea5c70674002486b3b92cbc
 ```
 
 Estado relevante:
@@ -41,29 +41,25 @@ CLOSED / VERIFIED / CURRENT
 USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
-ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROJECTION-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
 ADA-ACCESS-PROJECTION-PERSISTENCE
 CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-CONFIGURATION-UI-PASS
+CLOSED / VERIFIED MANUAL / CURRENT
+
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
 
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
-
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / OPEN
-
-PYTHON-METADATA-ALIGNMENT
-PLANNED / OPEN
 ```
 
-ADA Access no tiene Web surface CURRENT.
+Navigation Configuration no depende de Profiles core.
 
-El próximo diseño debe preservar que el consumo de access identifiers por funcionalidades
-Web es manual/controlado por desarrolladores, no automático.
+El siguiente trabajo continúa Manager UI page-by-page; no abre un nuevo backend contract.

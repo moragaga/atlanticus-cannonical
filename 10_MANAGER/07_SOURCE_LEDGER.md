@@ -4,297 +4,144 @@ Estado: **AUDIT LEDGER**
 
 ## Autoridad
 
-- `moragaga/atlanticus:main` = realidad implementada publicada.
+- `moragaga/atlanticus:main` = realidad implementada.
 - `moragaga/atlanticus-cannonical:main` = autoridad documental vigente.
 - `moragaga/atlanticus-decisions` = HISTORICAL.
 - Git permanece SOLO LECTURA para el asistente.
 
-## Checkpoint publicado CURRENT
+## Checkpoint CURRENT
 
 ```text
-moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 Parent:
 
 ```text
-e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
+856498c52f182cd531deae845c25bd51ae2ff4ea
 ```
 
 Tree:
 
 ```text
-5ed091d5477b8ca041ddd669de8217028ec72f35
+3f27ad599c6dec610dff5317494a73b276d2ebc4
 ```
 
-El parent `e0dca2d9...` introdujo Users Manager.
-`783d3578...` elimina únicamente:
+## Incremento cerrado
 
 ```text
-web/compositions/users-manager/uv.lock
-```
-
-La autoridad de lock del workspace Web es:
-
-```text
-web/uv.lock
-```
-
-## Cierres relevantes CURRENT
-
-```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-MANAGER-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-ADA-CONFIGURATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 ```
 
-## ManagerEntry
-
-CURRENT añadido al core Manager:
+Cambios de ownership/boundary:
 
 ```text
-ManagerEntry
+Navigation Configuration -> Profiles core
+REMOVED
+
+NavigationProfileOption
+CURRENT
+
+NavigationProfileOptionsProvider
+CURRENT / OPTIONAL
+
+Profiles adaptation
+APPLICATION/COMPOSITION BOUNDARY
 ```
 
-Campos CURRENT:
+## Navigation access semantics
 
 ```text
-key
-group_key
-title
-route
-order
-layout
-description
-access_key
-web_module
+allowed_profiles = ()
+PUBLIC WITHIN NAVIGATION AUTHORIZATION
+
+allowed_profiles = non-empty
+RESTRICTED
+
+enabled = False
+DENY
 ```
 
-`ManagerModuleRegistry` conserva `modules` y añade `entries` / `items`.
+## ADA composition
 
-El conjunto combinado exige key y route únicos.
+ADA Configuration Manager adapta `ProfileCatalog` a `NavigationProfileOption`.
 
-Authorization acepta:
+No expone `root` ni `local` como opciones asignables de Navigation.
 
-```text
-ManagerModule | ManagerEntry
-```
+## Navigation UI evidence
 
-El coordinator Source/Projection continúa resolviendo sólo `ManagerModule`.
+CURRENT incluye:
 
-## Users -> ADA Configuration Manager
+- top-level pagination `10 / 20`;
+- sections collapsed initially;
+- all children shown on expansion;
+- empty state centered in reserved page area;
+- page-size dropdown focus-target containment;
+- no standalone profiles card;
+- no guest auto-selection.
 
-Implementado:
-
-```text
-web/compositions/users-manager
-→ recibe UsersAdministrationService
-→ produce ManagerEntry
-→ registra users.administration mediante WebModule
-→ usa ManagerAuthorizationPolicy.can_view(...)
-```
-
-ADA Configuration Manager CURRENT:
-
-```text
-group administration
-    Users
-
-group configuration
-    Profiles
-    Navigation
-    Tools
-    KPI
-    KPI Definition
-```
-
-Capability funcional Users:
-
-```text
-users.manage
-```
-
-Ruta:
-
-```text
-/manager/users
-```
-
-No implementado:
-
-```text
-Users Source
-Users Projection
-Users ManagerModule Source/Projection
-adapter
-shim
-alias
-doble lifecycle
-```
-
-## Users Web surface CURRENT
-
-Incluye:
-
-```text
-candidate/promote
-promoted/edit
-search/filter
-conflict visibility
-profile selection
-enabled state
-pagination 10/20
-explicit Refresh
-```
-
-Sólo son administrables:
-
-```text
-profile_key
-enabled
-```
-
-Read-only:
-
-```text
-user_id
-issuer
-subject_id
-display_name
-email
-```
-
-Persistencia:
-
-```text
-UsersAdministrationService only
-```
-
-Profiles options usan snapshot de page load y sólo se reemplazan mediante Refresh explícito.
+El usuario confirmó manualmente que el resultado visual final quedó correcto.
 
 ## Qualification observada
 
-En el árbol integrado antes de publicar:
+Antes de los ajustes visuales finales:
 
 ```text
-targeted integration                  23 passed
-ADA Configuration Manager             26 passed
-Users core                             46 passed
-Manager                                62 passed
-users-manager                           1 passed
-Web scoped combined                   109 passed
-git diff --check                      PASS
-uv lock / uv sync                     PASS
+Navigation core                           22 passed
+Navigation Configuration                 42 passed
+Navigation Manager                       10 passed
+ADA Configuration Manager focused         5 passed
 ```
 
-No declarar:
+El checkpoint final también contiene el reemplazo del boundary test textual por inspección AST.
+
+No se observó una ejecución post-`29bbf6d8...` completa en este cierre.
+
+## Shared Manager CSS finding
+
+`29bbf6d8...` también modifica:
 
 ```text
-full monorepo pytest GREEN
-full Ruff workspace GREEN
-CI remote GREEN
-Docker E2E GREEN
+web/capabilities/manager/src/atlanticus/web/manager/resources/css/10_surface.css
 ```
 
-Se intentó una recolección pytest desde la raíz del monorepo y produjo errores de entornos,
-dependencias y nombres de tests entre proyectos independientes. Esa ejecución no constituye
-qualification válida del incremento y no se usa como evidencia de regresión Users.
-
-## ADA Access CURRENT observado
-
-Packages:
+Cambio CURRENT:
 
 ```text
-scopes/ada/web/access/core
-scopes/ada/web/access/configuration
-scopes/ada/web/access/projection-local
-scopes/ada/web/access/projection-cosmos
+module-page bottom padding -> 0
+mobile module-page bottom padding -> 0
 ```
 
-Ownership CURRENT:
+La correctness responsive/global permanece UNVERIFIED y se revisará en la fase 2 del UI
+review.
 
-```text
-profile_key -> access_keys
-```
-
-Contracts CURRENT:
-
-```text
-ProfileAccessGrant
-EffectiveAdaAccess
-AdaAccessConfiguration
-AdaAccessSourceService
-AdaAccessProjectionBuilder
-```
-
-Source schema:
-
-```text
-2
-```
-
-Projection:
-
-```text
-exact Profiles ProjectionTarget dependency
-durable ProjectionRecord[AdaAccessConfiguration]
-local provider
-Cosmos provider
-```
-
-No existe package/directorio Web UI de ADA Access ni dependencia Dash en estos packages.
-
-El historial inspeccionado de commits que introdujeron y modificaron
-`scopes/ada/web/access` tampoco muestra una Web surface de Access.
-
-## Requirement fijado para la próxima frontera
-
-El siguiente chat debe diseñar, antes de implementar, cómo representar:
-
-```text
-definición/creación controlada de accesos
-asignación de accesos a Profiles
-identificador estable consumible manualmente por desarrolladores
-```
-
-CURRENT sólo contiene strings `access_keys`; no existe catálogo de definiciones de acceso.
-
-No inventar clase, schema, storage, route o nombre de identificador antes de inspeccionar
-consumers reales.
-
-La integración en funcionalidades Web será manual/controlada por desarrolladores; no se
-requiere wiring automático.
-
-## Finding pendiente separado
+## Conflict separado
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-No introducir alias.
+`ManagerAuthorizationPolicy`:
+
+```text
+can_view(...)
+```
+
+Navigation Manager consumer:
+
+```text
+can_access(...)
+```
+
+No añadir alias.
 
 ## Próxima frontera
 
 ```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS / NEXT PAGE: HERRAMIENTA
 ```
 
-Después:
-
-```text
-MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED
-```
+No abrir persistencia ni runtime authorization durante esta frontera.

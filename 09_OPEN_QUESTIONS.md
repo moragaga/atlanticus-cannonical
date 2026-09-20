@@ -4,186 +4,151 @@ Estado: **CANONICAL OPEN ITEMS**
 
 Los puntos aquí no reabren contracts CLOSED.
 
-## CLOSED — Profiles editor / Web surface / Projection / Manager composition
+## CLOSED — Navigation standalone configuration
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-CONFIGURATION-WEB-SURFACE
+NAVIGATION-PUBLIC-ACCESS-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-PROJECTION-CONTRACT
+NAVIGATION-PROFILE-OPTIONS-DECOUPLING
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-MANAGER-COMPOSITION
-CLOSED / VERIFIED / CURRENT
+NAVIGATION-CONFIGURATION-UI-PASS
+CLOSED / VERIFIED MANUAL / CURRENT
 ```
 
-No reabrirlos para rediseñar Profiles mientras se implementan consumers.
-
-## CLOSED — Users / Profiles contract realignment
+No reabrir:
 
 ```text
-USERS-PROFILES-CONTRACT-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
+Navigation Configuration -> Profiles core hard dependency
+separate profiles context card
+guest auto-selection
+empty profile list as implicit deny
 ```
 
-CURRENT:
+## OPEN — Manager UI consistency
 
 ```text
-UserRecord.profile_key
-EffectiveUser.profile_key
-Users -> ProfileCatalog
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
 ```
 
-REMOVED:
+Navigation está cerrado dentro de este review.
+
+Siguiente página:
 
 ```text
-authority_key
-authority.py
+Herramienta
 ```
 
-## CLOSED — ADA Access ownership
+La fase actual sólo debe resolver presentación/consistencia de páginas Manager.
+
+## OPEN — Responsive/media queries
 
 ```text
-ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
+MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT
+PLANNED / PHASE 2
 ```
 
-CURRENT:
+Existe código CURRENT en shared Manager CSS con bottom padding `0` en
+`.atlanticus-manager__module-page`, incluida la regla `@media (max-width: 48rem)`.
+
+La intención visual global de ese cambio no fue calificada en este cierre.
+
+No asumirlo correcto ni incorrecto sin revisar las páginas y breakpoints.
+
+## OPEN — Test contract cleanup
 
 ```text
-profile_key -> access_keys
+WEB-TEST-CONTRACT-CLEANUP
+PLANNED / PHASE 3
 ```
 
-REMOVED:
+En la etapa final del UI review:
 
-```text
-UserProfileAssignment
-user_id -> profile_keys
-```
+- ejecutar targeted tests y Ruff;
+- conservar behavior/contracts/invariants;
+- eliminar tests cuyo único propósito sea CSS, visual structure, selectors, clases internas,
+  funciones internas o implementación accidental;
+- no modificar la UI para satisfacer un test visual inválido.
 
-## CLOSED — ADA Access Projection contract
-
-```text
-ADA-ACCESS-PROJECTION-CONTRACT
-CLOSED / VERIFIED / CURRENT
-```
-
-CURRENT:
-
-```text
-AdaAccessProjectionBuilder
-create_ada_access_projection_service
-ProjectionRecord[AdaAccessConfiguration]
-exact dependency -> Profiles ProjectionTarget
-```
-
-## OPEN — ADA Access Projection persistence
-
-```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
-PLANNED / NEXT / DESIGN FIRST
-```
-
-Debe verificarse primero el contract genérico de `ProjectionStore`/`ProjectionRecord`, los
-providers de Profiles y la serialización existente.
-
-Punto crítico a resolver antes de implementar:
-
-```text
-ProjectionRecord.dependencies
-```
-
-ADA Access sí tiene una dependencia exacta de Profiles; cualquier persistencia durable debe
-preservar la provenance necesaria para reconstruir el mismo record/target.
-
-No asumir package names, topology Cosmos ni schema durable sin verificar.
-
-## OPEN — navigation-manager authorization consumer mismatch
+## OPEN — Navigation Manager authorization consumer
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-No introducir alias de compatibilidad.
-
-## OPEN — Navigation fallback para identidad no promovida
-
-La autenticación base no requiere promoted `UserRecord`.
-
-Sigue OPEN la composición exacta de Navigation para esa identidad.
-
-No crear Users record ficticio ni dependencias Navigation -> Users/ADA Access.
-
-## OPEN — Users Administration surface
+CURRENT:
 
 ```text
-USERS-ADMINISTRATION-SURFACE-CUTOVER
-PLANNED / SEPARATE
+ManagerAuthorizationPolicy.can_view(...)
 ```
 
-Consumir `UsersAdministrationService` y el current `profile_key` contract.
-
-## OPEN — ADA Access Configuration UI
+Consumer actual:
 
 ```text
-PLANNED / SEPARATE
+web/compositions/navigation-manager
+→ authorization.can_access(...)
 ```
 
-Consumir `AdaAccessConfiguration` CURRENT; no reintroducir user-to-profile ownership.
+No añadir compatibility alias.
 
-## OPEN — final Manager administrative composition
+No resolver durante Manager UI review.
+
+## OPEN — Final automated qualification
+
+La última evidencia automatizada observada antes de los ajustes visuales finales fue:
 
 ```text
-MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / SEPARATE
+Navigation core                           22 passed
+Navigation Configuration                 42 passed
+Navigation Manager                       10 passed
+ADA Configuration Manager focused         5 passed
 ```
 
-Profiles Manager composition reusable existe; la aplicación final todavía debe integrar las
-superficies que correspondan cuando sus fronteras estén cerradas.
-
-## OPEN — ADA Access runtime composition
+Post-checkpoint CURRENT:
 
 ```text
-PLANNED / SEPARATE
-```
+post-29bb targeted pytest
+UNVERIFIED
 
-No convertir ADA Access en dependency de Navigation.
+post-29bb targeted Ruff
+UNVERIFIED
 
-## OPEN — concrete Entra directory discovery
-
-```text
-UsersDirectoryReader
-CURRENT CONTRACT
-
-Graph/Entra provider
+remote CI
 UNVERIFIED
 ```
 
-No inventar settings/scopes/endpoints.
+Esto se cierra en PHASE 3 del UI review, no antes.
 
-## OPEN — Python metadata alignment
+## OPEN — Real persistence qualification
 
 ```text
-PYTHON-METADATA-ALIGNMENT
-PLANNED / OPEN
+MANAGER-REAL-PERSISTENCE-QUALIFICATION
+PLANNED / AFTER UI REVIEW
 ```
 
-## PLANNED — Web test contract cleanup
+No confundir render/UI correctness con persistencia real.
+
+## Separados
 
 ```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / OPEN
-```
+ADA Access runtime composition
+PLANNED / SEPARATE
 
-## UNVERIFIED
+Navigation disabled-route surface
+PLANNED / SEPARATE
 
-```text
-CI remote
-full Ruff workspace
-Python/Trixie global qualification
 concrete Entra/Graph provider
+UNVERIFIED
+
+Python metadata alignment
+PLANNED / SEPARATE
+
+global CI/workspace cleanup
+PLANNED / SEPARATE
 ```

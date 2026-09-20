@@ -1,6 +1,6 @@
 # Manager — Testing Boundary
 
-Estado: **CURRENT POLICY / REFINED FOR UI REVIEW**
+Estado: **CURRENT POLICY / UI REVIEW IN PROGRESS**
 
 ## Principio
 
@@ -50,44 +50,43 @@ No añadir ni conservar tests cuya finalidad sea validar:
 - estructura accidental del package;
 - una implementación interna concreta cuando el comportamiento observable ya está cubierto.
 
-Un test no se vuelve válido por comprobar que una clase, función o selector dejó de existir
-después de un refactor.
+## Boundary tests válidos
 
-## Regla para el próximo UI review
+Un boundary test puede validar imports/dependencies reales.
 
-Si durante `MANAGER-UI-CONSISTENCY-REVIEW` aparece un test existente cuyo único propósito
-viola la frontera anterior:
+Ejemplo CURRENT:
 
 ```text
-REMOVE
+Navigation Configuration
+must not import Profiles / Users / ADA
 ```
 
-No modificar la nueva UI para satisfacerlo.
+La implementación usa AST para inspeccionar imports.
 
-No reescribir el test para congelar una nueva estructura visual equivalente.
-
-Si detrás del test existe un comportamiento funcional real, reemplazarlo únicamente por una
-prueba de ese comportamiento observable.
-
-## Assets
-
-La excepción permitida es estrecha:
+SUPERSEDED:
 
 ```text
-asset JS/CSS required by composition
-→ puede probarse como presente/cargable
+buscar substrings arbitrarios como "ada." en todo el source
 ```
 
-No probar:
+porque puede coincidir con copy de UI sin representar una dependencia.
+
+## UI review actual
 
 ```text
-selectores internos
-reglas CSS
-nombres de clases visuales
-contenido JS
-funciones JS internas
-estructura del archivo
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
 ```
+
+Orden:
+
+```text
+1. revisar presentación desktop/página
+2. revisar responsive y media queries
+3. ejecutar qualification final y limpiar tests inválidos
+```
+
+No anticipar la fase 3 cambiando UI para complacer tests visuales.
 
 ## Qualification visual
 
@@ -105,17 +104,34 @@ Se valida visualmente:
 - consistencia entre superficies;
 - presentación de paginación.
 
-Un finding visual real puede justificar una prueba automatizada sólo si se identifica un
-comportamiento funcional independiente de la apariencia.
+## Qualification automatizada conocida
 
-## Secuencia actual
+Antes de la patch visual final de Navigation:
 
 ```text
-MANAGER-UI-CONSISTENCY-REVIEW
-PLANNED / NEXT
+Navigation core                           22 passed
+Navigation Configuration                 42 passed
+Navigation Manager                       10 passed
+ADA Configuration Manager focused         5 passed
+```
 
+Post-checkpoint CURRENT:
+
+```text
+targeted pytest
+UNVERIFIED
+
+targeted Ruff
+UNVERIFIED
+```
+
+No declarar final qualification hasta PHASE 3.
+
+## Después
+
+```text
 MANAGER-REAL-PERSISTENCE-QUALIFICATION
 PLANNED / AFTER UI REVIEW
 ```
 
-No usar el UI review para abrir qualification de persistencia ni otros frentes backend.
+No usar el UI review para abrir persistencia real ni otros frentes backend.

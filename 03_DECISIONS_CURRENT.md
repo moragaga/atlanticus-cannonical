@@ -14,7 +14,7 @@ Estado: **CURRENT**
 | Cutover raíz limpio | CURRENT |
 | No shims/adapters/aliases legacy | FROZEN |
 | No doble contrato | FROZEN |
-| Tests no son autoridad sobre contratos SUPERSEDED | FROZEN |
+| Tests no son autoridad sobre contracts SUPERSEDED | FROZEN |
 | Presentación propia por módulo; reutilizar sólo comportamiento transversal real | FROZEN |
 | Un foco por incremento | FROZEN |
 
@@ -32,19 +32,6 @@ FORBIDDEN
 
 OLD SCHEMA READERS IN CURRENT RUNTIME
 FORBIDDEN
-```
-
-## Source / Projection
-
-CURRENT/FROZEN:
-
-```text
-Source generic -> web/capabilities/source
-Projection exact-release -> web/capabilities/projection/core
-ProjectionTarget = SourceKey + SourceReleaseRef + dependencies
-project(target) no relee current
-Manager no reconstruye ProjectionTarget desde revision
-expected_source_revision REMOVED
 ```
 
 ## Generic Web pagination
@@ -68,18 +55,15 @@ CURRENT:
 
 ```text
 ManagerModule
-ManagerAuthorizationPolicy.can_view(principal, module)
+ManagerEntry
+ManagerAuthorizationPolicy.can_view(principal, item)
 ```
 
 No bypass por `is_local` ni profile administrator.
 
-Profiles posee composition Manager reusable.
-
-Users no es Source/Projection Manager module.
-
 ## Users / Profiles
 
-Decisión CURRENT:
+CURRENT:
 
 ```text
 Profiles
@@ -87,13 +71,6 @@ owns profile definitions/catalog
 
 Users
 owns user -> profile_key
-```
-
-Contrato:
-
-```text
-UserRecord.profile_key
-EffectiveUser.profile_key
 ```
 
 SUPERSEDED / REMOVED:
@@ -106,83 +83,127 @@ administrator/root aliases
 
 Managed users consumen `ProfileCatalog`; `local` no es managed assignment.
 
-## ADA Access
+## Navigation standalone boundary
 
-ADA Access es application-specific.
-
-CURRENT:
+CURRENT/FROZEN:
 
 ```text
-profile_key -> access_keys
+Navigation Configuration
+MUST NOT depend on Profiles, Users or ADA
+
+NavigationProfileOption
+NavigationProfileOptionsProvider
+owned by Navigation Configuration
+
+provider
+OPTIONAL
+
+external profile catalog adaptation
+belongs to application/composition boundary
 ```
 
-SUPERSEDED / REMOVED:
-
-```text
-user_id -> profile_keys
-UserProfileAssignment
-```
-
-Contracts CURRENT:
-
-```text
-ProfileAccessGrant
-EffectiveAdaAccess(profile_key, access_keys)
-AdaAccessConfiguration
-```
-
-Source schema CURRENT:
-
-```text
-2
-```
-
-Projection CURRENT:
-
-```text
-ProjectionRecord[AdaAccessConfiguration]
-```
-
-con dependencia exacta sobre Profiles Projection.
-
-No crear `AdaAccessCatalog` paralelo sin una responsabilidad independiente demostrada.
-
-## Navigation / Profiles
-
-CURRENT:
+SUPERSEDED:
 
 ```text
 Navigation Configuration -> Profiles core
-Navigation durable allowed_profiles = profile keys
-Navigation -> Profiles Configuration FORBIDDEN
-Navigation -> Users FORBIDDEN
-Navigation -> ADA Access FORBIDDEN
 ```
 
-## UI ownership
-
-Cada superficie mantiene presentación propia.
-
-CURRENT reusable:
+Navigation durable access rule:
 
 ```text
-Profiles Configuration Web surface
-Profiles Manager composition
+allowed_profiles = ()
+PUBLIC WITHIN NAVIGATION AUTHORIZATION
+
+allowed_profiles = non-empty
+RESTRICTED TO PROFILE KEYS
+
+enabled = False
+DENY
+
+principal.unrestricted
+PROFILE-RESTRICTION BYPASS ONLY
 ```
 
-Pendientes separados:
+Navigation generic does not know `basic`, `root`, `guest` or `local` as special keys.
+
+ADA composition currently filters `root` and `local` from assignable Navigation profile
+options.
+
+## Navigation UI decisions
+
+CURRENT/FROZEN:
 
 ```text
-Users Administration UI
-ADA Access Configuration UI
-Manager final administrative composition
+separate profiles context card
+REMOVED
+
+profiles
+EDITED ONLY INSIDE LINK EDITOR
+
+guest auto-selection
+REMOVED
+
+pagination
+TOP-LEVEL NODES ONLY
+
+section
+COUNTS AS ONE TOP-LEVEL ITEM
+
+section children
+DO NOT COUNT TOWARD PAGE TOTAL
+
+expanded section
+SHOW ALL CHILDREN
+
+page sizes
+10 / 20
+
+expanded state
+EPHEMERAL / NOT SOURCE
+
+horizontal overflow
+FIX CAUSE; DO NOT HIDE GENERICALLY
 ```
+
+## Manager UI qualification order
+
+CURRENT decision:
+
+```text
+1. desktop/page visual consistency
+2. responsive/media-query audit
+3. behavior-focused test qualification and invalid-test cleanup
+```
+
+Do not mix persistence qualification into UI review.
+
+Do not modify code merely to satisfy tests that freeze CSS, markup, internal classes/functions
+or visual structure.
 
 ## Testing
 
-Automatizar comportamiento, contracts, invariants, regressions y critical flows.
+Automatizar:
 
-No fijar CSS/markup/implementación interna accidental.
+```text
+behavior
+contracts
+invariants
+regressions
+critical callbacks
+functional pagination
+```
+
+Visual/manual:
+
+```text
+CSS
+spacing
+branding
+responsive
+overflow
+alignment
+visual pagination form
+```
 
 ## Conflict CURRENT conocido
 
@@ -191,14 +212,15 @@ NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
+`ManagerAuthorizationPolicy` expone `can_view(...)`.
+
+`web/compositions/navigation-manager` continúa invocando `can_access(...)`.
+
 No crear alias para conservar el consumer.
 
 ## Siguiente foco
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
-PLANNED / NEXT / DESIGN FIRST
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS / NEXT PAGE: HERRAMIENTA
 ```
-
-Antes de implementar, verificar serializer/provider contracts existentes y definir cómo el
-store durable preserva `ProjectionRecord.dependencies`.

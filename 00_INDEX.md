@@ -7,19 +7,25 @@ Estado: **CANONICAL BASELINE 1.0 — EXECUTION IN PROGRESS**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
+moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 Parent inmediato:
 
 ```text
-90e89c376dfdfd182f0380b1d407127ecb7c9711
+856498c52f182cd531deae845c25bd51ae2ff4ea
+```
+
+Tree:
+
+```text
+3f27ad599c6dec610dff5317494a73b276d2ebc4
 ```
 
 Canonical inspeccionado antes de este reemplazo:
 
 ```text
-moragaga/atlanticus-cannonical@a7adef2568d664ee31cb1b0eb1fe9f11ce2b9203
+moragaga/atlanticus-cannonical@deb493659b41c0d8fea5c70674002486b3b92cbc
 ```
 
 `moragaga/atlanticus-decisions` permanece HISTORICAL.
@@ -40,7 +46,7 @@ Git permanece SOLO LECTURA para el asistente.
 | `07_VALIDATION_BASELINE.md` | Evidencia de qualification y límites de validación. | CURRENT |
 | `08_ROADMAP.md` | Orden de ejecución desde Baseline 1.0. | CURRENT |
 | `09_OPEN_QUESTIONS.md` | Open items vigentes. | CURRENT |
-| `10_MANAGER/` | Manager genérico, compositions y consumers administrativos. | CURRENT |
+| `10_MANAGER/` | Manager genérico, compositions y consumers administrativos. | CURRENT / UI REVIEW IN PROGRESS |
 | `11_ADA_GENERIC/` | ADA Generic y cadena Tool → KPI → runtime. | CURRENT DIRECTION |
 | `12_SOURCE_STORAGE/` | Source/Projection exact-release y storage. | CURRENT |
 | `13_ADA_WEB/` | ADA Web y management. | CURRENT DIRECTION |
@@ -58,55 +64,69 @@ Git permanece SOLO LECTURA para el asistente.
 PROFILES-CONFIGURATION-EDITOR-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
-PROFILES-CONFIGURATION-WEB-SURFACE
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-PROJECTION-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
 PROFILES-MANAGER-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
 USERS-PROFILES-CONTRACT-REALIGNMENT
 CLOSED / VERIFIED / CURRENT
 
-ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
+USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
-ADA-ACCESS-PROJECTION-CONTRACT
+ADA-ACCESS-PROJECTION-PERSISTENCE
 CLOSED / VERIFIED / CURRENT
+
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
+CLOSED / VERIFIED / CURRENT
+
+MANAGER-FINAL-ADMIN-COMPOSITION
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-CONFIGURATION-UI-PASS
+CLOSED / VERIFIED MANUAL / CURRENT
+
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
 ```
 
-Finding previo no cerrado:
+Finding no cerrado:
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-## Superficies administrativas
+## Navigation CURRENT
 
-CURRENT reusable:
+Navigation Configuration no depende de Profiles core.
 
-```text
-Profiles Configuration Web surface
-Profiles Manager composition
-```
-
-Pendientes separados:
+La integración con profiles usa un contrato neutral opcional:
 
 ```text
-Users Administration UI
-ADA Access Configuration UI
-Manager final administrative composition
+NavigationProfileOption
+NavigationProfileOptionsProvider
 ```
 
-## Siguiente foco recomendado
+ADA Configuration Manager adapta Profiles a ese contrato.
+
+`allowed_profiles=()` significa público dentro de la autorización Navigation.
+
+## Siguiente foco
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
-PLANNED / NEXT / DESIGN FIRST
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS / NEXT PAGE: HERRAMIENTA
 ```
 
-No diseñar desde cero lo que ya existe en código. Antes de implementar, verificar stores,
-serialización de Projection y provenance/dependencies.
+Secuencia del mismo foco:
+
+```text
+visual desktop/page consistency
+→ responsive/media-query audit
+→ final test-contract cleanup/qualification
+```
+
+No abrir persistencia real, runtime authorization ni otros frentes backend durante este review.

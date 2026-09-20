@@ -10,13 +10,13 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `6032cf84e8a5ad1f7a4cde4333513a04bcdd659a`
+  `29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85`
 - Parent inmediato verificado:
-  `783d3578da52aeb5cf831999a7717dc8b79f2fb0`
-
-El checkpoint CURRENT está exactamente un commit por delante de `783d3578...` y contiene el
-incremento ADA Access Configuration Manager junto con el fix de compatibilidad de Users
-Administration para `dash-bootstrap-components==2.0.4`.
+  `856498c52f182cd531deae845c25bd51ae2ff4ea`
+- Tree verificado:
+  `3f27ad599c6dec610dff5317494a73b276d2ebc4`
+- Fecha del commit:
+  `2026-09-20T04:04:29Z`
 
 Estado acumulado relevante:
 
@@ -39,13 +39,7 @@ CLOSED / VERIFIED / CURRENT
 USERS-ADMINISTRATION-MANAGER-INTEGRATION
 CLOSED / VERIFIED / CURRENT
 
-USERS-MANAGER-CHECKLIST-COMPATIBILITY
-CLOSED / VERIFIED / CURRENT
-
 ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-PROJECTION-CONTRACT
 CLOSED / VERIFIED / CURRENT
 
 ADA-ACCESS-PROJECTION-PERSISTENCE
@@ -57,27 +51,34 @@ CLOSED / VERIFIED / CURRENT
 MANAGER-FINAL-ADMIN-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 
-MANAGER-ALL-SURFACES-RENDERABLE
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
+CLOSED / VERIFIED / CURRENT
+
+NAVIGATION-CONFIGURATION-UI-PASS
 CLOSED / VERIFIED MANUAL / CURRENT
+
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
 ```
 
-Permanece un conflicto implementado previo:
+Permanece un conflicto implementado previo y separado:
 
 ```text
 NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
 BLOCKED / VERIFIED CONFLICT
 ```
 
-`web/compositions/navigation-manager` no debe tratarse como alineado hasta que consuma
-directamente el contrato CURRENT de autorización Manager. No crear alias/shim para preservar
-ese consumer.
+`web/compositions/navigation-manager` usa `authorization.can_access(...)`, mientras el contrato
+CURRENT de `ManagerAuthorizationPolicy` expone `can_view(...)`.
+
+No resolver mediante alias, shim ni doble contrato.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `701bbad0486540c8a6c067df37fc70d6f13a8d4e`
+  `deb493659b41c0d8fea5c70674002486b3b92cbc`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -90,7 +91,8 @@ Puede aportar rationale y evidencia histórica. No puede reemplazar `atlanticus:
 `atlanticus-cannonical:main`.
 
 No se verificó durante este cierre un decision record histórico que contradiga el contrato
-CURRENT. Cualquier afirmación adicional sobre `atlanticus-decisions` permanece UNVERIFIED.
+CURRENT de Navigation. Cualquier afirmación adicional sobre `atlanticus-decisions` permanece
+UNVERIFIED.
 
 ## Jerarquía
 
@@ -162,237 +164,124 @@ REMOVED
 
 Users Manager Source/Projection module
 REMOVED
-
-ADA Access legacy Source schema readers
-FORBIDDEN
-
-ADA Access legacy Projection schema readers
-FORBIDDEN
-
-AccessDefinition wrapper/entity without independent behavior
-NOT REQUIRED / SUPERSEDED
 ```
 
-## Source / Projection CURRENT
+## Navigation CURRENT
+
+Navigation es generic Atlanticus y debe poder componerse sin Profiles.
+
+Contrato durable:
 
 ```text
-Source generic
-web/capabilities/source
-
-Projection exact-release
-web/capabilities/projection/core
-
-ProjectionTarget
-SourceKey + SourceReleaseRef + dependencies
+NavigationLinkConfiguration.allowed_profiles
 ```
 
-`project(target)` no reconstruye target desde una revision textual.
-
-Dependencias exactas se modelan mediante `ProjectionTarget.dependencies` cuando existen
-realmente.
-
-## Manager authorization CURRENT
-
-Contrato CURRENT:
+Semántica CURRENT:
 
 ```text
-ManagerModule.access_key: str | None
-ManagerEntry.access_key: str | None
-ManagerAuthorizationPolicy.can_view(principal, item)
+enabled = False
+→ inaccesible
+
+enabled = True + allowed_profiles = ()
+→ público dentro de la autorización Navigation
+
+enabled = True + allowed_profiles no vacío
+→ restringido a esas profile keys
+
+principal.unrestricted = True
+→ bypass de restricción de profiles, no de disabled
 ```
 
-No conceden autoridad implícita:
+`Navigation Configuration` ya no depende físicamente de Profiles.
+
+Contrato neutral CURRENT:
 
 ```text
-principal.is_local
-administrator profile
+NavigationProfileOption(key, label)
+NavigationProfileOptionsProvider
 ```
 
-El mismo permiso funcional del item protege visibilidad y operaciones administrativas.
+El provider es opcional.
 
-## Users / Profiles CURRENT
-
-Profiles posee definición y catálogo de perfiles.
-
-Users posee:
+Si no existe provider:
 
 ```text
-identity + lifecycle + user -> profile_key
+Navigation sigue operando de forma autónoma
 ```
 
-Contrato CURRENT:
+Si existe provider:
 
 ```text
-UserRecord.profile_key
-EffectiveUser.profile_key
+la composition externa adapta su catálogo a NavigationProfileOption
+la validation de profile keys puede instalarse
 ```
 
-SUPERSEDED / REMOVED:
+No existe CURRENT:
 
 ```text
-authority_key
-authority.py
-basic|root assignable-authority mini-contract
+Navigation Configuration -> Profiles core dependency
+Navigation -> Users dependency
+Navigation -> ADA Access dependency
 ```
 
-Managed users pueden referenciar perfiles existentes en `ProfileCatalog` salvo `local`.
+En ADA Configuration Manager, la composition adapta Profiles a opciones de Navigation y
+excluye `root` y `local` del selector de asignación. Navigation generic no conoce esas keys
+como casos especiales.
 
-`local` es runtime-only para identidades locales.
+## Navigation Configuration UI CURRENT
 
-Users Manager:
+La surface administrativa CURRENT:
+
+- no contiene card separada de profiles;
+- asigna profiles únicamente dentro del editor de enlace;
+- no autoselecciona `guest`;
+- muestra enlace sin profiles como `Acceso: Público`;
+- pagina únicamente nodos top-level;
+- una sección cuenta como un item top-level;
+- hijos de sección no cuentan para el total de página;
+- page size: `10 / 20`, default `10`;
+- secciones colapsadas inicialmente;
+- expansión de sección muestra todos sus hijos;
+- múltiples secciones pueden permanecer expandidas;
+- el estado expandido es UI efímero y no entra al Source;
+- el orden durable global no se redefine por paginación;
+- el empty state reserva la superficie de página y se centra;
+- el dropdown de page size contiene su focus target interno y no debe producir overflow
+  horizontal.
+
+El cierre visual de Navigation fue confirmado manualmente por el usuario sobre el checkpoint
+CURRENT.
+
+## Manager UI review CURRENT
 
 ```text
-web/compositions/users-manager
-ManagerEntry
-users.manage
-/manager/users
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
 ```
 
-El fix CURRENT de Users Administration no cambia contratos de dominio. Corrige únicamente
-la construcción del control `dbc.Checklist` para dbc 2.0.4, moviendo `disabled` a la opción
-del Checklist.
+El review continúa page-by-page.
 
-## Profiles CURRENT
+Secuencia congelada dentro del mismo foco:
 
 ```text
-profiles/core
-profiles/configuration
-profiles/projection-local
-profiles/projection-cosmos
-web/compositions/profiles-manager
+1. presentación desktop/visual de las páginas restantes
+2. auditoría responsive/media queries compartidas y capability-locales
+3. cleanup/qualification de tests según la frontera vigente
 ```
 
-Profiles Projection materializa `ProfileCatalog`.
+No convertir esta secuencia en tres arquitecturas ni mezclar persistencia/runtime.
 
-La Web surface de Profiles y la composition Manager reusable están implementadas.
-
-## ADA Access CURRENT
-
-ADA Access es application-specific.
-
-Ownership:
+Existe un cambio CURRENT en:
 
 ```text
-profile_key -> access_keys
+web/capabilities/manager/src/atlanticus/web/manager/resources/css/10_surface.css
 ```
 
-SUPERSEDED / REMOVED:
+donde `.atlanticus-manager__module-page` usa bottom padding `0` tanto en regla base como en
+`@media (max-width: 48rem)`.
 
-```text
-user_id -> profile_keys
-UserProfileAssignment
-AccessDefinition wrapper sin responsabilidad independiente
-```
-
-Contrato CURRENT:
-
-```text
-ProfileAccessGrant(profile_key, access_keys)
-EffectiveAdaAccess(profile_key, access_keys)
-
-AdaAccessConfiguration
-├── access_keys: tuple[str, ...]
-└── profile_access: tuple[ProfileAccessGrant, ...]
-```
-
-`access_key` es la identidad estable del acceso. No existe UUID paralelo, `access_id` ni
-`permission_id`.
-
-Invariantes CURRENT:
-
-- access keys normalizadas y únicas;
-- grants únicos por profile;
-- un grant sólo puede referenciar access keys declaradas;
-- una access key asignada no puede eliminarse hasta retirar sus asignaciones;
-- profile keys se validan contra `ProfileCatalog`;
-- no se persiste `access_keys` dentro de Users;
-- no existe compatibilidad runtime con schemas anteriores.
-
-Source CURRENT:
-
-```text
-ADA_ACCESS_SOURCE_SCHEMA_VERSION = 3
-access/configuration.json.gz
-```
-
-Projection durable CURRENT:
-
-```text
-ADA_ACCESS_PROJECTION_SCHEMA_VERSION = 2
-ProjectionRecord[AdaAccessConfiguration]
-exact recursive dependencies
-local provider
-Cosmos provider
-```
-
-Dependencia exacta:
-
-```text
-Profiles ProjectionTarget
-        ↓
-ADA Access ProjectionTarget
-```
-
-Web/Manager CURRENT:
-
-```text
-scopes/ada/web/access/configuration/.../web
-ManagerModule key = access
-route = /access
-effective Manager route = /manager/access
-access_key = access.manage
-```
-
-La UI permite definir/eliminar access keys y asignarlas a Profiles provenientes de la
-Profiles Projection.
-
-La integración manual del desarrollador sigue siendo el modelo previsto: Access no descubre
-funcionalidades ni modifica consumidores automáticamente.
-
-## ADA Configuration Manager CURRENT
-
-Composición CURRENT:
-
-```text
-Administración
-└── Users
-
-Configuraciones
-├── Profiles
-├── Accesos
-├── Navegación
-├── Herramienta
-├── KPI
-└── Definiciones KPI
-```
-
-Las superficies fueron observadas manualmente como renderizables en el cierre.
-
-Esto no equivale a qualification visual completa ni a qualification real de persistencia.
-
-## Qualification automatizada del incremento
-
-Evidencia ejecutada durante el cierre:
-
-```text
-ADA Access Configuration
-37 passed
-Ruff scoped PASS
-Ruff format scoped PASS
-
-ADA Access Projection Local
-4 passed
-
-ADA Access Projection Cosmos
-6 passed
-
-ADA Configuration Manager
-31 passed
-Ruff scoped PASS
-Ruff format scoped PASS
-```
-
-Remote CI, full monorepo pytest y full global Ruff no fueron verificados en este cierre.
+La corrección visual de esa decisión no está calificada todavía. Debe revisarse en la fase
+responsive/media-query; no revertir ni extender a ciegas.
 
 ## Testing Web CURRENT
 
@@ -405,6 +294,9 @@ CSS visual
 spacing
 colores
 tamaños
+responsive visual
+overflow visual
+forma visual de paginación
 estructura visual accidental
 contenido/estructura interna de JS
 existencia/no existencia de clases internas
@@ -415,45 +307,69 @@ nombres privados
 Assets JS/CSS sólo pueden comprobarse como presentes/cargables cuando su carga sea un
 requisito contractual real.
 
-Durante el siguiente review de UI, cualquier test existente cuyo único objetivo viole esta
-frontera debe eliminarse, no adaptarse para congelar otra estructura visual.
+Paginación sí puede probarse como comportamiento funcional.
 
-Paginación puede probarse cuando se valida comportamiento funcional; no se testea su forma
-visual.
+El boundary test de Navigation Configuration usa análisis AST de imports; no busca substrings
+arbitrarios dentro del source.
 
-## Estado de qualification pendiente
+## Qualification observada durante el incremento
+
+Antes de los últimos ajustes exclusivamente visuales se observó:
+
+```text
+Navigation core
+22 passed
+
+Navigation Configuration
+42 passed
+
+Navigation Manager
+10 passed
+
+ADA Configuration Manager focused
+5 passed
+
+Total observado
+79 passed
+```
+
+También se observó Ruff scoped PASS en Navigation Configuration durante el incremento.
+
+No se recibió en este cierre una ejecución automatizada completa posterior al checkpoint
+`29bbf6d8...`.
+
+Por tanto:
+
+```text
+post-29bb scoped pytest
+UNVERIFIED
+
+post-29bb scoped Ruff
+UNVERIFIED
+
+remote CI
+UNVERIFIED
+
+full monorepo pytest
+UNVERIFIED
+
+full workspace Ruff
+UNVERIFIED
+```
+
+La validación visual final de Navigation sí quedó confirmada manualmente.
+
+## Siguiente foco único
 
 ```text
 MANAGER-UI-CONSISTENCY-REVIEW
-PLANNED / NEXT
-
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / NEXT / COUPLED TO UI REVIEW
-
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / AFTER UI REVIEW
+IN PROGRESS / NEXT PAGE: HERRAMIENTA
 ```
 
-La siguiente qualification funcional real debe comprobar después del cleanup visual:
+No abrir durante ese foco:
 
 ```text
-edit
-save draft
-validate
-publish Source
-project
-reload
-persistence
-conflicts/retry where applicable
-```
-
-No declarar esas propiedades VERIFIED antes de ejecutarlas.
-
-## Otros frentes separados
-
-No mezclar con el siguiente incremento:
-
-```text
+Manager real persistence qualification
 ADA Access runtime authorization/composition
 Navigation operational authorization alignment
 Navigation disabled-route surface
@@ -461,15 +377,3 @@ concrete Entra/Graph provider
 Python metadata alignment
 global CI/workspace cleanup
 ```
-
-## Siguiente foco único recomendado
-
-```text
-MANAGER-UI-CONSISTENCY-REVIEW
-PLANNED / NEXT
-```
-
-Alcance: revisar todas las superficies Manager ya visibles, corregir problemas de UI y
-paginación, y retirar tests visuales/estructurales inválidos encontrados durante el proceso.
-
-No probar todavía persistencia real ni abrir runtime authorization.

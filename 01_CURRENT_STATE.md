@@ -7,25 +7,25 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 Implementación publicada CURRENT:
 
 ```text
-moragaga/atlanticus@a31fce11d26a7c0a554d82de1813a4311522919b
+moragaga/atlanticus@29bbf6d8f2b47a7d31e967ad4bb8de42f67a4c85
 ```
 
 Parent inmediato:
 
 ```text
-90e89c376dfdfd182f0380b1d407127ecb7c9711
+856498c52f182cd531deae845c25bd51ae2ff4ea
 ```
 
 Tree:
 
 ```text
-737310de59774f3033607c1ef17c1c921efe1e09
+3f27ad599c6dec610dff5317494a73b276d2ebc4
 ```
 
 Canonical inspeccionado para este cierre:
 
 ```text
-moragaga/atlanticus-cannonical@a7adef2568d664ee31cb1b0eb1fe9f11ce2b9203
+moragaga/atlanticus-cannonical@deb493659b41c0d8fea5c70674002486b3b92cbc
 ```
 
 Git permanece SOLO LECTURA para el asistente.
@@ -33,264 +33,257 @@ Git permanece SOLO LECTURA para el asistente.
 ## Estado resumido
 
 ```text
-PROFILES-CONFIGURATION-EDITOR-CONTRACT               CLOSED / VERIFIED / CURRENT
-PROFILES-CONFIGURATION-WEB-SURFACE                   CLOSED / VERIFIED / CURRENT
-PROFILES-PROJECTION-CONTRACT                         CLOSED / VERIFIED / CURRENT
-PROFILES-MANAGER-COMPOSITION                         CLOSED / VERIFIED / CURRENT
-USERS-PROFILES-CONTRACT-REALIGNMENT                  CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT             CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-PROJECTION-CONTRACT                       CLOSED / VERIFIED / CURRENT
+PROFILES-CONFIGURATION-EDITOR-CONTRACT                CLOSED / VERIFIED / CURRENT
+PROFILES-MANAGER-COMPOSITION                          CLOSED / VERIFIED / CURRENT
+USERS-PROFILES-CONTRACT-REALIGNMENT                   CLOSED / VERIFIED / CURRENT
+USERS-ADMINISTRATION-MANAGER-INTEGRATION              CLOSED / VERIFIED / CURRENT
+ADA-ACCESS-PROJECTION-PERSISTENCE                     CLOSED / VERIFIED / CURRENT
+ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION          CLOSED / VERIFIED / CURRENT
+MANAGER-FINAL-ADMIN-COMPOSITION                       CLOSED / VERIFIED / CURRENT
 
-ADA-ACCESS-PROJECTION-PERSISTENCE                    PLANNED / NEXT / DESIGN FIRST
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER           CLOSED / VERIFIED / CURRENT
+NAVIGATION-PUBLIC-ACCESS-CONTRACT                     CLOSED / VERIFIED / CURRENT
+NAVIGATION-PROFILE-OPTIONS-DECOUPLING                 CLOSED / VERIFIED / CURRENT
+NAVIGATION-CONFIGURATION-UI-PASS                      CLOSED / VERIFIED MANUAL / CURRENT
 
-USERS-ADMINISTRATION-SURFACE-CUTOVER                 PLANNED / SEPARATE
-ADA-ACCESS-CONFIGURATION-UI                          PLANNED / SEPARATE
-MANAGER-FINAL-ADMIN-COMPOSITION                      PLANNED / SEPARATE
-ADA-ACCESS-RUNTIME-COMPOSITION                       PLANNED / SEPARATE
+MANAGER-UI-CONSISTENCY-REVIEW                         IN PROGRESS
+MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT                  PLANNED / PHASE 2
+WEB-TEST-CONTRACT-CLEANUP                             PLANNED / PHASE 3
 
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT  BLOCKED / VERIFIED CONFLICT
-WEB-TEST-CONTRACT-CLEANUP                            PLANNED / OPEN
-PYTHON-METADATA-ALIGNMENT                            PLANNED / OPEN
+NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT   BLOCKED / VERIFIED CONFLICT
+MANAGER-REAL-PERSISTENCE-QUALIFICATION                PLANNED / AFTER UI REVIEW
+PYTHON-METADATA-ALIGNMENT                             PLANNED / SEPARATE
 ```
 
 ## VERIFIED
 
-### Published checkpoint
-
-`main` está publicado exactamente en:
-
-```text
-a31fce11d26a7c0a554d82de1813a4311522919b
-```
-
-### Profiles administrative capability
+### Navigation runtime authorization semantics
 
 CURRENT:
 
 ```text
-profiles/core
-profiles/configuration
-profiles/projection-local
-profiles/projection-cosmos
-web/compositions/profiles-manager
+disabled
+→ deny
+
+enabled + allowed_profiles = ()
+→ allow for restricted principals
+
+enabled + allowed_profiles = non-empty
+→ require principal.access_key membership
+
+principal.unrestricted
+→ allow profile restriction bypass, except disabled route remains denied
 ```
 
-Contratos congelados:
+Home path remains allowed by Navigation authorization.
+
+Unknown internal paths remain denied for restricted principals.
+
+### Navigation Configuration capability boundary
+
+CURRENT implementation does not import or depend on:
 
 ```text
-ProfileCatalog
-ProfilesConfiguration
-Profiles Source lifecycle
-Profiles Projection -> ProfileCatalog
+atlanticus.web.profiles
+atlanticus.web.users
+ada.*
 ```
 
-La UI de Profiles es Profiles-owned. La composition reusable `profiles-manager` existe.
-La integración final de todas las superficies en una única aplicación administrativa
-permanece separada.
-
-### Users -> Profiles realignment
-
-CURRENT:
+Neutral contract:
 
 ```text
-UserRecord.profile_key
-EffectiveUser.profile_key
+NavigationProfileOption(key, label)
+NavigationProfileOptionsProvider
 ```
 
-SUPERSEDED / REMOVED:
+Provider is optional.
+
+Validation of referenced profile keys is installed only when a provider is supplied.
+
+### ADA composition
+
+ADA Configuration Manager is the integration point that knows Profiles and Navigation
+simultaneously.
+
+It maps the active `ProfileCatalog` to `NavigationProfileOption`.
+
+If there is no active Profiles Projection, it falls back to the system `ProfileCatalog`.
+
+The Navigation assignment selector excludes:
 
 ```text
-authority_key
-authority.py
-basic|root assignable-authority mini-contract
+root
+local
 ```
 
-Users consume `ProfileCatalog` para validar perfiles de managed users.
+Navigation generic does not special-case those keys.
 
-Managed users no pueden usar `local`.
+### Navigation admin UI
 
-`local` se conserva para runtime local.
-
-Persistencia CURRENT:
+CURRENT behavior:
 
 ```text
-Blob Users Registry schema 2
-Cosmos Users schema 2
-Users session snapshot v4
+profiles card separate
+REMOVED
+
+profile assignment
+inside link editor only
+
+guest auto-selection
+REMOVED
+
+empty allowed profiles
+displayed as public
+
+top-level pagination
+CURRENT
+
+page sizes
+10 / 20
+
+default page size
+10
+
+section children
+not counted in top-level total
+
+sections
+collapsed initially
+
+expanded section
+shows all child links
+
+expanded state
+ephemeral UI state, not Source
 ```
 
-No hay old-schema runtime readers.
+The empty state uses the reserved page area and is centered.
 
-Qualification observada antes de publicar el cutover:
+The Dash dropdown focus target is width-contained by Navigation's Dash adapter to avoid
+horizontal overflow.
+
+User confirmed the Navigation page looked correct on the CURRENT checkpoint.
+
+### Boundary-test correction
+
+`test_navigation_configuration_is_independent_from_profiles_users_and_ada` now parses Python
+imports with `ast`.
+
+The previous substring search for `ada.` was SUPERSEDED because it produced a false positive
+on UI text such as `configurada.`.
+
+### Shared Manager CSS finding
+
+CURRENT implementation contains:
 
 ```text
-Users core/blob/cosmos pytest
-49 PASS
+.atlanticus-manager__module-page {
+    padding-block: 1rem 0;
+}
 
-Ruff
-PASS
-
-git diff --check
-PASS
+@media (max-width: 48rem) {
+    .atlanticus-manager__module-page {
+        padding-block: .75rem 0;
+    }
+}
 ```
 
-### ADA Access ownership realignment
+This is implemented reality.
 
-CURRENT ownership:
+Its correctness across Manager pages and breakpoints is not yet qualified.
+
+## Qualification evidence
+
+Observed before the final visual-only patch:
 
 ```text
-profile_key -> access_keys
+Navigation core                           22 passed
+Navigation Configuration                 42 passed
+Navigation Manager                       10 passed
+ADA Configuration Manager focused         5 passed
+TOTAL                                    79 passed
 ```
 
-REMOVED:
+Ruff scoped was also observed passing for Navigation Configuration during the increment.
+
+Not observed after the final CURRENT checkpoint:
 
 ```text
-UserProfileAssignment
-AdaAccessConfiguration.user_profiles
-user_id -> profile_keys
-EffectiveAdaAccess.user_id
-EffectiveAdaAccess.profile_keys
-```
+post-29bb scoped pytest
+UNVERIFIED
 
-Source schema CURRENT:
+post-29bb scoped Ruff
+UNVERIFIED
 
-```text
-ADA_ACCESS_SOURCE_SCHEMA_VERSION = 2
-```
+remote CI
+UNVERIFIED
 
-Qualification observada antes de publicar:
+full monorepo pytest
+UNVERIFIED
 
-```text
-Access core pytest
-5 PASS
-
-Access configuration pytest
-13 PASS
-
-Ruff
-PASS
-
-git diff --check
-PASS
-```
-
-### ADA Access Projection contract
-
-CURRENT:
-
-```text
-AdaAccessProjectionBuilder
-create_ada_access_projection_service(...)
-AdaAccessConfigurationProjectionError
-```
-
-Payload:
-
-```text
-ProjectionRecord[AdaAccessConfiguration]
-```
-
-Dependencia:
-
-```text
-ADA Access ProjectionTarget
-└── exact Profiles ProjectionTarget
-```
-
-La Projection valida `profile_key` contra el `ProfileCatalog` de la Projection de Profiles.
-
-Si Profiles cambia entre target selection y execution, la proyección falla.
-
-Qualification observada antes de publicar:
-
-```text
-Access configuration pytest
-20 PASS
-
-Ruff
-PASS
-
-git diff --check
-PASS
+full workspace Ruff
+UNVERIFIED
 ```
 
 ## INFERRED
 
-Un store durable de ADA Access Projection debe preservar el `ProjectionRecord` completo,
-incluyendo `dependencies`, porque `ProjectionRecord.target` incorpora esas dependencias.
+No new architecture is required to continue the Manager UI review.
 
-El serializer de Profiles no puede copiarse mecánicamente para ADA Access: Profiles no
-tiene dependencia upstream en su record actual, ADA Access sí.
-
-Esta inferencia debe verificarse contra los contracts genéricos y providers existentes antes
-de implementar el siguiente incremento.
+The next corrections should remain capability-local unless a genuinely shared Manager surface
+defect is demonstrated.
 
 ## ASSUMED
 
-No se asume:
+No assumption is made that current media queries are correct merely because the desktop page
+looks correct.
 
-- nombre físico de packages nuevos de ADA Access Projection;
-- forma final del documento durable;
-- topology Cosmos exacta;
-- que Profiles serializer sea reusable sin cambios;
-- que Manager final ya integre Profiles/Users/ADA Access;
-- que ADA Access runtime composition esté resuelta;
-- que CI remoto o full Ruff workspace estén verdes;
-- que metadata Python esté globalmente alineada.
+No assumption is made that the final CURRENT commit is fully qualified by the earlier 79-test
+run.
 
 ## PROPOSED
 
-Único foco siguiente:
+Single next focus:
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
-PLANNED / NEXT / DESIGN FIRST
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS / NEXT PAGE: HERRAMIENTA
 ```
 
-La etapa inicial debe inspeccionar primero:
+Ordered phases:
 
 ```text
-ProjectionStore
-ProjectionRecord / ProjectionTarget
-Profiles projection-local
-Profiles projection-cosmos
-Profiles projection serializer
-ADA Access current source_projection
-```
+PHASE 1
+continue visual review page-by-page
 
-y sólo después proponer contrato durable/providers.
+PHASE 2
+audit responsive/media queries after desktop surfaces are coherent
+
+PHASE 3
+run final behavior-focused tests and remove invalid structural/visual tests
+```
 
 ## UNVERIFIED / PENDING
 
 ```text
-exact package placement for ADA Access Projection providers
+Herramienta final visual consistency
+UNVERIFIED / NEXT
+
+remaining Manager pages visual consistency
 UNVERIFIED
 
-exact durable document contract
+shared and local media-query correctness
 UNVERIFIED
 
-exact Cosmos storage topology
+final post-29bb targeted qualification
 UNVERIFIED
 
-Users Administration UI
-PLANNED
+Manager real persistence flows
+PLANNED / AFTER UI REVIEW
 
-ADA Access Configuration UI
-PLANNED
+Navigation Manager authorization consumer alignment
+BLOCKED / SEPARATE
 
-Manager final administrative composition
-PLANNED
-
-ADA Access runtime composition
-PLANNED / SEPARATE
-
-concrete Entra/Graph UsersDirectoryReader provider
-UNVERIFIED
-
-full Ruff workspace
-UNVERIFIED
-
-CI remoto
+CI remote
 UNVERIFIED
 
 Python metadata global 3.14.7

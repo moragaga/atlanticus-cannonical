@@ -9,10 +9,9 @@ Manager tiene una frontera de aplicación propia.
 No es una variante del shell operacional de ADA ni debe reutilizar el header operacional de
 ADA como si fueran la misma superficie.
 
-## Implementación verificada
+## Implementación CURRENT
 
-La aplicación ADA Configuration Manager crea un `ManagerSurface` y lo monta como una
-aplicación independiente.
+ADA Configuration Manager crea un `ManagerSurface` y lo monta como aplicación independiente.
 
 La capability genérica `atlanticus.web.manager` posee:
 
@@ -26,11 +25,7 @@ La capability genérica `atlanticus.web.manager` posee:
 - callbacks;
 - assets.
 
-La Home del Manager construye su propio header administrativo.
-
 ## Items administrativos CURRENT
-
-El shell Manager admite dos tipos de item registrados:
 
 ```text
 ManagerModule
@@ -39,34 +34,29 @@ ManagerEntry
 
 `ManagerModule` representa capabilities con Source/Projection.
 
-`ManagerEntry` representa capabilities administrativas que necesitan el mismo shell,
-routing, authorization y WebModule lifecycle, pero que no poseen Source/Projection.
-
-La existencia de `ManagerEntry` no convierte toda frontera lógica en un servicio ni en un
-nuevo lifecycle.
+`ManagerEntry` representa capabilities administrativas que necesitan el mismo shell, routing,
+authorization y WebModule lifecycle sin inventar Source/Projection.
 
 ## Regla canónica
 
 - ADA operacional → header/shell ADA.
 - Manager → header/shell Manager.
-- Pueden compartir primitives, tokens, branding o capacidades transversales.
+- Pueden compartir primitives, tokens, branding o comportamiento transversal real.
 - No comparten ownership de navegación ni header.
 - La presentación específica permanece en la capability que la posee.
 
-Esto es una frontera de aplicación, no una excepción CSS.
-
 ## Reusabilidad
 
-Manager sigue siendo capability genérica Atlanticus y no depende directamente de conceptos
-ADA.
+Manager sigue siendo capability generic Atlanticus.
 
-ADA Configuration Manager compone capacidades genéricas y ADA-specific sobre esa capability.
+ADA Configuration Manager compone capabilities generic y ADA-specific sobre Manager.
 
-CURRENT incluye:
+CURRENT:
 
 ```text
 ManagerModule:
 - Profiles
+- Accesos
 - Navigation
 - Tools
 - KPI Configuration
@@ -76,16 +66,34 @@ ManagerEntry:
 - Users
 ```
 
-Profiles y Users permanecen capabilities genéricas Atlanticus.
+Access es application-specific ADA.
 
-Navigation, Tools, KPI Configuration y KPI Definition son consumers/configurations del
-producto ADA según sus contratos actuales.
+Profiles, Users y Navigation son generic Atlanticus.
+
+## Navigation configuration boundary
+
+La UI/configuration de Navigation pertenece a Navigation.
+
+Manager provee shell/workflow/composition, no ownership de la presentación específica de
+Navigation.
+
+Navigation Configuration no depende de Profiles; la adaptación de profile options ocurre en
+la application/composition que conoce ambas capabilities.
+
+## UI qualification boundary
+
+```text
+MANAGER-UI-CONSISTENCY-REVIEW
+IN PROGRESS
+```
+
+Corregir shared Manager CSS sólo cuando el problema sea realmente transversal.
+
+No mover CSS capability-local a Manager por simetría.
+
+La fase responsive/media-query se ejecuta después de coherencia visual desktop de las páginas.
 
 ## Bootstrap boundary
-
-Existe una superficie anterior a Manager para primera instalación/readiness.
-
-No comparte ownership con el shell Manager.
 
 ```text
 Bootstrap/System Surface
@@ -95,4 +103,4 @@ Manager readiness
 Manager Shell
 ```
 
-El Manager continúa teniendo header/shell propios una vez habilitado.
+Bootstrap no comparte ownership con el shell Manager.
