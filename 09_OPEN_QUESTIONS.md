@@ -2,88 +2,51 @@
 
 Estado: **CANONICAL OPEN ITEMS**
 
-Los puntos aquí no reabren contracts CLOSED.
-
-## CLOSED — KPI Registry
-
-```text
-KPI-REGISTRY-CAPABILITY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-No reabrir:
-
-```text
-KpiRegistry naming
-SourceKey('kpis')
-core/configuration/projection-local/projection-cosmos structure
-Tool exact ProjectionTarget dependency
-Cosmos storage contract
-```
-
-## CLOSED — KPI Definition
-
-```text
-KPI-DEFINITION-CAPABILITY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-No reabrir:
-
-```text
-KpiDefinition domain
-SourceKey('kpi-definitions')
-core/configuration/projection-local/projection-cosmos structure
-Registry exact ProjectionTarget dependency
-Cosmos storage contract
-```
-
-## OPEN — KPI Runtime recovery
+## CLOSED — KPI backend recovery and Registry consumption
 
 ```text
 KPI-RUNTIME-REPROCESS-CURRENT
-PLANNED / NEXT
-```
+CLOSED / VERIFIED / CURRENT
 
-Debe implementar únicamente el bypass de `observed == committed` con `REPROCESS_CURRENT=true`.
-
-## OPEN — Delivery Registry consumption
-
-```text
 KPI-DELIVERY-REGISTRY-CONSUMPTION
-PLANNED
-```
+CLOSED / VERIFIED / CURRENT
 
-CURRENT backend todavía consume `ada_kpi_configuration_projection`.
-
-Debe migrar al Registry durable sin dual reader.
-
-## OPEN — Timeseries Registry consumption
-
-```text
 KPI-TIMESERIES-REGISTRY-CONSUMPTION
-PLANNED
-```
+CLOSED / VERIFIED / CURRENT
 
-Mismo conflicto de contrato que Delivery.
-
-## OPEN — Historian recovery
-
-```text
 KPI-HISTORIAN-REPROCESS-CURRENT
-PLANNED
+CLOSED / VERIFIED / CURRENT
 ```
 
-Forced-current requiere full replay hasta committed.
+No reabrir estos contracts salvo conflicto demostrado.
 
-## BLOCKED — ADA Generic Collector
+## OPEN — ADA Generic Collector
 
 ```text
 ADA-GENERIC-COLLECTOR-CLOSURE
-BLOCKED
+PLANNED / NEXT
 ```
 
-Espera cierre de la cadena backend KPI.
+Ya no está bloqueado por KPI backend.
+
+Decidido:
+
+```text
+Latest y Timeseries son superficies de lectura independientes.
+Latest es prioritario.
+Deben soportar intervalos de carga distintos.
+Tools aporta el contrato estructural/destination necesario para el mapping.
+```
+
+OPEN:
+
+```text
+exact numeric intervals
+sync/coherency semantics between Latest and Timeseries reads
+existing store ownership in ADA Generic
+whether existing reader/collector code already satisfies the boundary
+minimal integration location
+```
 
 ## OPEN — KPI Inspection stale Definition consumer
 
@@ -92,28 +55,27 @@ KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT
 OPEN / SEPARATE
 ```
 
-CURRENT aún declara `ada-web-kpi-definition==0.1.0` y consume un repository contract histórico.
-
-No resolver durante backend recovery salvo que se demuestre dependencia directa.
+No mezclar con Collector salvo dependencia directa demostrada.
 
 ## OPEN — Python metadata
 
 ```text
-Project baseline
-3.14.7
-
-observed KPI/Web package metadata
-==3.14.2
+Project baseline = Python 3.14.7
+some package metadata observed = 3.14.2
+PYTHON-METADATA-ALIGNMENT = OPEN / SEPARATE
 ```
 
-Mantener separado.
+## BLOCKED / SEPARATE — full backend test topology
+
+```text
+collection failures around tests.support
+UNVERIFIED AS PREEXISTING
+```
 
 ## PROPOSED / DEFERRED
 
 ```text
 Latest Delivery REPROCESS_CURRENT
 Timeseries Delivery REPROCESS_CURRENT
-reprocess_from optimization
+Historian reprocess_from optimization
 ```
-
-No autorizados en la secuencia actual.

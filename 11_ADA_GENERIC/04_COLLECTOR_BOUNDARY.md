@@ -1,6 +1,6 @@
 # ADA Generic — Collector Boundary
 
-Estado: **SEMANTICS FROZEN / IMPLEMENTATION BLOCKED BY KPI BACKEND FLOW**
+Estado: **PLANNED / NEXT**
 
 ## Semántica congelada
 
@@ -21,65 +21,72 @@ Subcomponent:
 - no destino KPI;
 - sí puede ser target visual independiente de alarma.
 
-Regla:
-
 ```text
 N Subcomponents != N Stores != N Collectors
 ```
 
-## Collector no equivale automáticamente a Producer
+## Gate KPI
 
-No renombrar Producer a Collector.
-
-No crear un wheel `collectors` por coincidencia terminológica.
-
-No duplicar sources/materializers ya válidos.
-
-ADA Generic no debe conocer productores concretos.
-
-## Gate CURRENT
-
-La implementación del Collector queda bloqueada hasta cerrar:
+El gate anterior está cerrado:
 
 ```text
-KPI-RUNTIME-REPROCESS-CURRENT
-KPI-DELIVERY-REGISTRY-CONSUMPTION
-KPI-TIMESERIES-REGISTRY-CONSUMPTION
-KPI-HISTORIAN-REPROCESS-CURRENT
+KPI-RUNTIME-REPROCESS-CURRENT               CLOSED / CURRENT
+KPI-DELIVERY-REGISTRY-CONSUMPTION           CLOSED / CURRENT
+KPI-TIMESERIES-REGISTRY-CONSUMPTION        CLOSED / CURRENT
+KPI-HISTORIAN-REPROCESS-CURRENT             CLOSED / CURRENT
 ```
 
-Razón:
+Collector deja de estar BLOCKED.
 
-la frontera final del flujo KPI debe estar calificada antes de fijar el mapping físico del Collector.
-
-## Después del gate
-
-Para la primera Tool/Component real:
+## Inputs CURRENT disponibles
 
 ```text
-1. identificar Source operacional
-2. identificar materialización Store/dataset
-3. identificar scheduling/runtime
-4. identificar entrada/salida KPI final
-5. contrastar con Component contract
-6. introducir sólo el gap mínimo real
+Latest Delivery Cosmos
+ada-kpi-latest-delivery
+id=latest
+partition_id=kpis
+
+Timeseries Delivery Cosmos
+ada-kpi-timeseries-delivery
+id=timeseries
+partition_id=kpis
+
+Tool CURRENT contract
+component/destination structure
 ```
 
-Posibles resultados:
+## Decisión de scheduling
 
 ```text
-Producer existente cumple Collector contract
-Producer alimenta Collector delgado
-varios Producers alimentan un Collector
-Collector es sólo contrato/configuración
-falta una responsabilidad nueva
+Latest y Timeseries deben tener intervalos de carga distintos.
+Latest es prioritario.
 ```
 
-No elegir antes de mapear la vertical real.
+No se fijan valores numéricos en este cierre.
 
-## Estado
+## OPEN para el siguiente chat
+
+Inspeccionar antes de diseñar código:
 
 ```text
-ADA-GENERIC-COLLECTOR-CLOSURE
-BLOCKED / AFTER KPI BACKEND FLOW
+1. stores/readers CURRENT de ada-generic-application
+2. contrato Tool CURRENT realmente consumible por ADA Generic
+3. contratos exactos de Latest y Timeseries readers
+4. ownership del polling/scheduling existente
+5. coherencia requerida al escribir/actualizar stores UI
+6. comportamiento ante Latest nuevo con Timeseries todavía anterior
+7. comportamiento ante ausencia temporal de una de las dos superficies
+```
+
+Luego introducir sólo el gap mínimo.
+
+## No asumir
+
+```text
+Collector == nuevo servicio
+Collector == Producer renombrado
+1 Subcomponent == 1 Store
+un único intervalo para ambas superficies
+atomicidad cross-document no demostrada
+nuevo schema intermedio
 ```

@@ -1,66 +1,41 @@
 # KPI Backend Recovery — Timeseries Delivery
 
-Estado: **PLANNED — REGISTRY CONSUMER ALIGNMENT**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
-## CURRENT conflict
+## Registry input
 
-`kpi-timeseries-delivery` todavía consume el projection document legacy:
+Timeseries consume el KPI Registry durable mediante reader propio e independiente.
+
+No dual reader, no legacy fallback, no shared process implementation.
+
+## Output owned
 
 ```text
-ada_kpi_configuration_projection
+container       = ada-kpi-timeseries-delivery
+partition path  = /partition_id
+TTL             = None
+id              = timeseries
+partition_id    = kpis
+document_type   = ada_kpi_timeseries_delivery
+schema_version  = 2
+step_seconds    = 120
 ```
 
-con payload:
+Startup:
 
 ```text
-configuration.bindings
-binding.key
+validate Registry container
+ensure Timeseries output container
+read Registry
+freeze effective configuration
+execute job
 ```
 
-El Registry CURRENT usa:
+Historian authority, aligned watermark, checkpoint validation y fencing permanecen intactos.
+
+Qualification:
 
 ```text
-ada_kpi_registry_projection_record
-payload.bindings
-binding.kpi_key
-```
-
-## Cambio autorizado
-
-```text
-KPI-TIMESERIES-REGISTRY-CONSUMPTION
-PLANNED
-```
-
-Timeseries debe cargar el KPI Registry durable desde Cosmos al inicio del flujo.
-
-No dual reader.
-
-No legacy fallback.
-
-No copiar el Registry a otro documento sólo para Timeseries.
-
-## Reprocess
-
-La propuesta histórica:
-
-```text
-Timeseries Delivery REPROCESS_CURRENT
-```
-
-queda:
-
-```text
-PROPOSED / DEFERRED / NOT AUTHORIZED
-```
-
-No mezclar con el cambio de configuration consumer.
-
-## No cambia
-
-```text
-Historian authority
-aligned timeseries watermark
-checkpoint authority validation
-publish/checkpoint fencing
+processes/kpi-timeseries-delivery/tests 22 passed
+kpis/delivery/tests                     28 passed
 ```

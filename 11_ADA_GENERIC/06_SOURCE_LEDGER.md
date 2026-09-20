@@ -6,132 +6,47 @@ Estado: **AUDIT LEDGER**
 
 ```text
 Implementation
-moragaga/atlanticus:main
+moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
 
-Current inspected checkpoint
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
+Tree
+b53495d710ae9307ce5b64da3311880d4bd6c050
 
-Canonical
-moragaga/atlanticus-cannonical:main
-
-Canonical checkpoint inspected before replacement
-430a90529c99e69d16978f60d91aa86f819b851e
-
-Historical
-moragaga/atlanticus-decisions:main
+Canonical inspected before replacement
+moragaga/atlanticus-cannonical@961447d3a1b3d2afaff7da148f85729fdbe4beab
 ```
 
-## Referencias históricas
-
-Las fuentes históricas existentes permanecen HISTORICAL y no reemplazan implementación/canonical CURRENT.
-
-## Implementación relevante inspeccionada
+## Configuration chain
 
 ```text
-scopes/ada/web/tools/configuration
-scopes/ada/web/kpis/configuration
-scopes/ada/web/kpis/definition
-scopes/ada/web/application/ada-configuration-manager
-web/capabilities/source/core
-web/capabilities/projection/core
-web/capabilities/manager
-web/compositions/users-manager
+Tools            CLOSED / VERIFIED / CURRENT
+KPI Registry     CLOSED / VERIFIED / CURRENT
+KPI Definition   CLOSED / VERIFIED / CURRENT
 ```
 
-## Tools
+## Backend KPI chain
 
 ```text
-TOOLS-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+KPI Runtime recovery             CLOSED / VERIFIED / CURRENT
+Latest Delivery Registry cutover CLOSED / VERIFIED / CURRENT
+Timeseries Registry cutover      CLOSED / VERIFIED / CURRENT
+Historian recovery               CLOSED / VERIFIED / CURRENT
 ```
 
-Ownership:
+## Output surfaces
 
 ```text
-scopes/ada/web/tools
+ada-kpi-latest-delivery
+ada_kpi_latest_delivery
+
+ada-kpi-timeseries-delivery
+ada_kpi_timeseries_delivery
 ```
-
-## KPI Configuration
-
-```text
-KPI-CONFIG-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-Checkpoint:
-
-```text
-4c7f8aa8b541e8b8f8abc7b49fe22526a4952bfe
-```
-
-Dependencia exacta CURRENT:
-
-```text
-Tool ProjectionTarget
-→ KPI Configuration ProjectionTarget.dependencies
-```
-
-## KPI Definition
-
-```text
-KPI-DEFINITION-GENERIC-SOURCE-PROJECTION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-Checkpoint:
-
-```text
-ef3f0a44c5dcc14f8fcafe5bb36bb97865381924
-```
-
-CURRENT:
-
-```text
-KpiDefinitionSourceService
-KpiDefinitionProjectionBuilder
-KpiDefinitionCatalog
-ProjectionStore[KpiConfiguration]
-exact KPI Configuration ProjectionTarget dependency
-```
-
-No CURRENT:
-
-```text
-KpiDefinitionAuthorityCatalog
-KpiDefinitionAuthorityProvider
-KpiDefinitionServices
-private revision lifecycle
-expected_source_revision
-```
-
-## Ownership confirmado
-
-Tools, KPI Configuration y KPI Definition siguen siendo ADA-specific bajo `scopes/ada`.
-
-El uso de Source/Projection genéricos no mueve esas capabilities al core Atlanticus.
-
-## Desalineación temporal del consumer
-
-`ada-configuration-manager` todavía referencia contratos anteriores de Users/Navigation/Tools/KPI.
-
-No se crea compatibilidad en los dominios para resolverlo.
-
-Todos los dominios Configuration requeridos ya están migrados, por lo que el consumer final deja de estar bloqueado por un dominio pendiente.
-
-## Regla
-
-Cuando histórico, canonical e implementación difieren:
-
-- `atlanticus:main` define realidad implementada;
-- canonical define contrato/estado vigente y debe actualizarse;
-- historical puede explicar rationale;
-- no reintroducir código removido por una referencia histórica.
 
 ## Siguiente frontera
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-GENERIC-COLLECTOR-CLOSURE
 PLANNED / NEXT
 ```
 
-Inspeccionar primero el consumer CURRENT y construir el delta exacto contra contratos ya publicados. No inventar APIs ni reintroducir legacy.
+No construir desde memoria. Inspeccionar `scopes/ada/web/application/ada-generic-application`, Tool CURRENT y los output readers/stores existentes antes de decidir arquitectura.

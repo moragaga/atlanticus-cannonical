@@ -1,75 +1,60 @@
 # KPI Backend Recovery — Configuration
 
-Estado: **DECIDED / BASELINE 1.0**
-
-Cada job tiene configuración independiente.
+Estado: **CURRENT**
 
 ## REPROCESS_CURRENT
 
-Variable común sólo para jobs que hayan sido autorizados a soportarla:
-
-```text
-REPROCESS_CURRENT=false
-```
-
-Autorizados ahora:
+Disponible sólo en:
 
 ```text
 kpi-runtime
 kpi-historian
 ```
 
-No autorizados todavía:
-
-```text
-kpi-delivery
-kpi-timeseries-delivery
-```
-
-## Semántica
+Default:
 
 ```text
 false
-→ comportamiento productivo normal
-
-true
-→ bypass exclusivamente del shortcut already-current
 ```
 
-No se mezcla con:
+## Cosmos connection
+
+External configuration:
 
 ```text
-DEBUG
-logging
-observability
-run_once
-poll interval
+COSMOS_CONSUMPTION_ENDPOINT
+COSMOS_CONSUMPTION_KEY
+COSMOS_CONSUMPTION_DATABASE_NAME
 ```
 
-## Ejecución controlada
+## Container contract
 
-Para repair/testing puntual:
+No ENV para:
 
 ```text
-REPROCESS_CURRENT=true
-+
---run-once
+container name
+item id
+partition key path
+partition value
+TTL
+document_type
+schema_version
 ```
 
-cuando corresponda.
+Esos valores son contratos internos del proceso.
 
-## Registry consumer settings
-
-Delivery y Timeseries deben migrar sus settings desde el contrato histórico de:
+Consumed Registry:
 
 ```text
-KPI_DELIVERY_CONFIGURATION_CONTAINER
-KPI_DELIVERY_CONFIGURATION_ITEM_ID
-KPI_DELIVERY_CONFIGURATION_PARTITION_KEY
+validate/read only
+never provision
 ```
 
-hacia el resource/identity real del KPI Registry durable CURRENT.
+Owned Delivery/Timeseries output:
 
-La forma exacta de settings debe partir del storage contract y composition CURRENT.
+```text
+ensure once at startup
+never per iteration
+```
 
-No inventar un segundo Registry contract.
+La database permanece externa y no es creada por estos procesos.

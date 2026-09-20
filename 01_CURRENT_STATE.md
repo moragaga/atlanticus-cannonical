@@ -4,241 +4,171 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ## Autoridad
 
-Implementación publicada CURRENT:
-
 ```text
-moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+Implementation
+moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
+
+Parent
+06e8f4ba4882c2d2600f995cce00b7bfdc01990c
+
+Tree
+b53495d710ae9307ce5b64da3311880d4bd6c050
+
+Canonical inspected before replacement
+moragaga/atlanticus-cannonical@961447d3a1b3d2afaff7da148f85729fdbe4beab
 ```
 
-Parent inmediato:
-
-```text
-107c7570061e0d31828b1d3e9b9fc6336a698809
-```
-
-Tree:
-
-```text
-41c299861d14a9691cbd3461dbca8bb466dfc156
-```
-
-Canonical inspeccionado para este cierre:
-
-```text
-moragaga/atlanticus-cannonical@a3e77aafe5e97bd4e2e10a9d9b24be9ff0486471
-```
-
-Git permanece SOLO LECTURA para el asistente.
+Git permanece SOLO LECTURA.
 
 ## Estado resumido
 
 ```text
 KPI-REGISTRY-CAPABILITY-CUTOVER                 CLOSED / VERIFIED / CURRENT
 KPI-DEFINITION-CAPABILITY-CUTOVER               CLOSED / VERIFIED / CURRENT
-KPI-MANAGER-REGISTRY-WIRING                     CLOSED / VERIFIED / CURRENT
-KPI-MANAGER-DEFINITION-WIRING                   CLOSED / VERIFIED / CURRENT
+KPI-RUNTIME-REPROCESS-CURRENT                   CLOSED / VERIFIED / CURRENT
+KPI-DELIVERY-REGISTRY-CONSUMPTION               CLOSED / VERIFIED / CURRENT
+KPI-TIMESERIES-REGISTRY-CONSUMPTION             CLOSED / VERIFIED / CURRENT
+KPI-HISTORIAN-REPROCESS-CURRENT                 CLOSED / VERIFIED / CURRENT
 
-KPI-RUNTIME-REPROCESS-CURRENT                   PLANNED / NEXT
-KPI-DELIVERY-REGISTRY-CONSUMPTION               PLANNED
-KPI-TIMESERIES-REGISTRY-CONSUMPTION             PLANNED
-KPI-HISTORIAN-REPROCESS-CURRENT                 PLANNED
-
-ADA-GENERIC-COLLECTOR-CLOSURE                   BLOCKED / AFTER KPI BACKEND FLOW
+ADA-GENERIC-COLLECTOR-CLOSURE                   PLANNED / NEXT
 
 KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT  OPEN / SEPARATE
 PYTHON-METADATA-ALIGNMENT                       OPEN / SEPARATE
+FULL-BACKEND-PYTEST-TOPOLOGY                    BLOCKED / UNVERIFIED AS PREEXISTING / SEPARATE
 ```
 
-## KPI Registry CURRENT
+## KPI Runtime CURRENT
+
+`REPROCESS_CURRENT=false` conserva `observed == committed -> up_to_date`.
+
+`REPROCESS_CURRENT=true` sólo fuerza el watermark CURRENT. Para el mismo watermark durable reutiliza el `evaluated_at_utc` ya persistido; por tanto:
 
 ```text
-scopes/ada/web/kpis/registry/
-├── core
-├── configuration
-├── projection-local
-└── projection-cosmos
+same watermark + same results
+→ write_once UNCHANGED
+
+same watermark + changed results
+→ durable conflict
+
+committed batch missing
+→ explicit data error
+
+observed < committed
+→ rejected
 ```
 
-Domain:
+Lease, cancellation, fencing y authority ordering permanecen intactos.
+
+## Delivery CURRENT
+
+Consume directamente el KPI Registry durable desde Cosmos mediante reader propio del proceso.
 
 ```text
-KpiRegistry
-KpiRegistryBinding
+input container = ada-kpi-registry-projection
+partition path  = /partition_key
+partition value = kpis
+document_type   = ada_kpi_registry_projection_record
+schema_version  = 1
 ```
 
-Source:
+No existe reader legacy ni fallback.
+
+Output owned:
 
 ```text
-SourceKey('kpis')
+container      = ada-kpi-latest-delivery
+partition path = /partition_id
+TTL            = None
+id             = latest
+partition_id   = kpis
+document_type  = ada_kpi_latest_delivery
+schema_version = 1
 ```
 
-Projection:
+El proceso valida el Registry consumido y asegura idempotentemente su output container una vez al startup.
+
+## Timeseries Delivery CURRENT
+
+Consume el mismo KPI Registry durable mediante reader independiente.
+
+Output owned:
 
 ```text
-ProjectionRecord[KpiRegistry]
+container      = ada-kpi-timeseries-delivery
+partition path = /partition_id
+TTL            = None
+id             = timeseries
+partition_id   = kpis
+document_type  = ada_kpi_timeseries_delivery
+schema_version = 2
+step_seconds   = 120
 ```
 
-Dependency:
+El proceso valida el Registry consumido y asegura idempotentemente su output container una vez al startup.
+
+## Container configuration CURRENT
+
+Variables de conexión/database permanecen externas:
 
 ```text
-Tool ProjectionTarget
-→ KPI Registry ProjectionTarget
+COSMOS_CONSUMPTION_ENDPOINT
+COSMOS_CONSUMPTION_KEY
+COSMOS_CONSUMPTION_DATABASE_NAME
 ```
 
-Cosmos:
+La identidad/topología de containers ya no se configura por ENV.
 
 ```text
-logical_id = ada.kpis.registry.projection
-physical   = ada-kpi-registry-projection
-partition  = /partition_key
-TTL        = None
-document_type = ada_kpi_registry_projection_record
+container name
+partition key path
+partition value
+TTL
+document_type
+schema_version
+item identity
 ```
 
-## KPI Definition CURRENT
+son contratos internos de cada proceso.
+
+## Historian CURRENT
+
+`REPROCESS_CURRENT=false` conserva `authority == committed -> SKIPPED_CURRENT`.
+
+Con `REPROCESS_CURRENT=true` y authority CURRENT:
 
 ```text
-scopes/ada/web/kpis/definition/
-├── core
-├── configuration
-├── projection-local
-└── projection-cosmos
+after = None
+through = KPI committed
+→ replay de todos los durable evaluation batches
+→ rematerialize history/errors
+→ commit misma authority
 ```
 
-Domain:
+Si Historian está atrasado, incluso con el flag true conserva catch-up incremental. Authority ahead of KPI continúa siendo error.
+
+## Collector
+
+La cadena backend KPI está cerrada, por tanto:
 
 ```text
-KpiDefinition
-KpiDefinitionConfiguration
-KpiDefinitionCatalog
-```
-
-Source:
-
-```text
-SourceKey('kpi-definitions')
-resource = kpis/definition.json.gz
-```
-
-Projection:
-
-```text
-ProjectionRecord[KpiDefinitionCatalog]
-```
-
-Dependency:
-
-```text
-KPI Registry ProjectionTarget
-→ KPI Definition ProjectionTarget
-```
-
-Cosmos:
-
-```text
-logical_id = ada.kpis.definition.projection
-physical   = ada-kpi-definition-projection
-partition  = /partition_key
-TTL        = None
-document_type = ada_kpi_definition_projection_record
-```
-
-## Local Manager CURRENT
-
-Registry y Definition usan projection stores locales durables.
-
-No dependen de `InProcessProjectionStore` para esas dos projections.
-
-La UI fue preservada visualmente durante ambos cutovers.
-
-## Backend CURRENT
-
-### KPI Runtime
-
-CURRENT todavía corta:
-
-```text
-observed == committed
-→ reason=up_to_date
-→ skip
-```
-
-No existe todavía `REPROCESS_CURRENT`.
-
-### Historian
-
-CURRENT todavía corta:
-
-```text
-historian authority == KPI committed
-→ SKIPPED_CURRENT
-```
-
-No existe todavía `REPROCESS_CURRENT`.
-
-### Delivery / Timeseries
-
-CURRENT todavía consume:
-
-```text
-document_type = ada_kpi_configuration_projection
-payload = configuration.bindings
-binding identity = key
-```
-
-Eso entra en conflicto con KPI Registry CURRENT:
-
-```text
-document_type = ada_kpi_registry_projection_record
-payload = payload.bindings
-binding identity = kpi_key
-```
-
-El consumer backend debe migrar sin dual reader ni legacy compatibility.
-
-## Qualification observada
-
-Registry cutover:
-
-```text
-108 tests passed
-```
-
-Definition cutover:
-
-```text
-76 tests passed
-```
-
-Además:
-
-```text
-git diff --check
-PASS observado
-
-Registry UI assets
-byte-identical
-
-Definition UI assets
-byte-identical
-```
-
-No declarar Ruff remoto/full workspace/CI como PASS.
-
-## Conflicto separado CURRENT
-
-KPI Inspection Definition provider continúa referenciando un contrato histórico de Definition:
-
-```text
-ada-web-kpi-definition==0.1.0
-KpiDefinitionProjectionRepository
-```
-
-No fue parte de este cierre.
-
-## Siguiente foco único
-
-```text
-KPI-RUNTIME-REPROCESS-CURRENT
+ADA-GENERIC-COLLECTOR-CLOSURE
 PLANNED / NEXT
 ```
+
+Decidido para el siguiente foco:
+
+```text
+Latest y Timeseries usan intervalos de carga distintos.
+Latest es prioritario y debe refrescarse con mayor prioridad/frecuencia que Timeseries.
+```
+
+OPEN para diseño/verificación en el siguiente chat:
+
+```text
+valores exactos de intervalos
+mecanismo de sincronización de lecturas
+mapeo a los stores de salida de la UI
+uso exacto del contrato Tool CURRENT para component/destination binding
+```
+
+No inventar esos detalles antes de inspeccionar `atlanticus:main`.

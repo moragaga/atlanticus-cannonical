@@ -1,101 +1,53 @@
 # KPI Backend Recovery — Common Reprocess Contract
 
-Estado: **DECIDED / PLANNED**
+Estado: **CURRENT / IMPLEMENTED**
 
-## Nombre
-
-```text
-REPROCESS_CURRENT
-```
-
-No llamarlo `DEBUG_MODE`.
-
-## Jobs autorizados en esta secuencia
+## Jobs autorizados
 
 ```text
 KPI Runtime
-Historian
+KPI Historian
 ```
 
-Delivery y Timeseries reprocess NO están autorizados en esta secuencia.
-
-## Default
+Default:
 
 ```text
-false
+REPROCESS_CURRENT=false
 ```
 
-## Semántica
+## Runtime
 
-Con `false`:
+Con CURRENT forced:
 
 ```text
-current checkpoint
-→ comportamiento normal
-→ skip
+observed == committed
+→ reevaluate same watermark
+→ preserve durable evaluated_at_utc
+→ same result => UNCHANGED
+→ changed result => conflict
 ```
 
-Con `true`:
+## Historian
+
+Con CURRENT forced:
 
 ```text
-current checkpoint
-→ bypass sólo del shortcut already-current
-→ volver a materializar con authority upstream actual
+authority == committed
+→ after=None
+→ replay durable batches through committed
+→ rematerialize history/errors
+→ commit same authority
 ```
 
 ## Nunca bypass
 
 ```text
-source/authority regression
-missing upstream authority
+regression checks
+missing upstream authority/data
 lease
 cancellation
 fencing
-referential validation
 write conflict detection
 ```
 
-## No retroceso
-
-```text
-upstream < committed/checkpoint
-→ error
-```
-
-## No source inventado
-
-```text
-upstream missing
-→ no fabricar watermark
-```
-
-## Idempotencia
-
-Contenido ya existente e idéntico:
-
-```text
-→ unchanged / convergente
-```
-
-Contenido faltante:
-
-```text
-→ rebuild
-```
-
-Contenido incompatible bajo write-once:
-
-```text
-→ conflict
-```
-
-## Ejecución controlada
-
-Preferir:
-
-```text
-REPROCESS_CURRENT=true
---run-once
-```
-
-para repair/testing puntual.
+Delivery y Timeseries no soportan este flag en la secuencia CURRENT.

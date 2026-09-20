@@ -4,27 +4,28 @@ Estado: **CURRENT DIRECTION**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_SCOPE.md` | Qué es y qué no es ADA Generic; ownership ADA vs infraestructura genérica. | CURRENT |
+| `01_SCOPE.md` | Qué es y qué no es ADA Generic. | CURRENT |
 | `02_CURRENT_COMPOSITION.md` | Capacidades que compone hoy `main`. | VERIFIED |
-| `03_CONFIGURATION_TO_RUNTIME.md` | Cadena Tool → KPI → runtime y dependencias Projection. | FROZEN SEMANTICS + CONFIGURATION CONTRACTS CURRENT |
-| `04_COLLECTOR_BOUNDARY.md` | Semántica de Collector y mapeo físico pendiente. | FROZEN SEMANTICS |
-| `05_FIRST_DELIVERABLE_VERTICAL.md` | Candidato de vertical para primer entregable. | PROPOSED |
-| `06_SOURCE_LEDGER.md` | Fuentes, checkpoints y cutovers relevantes. | AUDIT LEDGER |
-| `07_TOOL_DELIVERY_ORDER.md` | Operaciones Integradas primero; Mina después. | CURRENT |
+| `03_CONFIGURATION_TO_RUNTIME.md` | Tool → KPI Registry/Definition → backend outputs. | CURRENT |
+| `04_COLLECTOR_BOUNDARY.md` | Semántica y siguiente cierre del Collector. | PLANNED / NEXT |
+| `05_FIRST_DELIVERABLE_VERTICAL.md` | Vertical inicial. | PROPOSED |
+| `06_SOURCE_LEDGER.md` | Fuentes/checkpoints/cutovers relevantes. | AUDIT LEDGER |
+| `07_TOOL_DELIVERY_ORDER.md` | Orden funcional de Tools. | CURRENT |
 
-La cadena Configuration relevante está sobre contratos Source/Projection genéricos sin cambiar ownership ADA:
+Precondiciones para Collector:
 
 ```text
-Tools Source/Projection              CLOSED / CURRENT
-KPI Configuration Source/Projection CLOSED / CURRENT
-KPI Definition Source/Projection    CLOSED / CURRENT
+KPI Registry durable                  CLOSED / CURRENT
+KPI Definition durable                CLOSED / CURRENT
+KPI Runtime recovery                  CLOSED / CURRENT
+KPI Latest Delivery Registry consumer CLOSED / CURRENT
+KPI Timeseries Registry consumer      CLOSED / CURRENT
+KPI Historian recovery                CLOSED / CURRENT
 ```
 
-Siguiente frontera administrativa:
+Siguiente foco único:
 
 ```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
+ADA-GENERIC-COLLECTOR-CLOSURE
 PLANNED / NEXT
 ```
-
-ADA Generic runtime no debe usarse para reintroducir un `KpiDefinitionAuthority` ni revision identities privadas ya removidas.

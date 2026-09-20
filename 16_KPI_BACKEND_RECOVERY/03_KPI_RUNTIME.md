@@ -1,92 +1,38 @@
 # KPI Backend Recovery — KPI Runtime
 
-Estado: **PLANNED / NEXT**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
-## CURRENT
-
-`KpiRuntimeJob` hace:
-
-```text
-observed == committed
-→ up_to_date
-→ skip
-```
-
-Settings CURRENT no exponen `REPROCESS_CURRENT`.
-
-## Cambio autorizado
-
-Agregar:
+Implementado:
 
 ```text
 REPROCESS_CURRENT=false
-```
+→ observed == committed => up_to_date skip
 
-y entregarlo al job por el wiring CURRENT.
-
-Cuando:
-
-```text
 REPROCESS_CURRENT=true
 AND observed == committed
+→ load same source watermark
+→ evaluate
+→ preserve evaluated_at_utc from durable current batch
+→ commit same watermark
 ```
 
-omitir sólo el shortcut `up_to_date`.
-
-Continuar:
+Invariantes:
 
 ```text
-load(as_of=observed)
-→ evaluate base KPI
-→ evaluate over KPI
-→ KpiEvaluationBatch
-→ KpiPersistence.commit(same watermark)
+same durable content => UNCHANGED
+changed result at same watermark => conflict
+missing durable batch for committed watermark => explicit error
+observed < committed => rejected
+new watermark => normal flow
+lease/cancellation/fencing preserved
 ```
 
-## Casos obligatorios
-
-Batch faltante:
+Qualification observada:
 
 ```text
-committed = T
-source = T
-batch T missing
-→ rebuild T
-```
-
-Batch existente e idéntico:
-
-```text
-→ write_once unchanged
-```
-
-Batch incompatible:
-
-```text
-→ durable conflict
-```
-
-Regression:
-
-```text
-observed < committed
-→ error aunque forced
-```
-
-Missing source watermark:
-
-```text
-→ no source fabrication
-```
-
-## No cambia
-
-```text
-catalog semantics
-DataLoadPlan
-source authority
-lease
-fencing
-cancellation
-KpiPersistence conflict semantics
+kpi-runtime 43 passed
+kpis/persistence 10 passed
+Ruff PASS
+format PASS
+git diff --check PASS
 ```

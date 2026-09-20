@@ -1,73 +1,42 @@
 # KPI Backend Recovery — Historian
 
-Estado: **DECIDED / PLANNED**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
-## CURRENT
-
-Historian salta cuando:
-
-```text
-historian authority == KPI committed
-→ SKIPPED_CURRENT
-```
-
-El algoritmo normal usa:
-
-```text
-read_after(historian_before, through=committed)
-```
-
-Por eso simplemente omitir el skip no basta:
-
-```text
-read_after(committed, committed)
-→ empty
-```
-
-## Cambio autorizado
-
-Agregar:
+## Default
 
 ```text
 REPROCESS_CURRENT=false
+
+authority == KPI committed
+→ SKIPPED_CURRENT
 ```
 
-Con forced-current:
+## Forced current
 
 ```text
-after = None
-through = KPI committed
-```
-
-Luego:
-
-```text
-read all durable evaluation batches
+REPROCESS_CURRENT=true
+AND authority == committed
+→ after=None
+→ through=committed
+→ replay all durable evaluation batches
 → materialize history/errors
-→ commit authority = same KPI committed
+→ commit same authority
 ```
 
-## Razón
+Si authority < committed, aun con flag true se mantiene catch-up incremental.
 
-Si history fue borrado o quedó inconsistente, la primera versión de repair no conoce qué
-subconjunto falta.
+Authority > committed continúa siendo error.
 
-La authority KPI define el límite válido.
-
-Los evaluation batches persistidos son la fuente de reconstrucción.
+Qualification:
 
 ```text
-correctness > optimization
+historian suite     37 passed
+focused recovery     4 passed
+kpis/history        22 passed
+kpis/persistence    10 passed
+Ruff PASS
+format PASS
+git diff --check PASS
 ```
 
-## No cambia
-
-```text
-KPI committed missing behavior
-historian authority ahead of KPI → error
-lease
-cancellation
-fencing
-```
-
-`reprocess_from` queda fuera de alcance.
+Integration test verificó rebuild de history eliminado desde durable batch.

@@ -1,46 +1,29 @@
 # KPI Backend Recovery — Source Ledger
 
-Estado: **AUDIT LEDGER**
+Estado: **AUDIT LEDGER / CLOSED**
 
-Corte CURRENT:
+## Final CURRENT cut
 
 ```text
-moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
+parent = 06e8f4ba4882c2d2600f995cce00b7bfdc01990c
+tree   = b53495d710ae9307ce5b64da3311880d4bd6c050
 ```
 
-## KPI Runtime
+## Runtime
 
 Inspeccionado:
 
 ```text
-scopes/ada/backend/processes/kpi-runtime/src/ada/processes/kpi_runtime/job.py
-settings.py
-composition.py
+processes/kpi-runtime/.../settings.py
+processes/kpi-runtime/.../job.py
 ```
 
-Verificado:
+CURRENT:
 
 ```text
-observed == committed → up_to_date skip
-no REPROCESS_CURRENT setting
-KpiPersistence commit remains fenced
-```
-
-## Historian
-
-Inspeccionado:
-
-```text
-scopes/ada/backend/processes/kpi-historian/src/ada/processes/kpi_historian/job.py
-settings.py
-```
-
-Verificado:
-
-```text
-historian current → SKIPPED_CURRENT
-normal read_after(after, through)
-no REPROCESS_CURRENT setting
+REPROCESS_CURRENT
+preserved evaluated_at_utc on same-watermark replay
 ```
 
 ## Delivery
@@ -48,87 +31,71 @@ no REPROCESS_CURRENT setting
 Inspeccionado:
 
 ```text
-scopes/ada/backend/processes/kpi-delivery/src/ada/processes/kpi_delivery/configuration.py
+processes/kpi-delivery/.../configuration.py
+storage.py
 settings.py
-job.py
+composition.py
+backend/kpis/delivery/models.py
+backend/kpis/delivery/latest.py
 ```
 
-Verificado consumer CURRENT:
+CURRENT:
 
 ```text
-document_type = ada_kpi_configuration_projection
-payload = configuration
-binding identity = key
+Registry durable consumer
+owned ada-kpi-latest-delivery output
+container topology internal, database external
 ```
 
-Settings CURRENT:
-
-```text
-KPI_DELIVERY_CONFIGURATION_CONTAINER
-KPI_DELIVERY_CONFIGURATION_ITEM_ID
-KPI_DELIVERY_CONFIGURATION_PARTITION_KEY
-```
-
-## Timeseries Delivery
+## Timeseries
 
 Inspeccionado:
 
 ```text
-scopes/ada/backend/processes/kpi-timeseries-delivery/src/ada/processes/kpi_timeseries_delivery/configuration.py
+processes/kpi-timeseries-delivery/.../configuration.py
+storage.py
 settings.py
+composition.py
+backend/kpis/delivery/models.py
+backend/kpis/delivery/timeseries.py
+```
+
+CURRENT:
+
+```text
+Registry durable consumer
+owned ada-kpi-timeseries-delivery output
+schema v2
+120-second series grid
+```
+
+## Historian
+
+Inspeccionado:
+
+```text
+processes/kpi-historian/.../settings.py
 job.py
+composition.py
+history.py
 ```
 
-Verificado el mismo legacy configuration projection contract.
-
-## KPI Registry Web CURRENT
-
-Inspeccionado:
+CURRENT:
 
 ```text
-scopes/ada/web/kpis/registry/configuration/.../projection_record.py
-scopes/ada/web/kpis/registry/projection-cosmos/.../store.py
-scopes/ada/web/kpis/registry/projection-cosmos/.../storage.py
+REPROCESS_CURRENT
+forced-current full durable replay
+incremental catch-up preserved
 ```
 
-Verificado:
+## Canonical conflict before replacement
 
-```text
-document_type = ada_kpi_registry_projection_record
-schema_version = 1
-SourceKey = kpis
-payload = KpiRegistry
-payload.bindings[].kpi_key
-logical_id = ada.kpis.registry.projection
-physical = ada-kpi-registry-projection
-partition path = /partition_key
-TTL = None
-```
-
-## KPI Definition Web CURRENT
-
-Inspeccionado:
-
-```text
-scopes/ada/web/kpis/definition/configuration/.../projection_record.py
-scopes/ada/web/kpis/definition/projection-cosmos/.../storage.py
-```
-
-Verificado:
-
-```text
-document_type = ada_kpi_definition_projection_record
-ProjectionRecord[KpiDefinitionCatalog]
-logical_id = ada.kpis.definition.projection
-physical = ada-kpi-definition-projection
-```
-
-## Conflict
-
-Backend Delivery/Timeseries todavía no consumen el Registry Web CURRENT.
+`atlanticus-cannonical@961447d...` todavía describía estos cuatro frentes como PLANNED/BLOCKED y Delivery/Timeseries como legacy consumers.
 
 Clasificación:
 
 ```text
-VERIFIED / OPEN
+IMPLEMENTATION CURRENT
+CANONICAL STALE
+REPLACEMENT REQUIRED
 ```

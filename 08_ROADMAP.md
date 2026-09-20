@@ -2,78 +2,55 @@
 
 Estado: **CURRENT EXECUTION ROADMAP**
 
-## Regla
-
-Un solo foco por incremento.
-
-Cerrar cada frontera con evidencia suficiente.
-
-No conservar legacy para sostener consumers o tests anteriores.
-
 ## Checkpoint publicado
 
 ```text
-moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
 ```
 
-## Hitos KPI cerrados
-
-```text
-KPI-REGISTRY-CAPABILITY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-KPI-DEFINITION-CAPABILITY-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
-
-La precondición Web/durable para recovery y configuración backend ya está disponible.
-
-## Secuencia NEXT
-
-### 1. KPI Runtime
+## KPI backend flow
 
 ```text
 KPI-RUNTIME-REPROCESS-CURRENT
-PLANNED / NEXT
-```
+CLOSED / VERIFIED / CURRENT
 
-Agregar `REPROCESS_CURRENT=false` y permitir reevaluar exactamente el watermark current sin
-relajar authority, lease, fencing o conflict checks.
-
-### 2. Delivery + Timeseries
-
-```text
 KPI-DELIVERY-REGISTRY-CONSUMPTION
-PLANNED
+CLOSED / VERIFIED / CURRENT
 
 KPI-TIMESERIES-REGISTRY-CONSUMPTION
-PLANNED
-```
+CLOSED / VERIFIED / CURRENT
 
-Reemplazar consumo del documento legacy `ada_kpi_configuration_projection` por el KPI Registry
-durable CURRENT desde Cosmos.
-
-No dual reader.
-
-No schema legacy fallback.
-
-### 3. Historian
-
-```text
 KPI-HISTORIAN-REPROCESS-CURRENT
-PLANNED
+CLOSED / VERIFIED / CURRENT
 ```
 
-Forced-current relee todos los evaluation batches durables desde inicio hasta KPI committed.
-
-### 4. Collector
+## NEXT
 
 ```text
 ADA-GENERIC-COLLECTOR-CLOSURE
-BLOCKED / AFTER KPI BACKEND FLOW
+PLANNED / NEXT
 ```
 
-Cerrar sólo después de conocer y calificar el extremo final del flujo KPI.
+Objetivo del siguiente foco: cerrar el mapping real desde outputs KPI materializados hacia los stores de lectura de ADA Generic, usando el contrato Tool CURRENT.
+
+Restricciones ya decididas:
+
+```text
+Latest priority > Timeseries priority
+Latest and Timeseries use different load intervals
+no new legacy contract
+no shared implementation invented without a real boundary
+```
+
+A resolver allí, después de inspección:
+
+```text
+exact polling/load intervals
+read synchronization semantics
+existing UI output stores and their contracts
+exact Tool component/destination mapping
+minimal code delta
+```
 
 ## Frentes separados
 
@@ -84,19 +61,6 @@ OPEN / SEPARATE
 PYTHON-METADATA-ALIGNMENT
 OPEN / SEPARATE
 
-remote CI
-UNVERIFIED
-
-full workspace qualification
-UNVERIFIED
-```
-
-## No incluir en la secuencia autorizada
-
-```text
-Latest Delivery REPROCESS_CURRENT
-PROPOSED / DEFERRED
-
-Timeseries Delivery REPROCESS_CURRENT
-PROPOSED / DEFERRED
+FULL-BACKEND-PYTEST-TOPOLOGY
+BLOCKED / SEPARATE
 ```

@@ -1,88 +1,18 @@
-# KPI Backend Reprocessing — Problem
+# KPI Backend Recovery — Problem / Closure Context
 
-Estado: **VERIFIED**
+Estado: **CLOSED / HISTORICAL CONTEXT**
 
-Los procesos actuales usan watermarks/checkpoints para evitar trabajo repetido.
-
-Esto es correcto en producción.
-
-Pero dificulta pruebas y reparación cuando se elimina un materializado o se corrige un error sin que llegue un watermark nuevo.
-
-## KPI Runtime
-
-Hoy:
+El problema original era doble:
 
 ```text
-source observed == KPI committed
-→ up_to_date
-→ skip
+1. Runtime/Historian no podían rematerializar el watermark CURRENT sin nueva data.
+2. Delivery/Timeseries consumían un projection document KPI legacy distinto del KPI Registry durable CURRENT.
 ```
 
-Si el evaluation batch fue eliminado para reparar/reprobar:
+Ambos problemas están resueltos en `atlanticus@3ca8c833...`.
 
-```text
-watermark sigue current
-→ runtime no lo reconstruye
-```
+Runtime e Historian soportan `REPROCESS_CURRENT=false|true` con authority/fencing preservados.
 
-## Latest Delivery
+Delivery y Timeseries consumen el Registry durable sin dual reader ni fallback y materializan outputs Cosmos propios.
 
-Hoy:
-
-```text
-delivery checkpoint
-==
-KPI committed + config revision
-→ SKIPPED_CURRENT
-```
-
-Si se borra el snapshot publicado:
-
-```text
-checkpoint sigue current
-→ no republica
-```
-
-## Historian
-
-Hoy:
-
-```text
-historian authority == KPI committed
-→ SKIPPED_CURRENT
-```
-
-Si se borra/repara el dataset histórico:
-
-```text
-authority sigue current
-→ no rematerializa
-```
-
-## Timeseries Delivery
-
-Hoy:
-
-```text
-timeseries checkpoint == aligned historian watermark + config revision
-→ SKIPPED_CURRENT
-```
-
-Si se elimina el snapshot:
-
-```text
-checkpoint sigue current
-→ no republica
-```
-
-## Objetivo
-
-Poder reconstruir materializaciones con datos upstream existentes sin:
-
-- borrar manualmente todos los watermarks;
-- retroceder authorities;
-- esperar nueva data;
-- modificar source timestamps;
-- romper fencing/leases.
-
-Esto es una capacidad operacional de repair/test, no un modo de logging.
+Este documento conserva la motivación; ya no representa un gap OPEN.

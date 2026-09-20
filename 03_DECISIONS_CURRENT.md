@@ -4,20 +4,18 @@ Estado: **CURRENT**
 
 ## Baseline global
 
-| Decisión | Estado |
-|---|---|
-| Python 3.14.7 | DECIDED / LOCALLY USED / METADATA NOT YET GLOBALLY ALIGNED |
-| `python:3.14.7-slim-trixie` | DECIDED / NOT YET QUALIFIED GLOBALLY |
-| `uv`, no pip normal | CURRENT |
-| Definir contratos antes que consumidores | CURRENT |
-| Backend antes que frontend | CURRENT, salvo precondición durable ya cerrada para KPI |
-| Cutover raíz limpio | CURRENT |
-| No shims/adapters/aliases legacy | FROZEN |
-| No doble contrato | FROZEN |
-| Tests no son autoridad sobre contracts SUPERSEDED | FROZEN |
-| Un foco por incremento | FROZEN |
+```text
+Python 3.14.7
+uv, no pip normal
+contracts before consumers
+backend before frontend
+clean root cutover
+no legacy adapters/shims/aliases
+no double contract
+one focus per increment
+```
 
-## KPI Registry
+## KPI Registry / Definition
 
 CURRENT/FROZEN:
 
@@ -26,29 +24,7 @@ KpiRegistry
 KpiRegistryBinding
 SourceKey('kpis')
 ProjectionRecord[KpiRegistry]
-```
 
-Estructura:
-
-```text
-registry/core
-registry/configuration
-registry/projection-local
-registry/projection-cosmos
-```
-
-SUPERSEDED:
-
-```text
-ada.web.kpis.configuration
-KpiConfiguration*
-```
-
-## KPI Definition
-
-CURRENT/FROZEN:
-
-```text
 KpiDefinition
 KpiDefinitionConfiguration
 KpiDefinitionCatalog
@@ -56,46 +32,13 @@ SourceKey('kpi-definitions')
 ProjectionRecord[KpiDefinitionCatalog]
 ```
 
-Estructura:
-
-```text
-definition/core
-definition/configuration
-definition/projection-local
-definition/projection-cosmos
-```
-
-Dependency:
-
-```text
-Registry ProjectionTarget
-→ Definition ProjectionTarget
-```
-
-## KPI backend configuration consumption
-
-DECIDED:
-
-```text
-kpi-delivery
-kpi-timeseries-delivery
-```
-
-deben dejar de consumir el projection document legacy y leer el Registry durable publicado en
-Cosmos.
-
-No compatibility reader.
-
-No secondary schema.
-
-No duplicar Registry en otro documento backend.
-
 ## REPROCESS_CURRENT
 
-Nombre contractual:
+Implementado y CURRENT sólo en:
 
 ```text
-REPROCESS_CURRENT
+KPI Runtime
+KPI Historian
 ```
 
 Default:
@@ -104,79 +47,86 @@ Default:
 false
 ```
 
-DECIDED / PLANNED:
+Nunca bypass:
 
 ```text
-KPI Runtime
-Historian
-```
-
-Semántica:
-
-```text
-false
-→ comportamiento normal
-
-true
-→ bypass exclusivamente del shortcut "already current"
-```
-
-Se preservan:
-
-```text
-authority
-watermark ordering
+authority ordering
+watermark regression checks
 lease
 cancellation
 fencing
-conflict detection
+write conflict detection
 ```
 
-Para Historian, forced-current debe releer desde inicio hasta KPI committed current.
-
-## Delivery/Timeseries reprocess
-
-La propuesta histórica de dar `REPROCESS_CURRENT` también a Delivery y Timeseries queda:
+Delivery/Timeseries reprocess permanece:
 
 ```text
 PROPOSED / DEFERRED / NOT AUTHORIZED
 ```
 
-No mezclar con el cutover de consumo Registry.
+## Backend Registry consumption
+
+Delivery y Timeseries leen directamente el KPI Registry durable desde Cosmos.
+
+Cada proceso posee su reader y traducción interna. No existe librería compartida creada sólo para deduplicar esta frontera.
+
+```text
+shared Registry reader implementation
+SUPERSEDED
+
+independent process-owned readers
+CURRENT
+```
+
+## Cosmos configuration
+
+CURRENT:
+
+```text
+connection credentials + database name
+→ external configuration / ENV
+
+container identity + topology + document contract
+→ internal process contract
+```
+
+Cada proceso:
+
+```text
+consumed Registry container
+→ validate/read only
+→ never provision
+
+owned output container
+→ ensure once at startup
+→ never ensure per iteration
+```
+
+La database permanece infraestructura externa; estos procesos no asumen ownership de crearla.
 
 ## Collector
 
+El gate KPI backend ya está cerrado.
+
 ```text
 ADA-GENERIC-COLLECTOR-CLOSURE
-BLOCKED
-```
-
-Se abre sólo después de cerrar la cadena KPI backend.
-
-## Testing
-
-Automatizar:
-
-```text
-behavior
-contracts
-invariants
-regressions
-critical flows
-```
-
-No crear tests cuyo único objetivo sea:
-
-```text
-CSS visual
-existencia/no existencia de functions/classes
-estructura interna
-source token presence
-```
-
-## Siguiente foco
-
-```text
-KPI-RUNTIME-REPROCESS-CURRENT
 PLANNED / NEXT
 ```
+
+Decisión vigente:
+
+```text
+Latest y Timeseries deben tener intervalos de lectura distintos.
+Latest es prioritario.
+```
+
+OPEN, no decidido todavía:
+
+```text
+intervalos numéricos
+mecanismo de sincronización entre ambos reads
+forma exacta de actualización de stores UI
+shape exacta de composición Collector
+```
+
+El contrato Tool CURRENT debe ser la base para resolver component/destination mapping; no crear un contrato paralelo.

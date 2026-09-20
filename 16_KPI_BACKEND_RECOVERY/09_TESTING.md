@@ -1,90 +1,46 @@
 # KPI Backend Recovery — Testing
 
-Estado: **CURRENT PLAN**
+Estado: **VERIFIED / CLOSED**
 
-Tests de comportamiento, no de existencia de flags/functions.
-
-## KPI Runtime
+## Runtime
 
 ```text
-current + flag false
-→ skip
-
-current + flag true + missing batch
-→ rebuild
-
-current + flag true + same batch
-→ idempotent
-
-current + flag true + conflicting batch
-→ error
-
-source regression + flag true
-→ error
-
-source missing + flag true
-→ no fabrication
+43 process tests PASS
+10 persistence tests PASS
+Ruff PASS
+format PASS
+diff check PASS
 ```
 
-## Delivery Registry consumption
-
-Probar:
+## Delivery / Timeseries
 
 ```text
-valid Registry projection document
-→ configuration effective correcta
-
-wrong document_type/schema
-→ error
-
-missing Registry projection
-→ explicit error
-
-binding kpi_key/destinations/latest/series semantics preserved
-
-legacy ada_kpi_configuration_projection
-→ not accepted by CURRENT consumer
+32 Delivery tests PASS
+22 Timeseries tests PASS
+28 delivery-domain tests PASS
+Ruff PASS
+format PASS
+diff check PASS
 ```
-
-No crear un test cuya única finalidad sea comprobar un import concreto o la existencia de una
-clase.
-
-## Timeseries Registry consumption
-
-Mismo contrato Registry que Delivery.
-
-Probar además que series settings (`series_enabled`, `series_hours`) llegan intactos al
-comportamiento de Timeseries.
 
 ## Historian
 
 ```text
-current + flag false
-→ skip
-
-current + flag true
-→ read from beginning through committed
-
-deleted history
-→ rebuilt
-
-existing history
-→ convergent/idempotent merge
-
-authority ahead of KPI
-→ error
+37 Historian tests PASS
+4 focused recovery tests PASS
+22 history-domain tests PASS
+10 persistence tests PASS
+Ruff PASS
+format PASS
+diff check PASS
 ```
 
-## Common
+## Full backend pytest
+
+Observed collection failures around `tests.support` across packages.
 
 ```text
-cancellation respected
-lease respected
-fencing respected
-default false
-facts distinguish forced execution when contract decides expose them
+BLOCKED / TEST-COLLECTION TOPOLOGY
+UNVERIFIED AS PREEXISTING
+OUTSIDE THIS CLOSED INCREMENT
 ```
-
-## No incluido
-
-No agregar tests de Delivery/Timeseries reprocess mientras esa capacidad siga no autorizada.

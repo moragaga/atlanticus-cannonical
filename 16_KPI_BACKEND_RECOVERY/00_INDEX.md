@@ -1,35 +1,29 @@
 # KPI Backend Recovery / Registry Consumption — Index
 
-Estado: **PLANNED / EXECUTION READY**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
-Precondición Web:
+Autoridad implementada:
 
 ```text
-KPI Registry durable
-CLOSED / VERIFIED / CURRENT
-
-KPI Definition durable
-CLOSED / VERIFIED / CURRENT
+moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
 ```
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_PROBLEM.md` | Por qué checkpoints actuales dificultan recovery/tests. | VERIFIED |
-| `02_REPROCESS_CONTRACT.md` | Semántica común de reproceso autorizada. | DECIDED |
-| `03_KPI_RUNTIME.md` | Reevaluar watermark actual sin dato nuevo. | PLANNED / NEXT |
-| `04_LATEST_DELIVERY.md` | Migración de consumer a KPI Registry durable; reprocess separado. | PLANNED |
-| `05_HISTORIAN.md` | Reconstruir historia desde durable evaluations. | PLANNED |
-| `06_TIMESERIES_DELIVERY.md` | Migración de consumer a KPI Registry durable; reprocess separado. | PLANNED |
-| `07_SAFETY_RULES.md` | Gates que jamás se bypassan. | CURRENT |
-| `08_CONFIGURATION.md` | `REPROCESS_CURRENT` para jobs autorizados. | DECIDED |
-| `09_TESTING.md` | Casos de comportamiento para la secuencia actual. | CURRENT PLAN |
+| `01_PROBLEM.md` | Problema que motivó recovery y cutover. | CLOSED / HISTORICAL CONTEXT |
+| `02_REPROCESS_CONTRACT.md` | Semántica implementada de reprocess autorizado. | CURRENT |
+| `03_KPI_RUNTIME.md` | Runtime forced-current. | CLOSED / VERIFIED / CURRENT |
+| `04_LATEST_DELIVERY.md` | Registry consumer + owned output. | CLOSED / VERIFIED / CURRENT |
+| `05_HISTORIAN.md` | Historian full replay CURRENT. | CLOSED / VERIFIED / CURRENT |
+| `06_TIMESERIES_DELIVERY.md` | Registry consumer + owned output. | CLOSED / VERIFIED / CURRENT |
+| `07_SAFETY_RULES.md` | Gates preservados. | CURRENT |
+| `08_CONFIGURATION.md` | Flags/ENV/container ownership. | CURRENT |
+| `09_TESTING.md` | Qualification observada. | VERIFIED |
 | `10_SOURCE_LEDGER.md` | Código CURRENT inspeccionado. | AUDIT LEDGER |
 
-## Orden de ejecución
+Siguiente frontera:
 
 ```text
-1. KPI Runtime reprocess
-2. Delivery + Timeseries Registry consumption
-3. Historian reprocess
-4. ADA Generic Collector
+ADA-GENERIC-COLLECTOR-CLOSURE
+PLANNED / NEXT
 ```

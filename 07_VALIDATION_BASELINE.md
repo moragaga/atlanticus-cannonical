@@ -2,152 +2,70 @@
 
 Estado: **CURRENT**
 
-## Autoridad de implementación
+## Autoridad
 
 ```text
-moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
 ```
 
-Parent:
+## KPI Runtime recovery — VERIFIED
+
+Observado en workspace real:
 
 ```text
-107c7570061e0d31828b1d3e9b9fc6336a698809
+processes/kpi-runtime/tests    43 passed
+kpis/persistence/tests        10 passed
+ruff check                    PASS
+ruff format --check           PASS
+git diff --check              PASS
 ```
 
-Tree:
+Además se verificó comportamiento forced-current, preservación de `evaluated_at_utc`, conflicto durable ante resultado distinto y rechazo de regression.
+
+## Delivery + Timeseries Registry cutover — VERIFIED
 
 ```text
-41c299861d14a9691cbd3461dbca8bb466dfc156
+processes/kpi-delivery/tests             32 passed
+processes/kpi-timeseries-delivery/tests  22 passed
+kpis/delivery/tests                      28 passed
+ruff check                               PASS
+ruff format --check                      PASS / 64 files formatted
+git diff --check                         PASS
 ```
 
-## Regla
-
-Qualification y tests son evidencia de propiedades del contrato CURRENT.
-
-No son autoridad para conservar contratos, schemas, adapters o aliases SUPERSEDED.
-
-No inventar un PASS no observado.
-
-## KPI Registry cutover — evidencia observada
+## Historian recovery — VERIFIED
 
 ```text
-Registry Core                  6 PASS
-Registry Configuration       30 PASS
-Registry Projection Local     2 PASS
-Registry Projection Cosmos    3 PASS
-Definition alignment         35 PASS
-Configuration Manager        32 PASS
-
-TOTAL
-108 PASS
+processes/kpi-historian/tests            37 passed
+focused recovery tests                    4 passed
+kpis/history/tests                       22 passed
+kpis/persistence/tests                   10 passed
+ruff check                               PASS
+ruff format --check                      PASS / 23 files formatted
+git diff --check                         PASS
 ```
 
-Además se verificó:
+El integration test verifica reconstrucción de history eliminado desde durable batch.
 
-```text
-legacy symbol scan
-clean en alcance migrado
-
-Registry CSS
-byte-identical
-
-Registry css.list
-byte-identical
-
-Registry IDs
-byte-identical
-```
-
-## KPI Definition cutover — evidencia observada
-
-```text
-Definition Core              14 PASS
-Definition Configuration     23 PASS
-Definition Projection Local   3 PASS
-Definition Projection Cosmos  4 PASS
-Configuration Manager        32 PASS
-
-TOTAL
-76 PASS
-```
-
-Además se verificó:
-
-```text
-legacy monolithic import scan
-clean en Definition + Manager
-
-Definition CSS
-byte-identical
-
-Definition css.list
-byte-identical
-
-Definition IDs
-byte-identical
-
-git diff --check
-PASS
-```
-
-## Política de tests Web
-
-Probar:
-
-```text
-behavior
-contracts
-invariants
-regressions
-critical flows
-```
-
-No crear tests cuyo único objetivo sea:
-
-```text
-CSS visual
-responsive
-spacing
-branding
-apariencia
-estructura visual
-existencia/no existencia de funciones o clases
-implementación accidental
-```
-
-Los mirrors pedagógicos existentes pueden verificar equivalencia cuando esa entrega es una regla
-explícita del módulo.
-
-## Python metadata
-
-Baseline Project:
-
-```text
-Python 3.14.7
-```
-
-Packages KPI CURRENT observados:
-
-```text
-requires-python ==3.14.2
-```
-
-Estado:
-
-```text
-PYTHON-METADATA-ALIGNMENT
-OPEN / SEPARATE
-```
-
-## UNVERIFIED
+## UNVERIFIED / SEPARATE
 
 ```text
 remote CI
 full monorepo pytest
 full workspace Ruff
-targeted Ruff de los dos cutovers KPI
 python:3.14.7-slim-trixie global qualification
-Azure productive wiring de nuevos resources Cosmos KPI
+Azure productive wiring of the final KPI resources
 ```
 
-Git continúa SOLO LECTURA para el asistente.
+Una ejecución global de backend pytest observó errores de collection por `tests.support` en múltiples paquetes.
+
+Clasificación exacta:
+
+```text
+FULL BACKEND PYTEST
+BLOCKED / TEST-COLLECTION TOPOLOGY
+UNVERIFIED AS PREEXISTING
+OUTSIDE KPI RECOVERY INCREMENTS
+```
+
+No convertirlo en PASS ni declararlo preexistente sin baseline comparativo.
