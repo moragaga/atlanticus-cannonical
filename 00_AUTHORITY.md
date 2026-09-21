@@ -10,15 +10,15 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `21cfb2f11362c1606ad14ff8adc7551948eced6a`
+  `bc8eafc21a65e3f9aff044c232e2562cd490c49f`
 - Parent inmediato:
-  `6155dae407dc784114ff34c7b3b6f93125432713`
+  `d6e405e6466b1bf8d29dadae442a03062da2f1b3`
 - Tree:
-  `48e4115a5fb53e64d83e2ae2243a9f11d612d26f`
+  `c26c0ee18161ca7fc49c439109bec99ecae77476`
 - Fecha del commit:
-  `2026-09-21T03:39:24Z`
+  `2026-09-21T11:17:34Z`
 
-Estado acumulado relevante para este cierre:
+Estado acumulado relevante:
 
 ```text
 ADA-STORAGE-NAMESPACE                         CLOSED / VERIFIED / CURRENT
@@ -26,8 +26,12 @@ TOOL-PROJECTION-PERSISTENCE                   CLOSED / VERIFIED / CURRENT
 TOOL-PERSISTENCE-RESILIENT-COMPOSITION        CLOSED / VERIFIED / CURRENT
 
 ADA-WEB-KPI-COLLECTOR-CAPABILITY              CLOSED / VERIFIED / CURRENT
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP             CLOSED / VERIFIED / CURRENT
+ADA-GENERIC-COLLECTOR-RUNTIME-WIRING          CLOSED / VERIFIED / CURRENT
+ADA-GENERIC-OPERATIONAL-RENDER-RUNTIME-CONTRACT
+                                               CLOSED / VERIFIED / CURRENT
 
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP             PLANNED / NEXT
+ADA-GENERIC-STAGE-1                           CLOSED / VERIFIED / CURRENT
 ```
 
 ### Canonical
@@ -35,23 +39,24 @@ ADA-GENERIC-OPERATIONAL-BOOTSTRAP             PLANNED / NEXT
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `4058aab3525a09b568b80f3f6a5265e45e4f6fea`
+  `5c29631526939c52528e147b4a83e5557e610bf0`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
 
-## Referencia histórica
+### Historical decisions
 
-`moragaga/atlanticus-decisions` permanece **HISTORICAL**.
+- Repositorio: `moragaga/atlanticus-decisions`
+- Rama: `main`
+- Checkpoint observado:
+  `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`
 
-Checkpoint observado:
+Permanece **HISTORICAL**.
 
-```text
-50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-No se auditó el contenido binario de decisiones históricas durante este cierre.
-Cualquier contradicción específica adicional con decisiones antiguas permanece `UNVERIFIED`.
+No se verificó una decisión histórica específica que contradiga el cierre de ADA Generic Stage 1.
+Las búsquedas por bootstrap, operational render y Command Center Alarm Configuration no devolvieron
+un contrato histórico aplicable. Cualquier contradicción histórica adicional permanece
+`UNVERIFIED`.
 
 ## Jerarquía
 
@@ -138,18 +143,6 @@ tool namespace
 SourceKey
 ```
 
-Ejemplo lógico:
-
-```text
-conciencia_situacional/
-├── users/
-└── operaciones_integradas/
-    ├── sources/
-    └── projections/
-```
-
-`users` permanece global a la aplicación.
-
 El root de Tool entregado al Source provider termina en:
 
 ```text
@@ -162,52 +155,31 @@ El root de Tool entregado al Source provider termina en:
 sources/<SourceKey>
 ```
 
-No hacer que la composición conozca ni duplique ese segmento.
+La composición no conoce ni duplica ese segmento.
 
 ## Tool Projection CURRENT
 
-Persistencia durable implementada:
+Persistencia durable:
 
 ```text
 LocalToolProjectionStore
 CosmosToolProjectionStore
 ```
 
-El documento conserva:
+Runtime activo:
 
 ```text
-ProjectionRecord[ToolConfiguration]
-SourceKey
-SourceReleaseId
-source_published_at_utc
-projected_at_utc
-dependencies exactas
-payload ToolConfiguration
+resolve_active_tool_projection()
+→ durable Tool Projection
 ```
 
-Local:
+Source sólo participa en workflows de materialización/update:
 
 ```text
-<base>/<application>/<tool>/projections
+project_current_tool_source()
 ```
-
-Cosmos:
-
-```text
-partition_key = <application>/<tool>
-SourceKey     = tools
-```
-
-El namespace de deployment pertenece al store, no al contrato `SourceKey`.
 
 ## Tool persistence composition CURRENT
-
-Capability:
-
-```text
-scopes/ada/web/tools/persistence
-ada-web-tools-persistence==0.1.0
-```
 
 Providers independientes:
 
@@ -216,18 +188,7 @@ Source     = local | blob
 Projection = local | cosmos
 ```
 
-Combinaciones soportadas:
-
-```text
-local + local
-blob  + cosmos
-blob  + local
-local + cosmos
-```
-
-La construcción de `ToolPersistenceComposition` no ejecuta health check ni lectura remota.
-
-Resolución CURRENT:
+Estados de resolución:
 
 ```text
 READY
@@ -236,9 +197,7 @@ UNAVAILABLE
 INVALID
 ```
 
-`resolve_active_tool_projection()` lee Projection durable sin depender de Source.
-
-`project_current_tool_source()` pertenece al flujo Source -> Projection.
+La composición no ejecuta health checks ni lecturas remotas obligatorias durante construcción.
 
 ## Invariante de disponibilidad
 
@@ -252,57 +211,98 @@ EXTERNAL INFRASTRUCTURE AVAILABILITY
 BUSINESS DATA AVAILABILITY
 ```
 
-La ausencia de Source/Projection/KPI data no debe definir la existencia del proceso Web.
+ADA Generic aplica esta regla en su bootstrap CURRENT.
 
-Una conexión Blob/Cosmos caída debe degradar la capability afectada, no convertirse
-automáticamente en caída global de la aplicación.
+`UNCONFIGURED`, `UNAVAILABLE` e `INVALID` de Tool no eliminan la Web base.
 
-La integración de esta regla en el bootstrap real de ADA Generic todavía está `PLANNED`.
+La ausencia de KPI Delivery no define la existencia del proceso Web.
 
-## Collector KPI CURRENT
+## ADA Generic Stage 1 CURRENT
 
-El Collector permanece cerrado y CURRENT.
-
-No rediseñar:
+Cadena implementada:
 
 ```text
-Latest polling      = 10 s default
-Timeseries polling  = 120 s default
-Browser cache read  = 10 s default
-Latest priority     = before Timeseries when both are due
-1 ToolComponent     = 1 logical KPI Store
-Subcomponent        != Store
-browser             = cache only
-```
-
-## Siguiente foco único
-
-```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
-```
-
-Debe conectar la configuración Web real con:
-
-```text
-environment/.env
+environment / .env
 → provider settings
 → AdaStorageNamespace
 → ToolPersistenceComposition
 → resolve_active_tool_projection()
-→ ADA Generic runtime/composition
+→ ToolStructure
+→ AdaKpiCollector
+→ Latest Delivery / Timeseries Delivery
+→ process cache
+→ browser dcc.Store por ToolComponent
+→ frontera de consumo del desarrollador
 ```
 
-Mantener la Web ejecutable en:
+Semántica congelada:
 
 ```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
+Latest polling      = 10 s default
+Timeseries polling  = 120 s default
+Browser refresh     = 10 s default
+Latest priority     = before Timeseries when both are due
+1 ToolComponent     = 1 logical/browser KPI Store
+Subcomponent        != Store
+browser             = cache only
 ```
 
-sin reabrir Source, Projection, namespace ni Collector.
+## Frontera de render CURRENT
 
-El Collector se conecta después de resolver Tool/Structure; su ausencia de datos debe seguir
-siendo degradable y no una precondición de existencia de la Web.
+`OperationalRenderBinding` es estructural.
+
+Contiene:
+
+```text
+ToolStructure
+OperationalComponentBinding -> ToolComponent
+```
+
+No contiene:
+
+```text
+ComponentStoreSnapshot
+KPI payload
+Collector state
+browser state
+```
+
+`AdaKpiCollector` no depende de `ada-web-operational-render-binding`.
+
+ADA Generic entrega los datos operacionales hasta los `dcc.Store` existentes.
+
+La visualización concreta de una Tool pertenece al desarrollador/aplicación específica.
+
+Por tanto:
+
+```text
+ADA-GENERIC-OPERATIONAL-STORE-TO-RENDER-WIRING
+SUPERSEDED / NOT REQUIRED
+```
+
+No crear body genérico obligatorio, adapter de KPI a render ni segunda copia de estado.
+
+## Siguiente foco único
+
+```text
+ADA-COMMAND-CENTER-ALARM-CONFIGURATION
+PLANNED / NEXT
+```
+
+El siguiente chat debe auditar primero contratos e implementación CURRENT de Command Center y
+Alarm Engine antes de diseñar o implementar.
+
+Objetivo de siguiente frontera:
+
+```text
+human authoring
+→ Alarm Configuration contract
+→ validation
+→ Source / Release
+→ durable Projection / materialization
+→ Alarm Engine consumption
+→ alarm state delivery boundary
+→ developer-owned visualization
+```
+
+No implementar esa cadena desde este cierre.

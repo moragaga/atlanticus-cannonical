@@ -5,84 +5,92 @@ Estado: **AUDIT LEDGER**
 ## Implementación CURRENT auditada
 
 ```text
-moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
 ```
 
-### KPI Registry / Definition
-
-Los cutovers previos permanecen CLOSED / VERIFIED / CURRENT.
-
-### KPI Collector
+Parent:
 
 ```text
-scopes/ada/web/kpis/collector/src/ada/web/kpis/collector/
+d6e405e6466b1bf8d29dadae442a03062da2f1b3
 ```
 
-Inspeccionado especialmente:
+Tree:
 
 ```text
-collector.py
-cosmos.py
-integration.py
-presentation.py
-runtime.py
+c26c0ee18161ca7fc49c439109bec99ecae77476
 ```
 
-Tests de cierre:
+## Checkpoints ADA Generic observados
 
 ```text
-test_integration.py
-test_runtime.py
-test_web_application.py
+01a4387d9f73aceb83441d2f26f94ad9025a661c
+Operational bootstrap
+
+940336d5b704d10280cc2375e68c60b45f235eb0
+Settings dependency hygiene
+
+d6e405e6466b1bf8d29dadae442a03062da2f1b3
+Collector runtime wiring
+
+bc8eafc21a65e3f9aff044c232e2562cd490c49f
+Operational Render structural cutover
+Stage 1 closure
 ```
 
-### Atlanticus Web Core
+## Scopes relevantes
 
 ```text
-web/framework/core/src/atlanticus/web/application.py
-web/framework/core/src/atlanticus/web/services.py
-web/framework/core/src/atlanticus/web/modules.py
-web/framework/core/tests/test_observability_service.py
-web/framework/core/tests/test_modular_composition.py
+scopes/ada/web/application/ada-generic-application/
+scopes/ada/web/kpis/collector/
+scopes/ada/web/operational-render-binding/
+scopes/ada/web/tools/persistence/
+scopes/ada/web/storage/namespace/
+web/framework/core/
+connectivity/storage/
+connectivity/cosmos/
 ```
 
-### Web Observability
+## Qualification observada de cierre
 
 ```text
-web/framework/observability/src/atlanticus/web/observability/
-```
-
-Public contract added/current:
-
-```text
-WEB_OBSERVABILITY_SERVICE_KEY
-```
-
-## Qualification observed
-
-```text
-kpi-collector official gate 53 passed
-application official gate   63 passed
-Web Observability package   PASS
-Atlanticus Web Core package PASS
+operational-render-binding  7 passed
+kpis/collector              56 passed
+ada-generic-application     86 passed
+total                       149 passed
+ruff                        PASS
 git diff --check            PASS
 ```
 
 ## Conflict ledger
 
-Canonical before replacement still described Collector as PLANNED and several implemented
-contracts as OPEN.
+Canonical inspeccionado antes de este reemplazo:
+
+```text
+moragaga/atlanticus-cannonical@5c29631526939c52528e147b4a83e5557e610bf0
+```
+
+Todavía describía:
+
+```text
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+PLANNED / NEXT
+```
+
+y una ruta startup ya removida.
+
+Clasificación:
 
 ```text
 IMPLEMENTATION CURRENT
 CANONICAL STALE
 ```
 
-KPI Inspection Definition provider remains a separate historical-contract issue:
+## Historical decisions
 
 ```text
-OPEN / SEPARATE
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-No conflict específico con `atlanticus-decisions` fue verificado en este cierre; ese repository
-permanece HISTORICAL y sus documentos binarios no fueron re-auditados.
+No se verificó un conflicto específico aplicable en este cierre.
+
+Permanece HISTORICAL.

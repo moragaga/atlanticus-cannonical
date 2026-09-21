@@ -64,64 +64,80 @@ configuration_revision
 tool_projection_revision
 ```
 
-Missing/invalid data no debe reemplazar un último estado bueno válido.
+Missing/invalid data no reemplaza un último estado bueno válido.
 
-## Web composition
+## Web composition CURRENT
 
-Attachment CURRENT:
+Attachment:
 
 ```text
 attach_ada_kpi_collector(WebApplicationDefinition, collector)
 ```
 
-Generic Application no depende obligatoriamente del Collector.
+ADA Generic puede existir sin Collector.
 
-## Refinamiento del siguiente paso
+Con Tool `READY` y configuración KPI Delivery completa, el bootstrap adjunta Collector antes de
+crear el runtime Web.
 
-El canonical anterior decía:
+Tool Projection Cosmos y KPI Delivery Cosmos son conexiones conceptualmente separadas.
 
-```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
-PLANNED / NEXT
-```
+## Browser delivery boundary
 
-Ese orden quedó refinado.
-
-Antes del attachment operacional ya se cerraron:
+Collector Web integration publica:
 
 ```text
-AdaStorageNamespace
-Tool Projection durable local/cosmos
-ToolPersistenceComposition
-Tool projection resilient resolution
+1 dcc.Store por ToolComponent
 ```
 
-Por tanto el próximo foco ya no es diseñar ni conectar Collector directamente desde Source.
+El navegador consume cache de proceso.
 
-Siguiente:
+No lee Cosmos inline.
+
+## Render dependency removed
+
+El contrato anterior:
 
 ```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
+collector.operational_render_binding
+OperationalComponentBinding.store
+bind_operational_render(structure, stores)
 ```
 
-Luego, con Tool Projection `READY`:
+fue eliminado.
+
+CURRENT:
 
 ```text
-ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
-PLANNED / AFTER BOOTSTRAP
+AdaKpiCollector
+does not depend on
+ada-web-operational-render-binding
 ```
+
+`OperationalRenderBinding` no transporta snapshots del Collector.
+
+## Handoff
+
+```text
+Collector
+→ browser dcc.Store
+→ developer / concrete Tool visualization
+```
+
+La representación visual específica queda fuera del Collector y fuera del ownership genérico de
+ADA Generic.
 
 ## No reabrir
 
 ```text
 polling intervals
 one-store-per-component
+Subcomponent boundary
 Latest priority
 server compatibility
 browser merge semantics
 WebObservability service
 attachment contract
+render/data separation
 ```
 
 salvo conflicto demostrado por implementación CURRENT.

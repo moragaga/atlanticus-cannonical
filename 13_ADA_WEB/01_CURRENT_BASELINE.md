@@ -5,36 +5,16 @@ Estado: **CURRENT**
 ## Implementación auditada
 
 ```text
-moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
 ```
 
 ## KPI Registry
-
-```text
-scopes/ada/web/kpis/registry/
-├── core
-├── configuration
-├── projection-local
-└── projection-cosmos
-```
-
-Status:
 
 ```text
 CLOSED / VERIFIED / CURRENT
 ```
 
 ## KPI Definition
-
-```text
-scopes/ada/web/kpis/definition/
-├── core
-├── configuration
-├── projection-local
-└── projection-cosmos
-```
-
-Status:
 
 ```text
 CLOSED / VERIFIED / CURRENT
@@ -47,7 +27,7 @@ scopes/ada/web/kpis/collector
 ada-web-kpi-collector==0.1.0
 ```
 
-Core public capability includes:
+Public capability incluye:
 
 ```text
 AdaKpiCollector
@@ -67,43 +47,86 @@ Timeseries polling 120 s
 Browser refresh     10 s
 ```
 
-One Component Store per Tool Component.
+One Component Store per ToolComponent.
 
-## Atlanticus Web observability service
+Subcomponent no posee store propio.
 
-Public service key:
+## ADA Generic operational bootstrap
+
+CURRENT:
 
 ```text
-WEB_OBSERVABILITY_SERVICE_KEY = atlanticus.web.observability
+AdaGenericSettings
+→ ToolPersistenceComposition
+→ durable Tool Projection resolution
+→ WebApplicationDefinition
 ```
 
-`create_web_application()` registers the runtime-owned `WebObservability` instance before module
-service registration and freezes the registry after modules register.
-
-Collector declares this service requirement and uses the same runtime observability instance.
-
-## Collector Web lifecycle
+Tool resolution:
 
 ```text
-health/assets/auth infrastructure request
-→ poller remains stopped
-
-real application request
-→ per-worker poller starts
-→ refresh happens outside request thread
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
 ```
 
-The browser callback reads only in-process snapshot state.
+Estados degradados preservan Web base según contrato.
 
-## Generic Application compatibility
+## Collector runtime wiring
 
-Generic Application remains valid without Collector.
-
-Qualification after Collector closure:
+Con Tool `READY` y KPI Delivery configurado:
 
 ```text
-scripts/scopes/ada/check.sh application
-63 passed
+ToolStructure
+→ AdaKpiCollector
+→ attach_ada_kpi_collector
+→ Web runtime
+```
+
+Tool Projection y KPI Delivery usan settings/conexiones independientes.
+
+Collector no realiza polling durante composition.
+
+## Operational Render boundary
+
+CURRENT:
+
+```text
+OperationalRenderBinding
+→ structure only
+```
+
+No incluye `ComponentStoreSnapshot`.
+
+Collector no depende del package `ada-web-operational-render-binding`.
+
+## Generic data delivery boundary
+
+```text
+Cosmos KPI Delivery
+→ Collector
+→ worker cache
+→ dcc.Store / ToolComponent
+→ developer
+```
+
+ADA Generic no es owner del body específico de una Tool.
+
+## Qualification de cierre
+
+Observado antes del checkpoint final:
+
+```text
+operational-render-binding  7 passed
+kpis/collector              56 passed
+ada-generic-application     86 passed
+
+TOTAL                       149 passed
+
+ruff check                  PASS
+ruff format --check         PASS
+git diff --check            PASS
 ```
 
 ## Python
@@ -114,22 +137,24 @@ Project baseline:
 3.14.7
 ```
 
-Some package metadata remains observed at:
+Se mantiene el open item preexistente de metadata en packages que todavía declaren:
 
 ```text
 requires-python ==3.14.2
 ```
 
-Classification:
+Clasificación:
 
 ```text
 PYTHON-METADATA-ALIGNMENT
 OPEN / SEPARATE
 ```
 
-## Separate conflict
+No pertenece a ADA Generic Stage 1.
 
-KPI Inspection Definition provider still consumes a historical Definition contract.
+## Estado
 
-It does not belong to Collector operational integration unless a direct dependency is later
-demonstrated.
+```text
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
+```

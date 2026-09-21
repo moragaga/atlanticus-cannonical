@@ -1,17 +1,17 @@
 # ADA Generic — Current Composition
 
-Estado: **VERIFIED / GAP IDENTIFIED**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
 Implementación auditada:
 
 ```text
 scopes/ada/web/application/ada-generic-application
-moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
+moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
 ```
 
 ## Composición base CURRENT
 
-ADA Generic compone entre otras capacidades:
+ADA Generic compone capacidades como:
 
 ```text
 branding
@@ -30,83 +30,110 @@ session/runtime Web
 
 La composición base existe independientemente de Collector.
 
-## Tool resolution CURRENT dentro de ADA Generic
+## Bootstrap operacional CURRENT
 
-El archivo:
+Entrada:
 
 ```text
-ada/web/application/generic/operational_tool.py
+AdaGenericSettings
 ```
 
-todavía contiene:
+Cadena:
+
+```text
+environment / .env
+→ Tool persistence settings
+→ optional Storage client
+→ optional Tool Projection Cosmos client
+→ ToolPersistenceComposition
+→ resolve_operational_tool_projection()
+→ resolve_active_tool_projection()
+```
+
+No existe la ruta startup legacy basada en:
 
 ```text
 _StartupToolProjectionStore
-resolve_current_tool_projection(...)
+resolve_current_tool_projection
 ```
 
-El resolver:
+Esos símbolos no están presentes en `main` para este cierre.
+
+## Tool resolution
+
+Estados:
 
 ```text
-SourceStore
-→ select current Source
-→ project into in-process store
-→ return ProjectionRecord
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
 ```
 
-y si Source current no existe:
+`READY` exige además validación operacional ADA de la `ToolConfiguration`.
+
+Estados no READY mantienen disponible la Web base con diagnóstico.
+
+No existe fallback silencioso a Source ni a otro provider.
+
+## Collector runtime wiring
+
+Cuando Tool está `READY` y KPI Delivery Cosmos está configurado:
 
 ```text
-RuntimeError('Operational Tool source has no current release')
+Tool Projection
+→ ToolStructure
+→ create_operational_kpi_collector()
+→ attach_operational_kpi_collector()
+→ create_web_application()
 ```
 
-Este comportamiento permanece implementado pero ya no representa la dirección final del
-bootstrap operacional.
+La conexión KPI Delivery usa configuración de consumo separada de Tool Projection.
 
-## Infraestructura Tool disponible fuera de Generic Application
+La ausencia completa de configuración KPI no elimina la Web.
 
-CURRENT en `main`:
+Collector permanece lazy respecto del polling.
+
+## Operational Render CURRENT
+
+`OperationalRenderBinding` es estructural:
 
 ```text
-AdaStorageNamespace
-
-LocalToolProjectionStore
-CosmosToolProjectionStore
-
-ToolPersistenceSettings
-ToolPersistenceComposition
-compose_tool_persistence
-
-resolve_active_tool_projection
-project_current_tool_source
+ToolStructure
+→ one OperationalComponentBinding per ToolComponent
 ```
 
-`resolve_active_tool_projection()` permite leer la Projection durable sin depender de Source.
+Fue removido el acoplamiento con `ComponentStoreSnapshot`.
 
-## __main__ CURRENT
+Collector no depende de `operational-render-binding`.
 
-Sigue siendo:
+## Data delivery boundary
+
+Collector publica browser stores existentes:
 
 ```text
-create_application_runtime()
-→ run_web_application(runtime)
+1 ToolComponent
+→ 1 dcc.Store
 ```
 
-No existe todavía wiring desde settings/environment hacia `ToolPersistenceComposition`.
+Subcomponents no crean store propio.
 
-## Collector
+ADA Generic termina su responsabilidad genérica en esa superficie de datos.
 
-Collector permanece opcional respecto de Generic Application.
+No construye un body obligatorio para cada Tool.
 
-No hardcodear Collector ni Cosmos dentro de la composición base.
-
-## Gap CURRENT
+## Estado del hito
 
 ```text
 ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
-```
+CLOSED / VERIFIED / CURRENT
 
-Debe reemplazar la dependencia startup in-process de Tool por la composición durable CURRENT,
-sin perder la capacidad de levantar la Web cuando no existe Tool o una dependencia externa está
-indisponible.
+ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
+CLOSED / VERIFIED / CURRENT
+
+ADA-GENERIC-OPERATIONAL-RENDER-RUNTIME-CONTRACT
+CLOSED / VERIFIED / CURRENT
+
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
+```

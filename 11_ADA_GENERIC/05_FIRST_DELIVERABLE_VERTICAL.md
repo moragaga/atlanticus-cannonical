@@ -1,65 +1,94 @@
 # ADA Generic — First Deliverable Vertical
 
-Estado: **PROPOSED / REQUIERE CIERRE DE BOOTSTRAP**
+Estado: **CURRENT / GENERIC STAGE 1 CLOSED / TOOL GOLDEN PATH OPEN**
 
-## Objetivo candidato
+## Separación de hitos
 
-Conseguir una primera ADA realmente ejecutable/demostrable sobre Atlanticus recorriendo una vertical completa.
+La base genérica y la primera vertical completa de una Tool no son el mismo entregable.
 
-No se considera entregable tener paquetes individuales GREEN sin integración usable.
+### ADA Generic Stage 1
 
-## Vertical candidata
+CLOSED:
 
-1. Configuration
-   - Tool/Structure vigente;
-   - KPI/Alarm config requerida;
-   - Component/Collector contract.
+```text
+Tool Projection durable
+→ resilient Tool resolution
+→ ToolStructure
+→ KPI Collector
+→ Latest / Timeseries
+→ process cache
+→ browser dcc.Store / ToolComponent
+→ developer handoff
+```
 
-2. Source
-   - Release Model;
-   - SourceStore contract;
-   - Local semantics;
-   - Blob provider cuando el contrato esté GREEN;
-   - Source release identificable.
+La base genérica entrega datos y contratos.
 
-3. Operational Data
-   - al menos un Component materializado por su Collector/Producer real;
-   - Store vacío y Store con datos son estados válidos.
+No posee la visualización específica de una Tool.
 
-4. KPI / Alarm
-   - integrar sólo lo necesario para esa Tool real;
-   - no reabrir los cores ya cerrados sin finding;
-   - Alarm Engine conserva qualification R3.5.
+### Tool Golden Path
 
-5. ADA Generic Web
-   - estructura nace de Configuration;
-   - datos actualizan estado;
-   - alarmas actualizan estado visual;
-   - header operacional ADA;
-   - navegación/runtime reales.
+Permanece OPEN.
 
-6. Manager
-   - administra configuración mediante su propia aplicación/header;
-   - Source/version/conflict observable;
-   - no se mezcla con shell operacional.
+Debe demostrar una Tool concreta recorriendo, según corresponda:
 
-7. E2E
-   - configuración → release → proyección/materialización → consumo → render;
-   - flujo verificable en Local primero;
-   - Blob después con semántica equivalente.
+```text
+Configuration
+→ Source / Release
+→ Projection / materialization
+→ Operational Data
+→ KPI
+→ Alarm
+→ concrete visualization
+→ Manager / operational workflows
+→ E2E
+```
 
-## Definition of Done candidata
+## Operaciones Integradas
 
-Existe una Tool concreta que puede:
-- abrirse en Manager;
-- validarse/publicarse;
-- producir un release identificable;
-- proyectarse/materializarse;
-- disponer de al menos un Component con contrato de datos;
-- consumir KPI/Alarm donde corresponda;
-- arrancar ADA Generic incluso con Store vacío;
-- actualizarse cuando llegan datos;
-- mostrar estado visual de alarma independiente del dato;
-- ejecutarse de punta a punta sin pasos ocultos no documentados.
+El orden funcional vigente permanece:
 
-Este alcance todavía debe calibrarse para escoger la Tool inicial más barata de integrar.
+```text
+1. Operaciones Integradas
+2. Mina
+```
+
+Operaciones Integradas es la primera Tool destinada a revelar gaps reales de consumo, layout,
+alarm integration y distribución.
+
+Sus casos visuales especiales no deben generalizarse automáticamente dentro de ADA Generic.
+
+## Criterio de cierre de ADA Generic Stage 1
+
+Cumplido:
+
+- runtime Tool read desde Projection durable;
+- estados degradados no eliminan Web base;
+- Collector wiring sobre Tool `READY`;
+- Latest y Timeseries con cadencias independientes;
+- un browser store por ToolComponent;
+- Subcomponent sin store propio;
+- separación estructural de Operational Render;
+- frontera explícita de entrega al desarrollador.
+
+## Lo que no pertenece al cierre genérico
+
+No es requisito de Stage 1:
+
+```text
+body universal
+cards KPI obligatorias
+layout de Operaciones Integradas
+visualización de Mina
+alarm visualization concreta
+```
+
+Esas decisiones pertenecen a consumidores concretos.
+
+## Siguiente frontera del Project
+
+Antes de continuar el Golden Path visual de una Tool, el siguiente foco solicitado es:
+
+```text
+ADA-COMMAND-CENTER-ALARM-CONFIGURATION
+PLANNED / NEXT
+```

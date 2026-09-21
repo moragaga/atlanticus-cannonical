@@ -1,77 +1,103 @@
 # ADA Generic — Scope
 
-Estado: **CURRENT**
+Estado: **CURRENT / STAGE 1 CLOSED**
 
 ## Propósito
 
-ADA Generic compone la base reutilizable necesaria para materializar una ADA.
+ADA Generic compone la base reutilizable necesaria para ejecutar una ADA sobre contratos
+configurados y entregar estado operacional consumible.
 
-No debe convertirse en una megaaplicación ni absorber cada regla de negocio de las capabilities ADA-specific.
+No debe convertirse en una megaaplicación ni absorber comportamiento visual específico de cada
+Tool.
 
 ## Frontera de ownership
 
 Atlanticus aporta infraestructura y capacidades genéricas.
 
-ADA puede poseer capabilities propias bajo `scopes/ada` y consumir esos contratos genéricos directamente.
+ADA puede poseer capabilities propias bajo `scopes/ada` y consumir esos contratos genéricos
+directamente.
 
-Ejemplos de capabilities ADA-specific:
+Integrar una capability no transfiere su ownership al core.
 
-```text
-Tools
-KPI Configuration
-KPI Definition
-future Access
-```
+El núcleo genérico de Atlanticus nunca depende de ADA.
 
-Estas capabilities no pasan a ser core genérico por usar:
+## Alcance CURRENT de ADA Generic
+
+Stage 1 resuelve:
 
 ```text
-SourceStore
-ProjectionStore
-SourceProjectionService
-Manager
-Navigation
-Profiles
-Users
+environment / .env
+→ provider settings
+→ Tool Projection durable
+→ Tool resolution
+→ ToolStructure
+→ KPI Collector cuando corresponde
+→ Latest / Timeseries
+→ process cache
+→ browser dcc.Store por ToolComponent
 ```
 
-## Alcance de composición
+La aplicación puede continuar existiendo aunque una capability operacional no esté configurada o
+esté temporalmente indisponible, de acuerdo con sus estados de resolución.
 
-ADA Generic puede integrar/resolver desde configuración:
+## Frontera de entrega
 
-- identidad de Tool;
-- Tool Structure;
-- branding;
-- navegación;
-- sources/participación;
-- Component/Collector contracts;
-- KPI configuration/definition;
-- alarm configuration/projection;
-- render binding;
-- runtime experience;
-- demás contratos configurables aprobados.
+La frontera genérica termina en la entrega del estado operacional al consumidor Web.
 
-Integrar no significa adquirir ownership del dominio ni moverlo al core Atlanticus.
+```text
+ADA Generic
+→ dcc.Store por ToolComponent
+→ END GENERIC DATA DELIVERY
+```
 
-## Handoff
+Desde ahí:
 
-Una vez resuelta la base/configuración, el usuario puede continuar construyendo o generando el código específico de su ADA sobre contratos estables.
+```text
+developer / concrete Tool application
+→ construye la visualización específica
+```
 
-ADA Generic habilita autoservicio/composición.
+Esto permite que una Tool como Operaciones Integradas tenga necesidades visuales especiales sin
+convertirlas en arquitectura obligatoria para Mina, Process u otras Tools.
 
-No sustituye el código específico cuando una Tool requiere comportamiento propio legítimo.
+## Operational Render
+
+`OperationalRenderBinding` conserva únicamente estructura:
+
+```text
+ToolStructure
+ToolComponent
+```
+
+No contiene estado KPI.
+
+No contiene `ComponentStoreSnapshot`.
+
+No representa una segunda ruta de datos.
 
 ## Regla canónica
 
 ```text
-GENERIC INFRASTRUCTURE
-reusable across products
+CONFIGURATION
+determines structure
 
-ADA-SPECIFIC DOMAIN
-remains under scopes/ada
+RUNTIME DATA
+determines state
 
-COMPOSITION
-explicitly connects both
+GENERIC APPLICATION
+delivers stable contracts and data boundaries
+
+CONCRETE TOOL / DEVELOPER
+owns specific visualization
 ```
 
-El núcleo genérico de Atlanticus nunca depende de ADA.
+No crear adapters, shims, aliases ni doble contrato para unir estas fronteras.
+
+## Estado
+
+```text
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
+```
+
+Nuevos trabajos en ADA Generic requieren un finding real descubierto por consumidores concretos.

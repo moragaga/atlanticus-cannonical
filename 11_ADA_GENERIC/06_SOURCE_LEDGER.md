@@ -6,99 +6,163 @@ Estado: **AUDIT LEDGER**
 
 ```text
 Implementation
-moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
+moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
 
 Parent
-6155dae407dc784114ff34c7b3b6f93125432713
+d6e405e6466b1bf8d29dadae442a03062da2f1b3
 
 Tree
-48e4115a5fb53e64d83e2ae2243a9f11d612d26f
+c26c0ee18161ca7fc49c439109bec99ecae77476
 
 Canonical inspected before replacement
-moragaga/atlanticus-cannonical@4058aab3525a09b568b80f3f6a5265e45e4f6fea
+moragaga/atlanticus-cannonical@5c29631526939c52528e147b4a83e5557e610bf0
 
 Historical decisions
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-## Checkpoints de este hito
+## Checkpoints relevantes
 
 ```text
-366e2bab5bd4de6cdf94773b4fc4be5d5b1f26c1
-Tool Source -> Tool Projection -> Collector factory baseline
-
-6155dae407dc784114ff34c7b3b6f93125432713
-AdaStorageNamespace
-Tool Projection document codec
-LocalToolProjectionStore
-CosmosToolProjectionStore
-
 21cfb2f11362c1606ad14ff8adc7551948eced6a
-ToolPersistenceSettings
-ToolPersistenceComposition
-resolve_active_tool_projection
-project_current_tool_source
+Tool persistence resilient composition baseline
+
+01a4387d9f73aceb83441d2f26f94ad9025a661c
+ADA Generic operational bootstrap
+
+940336d5b704d10280cc2375e68c60b45f235eb0
+explicit direct pydantic / pydantic-settings dependency hygiene
+
+d6e405e6466b1bf8d29dadae442a03062da2f1b3
+ADA Generic Collector runtime wiring
+
+bc8eafc21a65e3f9aff044c232e2562cd490c49f
+Operational Render structural cutover
+Collector/render decoupling
+ADA Generic Stage 1 final checkpoint
 ```
 
-## Sources CURRENT inspeccionadas
+La cadena de parents fue verificada en GitHub:
 
 ```text
-scopes/ada/web/storage/namespace/
-scopes/ada/web/tools/configuration/
-scopes/ada/web/tools/projection-local/
-scopes/ada/web/tools/projection-cosmos/
-scopes/ada/web/tools/persistence/
-scopes/ada/web/application/ada-generic-application/
-web/capabilities/source/local/
-web/capabilities/source/blob/
-web/capabilities/projection/core/
-connectivity/storage/
-connectivity/cosmos/
+21cfb2f
+→ 01a4387
+→ 940336d
+→ d6e405e
+→ bc8eafc
 ```
 
-## Qualification observada
+## Bootstrap qualification observada
+
+Antes de publicación del bootstrap:
 
 ```text
-storage namespace
-15 passed
-ruff check PASS
-ruff format --check PASS
-git diff --check PASS
+pytest
+83 passed
 
-Tool Projection persistence
-configuration codec 2 passed
-projection-local    3 passed
-projection-cosmos   5 passed
-ruff check PASS
+ruff check
+PASS
 
-Tool persistence composition
-10 passed
-ruff check PASS
-ruff format --check PASS
-git diff --check PASS
+ruff format --check
+PASS
+
+git diff --check
+PASS
 ```
 
-El rerun completo de Tool Projection persistence posterior al último format antes de
-`6155dae...` no fue mostrado; permanece `UNVERIFIED` como qualification final exacta, aunque la
-implementación publicada es CURRENT.
+## Collector runtime wiring qualification observada
+
+Antes de `d6e405e...`:
+
+```text
+ada-generic-application
+87 passed
+
+ruff check
+PASS
+
+ruff format --check
+PASS
+
+git diff --check
+PASS
+```
+
+## Operational Render structural cutover qualification observada
+
+Antes de `bc8eafc...`:
+
+```text
+operational-render-binding
+7 passed
+
+kpis/collector
+56 passed
+
+ada-generic-application
+86 passed
+
+TOTAL
+149 passed
+
+ruff check
+PASS
+
+ruff format --check
+PASS
+
+git diff --check
+PASS
+```
+
+`uv lock` observó además:
+
+```text
+operational-render-binding
+removed ada-web-components dependency
+
+kpis/collector
+removed ada-web-operational-render-binding dependency
+```
+
+## Cutover final
+
+Removido:
+
+```text
+OperationalComponentBinding.store
+bind_operational_render(structure, stores)
+collector.operational_render_binding
+collector -> operational-render-binding dependency
+```
+
+CURRENT:
+
+```text
+OperationalRenderBinding
+→ ToolStructure
+→ ToolComponent only
+```
 
 ## Canonical conflict before replacement
 
-Canonical `4058aab3525a09b568b80f3f6a5265e45e4f6fea` todavía describe como siguiente paso:
+Canonical `5c296315...` todavía declaraba:
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+PLANNED / NEXT
 ```
 
-pero implementación CURRENT ya añadió un prerrequisito arquitectónico/persistente que ese texto
-no refleja:
+y describía:
 
 ```text
-namespace
-Tool Projection durable
-provider composition
-resilient Tool resolution
+_StartupToolProjectionStore
+resolve_current_tool_projection
 ```
+
+como realidad implementada.
+
+Búsqueda sobre `atlanticus:main` en el checkpoint de cierre no devolvió esos símbolos.
 
 Clasificación:
 
@@ -108,20 +172,15 @@ CANONICAL STALE
 REPLACEMENT REQUIRED
 ```
 
-## Gap real CURRENT
+## Decisions
 
-ADA Generic todavía usa:
+No se verificó un conflicto específico aplicable en `atlanticus-decisions`.
 
-```text
-_StartupToolProjectionStore
-resolve_current_tool_projection
-```
+El repository permanece HISTORICAL.
 
-con fallo estricto ante ausencia de Source current.
-
-Siguiente frontera:
+## Estado final
 
 ```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
 ```

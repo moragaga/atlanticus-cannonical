@@ -1,17 +1,13 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT / BOOTSTRAP GAP OPEN**
+Estado: **CURRENT / STAGE 1 CLOSED**
 
-## Configuration chain CURRENT
+## Configuration chain
 
 ```text
 Tool Source
-    ↓ exact ProjectionTarget
+    ↓ exact ProjectionTarget during materialization workflow
 Tool Projection durable
-    ↓
-KPI Registry Projection
-    ↓
-KPI Definition Projection
 ```
 
 Tool Projection dispone de:
@@ -21,16 +17,16 @@ LocalToolProjectionStore
 CosmosToolProjectionStore
 ```
 
-y de composición de providers:
+Providers:
 
 ```text
-Source     local | blob
-Projection local | cosmos
+Source      local | blob
+Projection  local | cosmos
 ```
 
 ## Runtime Tool read
 
-Dirección CURRENT/FROZEN:
+CURRENT / FROZEN:
 
 ```text
 runtime
@@ -40,7 +36,7 @@ runtime
 
 No requiere Source disponible cuando ya existe Projection válida.
 
-Workflow de materialización:
+Materialization workflow separado:
 
 ```text
 project_current_tool_source()
@@ -49,20 +45,18 @@ project_current_tool_source()
 → durable Tool Projection
 ```
 
-No mezclar ambas operaciones.
+No mezclar runtime read y materialization.
 
 ## Regla maestra
 
 ```text
-CONFIGURATION DETERMINES EXISTENCE/STRUCTURE
-DATA DETERMINES STATE
-PERSISTED STATE DOES NOT DETERMINE WEB PROCESS EXISTENCE
+CONFIGURATION DETERMINES EXISTENCE / STRUCTURE
+DATA DETERMINES RUNTIME STATE
+PERSISTED BUSINESS DATA DOES NOT DETERMINE WEB PROCESS EXISTENCE
 ```
 
 ## Tool resolution states
 
-CURRENT:
-
 ```text
 READY
 UNCONFIGURED
@@ -70,79 +64,78 @@ UNAVAILABLE
 INVALID
 ```
 
-Semántica:
+Estos estados no se transforman automáticamente en caída global de Web.
 
-```text
-READY
-projection válida disponible
+## Operational data chain CURRENT
 
-UNCONFIGURED
-provider accesible pero no existe projection/configuración
-
-UNAVAILABLE
-infraestructura necesaria para esa operación no responde
-
-INVALID
-contrato/documento obtenido es inválido
-```
-
-Estos estados no deben transformarse automáticamente en caída global de la Web.
-
-## Operational data chain
-
-Cuando existe Tool READY:
+Con Tool `READY` y Collector configurado:
 
 ```text
 ToolStructure
     ↓
-KPI Runtime durable evaluations
+KPI Latest Delivery
+KPI Timeseries Delivery
     ↓
-KPI Historian
+AdaKpiCollector
     ↓
-Latest Delivery + Timeseries Delivery
-    ↓
-AdaKpiCollector process cache
+process cache
     ↓
 Component KPI browser stores
 ```
 
-## Collector CURRENT
+Collector defaults:
 
 ```text
-Latest poll      10 s default
-Timeseries poll 120 s default
-Browser refresh  10 s default
+Latest poll       10 s
+Timeseries poll  120 s
+Browser refresh   10 s
 ```
 
-One logical KPI store per Tool Component.
+Latest tiene prioridad cuando ambos reads están due.
 
-Subcomponents do not create stores.
+One logical/browser KPI store per ToolComponent.
 
-## Siguiente handoff
+Subcomponents no crean stores.
 
-Antes de conectar Collector al startup real debe cerrarse:
+## Render boundary
+
+Estructura:
 
 ```text
-environment/.env
-→ provider/client settings
-→ AdaStorageNamespace
-→ ToolPersistenceComposition
-→ resolve_active_tool_projection
-→ ADA Generic runtime/composition
+ToolStructure
+→ OperationalRenderBinding
 ```
 
-Clasificación:
+Datos:
 
 ```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
+Collector
+→ dcc.Store / ToolComponent
 ```
 
-Después:
+Son fronteras distintas.
+
+`OperationalRenderBinding` no transporta KPI state.
+
+## Handoff al desarrollador
+
+Stage 1 termina en:
 
 ```text
-ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
-PLANNED / AFTER BOOTSTRAP
+ToolStructure
++
+existing browser stores
+→ developer-owned concrete visualization
 ```
 
-No rediseñar Collector.
+ADA Generic no impone un layout/body universal.
+
+No requiere un incremento adicional de store-to-render wiring para declarar cerrada la entrega
+genérica de datos.
+
+## Estado
+
+```text
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
+```

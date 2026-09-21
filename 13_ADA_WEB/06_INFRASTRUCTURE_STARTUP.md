@@ -1,10 +1,10 @@
 # ADA Web — Infrastructure Startup
 
-Estado: **CURRENT CONTRACT / INTEGRATION PENDING**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
 ## Invariante
 
-ADA Generic debe poder levantar su composición base aunque:
+ADA Generic puede levantar su composición base aunque:
 
 ```text
 no exista Tool Source current
@@ -12,8 +12,7 @@ no exista Tool Projection
 no existan KPI
 no exista Latest
 no exista Timeseries
-Blob esté temporalmente indisponible
-Cosmos esté temporalmente indisponible
+una capability externa esté temporalmente indisponible
 ```
 
 La disponibilidad de una capability no define la existencia del proceso Web.
@@ -29,17 +28,10 @@ APPLICATION EXISTENCE
 
 ## Tool persistence CURRENT
 
-Infraestructura disponible:
-
 ```text
 AdaStorageNamespace
 ToolPersistenceSettings
 ToolPersistenceComposition
-```
-
-Resolver runtime:
-
-```text
 resolve_active_tool_projection()
 ```
 
@@ -52,46 +44,44 @@ UNAVAILABLE
 INVALID
 ```
 
-El resolver no consulta Source para leer Projection activa.
+Runtime activo no consulta Source para leer Projection durable.
 
-## Lazy provider composition
+## Bootstrap CURRENT
 
-`compose_tool_persistence()` construye stores/servicios sin ejecutar:
+ADA Generic consume la capability desde su startup real:
 
 ```text
-Storage health check
-Cosmos health check
-Source read
-Projection read
+AdaGenericSettings
+→ provider/client settings
+→ ToolPersistenceComposition
+→ resolve_operational_tool_projection()
+→ durable Tool Projection
+→ WebApplicationDefinition
 ```
 
-La conexión ocurre cuando la operación realmente lee/escribe.
-
-Esto permite que la creación de composición no dependa por sí sola de disponibilidad de red.
-
-## Estado de integración
-
-ADA Generic todavía no consume esta capability desde su startup real.
-
-CURRENT todavía contiene:
+La ruta anterior basada en:
 
 ```text
 _StartupToolProjectionStore
 resolve_current_tool_projection
 ```
 
-con `RuntimeError` cuando Source current no existe.
+fue removida.
 
-Por tanto:
+No existe fallback legacy.
 
-```text
-APPLICATION EMPTY/DEGRADED STARTUP
-DECIDED / INFRASTRUCTURE READY / APP WIRING NOT YET IMPLEMENTED
-```
+## Provider lifecycle
+
+Los clientes utilizados sólo para resolver Tool tienen lifecycle corto y se cierran después de la
+operación de bootstrap.
+
+KPI Delivery usa su propia configuración Cosmos cuando Collector está habilitado.
+
+No asumir conexión compartida con Tool Projection.
 
 ## Collector lifecycle
 
-Collector no debe poll durante Web composition.
+Collector no hace polling durante Web composition.
 
 ```text
 /health/*
@@ -100,9 +90,9 @@ Collector no debe poll durante Web composition.
 → no start collector poller
 ```
 
-Primer request real inicia el polling worker-local cuando Collector esté adjunto.
+El primer request de aplicación elegible inicia polling worker-local.
 
-Browser requests no leen Cosmos inline.
+Browser callbacks consumen cache de proceso, no Cosmos inline.
 
 ## Degraded behavior
 
@@ -110,35 +100,51 @@ Tool:
 
 ```text
 UNCONFIGURED
-→ no Tool materialized
 → Web base remains available
 
 UNAVAILABLE
-→ capability unavailable
-→ Web base remains available
+→ Web base remains available + diagnostic
 
 INVALID
-→ capability invalid + diagnostic
+→ Web base remains available + invalid diagnostic
 → no silent fallback
 ```
 
 Collector/data:
 
 ```text
-missing KPI document
-→ no forced application startup failure
+KPI Delivery not configured
+→ Web remains available without Collector
 
-source failure
-→ request remains available
-→ preserve last good cache where applicable
+missing KPI document
+→ no application startup failure
+
+read failure after valid cache
+→ preserve last good cache where contract allows
 ```
 
-## Next
+## Render/data boundary
+
+Startup no construye una visualización Tool-specific obligatoria.
+
+ADA Generic entrega:
+
+```text
+ToolStructure
+KPI browser stores
+```
+
+La aplicación/desarrollador concreto decide su representación.
+
+## Estado
 
 ```text
 ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
-```
+CLOSED / VERIFIED / CURRENT
 
-Debe implementar esta regla en el composition/runtime root real sin inventar una aplicación
-paralela.
+ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
+CLOSED / VERIFIED / CURRENT
+
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
+```

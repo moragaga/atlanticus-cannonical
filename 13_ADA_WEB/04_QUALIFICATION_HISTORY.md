@@ -9,119 +9,132 @@ permanecen preservados según sus checkpoints.
 
 No reabrirlos sin finding real.
 
-## ADA Web KPI Collector closure
+## ADA Web KPI Collector capability
+
+El cierre previo del Collector permanece:
+
+```text
+CLOSED / VERIFIED / CURRENT
+```
+
+Sus contratos de polling, coherence, browser cache y worker lifecycle no se reabrieron.
+
+## ADA Generic operational bootstrap
+
+Checkpoint publicado:
+
+```text
+moragaga/atlanticus@01a4387d9f73aceb83441d2f26f94ad9025a661c
+```
+
+Qualification observada antes de publicación:
+
+```text
+pytest              83 passed
+ruff check          PASS
+ruff format --check PASS
+git diff --check    PASS
+```
+
+## Dependency hygiene microincrement
+
+Checkpoint publicado:
+
+```text
+moragaga/atlanticus@940336d5b704d10280cc2375e68c60b45f235eb0
+```
+
+Se declararon directamente las dependencias importadas por Settings:
+
+```text
+pydantic
+pydantic-settings
+```
+
+## Collector runtime wiring
+
+Checkpoint publicado:
+
+```text
+moragaga/atlanticus@d6e405e6466b1bf8d29dadae442a03062da2f1b3
+```
+
+Qualification observada:
+
+```text
+ada-generic-application
+87 passed
+
+ruff check          PASS
+ruff format --check PASS
+git diff --check    PASS
+```
+
+## Operational Render structural cutover
 
 Checkpoint final:
 
 ```text
-moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
 ```
 
-Official ADA gate:
+Qualification observada antes de publicación:
 
 ```text
-scripts/scopes/ada/check.sh kpi-collector
-53 passed
-Commented mirrors validated
-Atlanticus ADA validated: kpi-collector
+operational-render-binding  7 passed
+kpis/collector              56 passed
+ada-generic-application     86 passed
+
+TOTAL                       149 passed
+
+ruff check                  PASS
+ruff format --check         PASS
+git diff --check            PASS
 ```
 
-Direct package qualification also observed:
+Dependency simplification observada durante `uv lock`:
 
 ```text
-ruff check          PASS
-ruff format --check PASS
-pytest              PASS
+operational-render-binding
+removed ada-web-components
+
+kpis/collector
+removed ada-web-operational-render-binding
 ```
 
-Covered contracts include:
+## Behavior demonstrated by closure
 
 ```text
-Latest/Timeseries independent cadence
-Latest priority
-component store mapping
-server compatibility/monotonicity
-browser multi-worker monotonic merge
-health-safe lifecycle
-background polling
-source failure recovery
-WebObservability incident deduplication
-real create_web_application attachment smoke
-```
-
-Status:
-
-```text
-ADA-WEB-KPI-COLLECTOR-CAPABILITY
-CLOSED / VERIFIED / CURRENT
-```
-
-## Web Observability service
-
-Observed:
-
-```text
-web/framework/observability
-ruff check          PASS
-ruff format --check PASS
-pytest              PASS
-```
-
-Status:
-
-```text
-ATLANTICUS-WEB-OBSERVABILITY-SERVICE
-CLOSED / VERIFIED / CURRENT
-```
-
-## Atlanticus Web Core
-
-Observed:
-
-```text
-web/framework/core
-ruff check          PASS
-ruff format --check PASS
-pytest              PASS
-```
-
-A stale test that expected an empty `ServiceRegistry` was removed. The public behavior remains:
-minimal Web applications require no optional capability, while Web infrastructure services remain
-available.
-
-## Generic Application regression qualification
-
-```text
-scripts/scopes/ada/check.sh application
-63 passed
-Commented mirrors validated
-Atlanticus ADA validated: application
-```
-
-Status:
-
-```text
-GENERIC APPLICATION
-PRESERVED / VERIFIED / CURRENT
+durable Tool runtime read
+degraded Web availability
+Collector lazy attachment
+Latest / Timeseries independent cadence preserved
+one store per ToolComponent
+Subcomponent != Store
+render binding contains structure only
+Collector/render dependency removed
 ```
 
 ## Repository hygiene
 
+El cierre no introdujo adapters, shims, aliases ni double contract para mantener la ruta anterior.
+
+## Estado
+
 ```text
-git diff --check
-PASS
+ADA-GENERIC-STAGE-1
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Uso correcto
+## Límites de qualification
 
-Qualification demuestra comportamiento observado del scope probado.
-
-No declara automáticamente:
+Esta evidencia no declara automáticamente:
 
 ```text
 remote CI
 full monorepo pytest
 full Ruff workspace
 Azure deployment qualification
-actual Tool/Cosmos operational mounting
+tool-specific visualization E2E
+Alarm Configuration E2E
 ```
