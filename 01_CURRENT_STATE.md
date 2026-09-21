@@ -6,16 +6,16 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ```text
 Implementation
-moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
 
 Parent
-06e8f4ba4882c2d2600f995cce00b7bfdc01990c
+dde1e3a114a04b22cc2118c347a7ed907852c06b
 
 Tree
-b53495d710ae9307ce5b64da3311880d4bd6c050
+4c7c8209f2d0c670d3c6e8b5185b5af12172e591
 
 Canonical inspected before replacement
-moragaga/atlanticus-cannonical@961447d3a1b3d2afaff7da148f85729fdbe4beab
+moragaga/atlanticus-cannonical@a8c8c80ed3392cb189923d00bd5037e5965e2da5
 ```
 
 Git permanece SOLO LECTURA.
@@ -30,145 +30,175 @@ KPI-DELIVERY-REGISTRY-CONSUMPTION               CLOSED / VERIFIED / CURRENT
 KPI-TIMESERIES-REGISTRY-CONSUMPTION             CLOSED / VERIFIED / CURRENT
 KPI-HISTORIAN-REPROCESS-CURRENT                 CLOSED / VERIFIED / CURRENT
 
-ADA-GENERIC-COLLECTOR-CLOSURE                   PLANNED / NEXT
+ATLANTICUS-WEB-OBSERVABILITY-SERVICE            CLOSED / VERIFIED / CURRENT
+ADA-WEB-KPI-COLLECTOR-CAPABILITY                CLOSED / VERIFIED / CURRENT
+KPI-COLLECTOR-DEFINITION-ATTACHMENT             CLOSED / VERIFIED / CURRENT
+KPI-COLLECTOR-REAL-WEB-SMOKE                    CLOSED / VERIFIED / CURRENT
+
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION   PLANNED / NEXT
 
 KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT  OPEN / SEPARATE
 PYTHON-METADATA-ALIGNMENT                       OPEN / SEPARATE
 FULL-BACKEND-PYTEST-TOPOLOGY                    BLOCKED / UNVERIFIED AS PREEXISTING / SEPARATE
 ```
 
-## KPI Runtime CURRENT
+## Collector CURRENT
 
-`REPROCESS_CURRENT=false` conserva `observed == committed -> up_to_date`.
-
-`REPROCESS_CURRENT=true` sólo fuerza el watermark CURRENT. Para el mismo watermark durable reutiliza el `evaluated_at_utc` ya persistido; por tanto:
+Package:
 
 ```text
-same watermark + same results
-→ write_once UNCHANGED
-
-same watermark + changed results
-→ durable conflict
-
-committed batch missing
-→ explicit data error
-
-observed < committed
-→ rejected
+scopes/ada/web/kpis/collector
+ada-web-kpi-collector==0.1.0
 ```
 
-Lease, cancellation, fencing y authority ordering permanecen intactos.
-
-## Delivery CURRENT
-
-Consume directamente el KPI Registry durable desde Cosmos mediante reader propio del proceso.
+Scheduling default:
 
 ```text
-input container = ada-kpi-registry-projection
-partition path  = /partition_key
-partition value = kpis
-document_type   = ada_kpi_registry_projection_record
-schema_version  = 1
+Latest      10 s
+Timeseries 120 s
+Browser     10 s
 ```
 
-No existe reader legacy ni fallback.
+Latest y Timeseries son lecturas independientes. Cuando ambas están due, Latest se procesa
+primero.
 
-Output owned:
+El collector valida los documentos materializados CURRENT:
 
 ```text
-container      = ada-kpi-latest-delivery
-partition path = /partition_id
-TTL            = None
-id             = latest
-partition_id   = kpis
-document_type  = ada_kpi_latest_delivery
-schema_version = 1
+Latest
+ada-kpi-latest-delivery / latest / kpis / schema 1
+
+Timeseries
+ada-kpi-timeseries-delivery / timeseries / kpis / schema 2
 ```
 
-El proceso valida el Registry consumido y asegura idempotentemente su output container una vez al startup.
-
-## Timeseries Delivery CURRENT
-
-Consume el mismo KPI Registry durable mediante reader independiente.
-
-Output owned:
+Compatibilidad server-side:
 
 ```text
-container      = ada-kpi-timeseries-delivery
-partition path = /partition_id
-TTL            = None
-id             = timeseries
-partition_id   = kpis
-document_type  = ada_kpi_timeseries_delivery
-schema_version = 2
-step_seconds   = 120
+(configuration_revision, tool_projection_revision)
 ```
 
-El proceso valida el Registry consumido y asegura idempotentemente su output container una vez al startup.
-
-## Container configuration CURRENT
-
-Variables de conexión/database permanecen externas:
+Monotonicidad:
 
 ```text
-COSMOS_CONSUMPTION_ENDPOINT
-COSMOS_CONSUMPTION_KEY
-COSMOS_CONSUMPTION_DATABASE_NAME
+Latest     watermark_utc no puede retroceder
+Timeseries end_utc no puede retroceder
 ```
 
-La identidad/topología de containers ya no se configura por ENV.
+Un Latest nuevo compatible puede avanzar sin esperar Timeseries. Si Latest cambia
+compatibilidad, Timeseries incompatible se elimina del snapshot. Un Timeseries incompatible
+con Latest no desplaza el estado vigente.
+
+Missing document conserva el último estado bueno; contract/source errors no mutan el cache.
+
+## Component stores CURRENT
+
+`ToolStructure.components` define los stores.
 
 ```text
-container name
-partition key path
-partition value
-TTL
-document_type
-schema_version
-item identity
+1 ToolComponent = 1 logical KPI Component Store
+Subcomponent    != Store
+system destinations != Component Store
 ```
 
-son contratos internos de cada proceso.
-
-## Historian CURRENT
-
-`REPROCESS_CURRENT=false` conserva `authority == committed -> SKIPPED_CURRENT`.
-
-Con `REPROCESS_CURRENT=true` y authority CURRENT:
+Store browser id:
 
 ```text
-after = None
-through = KPI committed
-→ replay de todos los durable evaluation batches
-→ rematerialize history/errors
-→ commit misma authority
+{
+  type: ada-kpi-component-store,
+  tool: <tool_key>,
+  component: <component_key>
+}
 ```
 
-Si Historian está atrasado, incluso con el flag true conserva catch-up incremental. Authority ahead of KPI continúa siendo error.
-
-## Collector
-
-La cadena backend KPI está cerrada, por tanto:
+Cada store contiene, cuando existan:
 
 ```text
-ADA-GENERIC-COLLECTOR-CLOSURE
+latest
+Timeseries
+```
+
+Browser callback lee únicamente el cache del proceso. Nunca consulta Cosmos.
+
+El merge browser evita regresión entre workers usando:
+
+```text
+Latest     configuration_revision + watermark_utc + revision
+Timeseries configuration_revision + end_utc + revision
+```
+
+## Lifecycle CURRENT
+
+```text
+one poller/cache per worker
+first real application request -> ensure_started()
+/health/*                     -> does not start poller
+/assets/*                     -> does not start poller
+/.auth/*                      -> does not start poller
+```
+
+El polling corre en thread daemon por PID. Requests no hacen lectura Cosmos inline.
+
+## Web Observability CURRENT
+
+Atlanticus Web registra su instancia runtime como servicio:
+
+```text
+WEB_OBSERVABILITY_SERVICE_KEY
+atlanticus.web.observability
+```
+
+El collector requiere ese servicio y reporta incidentes deduplicados:
+
+```text
+Delivery read failure -> WARNING
+contract failure      -> ERROR
+other refresh failure -> ERROR
+runtime failure       -> CRITICAL
+```
+
+## Attachment CURRENT
+
+Una definición Web ya resuelta puede decorarse mediante:
+
+```text
+attach_ada_kpi_collector(definition, collector)
+```
+
+El attachment:
+
+- agrega el módulo `ada-kpi-collector`;
+- envuelve el layout con interval/revision/component stores;
+- rechaza attachment duplicado;
+- no vuelve obligatoria la dependencia desde `ada-generic-application`.
+
+## Siguiente frontera
+
+La capability Collector está cerrada. Sigue OPEN únicamente su montaje operacional real:
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
 PLANNED / NEXT
 ```
 
-Decidido para el siguiente foco:
+El próximo chat debe integrar el collector, no rediseñarlo.
+
+Debe localizar la composición CURRENT que posee:
 
 ```text
-Latest y Timeseries usan intervalos de carga distintos.
-Latest es prioritario y debe refrescarse con mayor prioridad/frecuencia que Timeseries.
+ToolConfiguration / ToolStructure
+Tool projection revision
+Cosmos client/configuration
+WebApplicationDefinition de la aplicación operacional
 ```
 
-OPEN para diseño/verificación en el siguiente chat:
+y conectar allí:
 
 ```text
-valores exactos de intervalos
-mecanismo de sincronización de lecturas
-mapeo a los stores de salida de la UI
-uso exacto del contrato Tool CURRENT para component/destination binding
+CosmosKpiDeliveryReader
+→ AdaKpiCollector
+→ attach_ada_kpi_collector
+→ create_web_application
 ```
 
-No inventar esos detalles antes de inspeccionar `atlanticus:main`.
+No inventar una app alternativa ni hardcodear Tool/Cosmos dentro de Generic Application.

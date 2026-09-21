@@ -5,7 +5,7 @@ Estado: **CURRENT EXECUTION ROADMAP**
 ## Checkpoint publicado
 
 ```text
-moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
 ```
 
 ## KPI backend flow
@@ -24,33 +24,54 @@ KPI-HISTORIAN-REPROCESS-CURRENT
 CLOSED / VERIFIED / CURRENT
 ```
 
-## NEXT
+## Collector capability
 
 ```text
-ADA-GENERIC-COLLECTOR-CLOSURE
+ATLANTICUS-WEB-OBSERVABILITY-SERVICE
+CLOSED / VERIFIED / CURRENT
+
+ADA-WEB-KPI-COLLECTOR-CAPABILITY
+CLOSED / VERIFIED / CURRENT
+
+KPI-COLLECTOR-DEFINITION-ATTACHMENT
+CLOSED / VERIFIED / CURRENT
+
+KPI-COLLECTOR-REAL-WEB-SMOKE
+CLOSED / VERIFIED / CURRENT
+```
+
+## NEXT — no perder esta frontera
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
 PLANNED / NEXT
 ```
 
-Objetivo del siguiente foco: cerrar el mapping real desde outputs KPI materializados hacia los stores de lectura de ADA Generic, usando el contrato Tool CURRENT.
+Objetivo único: **integrar el collector ya implementado** en la composición operacional real.
 
-Restricciones ya decididas:
+No volver a discutir polling, coherency, stores ni observability salvo conflicto demostrado.
 
-```text
-Latest priority > Timeseries priority
-Latest and Timeseries use different load intervals
-no new legacy contract
-no shared implementation invented without a real boundary
-```
-
-A resolver allí, después de inspección:
+El siguiente chat debe inspeccionar la fuente autoritativa para ubicar la composición que ya
+resuelve la Tool y sus conexiones. Después debe hacer el wiring mínimo:
 
 ```text
-exact polling/load intervals
-read synchronization semantics
-existing UI output stores and their contracts
-exact Tool component/destination mapping
-minimal code delta
+ToolConfiguration CURRENT
+    ↓
+ToolStructure + tool projection revision
+    ↓
+Cosmos client/configuration CURRENT
+    ↓
+CosmosKpiDeliveryReader
+    ↓
+AdaKpiCollector
+    ↓
+attach_ada_kpi_collector(existing WebApplicationDefinition, collector)
+    ↓
+create_web_application
 ```
+
+Acceptance del siguiente foco debe comprobar la aplicación operacional real, no sólo el package
+collector aislado.
 
 ## Frentes separados
 
@@ -64,3 +85,5 @@ OPEN / SEPARATE
 FULL-BACKEND-PYTEST-TOPOLOGY
 BLOCKED / SEPARATE
 ```
+
+No mezclar estos frentes con la integración operacional del collector.

@@ -5,62 +5,84 @@ Estado: **AUDIT LEDGER**
 ## Implementación CURRENT auditada
 
 ```text
-moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
 ```
 
-### KPI Registry
+### KPI Registry / Definition
+
+Los cutovers previos permanecen CLOSED / VERIFIED / CURRENT.
+
+### KPI Collector
 
 ```text
-scopes/ada/web/kpis/registry/core
-scopes/ada/web/kpis/registry/configuration
-scopes/ada/web/kpis/registry/projection-local
-scopes/ada/web/kpis/registry/projection-cosmos
+scopes/ada/web/kpis/collector/src/ada/web/kpis/collector/
 ```
 
-Especialmente:
+Inspeccionado especialmente:
 
 ```text
-configuration/projection_record.py
-projection-cosmos/store.py
-projection-cosmos/storage.py
+collector.py
+cosmos.py
+integration.py
+presentation.py
+runtime.py
 ```
 
-### KPI Definition
+Tests de cierre:
 
 ```text
-scopes/ada/web/kpis/definition/core
-scopes/ada/web/kpis/definition/configuration
-scopes/ada/web/kpis/definition/projection-local
-scopes/ada/web/kpis/definition/projection-cosmos
+test_integration.py
+test_runtime.py
+test_web_application.py
 ```
 
-Especialmente:
+### Atlanticus Web Core
 
 ```text
-configuration/projection_record.py
-projection-cosmos/storage.py
+web/framework/core/src/atlanticus/web/application.py
+web/framework/core/src/atlanticus/web/services.py
+web/framework/core/src/atlanticus/web/modules.py
+web/framework/core/tests/test_observability_service.py
+web/framework/core/tests/test_modular_composition.py
 ```
 
-### Configuration Manager
+### Web Observability
 
 ```text
-scopes/ada/web/application/ada-configuration-manager
+web/framework/observability/src/atlanticus/web/observability/
 ```
 
-`local_runtime.py` demuestra durable local projections para Registry y Definition.
+Public contract added/current:
+
+```text
+WEB_OBSERVABILITY_SERVICE_KEY
+```
+
+## Qualification observed
+
+```text
+kpi-collector official gate 53 passed
+application official gate   63 passed
+Web Observability package   PASS
+Atlanticus Web Core package PASS
+git diff --check            PASS
+```
 
 ## Conflict ledger
 
-Inspection:
+Canonical before replacement still described Collector as PLANNED and several implemented
+contracts as OPEN.
 
 ```text
-scopes/ada/web/inspection/providers/kpi-definition
+IMPLEMENTATION CURRENT
+CANONICAL STALE
 ```
 
-continúa referenciando un contract histórico de Definition.
-
-Clasificación:
+KPI Inspection Definition provider remains a separate historical-contract issue:
 
 ```text
-OPEN / SEPARATE / PREEXISTING
+OPEN / SEPARATE
 ```
+
+No conflict específico con `atlanticus-decisions` fue verificado en este cierre; ese repository
+permanece HISTORICAL y sus documentos binarios no fueron re-auditados.

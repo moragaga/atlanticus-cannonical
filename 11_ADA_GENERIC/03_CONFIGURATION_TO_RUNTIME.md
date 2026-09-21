@@ -19,10 +19,12 @@ KPI Historian materialization
     ↓
 Latest Delivery Cosmos + Timeseries Delivery Cosmos
     ↓
-ADA Generic Collector / UI stores
+AdaKpiCollector process cache
+    ↓
+Component KPI browser stores
 ```
 
-Los últimos dos pasos de Collector/UI stores son la siguiente frontera de implementación; los outputs KPI ya están materializados y CURRENT.
+La capability Collector y su Web attachment ya están implementados y calificados.
 
 ## Regla maestra
 
@@ -31,7 +33,7 @@ CONFIGURATION DETERMINES EXISTENCE
 DATA DETERMINES STATE
 ```
 
-La UI no debe depender de la primera medición para crear estructura.
+La estructura de stores existe desde `ToolStructure`; no depende de recibir primero una medición.
 
 ## Tool / KPI contracts
 
@@ -75,21 +77,42 @@ schema_version = 2
 step_seconds = 120
 ```
 
-## Handoff al Collector
-
-Collector debe partir de estas superficies y del contrato Tool CURRENT.
-
-Decidido:
+## Collector CURRENT
 
 ```text
-Latest read is priority.
-Latest and Timeseries use different load intervals.
+Latest poll      10 s default
+Timeseries poll 120 s default
+Browser refresh  10 s default
 ```
 
-No decidido todavía:
+Compatibility:
 
 ```text
-exact interval values
-read synchronization/coherency policy
-exact UI store wiring
+configuration_revision + tool_projection_revision
+```
+
+One logical KPI store per Tool Component; Subcomponents do not create stores.
+
+## Siguiente handoff
+
+Lo que falta no es otro contrato de Collector. Falta materializar esta última composición en la
+aplicación operacional real:
+
+```text
+ToolConfiguration CURRENT
++ tool projection revision
++ Cosmos client/configuration CURRENT
+    ↓
+CosmosKpiDeliveryReader
+    ↓
+AdaKpiCollector
+    ↓
+attach_ada_kpi_collector(existing application definition)
+```
+
+Clasificación:
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+PLANNED / NEXT
 ```

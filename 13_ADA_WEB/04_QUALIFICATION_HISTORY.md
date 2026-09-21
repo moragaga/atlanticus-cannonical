@@ -2,78 +2,114 @@
 
 Estado: **CURRENT HISTORY**
 
-## Checkpoints históricos preservados
+## Historical checkpoints preserved
 
-Los GREEN históricos de Session/PWA/Wake/Activity/Card/Header siguen preservados según los
-checkpoints anteriores.
+Los GREEN históricos de Session/PWA/Wake/Activity/Card/Header, KPI Registry y KPI Definition
+permanecen preservados según sus checkpoints.
 
 No reabrirlos sin finding real.
 
-## KPI Registry capability cutover
+## ADA Web KPI Collector closure
 
-Observed:
+Checkpoint final:
 
 ```text
-Registry Core                  6 PASS
-Registry Configuration       30 PASS
-Registry Projection Local     2 PASS
-Registry Projection Cosmos    3 PASS
-Definition alignment         35 PASS
-Configuration Manager        32 PASS
-
-TOTAL
-108 PASS
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
 ```
 
-UI invariant:
+Official ADA gate:
 
 ```text
-CSS identical
-css.list identical
-IDs identical
+scripts/scopes/ada/check.sh kpi-collector
+53 passed
+Commented mirrors validated
+Atlanticus ADA validated: kpi-collector
+```
+
+Direct package qualification also observed:
+
+```text
+ruff check          PASS
+ruff format --check PASS
+pytest              PASS
+```
+
+Covered contracts include:
+
+```text
+Latest/Timeseries independent cadence
+Latest priority
+component store mapping
+server compatibility/monotonicity
+browser multi-worker monotonic merge
+health-safe lifecycle
+background polling
+source failure recovery
+WebObservability incident deduplication
+real create_web_application attachment smoke
 ```
 
 Status:
 
 ```text
-KPI-REGISTRY-CAPABILITY-CUTOVER
+ADA-WEB-KPI-COLLECTOR-CAPABILITY
 CLOSED / VERIFIED / CURRENT
 ```
 
-## KPI Definition capability cutover
+## Web Observability service
 
 Observed:
 
 ```text
-Definition Core              14 PASS
-Definition Configuration     23 PASS
-Definition Projection Local   3 PASS
-Definition Projection Cosmos  4 PASS
-Configuration Manager        32 PASS
-
-TOTAL
-76 PASS
+web/framework/observability
+ruff check          PASS
+ruff format --check PASS
+pytest              PASS
 ```
 
-UI invariant:
+Status:
 
 ```text
-CSS identical
-css.list identical
-IDs identical
+ATLANTICUS-WEB-OBSERVABILITY-SERVICE
+CLOSED / VERIFIED / CURRENT
 ```
 
-`git diff --check`:
+## Atlanticus Web Core
+
+Observed:
 
 ```text
+web/framework/core
+ruff check          PASS
+ruff format --check PASS
+pytest              PASS
+```
+
+A stale test that expected an empty `ServiceRegistry` was removed. The public behavior remains:
+minimal Web applications require no optional capability, while Web infrastructure services remain
+available.
+
+## Generic Application regression qualification
+
+```text
+scripts/scopes/ada/check.sh application
+63 passed
+Commented mirrors validated
+Atlanticus ADA validated: application
+```
+
+Status:
+
+```text
+GENERIC APPLICATION
+PRESERVED / VERIFIED / CURRENT
+```
+
+## Repository hygiene
+
+```text
+git diff --check
 PASS
-```
-
-Status:
-
-```text
-KPI-DEFINITION-CAPABILITY-CUTOVER
-CLOSED / VERIFIED / CURRENT
 ```
 
 ## Uso correcto
@@ -87,4 +123,5 @@ remote CI
 full monorepo pytest
 full Ruff workspace
 Azure deployment qualification
+actual Tool/Cosmos operational mounting
 ```

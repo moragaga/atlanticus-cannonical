@@ -41,23 +41,6 @@ KPI Runtime
 KPI Historian
 ```
 
-Default:
-
-```text
-false
-```
-
-Nunca bypass:
-
-```text
-authority ordering
-watermark regression checks
-lease
-cancellation
-fencing
-write conflict detection
-```
-
 Delivery/Timeseries reprocess permanece:
 
 ```text
@@ -68,65 +51,141 @@ PROPOSED / DEFERRED / NOT AUTHORIZED
 
 Delivery y Timeseries leen directamente el KPI Registry durable desde Cosmos.
 
-Cada proceso posee su reader y traducción interna. No existe librería compartida creada sólo para deduplicar esta frontera.
+Cada proceso posee su reader y traducción interna. No existe librería compartida creada sólo
+para deduplicar esta frontera.
+
+## Collector — decisions CURRENT
 
 ```text
-shared Registry reader implementation
-SUPERSEDED
-
-independent process-owned readers
-CURRENT
+ADA-WEB-KPI-COLLECTOR-CAPABILITY
+CLOSED / VERIFIED / CURRENT
 ```
 
-## Cosmos configuration
+Scheduling:
+
+```text
+Latest default       10 s
+Timeseries default  120 s
+Browser default      10 s
+Latest priority      first when both due
+```
+
+Latest y Timeseries son superficies independientes. No se exige sincronización temporal exacta
+ni atomicidad cross-document.
+
+Compatibilidad server-side:
+
+```text
+(configuration_revision, tool_projection_revision)
+```
+
+Rules:
+
+```text
+Latest watermark regression    reject as STALE
+Timeseries end regression       reject as STALE
+wrong tool projection revision  INCOMPATIBLE
+Timeseries vs current Latest     INCOMPATIBLE when compatibility differs
+new incompatible Latest         drop cached Timeseries
+missing document                retain last good state
+invalid contract/source error   do not mutate state
+```
+
+## Component / Store ownership
+
+CURRENT/FROZEN:
+
+```text
+ToolStructure.components
+→ one logical ComponentStoreSnapshot per ToolComponent
+
+Subcomponent
+→ no own KPI Store
+
+system destinations
+→ no implicit Component Store
+```
+
+Cada browser store reúne Latest + Timeseries para ese Component.
+
+## Browser merge
+
+El browser nunca lee Cosmos. Consume snapshots del worker.
+
+Para evitar regresión entre workers usa marcadores monotónicos independientes:
+
+```text
+Latest
+revision + watermark_utc + configuration_revision
+
+Timeseries
+revision + end_utc + configuration_revision
+```
+
+Latest puede avanzar conservando Timeseries más nuevo ya presente en el browser cuando la
+compatibilidad lo permite.
+
+## Web Observability
 
 CURRENT:
 
 ```text
-connection credentials + database name
-→ external configuration / ENV
-
-container identity + topology + document contract
-→ internal process contract
+Atlanticus Web owns WebObservability
+→ registered in ServiceRegistry
+→ modules consume via WEB_OBSERVABILITY_SERVICE_KEY
 ```
 
-Cada proceso:
+Collector policy:
 
 ```text
-consumed Registry container
-→ validate/read only
-→ never provision
-
-owned output container
-→ ensure once at startup
-→ never ensure per iteration
+Delivery unavailable -> WARNING once per incident signature/source
+Contract failure      -> ERROR once per incident signature/source
+Other refresh failure -> ERROR once per incident signature/source
+Runtime failure       -> CRITICAL
+Recovery              -> clears source incident
 ```
 
-La database permanece infraestructura externa; estos procesos no asumen ownership de crearla.
+No usar polling exitoso como telemetría periódica.
 
-## Collector
+## Collector attachment
 
-El gate KPI backend ya está cerrado.
+CURRENT:
 
 ```text
-ADA-GENERIC-COLLECTOR-CLOSURE
+attach_ada_kpi_collector(WebApplicationDefinition, collector)
+```
+
+La función decora una definición existente; no convierte Generic Application en dependiente
+obligatorio del collector.
+
+Attachment duplicado se rechaza.
+
+## Decisiones superseded por este cierre
+
+```text
+Collector exact intervals OPEN
+SUPERSEDED
+
+Collector read coherency OPEN
+SUPERSEDED
+
+Collector UI store wiring OPEN
+SUPERSEDED
+
+Collector capability PLANNED / NEXT
+SUPERSEDED
+```
+
+Ahora son CURRENT los contratos implementados descritos arriba.
+
+## Siguiente decisión operacional
+
+No hay nueva arquitectura de Collector por decidir.
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
 PLANNED / NEXT
 ```
 
-Decisión vigente:
-
-```text
-Latest y Timeseries deben tener intervalos de lectura distintos.
-Latest es prioritario.
-```
-
-OPEN, no decidido todavía:
-
-```text
-intervalos numéricos
-mecanismo de sincronización entre ambos reads
-forma exacta de actualización de stores UI
-shape exacta de composición Collector
-```
-
-El contrato Tool CURRENT debe ser la base para resolver component/destination mapping; no crear un contrato paralelo.
+El siguiente incremento debe integrar las piezas existentes en la composición operacional real.
+No inventar un segundo collector, adapter, schema, service o app para hacer el wiring.

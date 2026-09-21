@@ -5,7 +5,7 @@ Estado: **CURRENT**
 ## Implementación auditada
 
 ```text
-moragaga/atlanticus@d71e94d12fa31a986b3ecc0262fbbb6ef2e4a3dd
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
 ```
 
 ## KPI Registry
@@ -18,27 +18,10 @@ scopes/ada/web/kpis/registry/
 └── projection-cosmos
 ```
 
-Packages:
+Status:
 
 ```text
-ada-web-kpi-registry==0.1.0
-ada-web-kpi-registry-configuration==0.1.0
-ada-web-kpi-registry-projection-local==0.1.0
-ada-web-kpi-registry-projection-cosmos==0.1.0
-```
-
-Projection:
-
-```text
-ProjectionRecord[KpiRegistry]
-```
-
-Cosmos contract:
-
-```text
-logical_id = ada.kpis.registry.projection
-physical   = ada-kpi-registry-projection
-document_type = ada_kpi_registry_projection_record
+CLOSED / VERIFIED / CURRENT
 ```
 
 ## KPI Definition
@@ -51,58 +34,77 @@ scopes/ada/web/kpis/definition/
 └── projection-cosmos
 ```
 
-Packages:
+Status:
 
 ```text
-ada-web-kpi-definition==0.6.0
-ada-web-kpi-definition-configuration==0.1.0
-ada-web-kpi-definition-projection-local==0.1.0
-ada-web-kpi-definition-projection-cosmos==0.1.0
+CLOSED / VERIFIED / CURRENT
 ```
 
-Projection:
+## KPI Collector
 
 ```text
-ProjectionRecord[KpiDefinitionCatalog]
+scopes/ada/web/kpis/collector
+ada-web-kpi-collector==0.1.0
 ```
 
-Cosmos contract:
+Core public capability includes:
 
 ```text
-logical_id = ada.kpis.definition.projection
-physical   = ada-kpi-definition-projection
-document_type = ada_kpi_definition_projection_record
+AdaKpiCollector
+CosmosKpiDeliveryReader
+AdaKpiCollectorPollingRuntime
+AdaKpiCollectorWebIntegration
+attach_ada_kpi_collector
+component_kpi_store_id
+resolve_kpi_collector_browser_update
 ```
 
-## Dependency chain
+Defaults:
 
 ```text
-Tool ProjectionTarget
-        ↓
-KPI Registry ProjectionTarget
-        ↓
-KPI Definition ProjectionTarget
+Latest polling      10 s
+Timeseries polling 120 s
+Browser refresh     10 s
 ```
 
-## Configuration Manager local runtime
+One Component Store per Tool Component.
 
-Registry y Definition usan projection stores locales durables.
+## Atlanticus Web observability service
 
-No usan in-process projection para esas dos capabilities.
-
-## UI invariant
-
-Durante ambos cutovers:
+Public service key:
 
 ```text
-CSS
-css.list
-IDs
+WEB_OBSERVABILITY_SERVICE_KEY = atlanticus.web.observability
 ```
 
-fueron preservados byte a byte.
+`create_web_application()` registers the runtime-owned `WebObservability` instance before module
+service registration and freezes the registry after modules register.
 
-No interpretar namespace/import changes como cambios visuales.
+Collector declares this service requirement and uses the same runtime observability instance.
+
+## Collector Web lifecycle
+
+```text
+health/assets/auth infrastructure request
+→ poller remains stopped
+
+real application request
+→ per-worker poller starts
+→ refresh happens outside request thread
+```
+
+The browser callback reads only in-process snapshot state.
+
+## Generic Application compatibility
+
+Generic Application remains valid without Collector.
+
+Qualification after Collector closure:
+
+```text
+scripts/scopes/ada/check.sh application
+63 passed
+```
 
 ## Python
 
@@ -112,21 +114,22 @@ Project baseline:
 3.14.7
 ```
 
-Packages CURRENT observados:
+Some package metadata remains observed at:
 
 ```text
 requires-python ==3.14.2
 ```
 
-Clasificación:
+Classification:
 
 ```text
 PYTHON-METADATA-ALIGNMENT
 OPEN / SEPARATE
 ```
 
-## Conflict separado
+## Separate conflict
 
-KPI Inspection Definition provider aún consume un Definition contract histórico.
+KPI Inspection Definition provider still consumes a historical Definition contract.
 
-No forma parte del baseline KPI Registry/Definition cerrado.
+It does not belong to Collector operational integration unless a direct dependency is later
+demonstrated.

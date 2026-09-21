@@ -5,47 +5,102 @@ Estado: **CURRENT**
 ## Autoridad
 
 ```text
-moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
 ```
 
-## KPI Runtime recovery — VERIFIED
+## KPI backend — VERIFIED / preserved
 
-Observado en workspace real:
+Los cierres previos permanecen CURRENT:
 
 ```text
-processes/kpi-runtime/tests    43 passed
-kpis/persistence/tests        10 passed
-ruff check                    PASS
-ruff format --check           PASS
-git diff --check              PASS
+KPI Runtime recovery
+Latest Delivery Registry consumption
+Timeseries Delivery Registry consumption
+Historian recovery
 ```
 
-Además se verificó comportamiento forced-current, preservación de `evaluated_at_utc`, conflicto durable ante resultado distinto y rechazo de regression.
+No fueron modificados por este hito.
 
-## Delivery + Timeseries Registry cutover — VERIFIED
+## ADA KPI Collector — VERIFIED
+
+Qualification observada en workspace real:
 
 ```text
-processes/kpi-delivery/tests             32 passed
-processes/kpi-timeseries-delivery/tests  22 passed
-kpis/delivery/tests                      28 passed
-ruff check                               PASS
-ruff format --check                      PASS / 64 files formatted
-git diff --check                         PASS
+scopes/ada/web/kpis/collector
+ruff check                         PASS
+ruff format --check                PASS
+pytest                             PASS
+scripts/scopes/ada/check.sh kpi-collector
+                                   53 passed
+commented mirrors                  PASS
 ```
 
-## Historian recovery — VERIFIED
+Comportamientos cubiertos incluyen:
 
 ```text
-processes/kpi-historian/tests            37 passed
-focused recovery tests                    4 passed
-kpis/history/tests                       22 passed
-kpis/persistence/tests                   10 passed
-ruff check                               PASS
-ruff format --check                      PASS / 23 files formatted
-git diff --check                         PASS
+Latest 10 s / Timeseries 120 s defaults
+independent scheduling + Latest priority
+source failure isolation
+recovery after failure
+incident deduplication
+runtime critical observability
+health/assets do not start poller
+real request starts background poller
+browser cache-only update
+one store per ToolComponent
+multi-worker browser monotonic merge
+attachment duplicate rejection
+real create_web_application smoke
 ```
 
-El integration test verifica reconstrucción de history eliminado desde durable batch.
+## Web Observability — VERIFIED
+
+Workspace real:
+
+```text
+web/framework/observability
+ruff check          PASS
+ruff format --check PASS
+pytest              PASS
+```
+
+## Atlanticus Web Core — VERIFIED
+
+Workspace real:
+
+```text
+web/framework/core
+ruff check          PASS
+ruff format --check PASS
+pytest              PASS
+```
+
+La suite verifica que la `WebObservability` owned por el framework queda disponible en el
+`ServiceRegistry` congelado mediante `WEB_OBSERVABILITY_SERVICE_KEY`.
+
+El assert histórico `len(runtime.services) == 0` fue removido por ser un test stale de
+implementación interna: una aplicación mínima sigue sin capabilities opcionales, pero sí posee
+infraestructura base Web.
+
+## ADA Generic Application — VERIFIED / preserved
+
+Gate oficial observado después del incremento:
+
+```text
+scripts/scopes/ada/check.sh application
+63 passed
+commented mirrors PASS
+```
+
+Esto demuestra que hacer integrable el collector no convirtió a Generic Application en un
+consumidor obligatorio.
+
+## Repository hygiene — VERIFIED
+
+```text
+git diff --check
+PASS
+```
 
 ## UNVERIFIED / SEPARATE
 
@@ -54,18 +109,9 @@ remote CI
 full monorepo pytest
 full workspace Ruff
 python:3.14.7-slim-trixie global qualification
-Azure productive wiring of the final KPI resources
+Azure productive wiring of collector resources
+actual operational Tool + Cosmos collector mounting
 ```
 
-Una ejecución global de backend pytest observó errores de collection por `tests.support` en múltiples paquetes.
-
-Clasificación exacta:
-
-```text
-FULL BACKEND PYTEST
-BLOCKED / TEST-COLLECTION TOPOLOGY
-UNVERIFIED AS PREEXISTING
-OUTSIDE KPI RECOVERY INCREMENTS
-```
-
-No convertirlo en PASS ni declararlo preexistente sin baseline comparativo.
+La última línea es el siguiente foco; no confundir capability qualification con deployment/wiring
+operacional ya realizado.

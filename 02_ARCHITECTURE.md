@@ -45,25 +45,6 @@ scopes/ada/web/kpis/registry/
 └── projection-cosmos
 ```
 
-Ownership:
-
-```text
-core
-    KpiRegistry
-    KpiRegistryBinding
-
-configuration
-    Source lifecycle
-    Projection builder/serializer
-    Web editor
-
-projection-local
-    durable local ProjectionStore[KpiRegistry]
-
-projection-cosmos
-    Cosmos ProjectionStore[KpiRegistry]
-```
-
 Source:
 
 ```text
@@ -84,30 +65,6 @@ Tool ProjectionTarget
 KPI Registry ProjectionTarget
 ```
 
-Cosmos:
-
-```text
-logical_id
-ada.kpis.registry.projection
-
-default physical name
-ada-kpi-registry-projection
-
-partition
-/partition_key
-
-TTL
-None
-```
-
-No existe contrato CURRENT:
-
-```text
-ada.web.kpis.configuration
-KpiConfiguration
-KpiConfigurationBinding
-```
-
 ## KPI Definition CURRENT
 
 ```text
@@ -116,33 +73,6 @@ scopes/ada/web/kpis/definition/
 ├── configuration
 ├── projection-local
 └── projection-cosmos
-```
-
-Ownership:
-
-```text
-core
-    KpiDefinition
-    KpiDefinitionConfiguration
-    KpiDefinitionCatalog
-
-configuration
-    Source lifecycle
-    Projection builder/serializer
-    Web editor
-
-projection-local
-    durable local ProjectionStore[KpiDefinitionCatalog]
-
-projection-cosmos
-    Cosmos ProjectionStore[KpiDefinitionCatalog]
-```
-
-Source:
-
-```text
-SourceKey('kpi-definitions')
-resource = kpis/definition.json.gz
 ```
 
 Projection:
@@ -159,56 +89,14 @@ KPI Registry ProjectionTarget
 KPI Definition ProjectionTarget
 ```
 
-Cosmos:
-
-```text
-logical_id
-ada.kpis.definition.projection
-
-default physical name
-ada-kpi-definition-projection
-
-partition
-/partition_key
-
-TTL
-None
-```
-
 ## Backend KPI configuration boundary
 
-Delivery y Timeseries deben consumir el KPI Registry durable CURRENT.
-
-El documento backend histórico:
-
-```text
-ada_kpi_configuration_projection
-```
-
-no es el contrato objetivo.
-
-No crear:
-
-```text
-legacy reader
-dual schema reader
-shim
-alias
-secondary projection document
-```
-
-El cambio de consumer debe hacerse en la frontera del proceso existente.
+Delivery y Timeseries consumen el KPI Registry durable CURRENT mediante readers propios de cada
+proceso. No existen fallback legacy ni shared reader creado sólo por deduplicación.
 
 ## Backend recovery boundary
 
-`REPROCESS_CURRENT` no es debug.
-
-Para jobs autorizados significa únicamente:
-
-```text
-current checkpoint
-→ volver a materializar usando authority upstream current
-```
+`REPROCESS_CURRENT` está implementado únicamente donde fue autorizado: KPI Runtime y Historian.
 
 Nunca bypass:
 
@@ -220,35 +108,116 @@ fencing
 write conflicts
 ```
 
-Autorizado/PLANNED:
+## ADA KPI Collector CURRENT
+
+Collector es una capability ADA Web separada:
 
 ```text
-KPI Runtime
-Historian
+scopes/ada/web/kpis/collector
 ```
 
-No autorizado en esta secuencia:
+Flujo CURRENT:
 
 ```text
-Latest Delivery reprocess
-Timeseries Delivery reprocess
+Latest Delivery Cosmos ─┐
+                        ├─> AdaKpiCollector
+Timeseries Delivery ────┘       │
+                                ├─> immutable process snapshot
+ToolStructure ------------------┤
+Tool projection revision -------┘
+                                ↓
+                     one logical store per Component
+                                ↓
+                         browser cache reads
 ```
 
-## ADA Generic Collector
-
-Collector no se define por coincidencia terminológica con Producer.
-
-Su cierre queda bloqueado hasta calificar la cadena backend KPI.
-
-Después debe mapearse:
+Fronteras:
 
 ```text
-Component
-→ collector contract
-→ existing physical data capability
+Cosmos
+→ only reader/collector side
+
+Browser
+→ cache only
+→ never Cosmos
+
+Generic Application
+→ remains usable without collector
+
+Subcomponent
+→ never gets its own KPI store
 ```
 
-y sólo introducir una responsabilidad nueva si el gap es real.
+Compatibilidad:
+
+```text
+configuration_revision + tool_projection_revision
+```
+
+No existe atomicidad requerida entre Latest y Timeseries. Latest puede avanzar primero mientras
+Timeseries compatible anterior permanece. Un cambio incompatible de Latest invalida Timeseries.
+
+## Collector Web composition
+
+Atlanticus Web crea `WebObservability` y la registra en su `ServiceRegistry` mediante:
+
+```text
+WEB_OBSERVABILITY_SERVICE_KEY
+```
+
+Los módulos pueden declararla en `requires_services` sin crear globals.
+
+Collector se adjunta a una definición Web ya resuelta:
+
+```text
+WebApplicationDefinition
+    ↓
+attach_ada_kpi_collector
+    ↓
+WebApplicationDefinition + collector module + wrapped layout
+```
+
+No introducir dependencia inversa desde Generic Application hacia Collector.
+
+## Lifecycle
+
+```text
+one cache/poller per worker PID
+latest interval default     10 s
+timeseries interval default 120 s
+browser interval default    10 s
+```
+
+Public infrastructure paths no arrancan el poller:
+
+```text
+/health/
+/assets/
+/.auth/
+```
+
+## Siguiente frontera arquitectónica
+
+La capability está cerrada. Lo siguiente es wiring, no diseño nuevo:
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+PLANNED / NEXT
+```
+
+Resolver en la composición operacional existente:
+
+```text
+published/current ToolConfiguration
+ToolStructure
+Tool projection revision
+Cosmos connection/client
+AdaKpiCollector
+attach_ada_kpi_collector
+```
+
+No crear un nuevo servicio remoto, schema intermedio, store por Subcomponent ni aplicación
+paralela salvo evidencia explícita posterior.
 
 ## Reglas congeladas
 

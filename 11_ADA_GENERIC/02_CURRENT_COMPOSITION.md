@@ -3,7 +3,11 @@
 Estado: **VERIFIED**
 
 Implementación auditada:
-`scopes/ada/web/application/ada-generic-application`
+
+```text
+scopes/ada/web/application/ada-generic-application
+moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+```
 
 ## Actualmente compone/consume
 
@@ -23,24 +27,55 @@ Entre otras capacidades:
 - global indicators;
 - session/runtime Web.
 
-## Header
+## Generic Application y Collector
 
-ADA Generic usa el **ADA operational header**.
+La Generic Application sigue siendo válida sin Collector.
 
-Esto no se reutiliza como header del Manager.
+El cierre de Collector **no** añadió `ada-web-kpi-collector` como dependencia obligatoria de
+`ada-generic-application`.
+
+El contrato implementado para composición externa es:
+
+```text
+create_application_definition(...)
+        ↓
+attach_ada_kpi_collector(definition, collector)
+        ↓
+create_web_application(...)
+```
+
+Esto conserva la frontera:
+
+```text
+Generic Application
+→ generic composition
+
+Operational composition root
+→ resolves Tool/Cosmos
+→ optionally attaches Collector
+```
 
 ## Runtime
 
-`create_application_runtime` reúne la composición Web y estados de consumo operacional en un `WebApplicationRuntime`.
+`create_application_runtime` sigue reuniendo la composición Web genérica y estados de consumo
+operacional en un `WebApplicationRuntime` sin requerir Collector.
 
-## Tests actuales
+Qualification posterior al cierre Collector:
 
-La suite observada contiene principalmente:
-- application/composition contracts;
-- operational component materialization;
-- operational render binding;
-- operational state extraction;
-- runtime experience extraction;
-- JS smoke de session/wake-lock.
+```text
+scripts/scopes/ada/check.sh application
+63 passed
+commented mirrors PASS
+```
 
-No convertir futuros tests en contratos de CSS.
+## Siguiente integración
+
+No está verificado todavía el montaje del collector con una Tool operacional real.
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+PLANNED / NEXT
+```
+
+El próximo incremento debe localizar el composition root real y aplicar el attachment allí. No
+hardcodear Tool/Cosmos dentro de Generic Application.

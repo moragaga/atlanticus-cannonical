@@ -12,34 +12,71 @@ ADA Generic debe poder levantar su shell aun cuando:
 
 ```text
 Web starts
-→ resource plan
-→ prepare/validate resources
-→ projection readiness
+→ framework infrastructure services
+→ module services
+→ resource/projection readiness when applicable
 → operational shell state
 ```
 
-## Local
+Atlanticus Web infrastructure includes runtime-owned `WebObservability`, exposed through the
+frozen `ServiceRegistry`.
 
-Puede crear la Cosmos database local y asegurar containers.
+## Collector lifecycle
 
-## Azure
-
-La DB base preexiste.
-
-La Web valida y prepara application containers permitidos.
-
-## Error
-
-Un container con partition key o TTL incorrecto:
+Collector does not poll during Web composition.
 
 ```text
-→ resource ERROR
-→ dependent capability unavailable
-→ system/bootstrap surface remains reachable
+/health/*
+/assets/*
+/.auth/*
+→ do not start collector poller
 ```
 
-## Backend
+The first real application request starts the worker-local polling thread.
 
-ADA backend se habilita después del Web bootstrap.
+Polling is independent from request execution; Cosmos is never read inline by the browser request
+or browser refresh callback.
 
-No debe ejecutar provisioning por ciclo.
+## Degraded data behavior
+
+Collector source failure:
+
+```text
+→ request remains available
+→ last good cache remains
+→ incident is reported through WebObservability
+```
+
+Missing document:
+
+```text
+→ no forced error state
+→ last good cache remains
+```
+
+Invalid contract:
+
+```text
+→ cache is not mutated
+→ ERROR observability event
+```
+
+## Local / Azure infrastructure
+
+Existing resource ownership rules remain unchanged.
+
+Local may create/ensure resources only where current contracts authorize it.
+
+Azure base infrastructure remains externally provisioned where defined.
+
+Collector operational integration must reuse current Cosmos configuration/client ownership; it
+must not add provisioning on every polling cycle.
+
+## Next
+
+```text
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+PLANNED / NEXT
+```
+
+The next increment validates this lifecycle with the actual operational Tool/Cosmos composition.
