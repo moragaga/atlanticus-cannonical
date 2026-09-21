@@ -1,64 +1,81 @@
 # ADA Command Center — Open Items
 
-Estado: **OPEN**
+Estado: **OPEN / REFINED**
 
 Los contracts globales Users/Profiles/ADA Access ya cerrados no se reabren desde Command Center.
 
 ## Web
 
 1. ubicación física;
-2. shell/header;
+2. shell/header final;
 3. páginas iniciales;
-4. APIs/read models Web.
+4. APIs/read models Web;
+5. integración exacta de la superficie genérica Manager dentro del shell de Command Center.
 
-## Configuration
+## Alarm Configuration
 
-5. Source/Release binding;
-6. Message Catalog UI/contract;
-7. evaluator parameter metadata/schema;
-8. Tool Catalog bajo Source/Projection vigente;
+6. binding físico Source/Release para Rules + Messages;
+7. Message Catalog UI final;
+8. editor genérico de parameters `str | float | bool`;
 9. integración de administración Profiles/Navigation en la superficie final;
 10. ADA Access Configuration UI;
 11. ADA Access Projection persistence;
 12. ADA Access runtime composition.
 
-La relación global `user -> profile_key` ya pertenece a Users CURRENT y no es un open item
-de Command Center.
+La metadata/schema específica por evaluator deja de ser open item: Alarm Configuration no la posee.
+
+La relación global `user -> profile_key` ya pertenece a Users CURRENT y no es un open item de Command Center.
+
+## Tool Catalog
+
+13. contrato físico del snapshot/revision en Blob;
+14. declaración de inputs Tool sobre conexiones Cosmos nombradas;
+15. cadence/trigger de reconciliación;
+16. política exacta AVAILABLE/STALE/MISSING y diagnóstico;
+17. startup/readiness/LKG del catálogo;
+18. wiring de credenciales/permisos read-only para Cosmos externos;
+19. verificar el punto de generación/enforcement de unicidad global de `tool_key`.
+
+No está abierto crear una segunda Tool Projection Cosmos en Command Center: esa duplicación queda fuera de la dirección actual.
 
 ## B.2
 
-13. verificar implementación física actual;
-14. reconciliar Tool Catalog con Blob/Source Release;
-15. materializar Resolved Alarm Configuration;
-16. Live Projection schema.
+20. verificar implementación física actual;
+21. definir `ResolvedAlarmConfiguration` y su identity/provenance;
+22. separar Runtime readiness de Delivery/reference readiness;
+23. definir findings para evaluator/Tool/Component/Subcomponent/routing/visual target no resueltos;
+24. materializar Runtime/Delivery desde una misma resolución;
+25. Live Projection schema;
+26. reemplazar/reconciliar los revision strings históricos del runtime con provenance de resolución CURRENT.
 
 ## History / Analytics
 
-17. unidad del read model;
-18. History sola vs History + Aggregates;
-19. storage/indexing/partitioning;
-20. retention;
-21. calendar/turno;
-22. duración de priority dispositions;
-23. normalización/comparabilidad de Evidence;
-24. insight rules;
-25. límites de causalidad.
+27. unidad del read model;
+28. History sola vs History + Aggregates;
+29. storage/indexing/partitioning;
+30. retention;
+31. calendar/turno;
+32. duración de priority dispositions;
+33. normalización/comparabilidad de Evidence;
+34. insight rules;
+35. límites de causalidad.
 
 ## Data update
 
-26. cadence Live;
-27. cadence/cache Analytics;
-28. separar de auto-refresh de sesión.
+36. cadence Live;
+37. cadence/cache Analytics;
+38. separar de auto-refresh de sesión.
 
 ## Golden Path
 
-29. seleccionar Tool/Component/Rule real.
+39. seleccionar Rule/evaluator/Tool real para la vertical integrada;
+40. demostrar preconfiguración con Tool inicialmente no resuelta y resolución posterior sin republicar Alarm Source.
 
 ## Web platform bootstrap
 
-30. Integrar ApplicationResourcePlan.
-31. Definir containers propios de Command Center/Alarm backend.
-32. Integrar bootstrap surface/readiness.
-33. Definir projection order sólo donde existan dependencias reales.
-34. Definir si User Activity entra en Golden Path o incremento posterior.
-35. Aplicar mismo TTL/history contract si Activity se habilita.
+41. integrar ApplicationResourcePlan;
+42. definir containers propios de Command Center/Alarm backend;
+43. integrar bootstrap surface/readiness;
+44. definir projection order sólo donde existan dependencias reales;
+45. definir si User Activity entra en Golden Path o incremento posterior;
+46. aplicar mismo TTL/history contract si Activity se habilita.

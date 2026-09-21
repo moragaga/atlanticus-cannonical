@@ -1,10 +1,12 @@
 # Web Platform — External Resource Requirements
 
-Estado: **CONTRACT DESIGN**
+Estado: **CONTRACT DESIGN / NAMED CONNECTION DIRECTION REFINED**
 
 ## Problema
 
-La Web debe preparar contenedores usados por Backend sin obligar al Backend a depender de Web.
+La Web debe preparar recursos propios usados por Backend sin obligar al Backend a depender de Web.
+
+También puede consumir recursos externos preexistentes que no son propiedad de la aplicación.
 
 No introducir:
 
@@ -27,27 +29,57 @@ BackendResourceRequirements
 └── required_for[]
 ```
 
-La Web/deployment composition importa esos **specs**, no el runtime del job.
+La Web/deployment composition importa esos specs, no el runtime del job.
+
+## Managed vs external resources
+
+No todo recurso referenciado por una aplicación debe ser provisionado por ella.
+
+Deben distinguirse semánticamente:
+
+### Managed application resource
+
+Recurso cuya topología pertenece a la aplicación/deployment y puede participar en validate/ensure según política.
+
+### External consumed resource
+
+Recurso preexistente perteneciente a otro owner.
+
+La aplicación consumidora:
+
+- resuelve su conexión nombrada;
+- valida lo necesario para consumir;
+- no crea el database;
+- no crea/modifica containers externos por defecto;
+- no altera partitioning/TTL del owner externo;
+- puede operar read-only cuando ese sea el contrato.
+
+La forma exacta de representar esta distinción en `ApplicationResourcePlan` permanece abierta.
 
 ## Ejemplo
 
 ```text
 Alarm Runtime package
-   └── declares:
+   └── declares managed resources:
        alarms-live
        alarms-management
        ...
 
-ADA Web composition
-   └── includes Alarm resource requirements
-       in ApplicationResourcePlan
+Command Center
+   ├── declares its managed resources
+   └── references external Tool Cosmos inputs as read-only dependencies
+
+Web composition
+   └── includes managed requirements in ApplicationResourcePlan
+       and resolves external connection references without provisioning them
 ```
 
 Esto permite:
 
 ```text
 Web deploy first
-→ resources ready
+→ managed resources ready
+→ external dependencies checked/read as applicable
 → Alarm backend deploy later
 ```
 
@@ -60,7 +92,7 @@ Alarm job iteration
 
 ## Ownership
 
-Cada resource requirement debe indicar:
+Cada managed resource requirement debe indicar:
 
 - owner;
 - connection name;
@@ -68,6 +100,14 @@ Cada resource requirement debe indicar:
 - partitioning/TTL contract;
 - required/optional;
 - purpose.
+
+Cada external consumed resource debe preservar:
+
+- external owner;
+- connection name/reference;
+- purpose;
+- required/optional/readiness semantics;
+- access mode cuando sea contractualmente relevante.
 
 ## Named connections
 
@@ -80,6 +120,32 @@ one global Cosmos
 one global Storage
 ```
 
+Una aplicación puede tener simultáneamente:
+
+```text
+command-center Cosmos
+external Tool Cosmos A
+external Tool Cosmos B
+...
+```
+
+Cada conexión se resuelve de forma explícita por composición.
+
+No introducir clientes globales compartidos accidentalmente entre conexiones.
+
+## Command Center Tool Catalog
+
+La dirección congelada para Command Center es:
+
+```text
+named external Tool Cosmos connections
+→ read confirmed Tool projections
+→ reconcile
+→ durable Tool Catalog revision in Blob
+```
+
+No se crea un Cosmos adicional de Command Center sólo para volver a publicar el Tool Catalog consolidado.
+
 ## Seguridad
 
 El plan no contiene secretos.
@@ -91,3 +157,5 @@ Sólo:
 - referencias de conexión.
 
 Credenciales siguen el mecanismo normal del proyecto.
+
+Las conexiones externas deben recibir únicamente los permisos necesarios; para Tool Catalog la dirección es consumo read-only.

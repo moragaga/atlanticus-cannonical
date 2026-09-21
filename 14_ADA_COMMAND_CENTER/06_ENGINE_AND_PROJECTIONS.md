@@ -1,21 +1,46 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT/FROZEN + ANALYTICS BOUNDARY CANDIDATE**
+Estado: **CURRENT / REFINED + ANALYTICS BOUNDARY CANDIDATE**
 
 ## Alarm Engine
 
-Recibe configuración ya resuelta.
+Alarm Engine recibe configuración ejecutable materializada.
+
+La persistencia de Alarm Configuration puede preceder a la resolución completa de dependencias externas. B.2 debe separar readiness por capability.
+
+Una referencia Tool no resuelta no bloquea necesariamente Runtime si el evaluator y los datos requeridos son ejecutables sin esa referencia.
 
 La Web no resuelve:
 
-- evaluators;
+- evaluator execution;
 - priority;
 - lifecycle;
 - Special Cascade;
 - reappearance;
 - Message catalogs;
 - deactivation authorization;
-- routing.
+- routing execution.
+
+## Runtime vs Delivery readiness
+
+Runtime y Delivery derivan de la misma resolución/provenance, pero no toda dependencia afecta a ambos de la misma forma.
+
+Ejemplo:
+
+```text
+Alarm Configuration valid
+Evaluator available
+Tool visual target unresolved
+
+→ Runtime may be READY
+→ Delivery target is NOT READY
+```
+
+Una Rule que puede evaluarse puede generar Occurrence/Journey/Evidence durante marcha blanca aunque un destino visual/routing externo todavía no esté disponible.
+
+Delivery no debe despachar hacia una referencia externa no resuelta.
+
+Delivery no puede liderar la configuración EFFECTIVE de Runtime.
 
 ## Live Projection
 
@@ -50,12 +75,14 @@ Debe combinar:
 - management;
 - deactivation;
 - routing/assignment;
-- configuration revision;
-- Tool topology revision.
+- Alarm Source revision;
+- resolution identity/provenance;
+- Tool Catalog revision/topology provenance.
 
 Nombre/API/storage todavía no congelados.
 
 No asumir aún si será:
+
 - una History Projection;
 - una Analytics Projection;
 - ambas.
@@ -65,6 +92,7 @@ No asumir aún si será:
 History/Analytics es read model derivado.
 
 No modifica Engine state y no reemplaza:
+
 - Durable Engine;
 - Live Projection;
 - Management Projection.
