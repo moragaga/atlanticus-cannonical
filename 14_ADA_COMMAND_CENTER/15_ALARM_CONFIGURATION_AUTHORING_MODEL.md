@@ -1,123 +1,195 @@
 # ADA Command Center — Alarm Configuration Authoring Model
 
-Estado: **DRAFT / IN PROGRESS**
+Estado: **DRAFT / AUTHORITY RECONCILED / OPEN CONTRACTS REMAIN**
 
-Propósito: **guía canónica de trabajo para reconstruir y completar el modelo de authoring de Alarm Configuration antes de rediseñar la UI o proponer cambios al Alarm Engine.**
+Propósito: **guía canónica de trabajo para diseñar el authoring de Alarm Configuration usando la versión más cercana posible a la autoridad vigente, sin convertir decisiones históricas o recuerdos en contrato actual y sin modificar el Alarm Engine por conveniencia de UI.**
 
-Este documento **no congela decisiones nuevas**. Separa explícitamente lo ya verificado de lo que todavía debe confirmarse con decisiones, implementación histórica u otras fuentes que se incorporen después.
+Este documento no congela decisiones nuevas. Consolida:
 
-## 1. Autoridad y evidencia usada
+- implementación CURRENT;
+- canonical CURRENT;
+- decisiones frozen/recorded aún compatibles;
+- qualification histórica;
+- conflictos explícitos entre contrato deseado e implementación;
+- temas que siguen OPEN.
 
-Jerarquía de autoridad aplicada:
+## 1. Checkpoint de autoridad auditado
 
-1. `moragaga/atlanticus:main`: realidad implementada.
-2. Decisiones explícitamente vigentes/frozen en `moragaga/atlanticus-decisions:main`.
-3. Qualification y tests.
-4. Decisiones recientes todavía no formalizadas.
-5. Recuerdo conversacional: pista para búsqueda, nunca autoridad suficiente por sí sola.
-
-Implementación auditada para esta guía:
+### Atlanticus implementado
 
 ```text
 moragaga/atlanticus:main
 762c8db89d8811b2036a84e4c82904e6ee31ec28
 ```
 
-Fuentes principales consultadas:
+La implementación en `main` es la realidad ejecutable actual.
+
+### Atlanticus canonical
 
 ```text
-atlanticus-decisions:
-alarm_decisions/R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md
-
-atlanticus-canonical:
-00_AUTHORITY.md
-04_ALARM_ENGINE__01_DOMAIN_MODEL.md
-
-atlanticus:
-scopes/ada-command-center/backend/alarms/core/
-scopes/ada-command-center/backend/tools/catalog/
-scopes/ada-command-center/web/alarms/configuration/
-scopes/ada/web/tools/core/
-web/capabilities/manager/
+moragaga/atlanticus-cannonical:main
+a91e1d8f176de1616c06f2492154ca9a50cdf0fb
 ```
 
-## 2. Objetivo de esta guía
+Documentos principales contrastados:
 
-La configuración de alarmas no debe tratarse como un formulario plano.
+```text
+04_ALARM_ENGINE/00_INDEX.md
+04_ALARM_ENGINE/01_DOMAIN_MODEL.md
+04_ALARM_ENGINE/02_RUNTIME_AND_LIFECYCLE.md
+04_ALARM_ENGINE/05_PROJECTION_AND_PUBLICATION.md
+04_ALARM_ENGINE/06_MANAGEMENT.md
+04_ALARM_ENGINE/07_CONFIGURATION_AND_MATERIALIZATION.md
+04_ALARM_ENGINE/08_QUALIFICATION_BASELINE.md
+04_ALARM_ENGINE/09_DECISION_INDEX.md
+04_ALARM_ENGINE/10_OPEN_ITEMS.md
+04_ALARM_ENGINE/11_SOURCE_LEDGER.md
 
-El problema de authoring incluye simultáneamente:
+14_ADA_COMMAND_CENTER/02_CURRENT_IMPLEMENTATION.md
+14_ADA_COMMAND_CENTER/04_CONFIGURATION_SCOPE.md
+14_ADA_COMMAND_CENTER/05_TOOL_TO_ALARM_CONFIGURATION.md
+14_ADA_COMMAND_CENTER/06_ENGINE_AND_PROJECTIONS.md
+14_ADA_COMMAND_CENTER/13_OPEN_ITEMS.md
+14_ADA_COMMAND_CENTER/14_TOOL_CATALOG.md
+```
 
-- familias;
-- Rules;
-- prioridad y `priority_group`;
+### Atlanticus decisions
+
+Fuentes de decisión principales:
+
+```text
+alarm_decisions/
+R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT.md
+R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT_2.md
+R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT_3.md
+R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md
+
+R3.6M-006B.2-alarm-projection-boundary-DECISION-RECORDED.md
+R3.6M-006B.2-alarm-projection-and-publication-boundary-DECISION-RECORDED-INCREMENT-1.md
+R3.6M-006B.2-alarm-projection-and-publication-boundary-DECISION-RECORDED-INCREMENT-2.md
+```
+
+Qualification y genealogía preservadas:
+
+```text
+alarm_test/
+R3.5 phases A-F
+E-008 .. E-012
+F-001
+F-002
+F-007
+F-010
+```
+
+El ledger canonical declara F-010 como cierre final `CLOSED PASS/GREEN`.
+
+## 2. Regla de lectura de esta guía
+
+Jerarquía usada:
+
+```text
+1. atlanticus:main
+2. atlanticus-cannonical:main
+3. decisiones FROZEN/RECORDED compatibles
+4. qualification / tests
+5. drafts históricos
+6. memoria conversacional
+```
+
+Si una decisión frozen y `main` difieren:
+
+```text
+NO se corrige silenciosamente.
+NO se declara implementado lo que sólo fue deseado.
+Se registra CONFLICT / RECONCILIATION OPEN.
+```
+
+## 3. Resultado principal del rastrillo
+
+El modelo de authoring que recordábamos está mayormente respaldado por B.1 y por la implementación de Alarm Configuration.
+
+Sin embargo, el rastrillo encontró una frontera clave:
+
+```text
+AlarmDefinition CURRENT
+!=
+PlannedAlarm CURRENT
+```
+
+B.2 sigue sin implementarse.
+
+Por tanto, hoy existen tres capas distintas:
+
+```text
+AUTHORING CONTRACT
+AlarmDefinition + MessageDefinition
+        |
+        | CURRENT
+        v
+Alarm Configuration Source / Projection
+
+RESOLUTION
+AlarmDefinition + Tool Catalog + evaluator registry
+        |
+        | PLANNED / B.2
+        v
+PlannedAlarm + AlarmExecutionEntry
+
+RUNTIME
+PlannedAlarm + AlarmExecutionSession
+        |
+        | CURRENT / QUALIFIED
+        v
+Alarm Engine
+```
+
+Consecuencia:
+
+> Una capacidad presente en `AlarmDefinition` no implica automáticamente que el Runtime actual ya la consuma.
+
+Esto es especialmente importante para:
+
 - Special Conditions;
-- evaluadores y parámetros;
-- mensajes reutilizables;
-- management y reappearance;
-- desactivación;
-- routing/escalamiento entre Tools;
-- áreas operacionales Mine/Plant;
+- reappearance desde Special Conditions;
+- max duration de deactivation;
+- Message deactivation overrides;
 - visual targets;
-- Components y Subcomponents;
-- semántica específica de Process;
-- resolución posterior hacia `PlannedAlarm`.
+- Process projection mode;
+- cambios de configuración durante adoption.
 
-La UI futura debe representar esas relaciones sin cambiar innecesariamente el contrato durable ni introducir lógica que pertenece a B.2 o al Runtime.
-
-## 3. Frontera general
+## 4. Agregado durable CURRENT
 
 **VERIFIED / CURRENT**
 
-La cadena conceptual vigente es:
-
 ```text
-Alarm Configuration
-        |
-        v
-AlarmDefinition
-        |
-        v
-B.2 / Configuration Resolution
-        |
-        +--> referencias externas
-        +--> Tool Configuration
-        +--> Message Catalog
-        +--> evaluator registry
-        |
-        v
-PlannedAlarm + AlarmExecutionEntry
-        |
-        v
-Alarm Runtime
+AlarmConfiguration
+├── rules: tuple[AlarmDefinition, ...]
+└── messages: tuple[MessageDefinition, ...]
 ```
 
-`AlarmDefinition` es configuración editable.
+Es la unidad editable/publicable.
 
-`PlannedAlarm` es la forma resuelta y ejecutable.
+Tool Catalog no forma parte del payload durable de Alarm Configuration.
 
-El Core no debe conocer Dash/Flask, geometría UI, Cosmos, SharePoint, sesiones web ni persistencia física.
+Semántica CURRENT:
 
-Consecuencia para este trabajo:
+```text
+VALID
+!=
+FULLY RESOLVED
+!=
+READY
+```
 
-> La UI debe facilitar la edición del contrato canónico y sus referencias. No debe absorber responsabilidades propias del resolver ni modificar el Engine sólo para simplificar el formulario.
+`VALID` significa intrínsecamente válido como Alarm Configuration.
 
-## 4. Conceptos base
+La ausencia o drift de una Tool/evaluator puede impedir resolución/readiness posterior, pero no convierte automáticamente la revisión Source en inválida.
 
-### 4.1 Rule
+## 5. Family
 
-**VERIFIED**
-
-Una Rule es una alarma configurada.
-
-Su contrato editable es `AlarmDefinition`.
-
-Una activación concreta en Runtime es una `Occurrence`.
-
-### 4.2 Family
+### 5.1 Contrato CURRENT
 
 **VERIFIED**
-
-La identidad de una Rule contiene:
 
 ```python
 AlarmIdentity(
@@ -126,73 +198,55 @@ AlarmIdentity(
 )
 ```
 
-`family_key` agrupa lógicamente Rules relacionadas.
+`family_key`:
 
-Actualmente no existe un `FamilyDefinition` durable separado en `AlarmConfiguration`.
+- es namespace lógico de Rules;
+- participa en referencias;
+- participa en resolución del evaluator;
+- define scope de Messages FAMILY.
 
-**PROPOSED**
+No existe un `FamilyDefinition` durable separado.
 
-Para authoring, la Family debe utilizarse como **agregado visual derivado** de los `family_key` existentes, sin introducir todavía un nuevo contrato durable.
+### 5.2 Runtime
 
-Conceptualmente:
+**VERIFIED**
+
+El lifecycle compartido del Engine no se agrupa por `family_key`.
+
+Se agrupa por:
+
+```text
+priority_group
+```
+
+Por tanto:
+
+```text
+Family != Episode/Lifecycle Group
+```
+
+Una Family puede contener más de un `priority_group`.
+
+### 5.3 Authoring
+
+**PROPOSED / SAFE**
+
+La UI puede usar Family como agregado visual derivado:
 
 ```text
 Family
-|
-+-- Rules
-|   |
-|   +-- Priority Group A
-|   +-- Priority Group B
-|
-+-- Family Messages
-|
-+-- Global Messages disponibles
+├── Priority Groups
+├── Rules
+└── Family Messages
 ```
 
-### 4.3 Priority Group
+sin introducir un nuevo documento durable.
 
-**VERIFIED**
+No congelar `FamilyDefinition` mientras no exista necesidad independiente.
 
-`priority_group` define el contexto donde Rules relacionadas:
+## 6. Identidad, nombre operativo y nombre humano
 
-- participan del mismo lifecycle/episode;
-- compiten por prioridad;
-- interactúan con Special Conditions.
-
-Existe una única secuencia `priority_order` dentro de cada `priority_group`.
-
-### 4.4 Message
-
-**VERIFIED**
-
-Los Messages son contratos reutilizables.
-
-Existen dos scopes:
-
-```text
-GLOBAL
-FAMILY
-```
-
-`GLOBAL` no es una Family.
-
-### 4.5 Tool
-
-**VERIFIED**
-
-Los tipos actuales de Tool Configuration son:
-
-```text
-PROCESS
-INTEGRATED_OPERATIONS
-STRATEGIC
-```
-
-Alarm Configuration almacena referencias por keys; Tool Configuration conserva ownership de topología, scopes, Components y Subcomponents.
-
-## 5. Identidad y nombres de una Rule
-
-**VERIFIED**
+**VERIFIED / CURRENT**
 
 Cada Rule distingue:
 
@@ -209,43 +263,58 @@ Semántica:
 
 ```text
 family_key
--> familia lógica.
+-> namespace lógico.
 
 alarm_key
--> identidad estable de la Rule.
--> usada en lifecycle, persistencia y referencias.
+-> identidad estable/inmutable de la Rule.
 
 rule_name
--> nombre técnico/operativo.
--> editable.
--> único dentro de la Family.
+-> nombre técnico/operativo editable.
+-> único dentro de Family.
 
 display_name
 -> friendly name humano.
 
 title
--> título estático mostrado por la alarma.
+-> título estático operacional.
 
 cause_template
--> texto dinámico que puede incorporar evidence/evaluation.
+-> causa materializable con evidence/evaluation.
 ```
 
-No deben colapsarse estos campos sólo porque hoy parezcan similares.
+Campos históricos retirados:
 
-**PROPOSED**
+```text
+rule_key
+content_key
+title_template
+image_key
+```
 
-En una UI:
+`image_key`/imágenes permanecen diferidos, no deben reaparecer como placeholder.
 
-- `alarm_key` debe presentarse como identidad estable y no como un texto ordinario de edición casual;
-- `rule_name` debe explicarse como nombre técnico/operativo;
-- `display_name` como friendly name;
-- `title` y `cause_template` como contenido operacional.
+### Authoring recomendado
 
-## 6. Clasificación y estado de la Rule
+```text
+alarm_key
+-> presentar como identidad estable.
 
-**VERIFIED**
+rule_name
+-> Operational name.
 
-Campos actuales:
+display_name
+-> Friendly name.
+
+title
+-> título mostrado.
+
+cause_template
+-> explicación/cause dinámica.
+```
+
+## 7. Clasificación y estado
+
+**VERIFIED / CURRENT**
 
 ```text
 is_active
@@ -258,169 +327,207 @@ operational_areas
 color
 ```
 
-Catálogos:
+Valores:
 
 ```text
 visibility_mode:
-- VISIBLE
-- TRACE_ONLY
+VISIBLE
+TRACE_ONLY
 
 kind:
-- RISK
-- IMPACT
+RISK
+IMPACT
 
 criticality:
-- C1
-- C2
-- C3
+C1
+C2
+C3
 
 business_category:
-- ECOLOGY
-- PRODUCTIVITY
-- SAFETY_HEALTH
-- COSTS
+ECOLOGY
+PRODUCTIVITY
+SAFETY_HEALTH
+COSTS
 
 operational_areas:
-- MINE
-- PLANT
-- una o ambas, sin valor artificial BOTH
+MINE
+PLANT
+(MINE, PLANT)
 
 color:
-- RED
-- YELLOW
+RED
+YELLOW
 ```
 
-`TRACE_ONLY` continúa evaluándose y trazándose, pero no debe proyectarse como alarma visible.
+`TRACE_ONLY`:
 
-Una Rule `is_active=false` continúa definida, pero queda fuera del flujo ejecutable.
+```text
+se evalúa y traza
+pero Delivery no debe mostrarla como alarma visible
+```
 
-## 7. Evaluación y parámetros
+`is_active=false`:
 
-**VERIFIED**
+```text
+Rule sigue definida
+pero no forma parte de la execution session
+```
 
-Cada Rule declara:
+## 8. Evaluator y parameters
+
+### 8.1 Contrato de authoring
+
+**VERIFIED / CURRENT**
 
 ```text
 evaluator_key
 parameters
 ```
 
-Contrato de `parameters`:
-
 ```python
 Mapping[str, str | float | bool]
 ```
 
-Permitidos:
+No soporta:
 
 ```text
-TEXT
-FLOAT
-BOOLEAN
-```
-
-No permitidos:
-
-```text
+int como tipo de dominio
 None
-listas
-tuplas como valor
+list
+tuple como valor
 dict anidado
-código
 expresiones
+código
 ```
 
-Un entero numérico del negocio se representa contractualmente como `float`.
-
-Ejemplo:
+Un número integral de negocio se representa como:
 
 ```text
-120.0
+1200.0
 ```
 
-y no como un tipo `int` de dominio.
+### 8.2 Runtime
 
-La semántica de cada parameter pertenece al evaluator/desarrollador.
+**VERIFIED / CURRENT**
 
-**CURRENT IMPLEMENTATION NOTE**
-
-El authoring ya normaliza el round-trip JSON/browser donde un `1200.0` puede volver como `1200`, preservando finalmente el contrato `float`.
-
-**PROPOSED FOR UI**
-
-No usar un único campo `Parameters JSON`.
-
-Representar los parámetros dinámicamente:
+`AlarmEvaluatorRegistry` resuelve por:
 
 ```text
-Key                 Type       Value
-threshold_tph       Number     1200.0
-window              Text       15m
-quality_required    Boolean    Yes
+(family_key, evaluator_key)
 ```
 
-con operaciones:
+`AlarmExecutionEntry` mantiene:
 
 ```text
-+ Add parameter
-Remove
+planned_alarm
+evaluator_contract
+parameters
 ```
 
-Esto no requiere todavía un catálogo de evaluator schemas.
+Los parámetros CURRENT del Runtime aceptan exactamente:
 
-**OPEN**
+```text
+str | float | bool
+```
 
-Si posteriormente existe metadata contractual del evaluator, la UI puede aprovecharla para nombres, tipos y validaciones más específicas sin cambiar el shape durable.
+### 8.3 Metadata de parámetros
 
-## 8. Priority y Special Conditions
+**VERIFIED ABSENCE / CURRENT**
 
-### 8.1 Una sola secuencia
+No existe un schema general de parámetros por evaluator.
 
-**VERIFIED**
+Los nombres y su semántica pertenecen al evaluator/desarrollador.
 
-Dentro de cada `priority_group`:
+Por tanto, para UI V1 es correcto usar un editor genérico:
+
+```text
+Key
+Type
+Value
+```
+
+sin inventar schemas.
+
+### 8.4 UI
+
+**PROPOSED / SAFE**
+
+Superar `Parameters JSON` con filas dinámicas:
+
+```text
+threshold_tph       Number      1200.0
+window              Text        15m
+quality_required    Boolean     Yes
+```
+
+Persistiendo exactamente el mapping durable.
+
+## 9. Priority Group y prioridad
+
+### 9.1 Contrato
+
+**VERIFIED / CURRENT**
+
+```text
+priority_group
+priority_order
+```
+
+Cada `priority_group` tiene una única secuencia total.
+
+Invariantes presentes tanto en Alarm Configuration como en Engine:
 
 ```text
 priority_order > 0
-priority_order único
+priority_order único dentro del group
+
+si existen IMPACT + RISK:
+todos los IMPACT preceden a todos los RISK
 ```
 
-Rules normales y Special Conditions comparten la misma secuencia.
+### 9.2 Engine
 
-Ejemplo válido:
+**VERIFIED / CURRENT**
+
+El Engine vuelve a validar la unicidad/orden del execution plan.
+
+Priority se resuelve antes de Live Projection.
+
+La Web operacional no decide predominancia.
+
+### 9.3 UI
+
+**PROPOSED / SAFE**
+
+El usuario debería administrar una lista ordenada, no escribir principalmente números:
 
 ```text
 Priority Group: CRUSHING
 
-1 -> Special Condition A
-2 -> Rule B
-3 -> Special Condition C
-4 -> Rule D
+1  Crusher Trip
+2  Crusher Throughput Risk
+3  Low Stockpile
 ```
 
-### 8.2 IMPACT y RISK
+La UI deriva/persiste `priority_order`.
 
-**VERIFIED**
+## 10. Special Conditions — contrato vs Engine
 
-La revisión completa mantiene la invariante de prioridad:
+Este es el conflicto más importante encontrado.
+
+### 10.1 B.1 frozen / AlarmDefinition
+
+**VERIFIED CONTRACT**
+
+Una Special Condition es una Rule normal con:
 
 ```text
-IMPACT debe preceder RISK dentro del mismo priority_group
+is_special_condition=true
 ```
 
-### 8.3 Special Condition
+No es un tercer `AlarmKind`.
 
-**VERIFIED**
-
-Una Special Condition no es otro `AlarmKind`.
-
-Es una Rule normal con:
-
-```text
-is_special_condition = true
-```
-
-Conserva:
+Debe conservar:
 
 - kind;
 - criticality;
@@ -429,47 +536,95 @@ Conserva:
 - priority;
 - routing;
 - management;
-- targets.
+- visual targets.
 
-Una referencia a Special Condition para reappearance debe apuntar a una Rule:
-
-```text
-de la misma Family
-AND
-del mismo priority_group
-AND
-marcada is_special_condition=true
-```
-
-### 8.4 Semántica de gestión
-
-**VERIFIED EN DECISIÓN FROZEN**
-
-Una Special Condition predominante gestionada puede ejercer Special Cascade sobre las demás Rules activas del mismo `priority_group`.
-
-La prioridad de la Special Condition sigue usando el mismo `priority_order`.
-
-**PROPOSED FOR UI**
-
-No pedir `priority_order` principalmente como número.
-
-Representar el Priority Group como una secuencia ordenable:
+Una referencia de reappearance debe apuntar a una Rule:
 
 ```text
-CRUSHING
-
-1  Crusher Trip                IMPACT · Special
-2  Crusher Throughput Risk     RISK
-3  Low Stockpile               RISK
+misma Family
+AND
+mismo priority_group
+AND
+is_special_condition=true
 ```
 
-La UI puede persistir automáticamente `priority_order`.
+Alarm Configuration CURRENT ya valida esas relaciones intrínsecas.
 
-## 9. Management y reappearance
+### 10.2 Semántica frozen deseada
 
-**VERIFIED**
+B.1 congeló la intención:
 
-Contrato:
+```text
+managed predominant Special Condition
+-> Special Cascade
+-> bloquea las demás Rules activas del mismo priority_group
+```
+
+No debía limitarse sólo a RISK.
+
+### 10.3 Engine CURRENT
+
+**VERIFIED / CONFLICT**
+
+`PlannedAlarm` CURRENT no contiene:
+
+```text
+is_special_condition
+special_conditions
+reappearance definition
+```
+
+El Engine actual implementa la cascada histórica mediante:
+
+```text
+source_plan.kind == IMPACT
+AND source_plan.delivery_enabled
+```
+
+y sólo suprime targets:
+
+```text
+kind == RISK
+AND lower priority than source IMPACT
+AND delivery_enabled
+```
+
+Por tanto:
+
+```text
+B.1 Special Condition semantics
+!=
+Engine CURRENT cascade semantics
+```
+
+### 10.4 Estado
+
+```text
+AlarmDefinition.is_special_condition          CURRENT
+AlarmConfiguration validation                 CURRENT
+B.1 desired Special Cascade                   FROZEN
+Runtime materialization of is_special_condition  NOT IMPLEMENTED
+Engine current cascade                        HISTORICAL IMPACT -> lower RISK
+```
+
+Estado global:
+
+```text
+CONFLICT / B.2 + ENGINE RECONCILIATION OPEN
+```
+
+No modificar Engine todavía.
+
+Primero debe decidirse si B.2:
+
+- adapta el contrato a la semántica Engine existente;
+- o si existe evidencia suficiente para evolucionar Engine hacia la semántica frozen.
+
+## 11. Management y reappearance
+
+### 11.1 Authoring contract
+
+**VERIFIED / CURRENT**
 
 ```python
 ReappearanceDefinition(
@@ -478,48 +633,112 @@ ReappearanceDefinition(
 )
 ```
 
-No existe `enabled`.
-
 ```text
 after_minutes=None
 special_conditions=()
+-> sin reappearance configurado
 ```
 
-significa que no existe reappearance configurado.
-
-Una occurrence gestionada reaparece cuando:
+Semántica frozen:
 
 ```text
 main condition remains active
 AND
 (
-    after_minutes elapsed
+    timer elapsed
     OR
-    any referenced Special Condition is active
+    any referenced Special Condition active
 )
+-> REAPPEAR
 ```
 
-Si la condición principal deja de estar activa, una referencia o timer anterior no debe resucitar esa occurrence.
+### 11.2 Engine timer reappearance
 
-`after_minutes`:
+**VERIFIED / CURRENT**
+
+El Engine tiene:
 
 ```text
-None
-o
-> 0
+ManagementEffect.reappearance_due_at
 ```
 
-sin máximo artificial definido en el contrato.
+y reappearance temporal funcional.
 
-**VERIFIED**
+Al vencer el efecto:
 
-Mientras Management oculta una alarma, el routing no se detiene automáticamente.
+- mantiene la misma occurrence;
+- incrementa `management_cycle`;
+- limpia `management_effect`.
 
-## 10. Deactivation de la Rule
+La qualification incluye management intensivo y cierre F-010.
 
-**VERIFIED**
+### 11.3 Fuente del due_at
 
-Contrato:
+**VERIFIED / GAP**
+
+El Runtime recibe:
+
+```text
+reappearance_due_at_resolver
+```
+
+como callable de composición.
+
+No existe todavía B.2 que derive ese resolver/materialización desde:
+
+```text
+AlarmDefinition.reappearance.after_minutes
+```
+
+Por tanto:
+
+```text
+timer behavior exists in Engine
+pero AlarmDefinition -> timer mapping sigue OPEN
+```
+
+### 11.4 Reappearance por Special Condition
+
+**VERIFIED ABSENCE / GAP**
+
+No existe en `PlannedAlarm` CURRENT una lista de Special Conditions para reappearance.
+
+No existe materialización B.2 que conecte:
+
+```text
+AlarmDefinition.reappearance.special_conditions
+```
+
+con Engine.
+
+Estado:
+
+```text
+PLANNED / RECONCILIATION OPEN
+```
+
+### 11.5 Cambio de after_minutes durante una gestión
+
+B.1 frozen desea:
+
+```text
+cambio de after_minutes
+-> recalcular due del ManagementEffect actual
+```
+
+No existe evidencia en `main` de reconciliación de este campo porque no forma parte de `PlannedAlarm`.
+
+Estado:
+
+```text
+FROZEN DESIRED / NOT CURRENTLY MATERIALIZED
+```
+
+## 12. Deactivation de la Rule
+
+### 12.1 Authoring contract
+
+**VERIFIED / CURRENT**
 
 ```python
 AlarmDeactivationDefinition(
@@ -537,47 +756,94 @@ enabled=false
 -> approval_required=false
 
 enabled=true
--> max_duration_hours requerido
--> 1 <= max_duration_hours <= 12
+-> max_duration_hours 1..12
 ```
 
-La desactivación es una capacidad ofrecida al operador.
-
-El operador sigue siendo quien decide si desactivar y hasta cuándo dentro del máximo efectivo permitido.
-
-El fin real puede depender además de restricciones Runtime como fin de turno; B.1 no resuelve eso.
-
-### 10.1 Approval
-
-**VERIFIED CONTRACT**
-
-`approval_required` existe en el contrato.
-
-**CURRENT PROJECT CONTEXT**
-
-El flujo operacional completo de aprobación todavía no debe asumirse implementado sólo porque el flag exista.
-
-La UI de configuración puede expresar la intención contractual sin inventar el workflow de aprobación.
-
-## 11. Message Catalog
-
-### 11.1 Organización
+### 12.2 Engine CURRENT
 
 **VERIFIED**
 
-Conceptualmente:
+`PlannedAlarm` sólo recibe:
 
-```text
-Message Catalog
-|
-+-- GLOBAL
-|
-+-- FAMILY A
-|
-+-- FAMILY B
+```python
+DeactivationPolicy(
+    approval_required: bool
+)
 ```
 
-Contrato:
+La intención operacional llega como:
+
+```python
+DeactivationIntent(
+    effective_until
+)
+```
+
+Por tanto el Engine CURRENT:
+
+- conoce si requiere aprobación;
+- materializa request/decision/effect;
+- no conoce directamente `max_duration_hours` de AlarmDefinition;
+- no calcula por sí mismo el máximo permitido desde esa configuración.
+
+### 12.3 Approval
+
+**VERIFIED / CURRENT ENGINE**
+
+El Engine sí soporta:
+
+```text
+approval_required=false
+-> DIRECT
+-> DeactivationEffect inmediato
+
+approval_required=true
+-> PENDING_APPROVAL
+-> durable DeactivationRequest
+-> DeactivationDecision
+-> APPLIED / REJECTED / CANCELLED / etc.
+```
+
+Esto está cubierto por tests CURRENT.
+
+Por tanto, la frase correcta es:
+
+```text
+Approval domain flow:
+IMPLEMENTED en Engine/Core
+
+Approval application/user workflow:
+NO debe asumirse compuesto sólo por existir el dominio
+```
+
+### 12.4 Max duration / shift end
+
+**OPEN / B.2-DELIVERY BOUNDARY**
+
+B.1 define el máximo configurable.
+
+La decisión frozen plantea conceptualmente:
+
+```text
+effective_until =
+min(
+    operator_selected_until,
+    now + configured_max_duration,
+    shift_end
+)
+```
+
+El Engine recibe ya un `effective_until`.
+
+Esto sugiere que el cálculo/capability efectivo debe resolverse antes del Engine, no necesariamente dentro del lifecycle.
+
+No modificar Engine para esto sin necesidad demostrada.
+
+## 13. Message Catalog
+
+### 13.1 Contrato
+
+**VERIFIED / CURRENT**
 
 ```python
 MessageDefinition(
@@ -590,93 +856,113 @@ MessageDefinition(
 )
 ```
 
-Reglas:
+Scopes:
 
 ```text
 GLOBAL
--> family_key=None
-
 FAMILY
--> family_key requerido
 ```
 
-`message_key` es identidad estable.
+Reglas:
 
-`display_text` no es identidad.
+```text
+GLOBAL -> family_key=None
+FAMILY -> family_key requerido
+```
 
-### 11.2 Selección desde una Rule
+`message_key` es identidad.
+
+### 13.2 Asociación
 
 **VERIFIED**
 
-Cada Rule declara explícitamente:
+Cada Rule selecciona explícitamente:
 
 ```text
 message_keys[]
 ```
 
-Una Rule de `FAMILY_A` puede seleccionar:
+Una Rule puede elegir:
 
 ```text
 GLOBAL
 +
-FAMILY_A
+misma FAMILY
 ```
 
-No puede seleccionar Messages de otra Family.
+Nunca otra Family.
 
-Una Rule puede no tener Messages.
+Crear un Message nuevo no altera Rules existentes.
 
-Crear un Message GLOBAL nuevo no modifica Rules existentes automáticamente.
+### 13.3 Message deactivation override
 
-### 11.3 Deactivation override del Message
+**VERIFIED CONTRACT**
 
-**VERIFIED**
-
-Un Message puede declarar:
-
-```python
-MessageDeactivationDefinition(
-    enabled,
-    max_duration_hours,
-    approval_required,
-)
-```
-
-Precedencia:
+Si:
 
 ```text
-message.deactivation_override is None
--> usar default de la Rule
-
-override existe
--> reemplaza completamente el default de la Rule
+deactivation_override=None
 ```
 
-No se mezclan campos individualmente.
+se usa default de la Rule.
 
-Ejemplo:
+Si existe override:
 
 ```text
-Rule max deactivation = 2h
-Message override = 7h
--> contexto del Message usa 7h
-
-Rule max deactivation = 2h
-Message override = disabled
--> ese contexto no ofrece deactivation
+reemplaza COMPLETAMENTE el default
 ```
 
-**OPEN / NEEDS CONFIRMATION**
+Puede incluso permitir un máximo mayor al default de la Rule, limitado por las restricciones operacionales posteriores.
 
-Cuando una Rule tiene múltiples Messages seleccionados, debe verificarse cómo se materializa la política efectiva si esos Messages tienen overrides distintos. No asumir una regla de combinación hasta revisar la fuente correspondiente.
+### 13.4 Engine CURRENT
 
-## 12. Routing y escalamiento
+**VERIFIED / GAP**
 
-### 12.1 Contrato editable
+`MessageDefinition` no forma parte de `PlannedAlarm` CURRENT.
 
-**VERIFIED**
+`PlannedAlarm.deactivation_policy` contiene únicamente:
 
-Cada Rule declara:
+```text
+approval_required
+```
+
+Por tanto la resolución:
+
+```text
+Rule default
++
+selected Message
++
+Message override
+->
+effective deactivation capability
+```
+
+sigue perteneciendo a B.2/Delivery.
+
+### 13.5 Multiple Messages con overrides
+
+**OPEN**
+
+No existe una regla congelada recuperada para decidir automáticamente cómo combinar varios Messages seleccionados si tienen overrides distintos.
+
+No inventar:
+
+```text
+min
+max
+first
+last
+merge
+```
+
+La UI puede permitir configurar los Messages, pero la semántica efectiva necesita una decisión antes de materialización.
+
+## 14. Routing y criticality
+
+### 14.1 Authoring source contract
+
+**VERIFIED / CURRENT**
 
 ```text
 origin_tool_key
@@ -691,41 +977,196 @@ steps[]
 Invariantes locales:
 
 ```text
-origin_tool_key no vacío
+origin no vacío
 step_order > 0
 step_order único
-target_tool_key no vacío
+target no vacío
 target != origin
 targets sin duplicados
 wait is None OR >= 0
 ```
 
-B.2 debe validar existencia y compatibilidad de Tools.
+### 14.2 PlannedAlarm / Engine contract
 
-### 12.2 Criticality y routing
+**VERIFIED / CURRENT**
 
-**VERIFIED EN DECISIÓN FROZEN**
+```python
+AlarmRouting(
+    origin_tool_key,
+    destinations: tuple[RoutingDestination, ...]
+)
 
-Semántica histórica a preservar:
+RoutingDestination(
+    tool_key,
+    delay_seconds
+)
+```
+
+Semántica exacta CURRENT:
 
 ```text
 C1
--> destinos inmediatos
+-> todos los destinations deben ser inmediatos
+-> delay_seconds=None
 
 C2
--> destinos retardados
+-> todos los destinations requieren delay_seconds
 
 C3
+-> no puede tener destinations
 -> origin only
 ```
 
-Los detalles de tipos/tier permitidos pertenecen a resolución contra Tool Configuration.
+### 14.3 Runtime behavior
 
-### 12.3 Jerarquía recordada
+**VERIFIED / TESTED**
 
-**UNVERIFIED / TO CONFIRM**
+C1:
 
-Se recuerda la jerarquía operacional:
+```text
+origin + destinations
+-> asignados inmediatamente
+```
+
+C2:
+
+```text
+origin
+-> inmediato
+
+destinations
+-> scheduled
+```
+
+Los deadlines C2 se calculan como tiempos absolutos desde el inicio de la occurrence.
+
+Ejemplo probado:
+
+```text
+destination B: 900s
+-> occurrence start + 15m
+
+destination C: 1800s
+-> occurrence start + 30m
+```
+
+C3:
+
+```text
+origin only
+```
+
+### 14.4 Routing durante eclipse/management
+
+**VERIFIED**
+
+El routing sigue progresando aunque una RISK esté eclipsada por un IMPACT activo.
+
+La decisión B.1 también retiró:
+
+```text
+continue_escalation_clock_when_hidden
+```
+
+porque el reloj continúa.
+
+### 14.5 Mutation/adoption CURRENT
+
+**VERIFIED**
+
+Engine adoption:
+
+```text
+criticality change
+-> STRUCTURAL_RESET
+
+C2 routing changes
+-> COMPATIBLE
+
+C1 routing mutation
+-> REJECTED
+
+C3 routing mutation
+-> REJECTED
+```
+
+## 15. Semántica de tiempos de escalamiento
+
+Este es un OPEN importante.
+
+### Authoring
+
+B.1 usa:
+
+```text
+wait_minutes_from_previous_step
+```
+
+lo que lingüísticamente describe espera desde el paso anterior.
+
+### Runtime
+
+Engine usa:
+
+```text
+delay_seconds
+```
+
+como deadline absoluto desde el inicio de la occurrence.
+
+### Ejemplo del conflicto potencial
+
+Authoring:
+
+```text
+Origin
+  ↓ 10 min
+IO
+  ↓ 20 min
+Strategic
+```
+
+Dos interpretaciones posibles:
+
+```text
+A. acumulativa:
+IO        occurrence +10
+Strategic occurrence +30
+
+B. absoluta:
+IO        occurrence +10
+Strategic occurrence +20
+```
+
+Engine espera delays absolutos.
+
+B.1 no congela explícitamente la transformación.
+
+B.2 no está implementado.
+
+Estado:
+
+```text
+OPEN / MUST FREEZE BEFORE RESOLUTION IMPLEMENTATION
+```
+
+No duplicar un segundo “tiempo de carga” hasta resolver si el recuerdo operacional corresponde a esta misma secuencia.
+
+## 16. Routing por Tool tier
+
+### 16.1 Tool kinds
+
+**VERIFIED / CURRENT**
+
+```text
+PROCESS
+INTEGRATED_OPERATIONS
+STRATEGIC
+```
+
+### 16.2 Memoria operacional recuperada
+
+Se recuerda:
 
 ```text
 PROCESS
@@ -733,106 +1174,137 @@ PROCESS
 INTEGRATED_OPERATIONS
     ↓
 STRATEGIC
+
+nunca hacia atrás
 ```
 
-y la restricción:
-
-```text
-nunca escalar hacia atrás
-```
-
-También se recuerda que:
-
-```text
-PROCESS puede escalar a INTEGRATED_OPERATIONS
-INTEGRATED_OPERATIONS puede escalar a STRATEGIC
-```
-
-Esta matriz debe confirmarse explícitamente antes de congelarse como contrato.
-
-### 12.4 Tiempo de carga / espera por destino
-
-**PARTIALLY VERIFIED**
-
-El contrato CURRENT posee:
-
-```text
-wait_minutes_from_previous_step
-```
-
-por cada paso de escalamiento.
+### 16.3 Resultado del rastrillo
 
 **UNVERIFIED**
 
-Debe confirmarse si el “tiempo de carga” recordado para cada Tool/destino corresponde exactamente a:
+La matriz anterior no está congelada en:
+
+- B.1 frozen;
+- B.2 recorded;
+- Engine CURRENT.
+
+Engine trata routing como `tool_key` opaco y no conoce `ToolConfigurationKind`.
+
+B.1 dice explícitamente que:
 
 ```text
-wait_minutes_from_previous_step
+routing/escalation válido para criticality y Tool types
 ```
 
-o si existe otra semántica/configuración histórica independiente.
+es responsabilidad de B.2.
 
-No duplicar conceptos hasta resolver esta pregunta.
+Por tanto:
 
-## 13. Tool scopes y áreas Mine / Plant
+```text
+PROCESS -> IO -> STRATEGIC
+NO puede marcarse todavía CURRENT
+```
 
-### 13.1 Process
+hasta recuperar una fuente adicional o adoptar una nueva decisión explícita.
+
+### 16.4 Implicación
+
+La jerarquía de tiers, si se confirma, debe implementarse en:
+
+```text
+B.2 / Tool compatibility resolution
+```
+
+no dentro del lifecycle Engine.
+
+## 17. Mine / Plant y Tool scopes
+
+### 17.1 Rule
 
 **VERIFIED**
 
-Una Tool `PROCESS` requiere:
-
 ```text
-operational_scope:
-- MINE
-- PLANT
+operational_areas:
+MINE
+PLANT
+MINE + PLANT
 ```
 
-Por lo tanto una Rule sólo debería recibir como opciones Process compatibles con sus `operational_areas`.
+### 17.2 Process Tool
 
-Ejemplo conceptual:
+**VERIFIED / CURRENT**
+
+`ToolStructure` exige:
 
 ```text
-Rule areas = MINE
--> Process MINE disponible
--> Process PLANT no debe ofrecerse como opción compatible
+PROCESS
+-> operational_scope obligatorio
+   MINE o PLANT
 ```
 
-### 13.2 Integrated Operations
+### 17.3 Integrated Operations
 
-**VERIFIED**
+**VERIFIED / CURRENT**
 
-`INTEGRATED_OPERATIONS` no posee un único `operational_scope`.
+Integrated Operations:
 
-Sus Components declaran individualmente:
+```text
+no tiene un único operational_scope
+```
+
+Sus Components declaran:
 
 ```text
 scope = MINE | PLANT
 ```
 
-Por eso puede integrar ambos dominios.
-
-### 13.3 Strategic
+### 17.4 Strategic
 
 **VERIFIED**
 
-`STRATEGIC` existe como `ToolConfigurationKind`.
+`STRATEGIC` existe como Tool kind.
 
-**VERIFIED**
+No existe visual alarm projection definida para Strategic.
 
-Todavía no existe contrato suficiente para proyección visual específica de alarmas Strategic.
+### 17.5 Compatibilidad Rule -> Tool
 
-**OPEN**
+**INFERRED / NEEDS B.2 DECISION**
 
-Routing hacia Strategic y visual projection de Strategic deben tratarse como responsabilidades distintas.
+Es coherente que una Rule `MINE` sólo ofrezca Process `MINE`, y equivalente para `PLANT`.
 
-Strategic puede terminar siendo válido como destino de routing sin que eso implique que ya exista un contrato visual.
+Pero la matriz exacta no está implementada en B.2.
 
-## 14. Gap actual en Alarm Tool References
+Para `(MINE, PLANT)` también falta congelar si:
+
+- se permiten ambos Process;
+- se exige Integrated Operations;
+- depende de origin/target.
+
+No inventar esta regla en callbacks.
+
+## 18. Tool Catalog y Alarm Tool References
+
+### 18.1 Tool Catalog
 
 **VERIFIED / CURRENT**
 
-`AlarmToolReferenceReader` actualmente entrega:
+Cada entry conserva:
+
+```text
+tool_key
+display_name
+kind
+source_release_id
+ToolStructure
+```
+
+Por tanto la información de scopes sí existe upstream.
+
+### 18.2 AlarmToolReferenceReader
+
+**VERIFIED / CURRENT GAP**
+
+El read model de authoring entrega:
 
 ```text
 tool_key
@@ -843,52 +1315,46 @@ components
 subcomponents
 ```
 
-Además actualmente omite `STRATEGIC` del catálogo entregado a Alarm Configuration.
-
-También pierde información necesaria para filtrado operacional:
+No conserva:
 
 ```text
 PROCESS operational_scope
 INTEGRATED_OPERATIONS component.scope
 ```
 
-### Consecuencia
-
-La UI CURRENT no puede realizar correctamente por sí sola:
+Además omite completamente:
 
 ```text
-Rule MINE
--> mostrar sólo Process MINE
-
-Rule PLANT
--> mostrar sólo Process PLANT
+STRATEGIC
 ```
 
-sin duplicar o inventar conocimiento.
+porque Strategic no tiene visual projection de alarmas.
+
+### 18.3 Refinamiento necesario
 
 **PROPOSED**
 
-Antes de una UI final, refinar el contrato de referencias para preservar el scope necesario.
-
-También evaluar separar conceptualmente:
+Separar necesidades:
 
 ```text
-Routing references
+Routing reference view
+-> puede requerir STRATEGIC
+-> necesita kind/scope
+
+Visual projection reference view
+-> sólo Tools con visual projection definida
+-> Component/Subcomponent topology
 ```
 
-de:
+No modificar Tool Catalog durable para esto: ya contiene `ToolStructure`.
 
-```text
-Visual projection references
-```
+El cambio correcto está en el read model/authoring boundary.
 
-porque Strategic puede tener reglas diferentes entre ambas superficies.
+## 19. Visual Targets
 
-## 15. Visual Targets
+### 19.1 Contract
 
-**VERIFIED**
-
-Cada Rule puede declarar múltiples:
+**VERIFIED / CURRENT**
 
 ```python
 AlarmVisualTarget(
@@ -899,147 +1365,262 @@ AlarmVisualTarget(
 )
 ```
 
-### 15.1 Integrated Operations
+Subcomponent identity:
+
+```text
+(owner_component_key, subcomponent_key)
+```
+
+### 19.2 Integrated Operations
 
 **VERIFIED**
-
-Semántica:
 
 ```text
 Component
 -> dónde se posiciona/organiza la alarma
 
 Subcomponents
--> elementos que reciben color/afectación visual
+-> qué recibe color/afectación
 ```
 
-Una Rule puede afectar múltiples Components y Subcomponents.
+Una Rule puede seleccionar múltiples Components y múltiples Subcomponents.
 
-### 15.2 Identidad del Subcomponent
+### 19.3 Process
 
 **VERIFIED**
 
-La identidad durable es:
-
-```text
-(owner_component_key, subcomponent_key)
-```
-
-Esto es importante porque Integrated Operations puede hacer visible un Subcomponent desde otro Component mediante links, pero debe conservarse el owner real.
-
-### 15.3 Process
-
-**VERIFIED**
-
-Para un target `PROCESS`, cada Rule declara:
+Cada target PROCESS declara:
 
 ```text
 GENERIC
-o
 DISTRIBUTED
 ```
 
-mediante:
+La geometría concreta del panel no pertenece al Engine.
+
+### 19.4 Strategic
+
+**VERIFIED UNDEFINED**
+
+No existe todavía comportamiento visual específico de Strategic.
+
+No inventarlo.
+
+## 20. Adoption — desired vs CURRENT
+
+B.1 congeló una matriz deseada de evolución de configuración.
+
+El Engine CURRENT aún conserva varias restricciones históricas.
+
+| Cambio | B.1 desired | Engine CURRENT |
+|---|---|---|
+| `rule_name` | COMPATIBLE | fuera de PlannedAlarm |
+| `display_name` | COMPATIBLE | Delivery, fuera de PlannedAlarm |
+| `title/cause` | COMPATIBLE | Delivery |
+| `parameters` | COMPATIBLE | COMPATIBLE |
+| `priority_order` | COMPATIBLE | COMPATIBLE |
+| `criticality` | STRUCTURAL_RESET | STRUCTURAL_RESET |
+| C2 routing | COMPATIBLE | COMPATIBLE |
+| `evaluator_key` | COMPATIBLE deseado | REJECTED |
+| `kind` | COMPATIBLE deseado | REJECTED |
+| `priority_group` | structural group migration | REJECTED |
+| `origin_tool_key` | STRUCTURAL_RESET | no tiene clasificación específica; entra como routing mutation |
+| C1 routing mutation | no congelado como compatible | REJECTED |
+| C3 routing mutation | no congelado como compatible | REJECTED |
+| visual targets | COMPATIBLE | fuera del Engine lifecycle |
+| process projection mode | COMPATIBLE | fuera del Engine lifecycle |
+| Special Condition semantics | reconcile | no materializada |
+
+### Finding adicional: origin Tool
+
+B.1 frozen dice:
 
 ```text
-process_projection_mode
+origin_tool_key
+-> STRUCTURAL_RESET
 ```
 
-La geometría concreta del panel Process no pertenece a Alarm Core.
+Engine adoption CURRENT no inspecciona `origin_tool_key` por separado.
 
-### 15.4 Strategic
+Para C2, un cambio de `routing` que no cae en un rejection específico termina clasificado como compatible.
 
-**VERIFIED**
-
-No inventar `process_projection_mode` ni comportamiento visual Strategic mientras no exista evidencia contractual.
-
-## 16. Estructura durable actual de AlarmDefinition
-
-**VERIFIED**
+Por tanto existe un posible conflicto:
 
 ```text
-AlarmDefinition
-|
-+-- identity
-|   +-- family_key
-|   +-- alarm_key
-|
-+-- rule_name
-+-- display_name
-+-- title
-+-- cause_template
-|
-+-- is_active
-+-- visibility_mode
-+-- is_special_condition
-|
-+-- kind
-+-- criticality
-+-- business_category
-+-- operational_areas[]
-+-- color
-|
-+-- evaluator_key
-+-- parameters{}
-|
-+-- priority_group
-+-- priority_order
-|
-+-- message_keys[]
-|
-+-- reappearance
-|   +-- after_minutes
-|   +-- special_conditions[]
-|
-+-- default_deactivation
-|   +-- enabled
-|   +-- max_duration_hours
-|   +-- approval_required
-|
-+-- escalation
-|   +-- origin_tool_key
-|   +-- steps[]
-|       +-- step_order
-|       +-- target_tool_key
-|       +-- is_enabled
-|       +-- wait_minutes_from_previous_step
-|
-+-- visual_targets[]
-    +-- tool_key
-    +-- component_keys[]
-    +-- subcomponents[]
-    |   +-- owner_component_key
-    |   +-- subcomponent_key
-    +-- process_projection_mode
+B.1 desired origin change = STRUCTURAL_RESET
+vs
+Engine CURRENT C2 routing mutation = COMPATIBLE
 ```
 
-## 17. Estructura durable actual de MessageDefinition
+Debe verificarse/decidirse en B.2/adoption antes de permitir promoción operacional de ese cambio.
 
-**VERIFIED**
+## 21. B.2 historical vs CURRENT canonical
+
+### 21.1 Invariantes históricas que siguen siendo útiles
+
+B.2 recorded aporta:
 
 ```text
-MessageDefinition
-|
-+-- message_key
-+-- scope
-|   +-- GLOBAL
-|   +-- FAMILY
-|
-+-- family_key | None
-+-- display_text
-+-- is_active
-|
-+-- deactivation_override | None
-    +-- enabled
-    +-- max_duration_hours
-    +-- approval_required
+INVALID != REMOVED
+
+DISABLED != INVALID
+
+Runtime y Delivery derivan de una misma resolución
+
+Delivery no puede adelantarse al Runtime
+
+Runtime adoption determina EFFECTIVE
+
+Live Projection != Management Projection
+
+Web operacional no resuelve prioridad ni Message catalogs
 ```
 
-## 18. Modelo de authoring propuesto
+Estas invariantes siguen alineadas con canonical.
 
-Esta sección describe una forma de entender la configuración. **No es todavía un contrato UI congelado.**
+### 21.2 Strict persistence gate de Increment 2
 
-**PROPOSED**
+Increment 2 histórico endureció:
+
+```text
+LATEST SAVED = LATEST VALID
+```
+
+pero entendiendo VALID de forma que referencias externas podían bloquear persistence.
+
+Canonical CURRENT refinó esa semántica:
+
+```text
+LATEST SAVED = LATEST INTRINSICALLY VALID
+
+VALID
+!= FULLY RESOLVED
+!= READY
+```
+
+Por tanto:
+
+```text
+B.2 Increment 2 strict external pre-save gate
+-> SUPERSEDED / REFINED
+```
+
+No reintroducirlo desde la UI.
+
+### 21.3 Preconfiguration CURRENT
+
+**VERIFIED / CURRENT**
+
+Se permite persistir una Rule con:
+
+```text
+Tool aún no disponible
+o
+evaluator aún no disponible
+```
+
+si el aggregate es intrínsecamente válido.
+
+La referencia:
+
+```text
+no se borra
+no se vuelve disabled
+no se convierte en removed
+```
+
+Podrá re-resolverse posteriormente.
+
+## 22. Runtime / Delivery boundary
+
+**VERIFIED DIRECTION**
+
+B.2 debe poder producir, desde una misma resolución/provenance:
+
+```text
+Runtime materialization
+Delivery materialization
+```
+
+Runtime necesita:
+
+- executable Rule;
+- evaluator reference;
+- parameters;
+- priority;
+- routing;
+- management/reappearance inputs;
+- adoption semantics.
+
+Delivery necesita:
+
+- display/title/cause;
+- color;
+- kind/criticality/category/areas;
+- Messages;
+- deactivation capability;
+- visual targets;
+- Process projection mode.
+
+Readiness puede diferir:
+
+```text
+Runtime READY
+Delivery NOT READY
+```
+
+si el problema es exclusivamente visual.
+
+Delivery nunca debe liderar al Engine.
+
+## 23. Qualification y política de intervención del Engine
+
+**VERIFIED / CURRENT DIRECTION**
+
+R3.5 qualification cerró F-010:
+
+```text
+CLOSED PASS/GREEN
+1000 alarms
+361/361 iterations
+0 overruns
+journal aligned
+management requests 480/480
+management decisions 480/480
+no open product findings
+```
+
+La campaña también cubrió:
+
+- routing;
+- management;
+- deactivation;
+- adoption;
+- WAL/recovery;
+- leases/fencing;
+- drain;
+- soak/stress.
+
+Regla de trabajo:
+
+> No modificar Alarm Engine sólo para hacer más simple el authoring.
+
+Antes de tocar Engine clasificar una necesidad como:
+
+```text
+A. AlarmDefinition
+B. B.2 resolution
+C. Tool Configuration
+D. evaluator
+E. Delivery/UI
+F. gap real del Engine
+```
+
+Sólo `F` justifica discutir cambio del Engine.
+
+## 24. Modelo de authoring recomendado
+
+**PROPOSED / NOT YET FROZEN UI**
 
 ```text
 Alarm Configuration
@@ -1048,17 +1629,15 @@ Alarm Configuration
 |
 +-- Families
     |
-    +-- Family A
+    +-- Family
+        |
+        +-- Overview
         |
         +-- Family Messages
         |
         +-- Priority Groups
         |   |
-        |   +-- Group 1
-        |       |
-        |       +-- Rule / Special Condition
-        |       +-- Rule
-        |       +-- Rule
+        |   +-- ordered Rules
         |
         +-- Rules
             |
@@ -1072,228 +1651,354 @@ Alarm Configuration
             +-- Visual Projection
 ```
 
-La Family sería una vista derivada, no necesariamente una nueva entidad persistida.
+Family es una vista derivada.
 
-## 19. Implicaciones para una futura UI
+No crea un nuevo contrato durable.
 
-**PROPOSED / NOT FROZEN**
+## 25. Implicaciones seguras para UI
 
-La UI debería evitar:
-
-- todas las Rules expandidas simultáneamente;
-- JSON manual para parameters;
-- `priority_order` como único mecanismo de orden;
-- Tools/Components/Subcomponents como campos independientes sin jerarquía;
-- mostrar keys técnicas cuando existe `display_name`;
-- mezclar routing con visual projection;
-- obligar al usuario a conocer compatibilidad Mine/Plant manualmente.
-
-Direcciones a evaluar después de completar esta guía:
+Puede hacerse sin esperar B.2:
 
 ```text
 Family-first navigation
 Master/detail para Rules
 Master/detail para Messages
-Priority Groups ordenables
+Priority Groups como secuencia
 Parameters tipados dinámicos
-Message selection GLOBAL + FAMILY
-Routing como secuencia dirigida
-Visual targets como árbol Tool -> Component -> Subcomponent
-Filtrado por operational area
-Progressive disclosure de campos dependientes
+Selector GLOBAL + FAMILY Messages
+Deactivation fields con progressive disclosure
+Reappearance timer input
+Special Condition selector limitado por same family/group en aggregate
+Visual targets como Tool -> Component -> Subcomponent
+Friendly display names conservando keys durables
 ```
 
-## 20. Relación con el Engine
-
-### 20.1 Principio de trabajo
-
-**CURRENT PROJECT DIRECTION**
-
-El Alarm Engine ya fue sometido a un ciclo largo de pruebas y se considera operacionalmente estable para los escenarios probados.
-
-Por tanto:
-
-> No modificar el Engine por conveniencia de authoring.
-
-Primero determinar si una necesidad:
+No debe implementarse todavía como regla definitiva:
 
 ```text
-A. ya existe en AlarmDefinition;
-B. puede resolverse en B.2;
-C. pertenece a Tool Configuration;
-D. pertenece al evaluator;
-E. pertenece a Delivery/UI;
-F. es realmente un gap del Engine.
+PROCESS -> IO -> STRATEGIC
+nunca hacia atrás
 ```
 
-Sólo el último caso justifica proponer evolución del Engine.
+hasta congelar tier routing.
 
-### 20.2 Deltas históricos que deben revalidarse
-
-**VERIFIED EN DECISIÓN FROZEN, CURRENT IMPLEMENTATION STATUS TO RECHECK**
-
-La decisión B.1 documentó como delta respecto del engine de ese momento:
+Tampoco debe calcularse silenciosamente:
 
 ```text
-evaluator_key
-CURRENT histórico: REJECTED
-TARGET: COMPATIBLE
-
-kind
-CURRENT histórico: REJECTED
-TARGET: COMPATIBLE
-
-priority_group
-CURRENT histórico: REJECTED
-TARGET: migración estructural entre grupos
-
-origin_tool_key
-TARGET: STRUCTURAL_RESET
+effective Message deactivation
 ```
 
-Antes de modificar Engine por cualquiera de estos puntos se debe auditar el estado actual de `main`; no asumir que el delta histórico sigue abierto.
+cuando múltiples Messages tienen overrides distintos.
 
-## 21. OPEN — investigación requerida antes de congelar UX
+## 26. OPEN después del rastrillo
 
-Los siguientes puntos quedan explícitamente abiertos:
+### OPEN-1 — Routing tier matrix
 
-1. **Matriz de routing por Tool tier**
-   - confirmar `PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC`;
-   - confirmar prohibición estricta de escalamiento hacia atrás;
-   - confirmar si existen saltos permitidos, por ejemplo `PROCESS -> STRATEGIC`.
-
-2. **Criticality y routing**
-   - confirmar reglas completas de C1/C2/C3 contra tiers;
-   - confirmar si C1 usa steps con wait=0 o si B.2 materializa destinos inmediatos de otra forma.
-
-3. **“Tiempo de carga” por Tool/destino**
-   - confirmar si equivale a `wait_minutes_from_previous_step`;
-   - confirmar si existe un segundo concepto histórico.
-
-4. **Strategic**
-   - confirmar participación en routing;
-   - mantener comportamiento visual como pendiente hasta nueva evidencia.
-
-5. **Area compatibility**
-   - confirmar reglas exactas cuando una Rule tiene `(MINE, PLANT)`;
-   - confirmar cómo aplica scope a routing y a visual targets por separado.
-
-6. **Multiple Messages con overrides**
-   - confirmar cómo se materializa la política de deactivation cuando una Rule utiliza varios Messages con overrides distintos.
-
-7. **Evaluator metadata**
-   - determinar si existe o existirá un catálogo de evaluator/parameter definitions;
-   - no bloquear UI V1 por este punto.
-
-8. **Approval**
-   - mantener `approval_required` como configuración;
-   - no inventar workflow operativo mientras no exista contrato.
-
-9. **Family authoring**
-   - confirmar si Family seguirá siendo únicamente derivada de `family_key`;
-   - no introducir `FamilyDefinition` sin una necesidad contractual real.
-
-10. **B.2 actual**
-    - localizar y auditar la decisión/implementación vigente de Configuration Resolution;
-    - contrastar sus invariantes con esta guía.
-
-11. **Engine actual**
-    - auditar únicamente después de completar el modelo;
-    - comparar contratos antes de proponer modificaciones.
-
-## 22. Estado consolidado
-
-| Elemento | Estado | Evidencia |
-|---|---|---|
-| AlarmDefinition durable | CURRENT / VERIFIED | Core + B.1 |
-| Family por `family_key` | CURRENT / VERIFIED | AlarmIdentity |
-| Family como agregado UI | PROPOSED | Derivable, no durable |
-| Priority Group único | CURRENT / VERIFIED | B.1 + configuration |
-| Special Conditions en misma prioridad | CURRENT / VERIFIED | B.1 |
-| Reappearance | CURRENT / VERIFIED | Core + B.1 |
-| Rule deactivation | CURRENT / VERIFIED | Core + B.1 |
-| Message GLOBAL/FAMILY | CURRENT / VERIFIED | Core + B.1 |
-| Message deactivation override | CURRENT / VERIFIED | Core + B.1 |
-| Routing origin + steps | CURRENT / VERIFIED | Core + B.1 |
-| C1/C2/C3 histórico | VERIFIED / requiere contraste B.2 actual | B.1 |
-| PROCESS scope Mine/Plant | CURRENT / VERIFIED | ToolStructure |
-| Integrated Operations component scope | CURRENT / VERIFIED | ToolStructure |
-| STRATEGIC Tool kind | CURRENT / VERIFIED | Tool enums |
-| Strategic visual projection | PLANNED / UNDEFINED | B.1 + ToolStructure |
-| Routing ascendente Process -> IO -> Strategic | UNVERIFIED | recuerdo a confirmar |
-| No routing hacia atrás | UNVERIFIED | recuerdo a confirmar |
-| ToolReference conserva scopes | BLOCKED / GAP | implementación actual no los expone |
-| Parameters JSON como UX final | SUPERSEDED / PROPOSED replacement | structured parameters |
-| UI final | PLANNED | pendiente completar modelo |
-| Cambios al Engine | BLOCKED | primero completar/contrastar contratos |
-
-## 23. Invariantes a conservar durante la investigación
-
-Hasta que nueva evidencia explícita los reemplace:
+Confirmar:
 
 ```text
-AlarmDefinition sigue siendo contrato editable canónico.
+PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC
+```
+
+y:
+
+- backward prohibited;
+- direct PROCESS -> STRATEGIC allowed o no;
+- IO origin permitido;
+- Strategic origin permitido;
+- relación con C1/C2/C3.
+
+### OPEN-2 — Escalation wait semantics
+
+Congelar transformación:
+
+```text
+wait_minutes_from_previous_step
+->
+RoutingDestination.delay_seconds
+```
+
+especialmente con 2+ steps.
+
+### OPEN-3 — Rule area vs Tool scope
+
+Congelar compatibilidad:
+
+```text
+Rule MINE / PLANT / BOTH
+vs
+PROCESS operational_scope
+vs
+Integrated component.scope
+```
+
+separando routing de visual projection.
+
+### OPEN-4 — Multiple Message overrides
+
+Definir el contexto operacional exacto cuando una Rule tiene múltiples Messages seleccionados con deactivation overrides diferentes.
+
+### OPEN-5 — Special Conditions runtime
+
+Resolver explícitamente conflicto:
+
+```text
+B.1 Special Condition model
+vs
+Engine IMPACT cascade model
+```
+
+incluyendo:
+
+- cascade source;
+- cascade target set;
+- predominance;
+- reappearance por Special Condition.
+
+### OPEN-6 — Reappearance materialization
+
+Definir:
+
+```text
+AlarmDefinition.after_minutes
+-> runtime due resolver
+
+special_conditions
+-> runtime trigger
+
+config change during active ManagementEffect
+-> reconciliation
+```
+
+### OPEN-7 — Origin Tool adoption
+
+Resolver el conflicto:
+
+```text
+B.1: STRUCTURAL_RESET
+Engine C2 routing mutation: COMPATIBLE
+```
+
+### OPEN-8 — Effective deactivation capability
+
+Definir B.2/Delivery mapping:
+
+```text
+Rule default
++
+Message override
++
+operator selected until
++
+configured max
++
+shift end
+->
+effective capability / effective_until
+```
+
+sin duplicar lifecycle logic en Web.
+
+### OPEN-9 — Routing references vs visual references
+
+Refinar `AlarmToolReferenceReader` para no perder scope y para no usar una única lista que excluye Strategic por razones exclusivamente visuales.
+
+### OPEN-10 — B.2 concrete contract
+
+Definir:
+
+```text
+ResolvedAlarmConfiguration
+resolution identity/provenance
+Runtime readiness
+Delivery readiness
+findings
+materialization boundaries
+```
+
+sin resurrectar el strict external pre-save gate superseded.
+
+## 27. Matriz de estado consolidada
+
+| Tema | Estado |
+|---|---|
+| AlarmConfiguration aggregate | CURRENT / VERIFIED |
+| AlarmDefinition B.1 shape | CURRENT / IMPLEMENTED |
+| MessageDefinition | CURRENT / IMPLEMENTED |
+| Family por `family_key` | CURRENT |
+| FamilyDefinition durable | NOT PRESENT / NOT NEEDED YET |
+| Priority Group | CURRENT / ENGINE ALIGNED |
+| IMPACT-before-RISK invariant | CURRENT / ENGINE ALIGNED |
+| Evaluator key + parameters | CURRENT / ENGINE ALIGNED |
+| Generic parameter metadata | NOT PRESENT |
+| C1 immediate routing | CURRENT / TESTED |
+| C2 delayed routing | CURRENT / TESTED |
+| C3 origin only | CURRENT / TESTED |
+| C2 routing mutation | CURRENT / COMPATIBLE |
+| C1/C3 routing mutation | CURRENT / REJECTED |
+| Criticality mutation | CURRENT / STRUCTURAL_RESET |
+| Kind mutation | CURRENT / REJECTED; B.1 desired differs |
+| Evaluator mutation | CURRENT / REJECTED; B.1 desired differs |
+| Priority group mutation | CURRENT / REJECTED; B.1 desired differs |
+| Origin Tool mutation | CONFLICT / OPEN |
+| Special Condition authoring | CURRENT |
+| Special Condition runtime semantics | CONFLICT / OPEN |
+| Timer reappearance engine | CURRENT |
+| AlarmDefinition -> timer mapping | OPEN |
+| Special-condition reappearance | OPEN |
+| Rule deactivation definition | CURRENT |
+| Engine approval flow | CURRENT / TESTED |
+| Rule max duration -> effective_until | OPEN B.2/Delivery |
+| GLOBAL/FAMILY Messages | CURRENT |
+| Message override contract | CURRENT |
+| Multiple override resolution | OPEN |
+| Tool Catalog | CURRENT |
+| PROCESS scope | CURRENT |
+| Integrated component scope | CURRENT |
+| STRATEGIC kind | CURRENT |
+| Strategic visual projection | UNDEFINED |
+| Routing tier matrix | UNVERIFIED |
+| Alarm Tool Reference scope preservation | GAP |
+| Routing/visual reference separation | PROPOSED |
+| B.2 | PLANNED |
+| Engine qualification baseline | CLOSED PASS/GREEN |
+| Engine changes for UI convenience | BLOCKED |
+
+## 28. Invariantes congeladas para el siguiente trabajo
+
+Hasta decisión explícita en contrario:
+
+```text
+AlarmDefinition es el contrato editable.
+
+AlarmConfiguration persiste Rules + Messages atómicamente.
+
+VALID != FULLY RESOLVED != READY.
 
 AlarmIdentity = family_key + alarm_key.
 
 alarm_key es identidad estable.
 
-rule_name y display_name son conceptos distintos.
+rule_name y display_name son distintos.
 
-Una Rule pertenece al menos a MINE o PLANT.
+Family no equivale a priority_group.
 
-Un priority_group tiene una sola secuencia de priority_order.
+priority_group es el scope de lifecycle/priority.
 
-Special Conditions participan de esa misma secuencia.
+Existe una sola secuencia priority_order por group.
+
+IMPACT debe preceder RISK.
 
 Parameters son str | float | bool.
 
-Messages son explícitamente seleccionados por cada Rule.
+Evaluator registry CURRENT resuelve por family_key + evaluator_key.
 
-Una Rule puede seleccionar GLOBAL + misma FAMILY.
+Messages se seleccionan explícitamente por Rule.
 
-Message override reemplaza completamente default deactivation de la Rule.
+Una Rule sólo usa GLOBAL + misma FAMILY.
 
-Management no detiene routing por sí mismo.
+Message override reemplaza completamente default deactivation.
 
-Visual target y routing son responsabilidades diferentes.
+Management no detiene routing.
 
-Component determina posicionamiento en Integrated Operations.
+C1 es inmediato.
 
-Subcomponents determinan afectación/color visual.
+C2 usa destinos retardados.
 
-Subcomponent durable identity = owner_component_key + subcomponent_key.
+C3 es origin only.
 
-Process target declara GENERIC o DISTRIBUTED.
+Routing y Visual Projection son contratos distintos.
+
+Integrated Operations Component posiciona.
+
+Subcomponents determinan afectación visual.
+
+Subcomponent identity conserva owner_component_key.
+
+Process target usa GENERIC/DISTRIBUTED.
 
 Strategic visual behavior no se inventa.
 
-Tool Configuration mantiene ownership de topology y scope.
+Tool Configuration mantiene ownership de topology/scope.
 
-Alarm Configuration persiste referencias, no copias de Tool Configuration.
+Alarm Configuration guarda referencias, no duplica Tool Configuration.
 
-No modificar Engine sólo para simplificar authoring.
+Tool/evaluator unresolved no vuelve intrínsecamente inválida la Alarm Source revision.
+
+Runtime adoption determina EFFECTIVE.
+
+Delivery no lidera Runtime.
+
+No modificar Engine por conveniencia de authoring.
 ```
 
-## 24. Próxima etapa de esta guía
+## 29. Conflictos que canonical debe mantener visibles
 
-Este documento debe enriquecerse con las fuentes adicionales que se identifiquen.
-
-El siguiente ciclo debe:
+No resolver silenciosamente:
 
 ```text
-1. buscar evidencia histórica faltante;
-2. completar routing/tier rules;
-3. completar semántica de tiempos;
-4. revisar B.2;
-5. contrastar con Engine CURRENT;
-6. cerrar OPEN;
-7. recién entonces trazar UX/UI final;
-8. implementar cambios incrementales fuera del Engine cuando sea posible.
+1. B.1 Special Condition desired semantics
+   vs
+   Engine CURRENT IMPACT cascade.
+
+2. B.1 reappearance.special_conditions
+   vs
+   ausencia en PlannedAlarm CURRENT.
+
+3. B.1 origin_tool_key STRUCTURAL_RESET
+   vs
+   Engine CURRENT C2 routing mutation compatible.
+
+4. B.1 desired compatible kind/evaluator changes
+   vs
+   Engine CURRENT REJECTED.
+
+5. B.1 desired priority_group migration
+   vs
+   Engine CURRENT REJECTED.
+
+6. B.2 Increment 2 strict external pre-save gate
+   vs
+   canonical CURRENT intrinsic-valid persistence.
 ```
 
-Hasta completar esos pasos, este documento permanece:
+## 30. Próximo foco recomendado
+
+Antes de dibujar la UI definitiva, cerrar un único frente:
 
 ```text
-DRAFT / IN PROGRESS
+ALARM-CONFIGURATION-RESOLUTION-RULES-CLOSURE
+```
+
+Objetivo:
+
+```text
+resolver sólo los OPEN contractuales que afectan authoring:
+
+- routing tier matrix;
+- escalation wait semantics;
+- area/scope compatibility;
+- multiple Message override semantics;
+- Special Condition materialization boundary;
+- deactivation effective capability boundary.
+```
+
+No implementar B.2 completo todavía.
+
+No modificar Engine todavía.
+
+Una vez cerrados estos puntos:
+
+```text
+Authoring model
+-> suficientemente estable
+
+UI information architecture
+-> puede congelarse
+
+B.2
+-> puede diseñarse desde contratos conocidos
+
+Engine
+-> sólo se toca si persiste un gap real después de resolution.
 ```
