@@ -18,3 +18,4 @@ Estado: **CURRENT / TOOL CATALOG + ALARM TOOL REFERENCES MILESTONE CLOSED**
 | `12_SOURCE_LEDGER.md` | Fuentes auditadas y trazabilidad. | AUDIT LEDGER / UPDATED 2026-09-21 |
 | `13_OPEN_ITEMS.md` | Contratos todavía pendientes. | OPEN / REFINED |
 | `14_TOOL_CATALOG.md` | Consolidador read-only durable de Tools para Command Center. | CURRENT V1 / CLOSED |
+| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Modelo funcional de authoring: Families, Rules, Priority Groups, Messages, Management, Routing y Visual Projection. | DRAFT / IN PROGRESS |
