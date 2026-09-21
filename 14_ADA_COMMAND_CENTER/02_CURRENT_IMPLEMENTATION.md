@@ -5,13 +5,19 @@ Estado: **VERIFIED / UPDATED 2026-09-21**
 Corte auditado:
 
 ```text
-moragaga/atlanticus@1c67212b21ef2241bcb59173ccb8e9cd237a0219
+moragaga/atlanticus@4fe03660ad47d105c55167dc583f09be1f395275
 ```
 
 Parent inmediato:
 
 ```text
-07eeb8d4ecc3f1e9d9a84ab1059eaad2fd5f78ce
+8e133ad7da3524874add8323315e8c2b3c3f1ee1
+```
+
+Tree:
+
+```text
+d893128c23939e8a1e8bdd60b5bae64d14983be8
 ```
 
 ## Físicamente en `main`
@@ -22,8 +28,10 @@ scopes/ada-command-center/
 │   ├── alarms/
 │   │   ├── core/
 │   │   └── persistence/
-│   └── processes/
-│       └── alarms-runtime/
+│   ├── processes/
+│   │   └── alarms-runtime/
+│   └── tools/
+│       └── catalog/
 └── web/
     └── alarms/
         └── configuration/
@@ -38,8 +46,10 @@ Alarm Configuration Source/Release               IMPLEMENTED / VERIFIED / CURREN
 Alarm Configuration base Projection              IMPLEMENTED / VERIFIED / CURRENT
 Alarm Configuration Manager integration          IMPLEMENTED / VERIFIED / CURRENT
 Alarm Configuration document-mode Web surface    IMPLEMENTED / VERIFIED / CURRENT
+Command Center Tool Catalog V1                   IMPLEMENTED / VERIFIED / CURRENT
+Alarm Tool Reference read model V1               IMPLEMENTED / CURRENT
+Structured Alarm Configuration authoring UI      NOT YET IMPLEMENTED
 Standalone Command Center application/shell      NOT YET IMPLEMENTED
-Command Center Tool Catalog                      NOT YET IMPLEMENTED
 B.2 ResolvedAlarmConfiguration                   NOT YET IMPLEMENTED
 Runtime/Delivery materialization from B.2        NOT YET IMPLEMENTED
 Management Projection                            NOT YET IMPLEMENTED
@@ -61,159 +71,175 @@ AlarmConfiguration
 └── messages: tuple[MessageDefinition, ...]
 ```
 
-El contrato durable se expresa como documento serializable completo y se transforma a los
-contratos ya existentes de `ada-command-center-alarms-core`.
-
-No se agregó un segundo `AlarmDefinition` ni un DTO paralelo dentro de Alarm Core.
-
-### Invariantes full-revision implementadas
-
-- `AlarmIdentity` única en la revisión;
-- `rule_name` único dentro de family;
-- `rule_name` reutilizable entre families;
-- `priority_order` único dentro de `priority_group`;
-- IMPACT antes de RISK dentro del grupo;
-- `message_key` único dentro del aggregate CURRENT;
-- Message referenciado debe existir;
-- Message FAMILY sólo puede ser consumido por la misma family;
-- Message inactivo puede permanecer referenciado sin invalidar intrínsecamente la revisión;
-- Special Condition referenciada debe existir;
-- debe estar marcada `is_special_condition=true`;
-- debe pertenecer a la misma family y `priority_group`.
+El contrato durable no cambió durante este hito.
 
 La semántica CURRENT permanece:
 
 ```text
 VALID
 !=
+FULLY RESOLVED
+!=
 READY
 ```
 
-## Source / Release CURRENT
+## Tool Catalog V1 CURRENT
 
-Alarm Configuration usa los contratos genéricos Atlanticus:
-
-```text
-SourceKey
-SourceReleaseRef
-SourceSnapshot
-SourceStore
-SourceService
-History
-exact release reads
-```
-
-La codec serializa el aggregate `Rules + Messages` como una única release.
-
-La composición recibe `SourceStore` y `SourceKey` explícitamente. No fija todavía un provider
-productivo Blob dentro de este paquete.
-
-## Alarm Configuration Projection CURRENT
-
-La Projection base materializa una `SourceRelease` exacta como `AlarmConfiguration`.
+Paquete:
 
 ```text
-Alarm Configuration SourceRelease exacta
-→ AlarmConfigurationProjectionBuilder
-→ ProjectionStore[AlarmConfiguration]
+scopes/ada-command-center/backend/tools/catalog
 ```
 
-Invariante:
+Contrato:
 
 ```text
-ProjectionTarget.dependencies == ()
+ToolCatalogEntry
+├── tool_key
+├── display_name
+├── kind
+├── source_release_id
+└── structure: ToolStructure
+
+ToolCatalogSnapshot
+├── revision
+├── generated_at_utc
+└── tools
 ```
 
-Esta Projection no es B.2 y no resuelve:
+`tools` se ordena por `tool_key` y los `tool_key` duplicados se rechazan.
 
-- Tool Catalog;
-- evaluator availability;
-- routing externo;
-- visual targets externos;
-- Runtime readiness;
-- Delivery readiness.
+`revision` es SHA-256 determinístico sobre el contenido de las entries:
 
-## Manager integration CURRENT
+- `tool_key`;
+- `display_name`;
+- `kind`;
+- `source_release_id`;
+- `ToolStructure.to_document()`.
 
-Alarm Configuration reutiliza `atlanticus.web.manager` mediante un `ManagerModule` real.
+`generated_at_utc` no participa en la revisión.
 
-La composición integra:
+### Consolidator
 
 ```text
-workspace
-validation
-Source read/publication/history
-base Projection
-history preview
-capability-local Web module
+ToolCatalogInput
+├── input_key
+├── ProjectionStore[ToolConfiguration]
+└── source_key = SourceKey('tools') por defecto
 ```
 
-`SourceKey`, `access_key`, stores y principal son dependencias explícitas de la composición.
+`ToolCatalogConsolidator.refresh()`:
 
-No se creó un Manager paralelo ni adapters legacy.
+1. lee cada Projection activa;
+2. exige payload `ToolConfiguration`;
+3. exige `configuration.structure`;
+4. rechaza `tool_key` duplicado;
+5. crea un snapshot completo;
+6. sólo entonces ejecuta `store.replace_current(snapshot)`.
 
-La Web capability-local usa actualmente un modo documental para editar/importar el aggregate
-completo. El editor visual final de Rules/Messages/parameters permanece abierto.
+No publica parcial si algún input falla.
 
-## Evidencia de qualification del hito
+### Blob store
 
-Ejecutado en el checkout real por el usuario:
+`BlobToolCatalogStore` usa `StorageClient` y settings explícitos:
 
 ```text
-uv sync                                OK
-pytest                                 27 passed
-ruff check .                           All checks passed
-ruff format --check .                  corregido antes de publicación
+container_name
+blob_name
 ```
 
-El entorno de paquete ejecutó Python `3.14.2`.
+`get_current()` devuelve `None` cuando el blob aún no existe.
 
-## AlarmDefinition ya implementado
+V1 no implementa:
 
-El código de Core conserva:
+- history;
+- LKG separado;
+- AVAILABLE/STALE/MISSING;
+- scheduler/cadence;
+- discovery automático de Tool stores;
+- Cosmos propio de Command Center.
 
-- AlarmDefinition;
-- MessageDefinition;
-- Message/Rule deactivation definitions;
-- ReappearanceDefinition;
-- AlarmEscalationDefinition;
-- AlarmVisualTarget;
-- evaluator + typed parameters;
-- priority;
-- business category;
-- operational areas;
-- semantic color;
-- Special Condition;
-- Message references.
+El blob CURRENT previo permanece sin cambios cuando el consolidator falla antes de publicar.
 
-No rediseñar estas capacidades desde cero.
+## Alarm Tool Reference read model CURRENT
+
+Implementado en:
+
+```text
+scopes/ada-command-center/web/alarms/configuration/
+src/ada_command_center/web/alarms/configuration/tool_references.py
+```
+
+Contrato:
+
+```text
+AlarmToolReferenceCatalog
+├── catalog_revision
+└── tools
+    └── AlarmToolReference
+        ├── tool_key
+        ├── display_name
+        ├── kind
+        ├── source_release_id
+        └── components
+            └── AlarmToolComponentReference
+                ├── component_key
+                ├── display_name
+                └── subcomponents
+                    └── AlarmToolSubcomponentReference
+                        ├── owner_component_key
+                        ├── subcomponent_key
+                        └── display_name
+```
+
+`AlarmToolReferenceReader` depende de `ToolCatalogStore` y:
+
+- retorna `None` si no existe catálogo CURRENT;
+- no oculta errores físicos del store;
+- reutiliza `ToolStructure.alarm_baseline_component_keys`;
+- reutiliza `ToolStructure.alarm_subcomponent_addresses_for_component()`;
+- conserva `owner_component_key` para subcomponentes linked;
+- omite `STRATEGIC` de las sugerencias porque la proyección de alarmas no está definida para ese kind.
+
+No modifica `AlarmConfiguration.from_document()` ni agrega validación externa al save/publish.
+
+## Qualification observada
+
+### Tool Catalog V1
+
+Ejecutado por el usuario antes de publicar el checkpoint `8e133ad7...`:
+
+```text
+pytest                    13 passed
+ruff check .              All checks passed!
+ruff format --check .     13 files already formatted
+```
+
+### Alarm Tool References V1
+
+Ejecutado por el usuario durante integración:
+
+```text
+pytest                    32 passed
+ruff check .              All checks passed!
+ruff format --check .     indicó 1 test por reformatear
+```
+
+Luego se indicó ejecutar `ruff format tests/test_tool_references.py` antes del cierre y la
+implementación fue publicada en `main@4fe03660...`.
+
+No se capturó en este chat una corrida post-publicación de los tres gates sobre exactamente ese SHA.
+Por tanto, la qualification funcional/lint previa está **VERIFIED**, mientras la qualification
+completa del checkpoint exacto queda **UNVERIFIED** hasta una corrida explícita si se requiere como
+gate formal.
 
 ## Base histórica ya disponible
 
-### Journey
+Alarm Engine conserva Journey/Evidence/Occurrence y demás hechos operacionales ya auditados.
 
-El motor genera eventos de:
+Este hito no modificó:
 
-- occurrence start/close;
-- technical hold;
-- management;
-- reappearance;
-- assignment/escalation;
-- deactivation;
-- priority suppression/release.
-
-### Evidence
-
-Conserva:
-
-- occurrence;
-- evaluated_at;
-- status;
-- evaluator/evidence contract;
-- payload;
-- errores técnicos;
-- affected inputs.
-
-Existe evidencia inicial, periódica, final y técnica/recovery.
-
-Esto da una base real para análisis histórico profundo.
+- Alarm Engine Domain Model;
+- Runtime lifecycle;
+- persistence/recovery;
+- Analytics boundary.

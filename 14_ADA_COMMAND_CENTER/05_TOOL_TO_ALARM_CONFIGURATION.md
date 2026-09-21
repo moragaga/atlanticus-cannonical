@@ -1,11 +1,11 @@
 # ADA Command Center — Tool to Alarm Configuration
 
-Estado: **FROZEN SEMANTICS / ALARM SIDE CURRENT / TOOL CATALOG NEXT**
+Estado: **CURRENT / TOOL CATALOG V1 + AUTHORING READ MODEL IMPLEMENTED / B.2 OPEN**
 
 ADA Tool Configuration es dueña de:
 
 - `tool_key`;
-- Tool type/tier;
+- Tool kind;
 - Components;
 - Subcomponents;
 - relaciones;
@@ -13,34 +13,36 @@ ADA Tool Configuration es dueña de:
 
 Alarm Configuration guarda referencias.
 
-`tool_key` es identidad estable de la Tool. Dos Tools distintas no comparten `tool_key`;
-`display_name` puede repetirse y no participa de la identidad.
+`tool_key` es identidad estable de la Tool. `display_name` no participa de la identidad.
 
-## Frontera de variante
-
-El siguiente componente de Command Center **no es el Tool Configuration authoring de ADA**.
-
-Es una capability distinta:
+## Frontera CURRENT
 
 ```text
 ADA Tool Configuration(s)
         ↓ durable Tool projections
-Command Center Tool Catalog
-        = consolidator / reconciler / read-only consumer
+Command Center Tool Catalog V1
+        = consolidator / read-only derived state
+        ↓
+Alarm Tool Reference read model
+        = authoring assistance
+        ↓
+Alarm Configuration
 ```
 
-Debe reutilizar o adaptar explícitamente los contratos CURRENT de Tool Configuration/ToolStructure
-cuando corresponda. No debe inventar un fork de Tool authoring ni convertirse en segunda source of
-truth.
+Command Center no inventa un segundo Tool authoring ni una segunda source of truth.
 
 ## Cadena CURRENT / PLANNED
 
 ```text
 ADA Tool Configuration(s)                    CURRENT fuera de Command Center
         ↓
-external Tool projections                    CURRENT por Tool/provider donde aplique
+Tool ProjectionStore inputs                  CURRENT contract
         ↓
-Command Center Tool Catalog                  NEXT / NOT YET IMPLEMENTED
+Command Center Tool Catalog V1               CURRENT
+        ↓
+AlarmToolReferenceReader                     CURRENT
+        ↓
+Structured Alarm Configuration authoring UI  NEXT / PLANNED
         ↓
                  + Alarm Configuration Projection   CURRENT
                  ↓
@@ -51,39 +53,99 @@ Resolved Alarm Configuration                 PLANNED
 Runtime / Delivery capability readiness      PLANNED
 ```
 
-Alarm Configuration puede usar el Tool Catalog para authoring asistido, pero el catálogo no forma
-parte de su Source aggregate.
+## Tool Catalog V1
 
-## Tool Catalog
+La implementación CURRENT consolida inputs explícitos `ProjectionStore[ToolConfiguration]`.
 
-Command Center no descubre Tools arbitrariamente durante cada edición de Rule ni durante cada
-resolución.
+Cada entry conserva:
 
-La dirección congelada es un Tool Catalog reconciliado/read-only que mantiene una visión
-durable/LKG de las topologías externas conocidas.
+```text
+tool_key
+display_name
+kind
+source_release_id
+ToolStructure
+```
 
-El catálogo:
+No duplica Components/Subcomponents en un contrato paralelo; reutiliza `ToolStructure`.
 
-- no crea ni edita Tools;
-- no es una segunda source of truth;
-- no se replica en un Cosmos propio sólo para duplicar Tool topology;
-- tiene lifecycle/revisión independiente de Alarm Configuration;
-- puede consolidar múltiples conexiones Cosmos nombradas;
-- conserva provenance suficiente para saber de qué observación externa provino una Tool.
+El snapshot:
 
-El contrato exacto del snapshot/entry/provenance y el binding Blob permanecen abiertos para el
-siguiente hito.
+- ordena entries por `tool_key`;
+- rechaza duplicados;
+- tiene revisión determinística;
+- persiste como un único documento CURRENT en Blob mediante `StorageClient`;
+- no introduce Cosmos propio de Command Center.
+
+## Failure semantics V1
+
+La reconciliación V1 es all-or-nothing.
+
+Si cualquier input:
+
+- falla al leer;
+- no tiene Projection activa;
+- no entrega `ToolConfiguration`;
+- no tiene `structure`;
+- repite `tool_key`;
+
+el refresh falla antes de publicar y el CURRENT anterior queda intacto.
+
+V1 **no** implementa estados por-entry AVAILABLE/STALE/MISSING.
+
+La dirección canónica anterior que los exigía desde el primer contrato queda **SUPERSEDED/REFINED**
+por esta primera versión funcional. Podrán agregarse sólo si una necesidad posterior lo justifica.
+
+## Durable state CURRENT
+
+Implementado:
+
+```text
+BlobToolCatalogStoreSettings
+├── container_name
+└── blob_name
+```
+
+```text
+get_current()
+replace_current(snapshot)
+```
+
+Blob inexistente significa que todavía no existe catálogo CURRENT y retorna `None`.
+
+No hay todavía:
+
+- history;
+- manifest/current pointer separado;
+- LKG separado;
+- retention;
+- scheduler/cadence.
+
+## Alarm Tool Reference read model
+
+`AlarmToolReferenceReader` consume el catálogo y produce una estructura de authoring con:
+
+- Tools;
+- Components;
+- subcomponent addresses visibles;
+- `source_release_id` por Tool;
+- `catalog_revision` global.
+
+La visibilidad de linked subcomponents se obtiene desde:
+
+```text
+ToolStructure.alarm_subcomponent_addresses_for_component()
+```
+
+No se duplica esa lógica en Command Center.
+
+`STRATEGIC` no aparece en las sugerencias porque el contrato Tool CURRENT no define proyección de
+alarmas para ese kind.
 
 ## Authoring vs resolution
 
-Sólo topología reconciliada/confirmada puede usarse para RESOLVER una referencia Tool.
-
-Esto no significa que la Tool deba existir para PERSISTIR una Alarm Configuration intrínsecamente
-válida.
-
-Se permite preconfigurar referencias aún no resolubles.
-
-Por tanto:
+El catálogo y el read model permiten authoring asistido, pero no vuelven obligatoria la resolución
+externa durante persistencia.
 
 ```text
 VALID CONFIGURATION
@@ -91,44 +153,15 @@ VALID CONFIGURATION
 FULLY RESOLVED CONFIGURATION
 ```
 
-Una referencia no resuelta genera findings/readiness específicos. No equivale a:
+Una referencia no sugerida/no resuelta no equivale a:
 
 - Rule inválida;
 - Rule disabled;
 - Rule removed.
 
-## B.2 valida y resuelve
+B.2 será la frontera que resuelva referencias contra una Tool Catalog revision concreta.
 
-B.2 no está implementado en `atlanticus:main` al checkpoint de este cierre.
-
-### Intrinsic validation
-
-La mayor parte de esta frontera ya quedó implementada en Alarm Configuration:
-
-- alarm identity/uniqueness;
-- priority invariants;
-- Message references dentro del mismo aggregate;
-- deactivation/reappearance structure;
-- escalation structure;
-- Special Condition references dentro del aggregate;
-- parameter key/value shape.
-
-### External resolution PLANNED
-
-Entre otros:
-
-- evaluator disponible;
-- Tool disponible;
-- Component disponible;
-- Subcomponent disponible;
-- Subcomponent pertenece al Component esperado;
-- Tool type permite projection mode;
-- routing/escalation apunta a referencias resolubles;
-- visual targets son resolubles contra topología confirmada.
-
-Un finding externo puede impedir una capability concreta sin invalidar la Alarm Source revision.
-
-## Re-resolution
+## Re-resolution futura
 
 La misma Alarm Source revision puede resolverse nuevamente contra una revisión posterior del Tool
 Catalog.
@@ -143,39 +176,13 @@ Alarm Source A17 + Tool Catalog T41
 
 La aparición de una Tool no obliga a republicar A17 si Alarm Configuration no cambió.
 
-## Tool types CURRENT de ADA
+## Non-goals CURRENT
 
-El contrato CURRENT de ADA Tool Configuration incluye:
+No crear desde este contrato:
 
-```text
-PROCESS
-INTEGRATED_OPERATIONS
-STRATEGIC
-```
-
-Para Alarm Configuration permanece congelado:
-
-### PROCESS
-
-`process_projection_mode`:
-
-- GENERIC;
-- DISTRIBUTED.
-
-### INTEGRATED_OPERATIONS
-
-`process_projection_mode = None`.
-
-### STRATEGIC
-
-No inventar comportamiento visual específico sin contrato/evidencia adicional.
-
-La geometría visual queda fuera de Alarm Core.
-
-## Principio
-
-Command Center configura referencias hacia Tools y las resolverá contra una topología consolidada y
-reconciliada.
-
-No duplica Tool authoring ni convierte disponibilidad externa temporal en invalidez intrínseca de
-Alarm Configuration.
+- legacy adapters;
+- aliases de compatibilidad;
+- duplicación de Tool authoring;
+- segunda Tool Projection Cosmos de Command Center;
+- B.2 dentro del reader de authoring;
+- validación externa obligatoria dentro de `AlarmConfiguration`.

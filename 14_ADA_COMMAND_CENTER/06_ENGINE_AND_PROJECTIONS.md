@@ -1,6 +1,6 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT / ALARM CONFIGURATION BASE PROJECTION IMPLEMENTED / B.2 OPEN**
+Estado: **CURRENT / ALARM CONFIGURATION BASE PROJECTION + TOOL CATALOG PRODUCER IMPLEMENTED / B.2 OPEN**
 
 ## Alarm Configuration Projection CURRENT
 
@@ -26,7 +26,22 @@ Su `ProjectionTarget` no declara dependencias externas.
 ProjectionTarget.dependencies == ()
 ```
 
-Esto es intencional: Tool Catalog/evaluator resolution pertenecen a B.2, no a la base projection.
+Esto es intencional: external resolution pertenece a B.2, no a la base projection.
+
+## Tool Catalog producer CURRENT
+
+Command Center ya dispone de una revisión consolidada de topología Tool:
+
+```text
+Tool Projection inputs
+→ ToolCatalogConsolidator
+→ ToolCatalogSnapshot
+→ Blob CURRENT
+```
+
+El catálogo tiene lifecycle/revisión independiente de Alarm Configuration.
+
+Existe además un read model backend-only para authoring. Ninguno de los dos reemplaza B.2.
 
 ## Alarm Engine
 
@@ -65,9 +80,6 @@ Tool visual target unresolved
 → Delivery target is NOT READY
 ```
 
-Una Rule que puede evaluarse puede generar Occurrence/Journey/Evidence durante marcha blanca aunque
-un destino visual/routing externo todavía no esté disponible.
-
 Delivery no debe despachar hacia una referencia externa no resuelta.
 
 Delivery no puede liderar la configuración EFFECTIVE de Runtime.
@@ -91,7 +103,7 @@ ni doble contrato.
 
 `AlarmEvaluatorRegistry` CURRENT resuelve por `(family_key, evaluator_key)` y no expone actualmente
 una identidad/revisión de registry. La necesidad exacta de provenance para evaluator resolution
-permanece OPEN para el hito B.2; no inventarla en Tool Catalog.
+permanece OPEN para B.2.
 
 ## Live Projection
 
@@ -115,36 +127,14 @@ No reemplaza Live.
 
 ## History / Analytics
 
-Command Center necesita una tercera frontera conceptual para explicar la historia operacional
-completa.
+Command Center necesita una frontera derivada para explicar la historia operacional completa.
 
-Debe combinar:
+Debe poder conservar provenance de:
 
-- Occurrence/Episode;
-- Journey;
-- Evidence;
-- priority transitions;
-- management;
-- deactivation;
-- routing/assignment;
 - Alarm Source revision;
-- resolution identity/provenance;
-- Tool Catalog revision/topology provenance.
+- resolution identity futura;
+- Tool Catalog revision usada por esa resolución.
 
 Nombre/API/storage todavía no congelados.
 
-No asumir aún si será:
-
-- una History Projection;
-- una Analytics Projection;
-- ambas.
-
-## Regla
-
-History/Analytics es read model derivado.
-
-No modifica Engine state y no reemplaza:
-
-- Durable Engine;
-- Live Projection;
-- Management Projection.
+Este hito no modifica el Analytics Boundary existente.

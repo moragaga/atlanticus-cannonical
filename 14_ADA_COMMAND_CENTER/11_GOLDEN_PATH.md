@@ -1,6 +1,6 @@
 # ADA Command Center — Golden Path
 
-Estado: **PARTIALLY IMPLEMENTED / NEXT TOOL CATALOG**
+Estado: **PARTIALLY IMPLEMENTED / STRUCTURED AUTHORING NEXT / B.2 LATER**
 
 El Golden Path debe demostrar tanto configuración con Tool disponible como preconfiguración antes de
 que una dependencia externa esté disponible.
@@ -27,90 +27,93 @@ que una dependencia externa esté disponible.
    CLOSED / VERIFIED / CURRENT contract
    production Blob binding remains OPEN
 
-4. Command Center Tool Catalog
-   └── reconciled from named external Tool projections
+4. Command Center Tool Catalog V1
+   └── consolidated from explicit Tool Projection inputs
                 ↓
-   NEXT / DESIGN FIRST / NOT YET IMPLEMENTED
+   CLOSED / CURRENT
 
-5. B.2 Resolution
+5. Alarm Tool Reference read model
+   └── Tool → Component → visible Subcomponent options
+                ↓
+   CLOSED / CURRENT
+
+6. Structured Alarm Configuration authoring UI
+                ↓
+   NEXT / PLANNED
+
+7. B.2 Resolution
    ├── Runtime readiness
    └── Delivery/reference readiness
                 ↓
    PLANNED
 
-6. Alarm Runtime
+8. Alarm Runtime
                 ↓
    EXISTING ENGINE / B.2 ADOPTION RECONCILIATION OPEN
 
-7. Durable History
+9. Durable History
    ├── Occurrence/Episode
    ├── Journey
    └── Evidence
                 ↓
    ENGINE FACTS CURRENT / COMMAND CENTER READ MODEL OPEN
 
-8a. Live Projection → ADA Generic
-8b. History/Analytics → Command Center
+10a. Live Projection → ADA Generic
+10b. History/Analytics → Command Center
    PLANNED / OPEN
 ```
 
-## Manager milestone CURRENT
+## Tool Catalog milestone CURRENT
 
-Alarm Configuration ya se administra mediante `atlanticus.web.manager` sin duplicar el Manager ADA.
+El catálogo:
 
-Implementado:
+- no duplica Tool authoring;
+- no introduce Cosmos propio de Command Center;
+- consolida sólo cuando todos los inputs configurados son válidos;
+- publica un único snapshot CURRENT en Blob;
+- conserva `source_release_id` y `ToolStructure` por Tool;
+- rechaza `tool_key` duplicado.
 
-```text
-workspace
-→ validate
-→ verify Source
-→ publish
-→ project
-→ history/preview
-```
+## Authoring reference milestone CURRENT
 
-La capability Web específica está bajo ownership de Command Center y actualmente usa un editor
-Document mode sobre el mismo aggregate durable.
+Alarm Configuration ya puede consumir el catálogo mediante un read model backend-only.
 
-## Preconfiguration path
+La UI estructurada todavía no está implementada.
 
-Debe seguir siendo válido el siguiente caso:
+El read model no altera el contrato durable ni convierte catálogo ausente en configuración inválida.
+
+## Preconfiguration path congelado
+
+Debe seguir siendo válido:
 
 ```text
 Alarm Source A17
 → references tool_key not yet available
 → A17 remains intrinsically valid and persisted
-→ resolution reports Tool reference unresolved
-→ eligible Runtime logic may execute
-→ Delivery/routing dependent on that Tool does not dispatch
+→ future B.2 reports Tool reference unresolved
 
 later:
 
 Tool Catalog T41
 → referenced Tool becomes available
-→ A17 is resolved again against T41
-→ dependent capability becomes READY
+→ A17 can be resolved again against T41
 → no new Alarm Source release is required
 ```
 
-El Tool Catalog necesario para demostrar esta vertical todavía no está implementado.
+## Definition of Done — estado
 
-## Definition of Done candidata
-
-Estado de los criterios:
-
-1. Alarm Configuration se administra mediante infraestructura genérica Manager sin duplicar el Manager ADA — **DONE**;
-2. Rules + Messages se publican como un único aggregate — **DONE**;
-3. Source/Release adopta el contrato durable Atlanticus y Blob como provider objetivo — **CONTRACT DONE / PRODUCTIVE BINDING OPEN**;
-4. parámetros permanecen `str | float | bool` sin schemas específicos por evaluator — **DONE**;
-5. Tool Catalog consolida Tools externas sin duplicarlas en un Cosmos de Command Center — **OPEN / NEXT**;
-6. múltiples Cosmos se resuelven mediante conexiones nombradas — **OPEN / TOOL CATALOG**;
-7. una Rule puede persistirse con referencias externas aún no resueltas — **DONE en intrinsic contract**;
-8. B.2 distingue intrinsic validity de external resolution/readiness — **PLANNED**;
-9. una Tool disponible puede resolver Component/Subcomponent/target desde topología confirmada — **PLANNED**;
-10. Alarm Runtime adopta configuración ejecutable B.2 — **PLANNED / RECONCILIATION OPEN**;
-11. una occurrence controlada/real produce Journey + Evidence — **ENGINE CAPABILITY CURRENT**;
-12. Delivery no despacha hacia referencias no resueltas — **FROZEN SEMANTICS / IMPLEMENTATION OPEN**;
-13. una revisión posterior de Tool Catalog puede resolver la misma Alarm Source revision sin republicarla — **FROZEN SEMANTICS / IMPLEMENTATION OPEN**;
-14. el estado se proyecta hacia ADA — **OPEN**;
-15. Command Center puede reconstruir historia y provenance de configuración/resolución — **OPEN**.
+1. Manager generic sin duplicación — **DONE**;
+2. Rules + Messages aggregate — **DONE**;
+3. Source/Release contract — **DONE / PRODUCTIVE BINDING OPEN**;
+4. parameters `str | float | bool` — **DONE**;
+5. Tool Catalog consolida Tools externas sin Cosmos propio — **DONE V1**;
+6. inputs múltiples se expresan como `ToolCatalogInput` con stores explícitos — **DONE CONTRACT / PRODUCTIVE COMPOSITION OPEN**;
+7. Rule puede persistirse con referencias externas aún no resueltas — **DONE**;
+8. backend authoring Tool/Component/Subcomponent — **DONE V1**;
+9. structured authoring UI consume ese read model — **NEXT**;
+10. B.2 distingue intrinsic validity de external resolution/readiness — **PLANNED**;
+11. Runtime adopta configuración ejecutable B.2 — **PLANNED / RECONCILIATION OPEN**;
+12. Journey + Evidence — **ENGINE CAPABILITY CURRENT**;
+13. Delivery no despacha hacia referencias no resueltas — **FROZEN SEMANTICS / IMPLEMENTATION OPEN**;
+14. re-resolution con nueva Tool Catalog revision — **FROZEN SEMANTICS / B.2 OPEN**;
+15. Live/History surfaces — **OPEN**.

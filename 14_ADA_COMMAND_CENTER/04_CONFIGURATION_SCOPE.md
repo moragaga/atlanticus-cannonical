@@ -1,6 +1,6 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT / ALARM CONFIGURATION CORE FLOW IMPLEMENTED / SPECIALIZED UI OPEN**
+Estado: **CURRENT / CORE FLOW + TOOL REFERENCE BACKEND IMPLEMENTED / STRUCTURED UI NEXT**
 
 Command Center es owner de Alarm Configuration.
 
@@ -16,7 +16,7 @@ Paquete:
 scopes/ada-command-center/web/alarms/configuration
 ```
 
-Cadena implementada:
+Cadena durable implementada:
 
 ```text
 Manager Workspace
@@ -25,30 +25,22 @@ Manager Workspace
 → Alarm Configuration Projection
 ```
 
-El Manager module es reusable y recibe explícitamente:
-
-- `SourceStore`;
-- `ProjectionStore[AlarmConfiguration]`;
-- `SourceKey`;
-- principal provider;
-- `access_key`;
-- nombres/ruta/metadatos de composición.
-
-No fija el provider productivo ni el shell final de Command Center.
+El Manager module recibe explícitamente stores, `SourceKey`, principal, `access_key` y metadatos de
+composición. No fija el provider productivo ni el shell final de Command Center.
 
 ## NO Tool authoring
 
 Command Center no crea/edita:
 
 - Tool identity;
-- Tool type;
+- Tool type/kind;
 - Components;
 - Subcomponents;
 - Tool topology.
 
 Eso pertenece a ADA Tool Configuration.
 
-Command Center consumirá una vista reconciliada/read-only mediante su Tool Catalog.
+Command Center consume una vista consolidada/read-only mediante `ToolCatalogStore`.
 
 ## Alarm Configuration aggregate
 
@@ -57,107 +49,89 @@ La unidad editable/publicable CURRENT contiene atómicamente:
 - Alarm Rules;
 - Message Catalog.
 
-El Tool Catalog no forma parte de este payload editable y tendrá lifecycle/revisión independiente.
+Tool Catalog no forma parte de este payload editable y tiene lifecycle/revisión independiente.
 
-### Alarm Rules
+La incorporación del catálogo no cambió el documento durable de `AlarmConfiguration`.
 
-Administra el contrato ya implementado:
+## Tool reference authoring backend CURRENT
 
-- identity;
-- names/title/cause;
-- active/visibility;
-- Special Condition;
-- kind/criticality/category/areas/color;
-- evaluator;
-- parameters;
-- priority group/order;
-- messages;
-- reappearance;
-- default deactivation;
-- escalation;
-- visual targets.
+Alarm Configuration dispone de:
 
-### Message Catalog
+```text
+AlarmToolReferenceReader
+→ AlarmToolReferenceCatalog
+```
 
-- GLOBAL;
-- FAMILY;
-- stable `message_key`;
-- display_text;
-- active/inactive;
-- optional deactivation override.
+El reader traduce el Tool Catalog CURRENT a opciones backend de:
 
-CURRENT implementation exige `message_key` único dentro del aggregate completo porque las Rules
-referencian mensajes mediante la key escalar.
+```text
+Tool
+→ Component
+→ visible Subcomponent address
+```
 
-Una referencia a un Message inactivo permanece intrínsecamente válida. La disponibilidad de ese
-contenido para Delivery/readiness no se resuelve en Alarm Configuration.
+Cada subcomponent reference conserva:
 
-### Evaluator / parameters
+```text
+owner_component_key
+subcomponent_key
+display_name
+```
+
+La topología no se recalcula en Alarm Configuration: se reutilizan las operaciones CURRENT de
+`ToolStructure`.
+
+`STRATEGIC` se omite de las sugerencias porque `ToolStructure` no define proyección de alarmas para
+ese kind.
+
+Esto es **authoring assistance**, no resolución B.2.
+
+## Authoring no restrictivo
+
+Se conserva congelado:
+
+```text
+catalog available
+!=
+requirement to create/save Alarm Configuration
+```
+
+Si no existe catálogo CURRENT, `AlarmToolReferenceReader.load()` devuelve `None`.
+
+Si una key no está presente en las opciones, Alarm Configuration sigue validándose únicamente por su
+contrato intrínseco CURRENT.
+
+No se agregó enforcement externo a:
+
+- `AlarmConfiguration.from_document()`;
+- draft validation;
+- Source publication;
+- base Projection.
+
+## Tool identity
+
+Alarm Configuration persiste referencias escalares:
+
+- `tool_key`;
+- `component_key` donde corresponda;
+- `owner_component_key` + `subcomponent_key` donde corresponda.
+
+`display_name` es presentación y no identidad.
+
+## Evaluator / parameters
 
 `evaluator_key` identifica código de evaluator registrado por desarrollo.
 
 Alarm Configuration no define schemas particulares por evaluator.
 
-`parameters` conserva el contrato genérico:
+`parameters` conserva:
 
 ```text
 mapping[str, str | float | bool]
 ```
 
-La validación intrínseca exige keys válidas y valores de esos tres tipos.
-
-Los nombres de parámetros, su significado y su uso pertenecen al evaluator/desarrollador.
-
 La existencia del evaluator y el uso correcto de sus parámetros pertenecen a
 resolution/readiness/ejecución.
-
-Una configuración puede persistirse antes de que el evaluator o una Tool referenciada estén
-disponibles. Esa condición debe aparecer después como finding/readiness y no convierte la Source
-revision persistida en inválida.
-
-## Invariantes full-revision CURRENT
-
-Además de las validaciones locales de Core:
-
-- `AlarmIdentity` única;
-- `rule_name` único dentro de family;
-- `priority_order` único dentro de `priority_group`;
-- orden IMPACT/RISK del grupo;
-- referencias Message deben existir en el mismo aggregate;
-- Message FAMILY sólo puede referenciarse desde la misma family;
-- referencias Special Condition deben existir;
-- deben apuntar a `is_special_condition=true`;
-- deben pertenecer a la misma family y `priority_group`.
-
-## Tool references
-
-Alarm Configuration almacena referencias por `tool_key` y, cuando corresponda,
-Component/Subcomponent.
-
-`tool_key` es identidad; `display_name` no lo es.
-
-Una referencia externa no resuelta:
-
-- no deshabilita la Rule;
-- no elimina la Rule;
-- no obliga a modificar la Alarm Source revision;
-- bloquea únicamente las capacidades que realmente requieran esa resolución.
-
-## Workflow administrativo CURRENT
-
-Implementado sobre Manager generic:
-
-```text
-WORKSPACE
-→ validate
-→ verify Source
-→ publish Source
-→ project
-→ history/preview
-```
-
-La validación Manager usa `AlarmConfiguration.from_document(...)`; la publicación vuelve a
-reconstruir el aggregate antes de publicarlo.
 
 ## Projection base CURRENT
 
@@ -186,28 +160,19 @@ abierto para la composición de aplicación.
 
 ## Web editor CURRENT
 
-Existe una superficie capability-local en modo documental para editar/importar el aggregate
-completo sin crear otro contrato durable.
+La UI actual sigue siendo Document mode.
 
-Permanece OPEN:
+No se modificaron `layout.py` ni callbacks durante el hito Tool References.
 
-- editor visual especializado de Rules;
-- Message Catalog UI final;
-- editor visual genérico de parameters `str | float | bool`.
+Permanece OPEN y es el siguiente foco único:
 
-Estos refinamientos deben operar sobre el mismo `AlarmConfiguration` y no introducir un schema
-paralelo.
+```text
+ALARM-CONFIGURATION-STRUCTURED-AUTHORING-V1
+```
 
-## Configuration transversal
+Debe consumir el read model ya implementado para presentar Tool/Component/Subcomponent sin crear un
+schema durable paralelo y manteniendo entrada manual/fallback compatible con authoring no
+restrictivo.
 
-Dirección inicial:
-
-- Profiles / permissions;
-- Navigation.
-
-No inicialmente:
-
-- Tool editor;
-- generic Actions module;
-- User Activity;
-- refresh configuration.
+Message UI, editor visual completo de Rules y editor de parameters pueden continuar incrementalmente,
+pero no deben mezclarse automáticamente en el mismo incremento si amplían el foco.

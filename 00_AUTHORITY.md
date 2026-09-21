@@ -10,13 +10,13 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `1c67212b21ef2241bcb59173ccb8e9cd237a0219`
+  `4fe03660ad47d105c55167dc583f09be1f395275`
 - Parent inmediato:
-  `07eeb8d4ecc3f1e9d9a84ab1059eaad2fd5f78ce`
+  `8e133ad7da3524874add8323315e8c2b3c3f1ee1`
 - Tree:
-  `ae432b5aa55183ca9f11b35ac37f4fa3859c9e78`
+  `d893128c23939e8a1e8bdd60b5bae64d14983be8`
 - Fecha del commit:
-  `2026-09-21T13:25:55Z`
+  `2026-09-21T18:52:46Z`
 
 Estado acumulado relevante:
 
@@ -37,6 +37,8 @@ COMMAND-CENTER-WEB-ALARM-CONFIGURATION-CONTRACT
 COMMAND-CENTER-ALARM-CONFIGURATION-PROJECTION CLOSED / VERIFIED / CURRENT
 COMMAND-CENTER-ALARM-CONFIGURATION-MANAGER-INTEGRATION
                                                CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-TOOL-CATALOG-V1                CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-ALARM-TOOL-REFERENCES-V1       CLOSED / CURRENT
 ```
 
 ### Canonical
@@ -44,7 +46,7 @@ COMMAND-CENTER-ALARM-CONFIGURATION-MANAGER-INTEGRATION
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `f04ee728b157a4f64a3c0c59622d5d6702f4cd87`
+  `fb5b000d0f38a535fca606fe01a324cb0f6185b4`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -59,8 +61,19 @@ COMMAND-CENTER-ALARM-CONFIGURATION-MANAGER-INTEGRATION
 Permanece **HISTORICAL**.
 
 Las decisiones B.1/B.2 preservan semántica útil de AlarmDefinition, Live/Management y
-Runtime/Delivery, pero sus bindings físicos históricos SharePoint/Cosmos no prevalecen sobre
-Source/Projection/Blob CURRENT.
+Runtime/Delivery, pero no prevalecen sobre la implementación CURRENT cuando describen:
+
+- SharePoint como autoridad física de dominios ya migrados a Source/Release + Blob;
+- una pre-save validation externa estricta que impide persistir referencias Tool/evaluator todavía
+  no resolubles;
+- un Confirmed Tool Catalog con estados de reconciliación no implementados en V1.
+
+CURRENT conserva:
+
+```text
+VALID != FULLY RESOLVED != READY
+UNRESOLVED != INVALID
+```
 
 ## Jerarquía
 
@@ -147,20 +160,6 @@ tool namespace
 SourceKey
 ```
 
-El root de Tool entregado al Source provider termina en:
-
-```text
-<application>/<tool>
-```
-
-`SourceStore` agrega internamente:
-
-```text
-sources/<SourceKey>
-```
-
-La composición no conoce ni duplica ese segmento.
-
 ## Tool Projection CURRENT
 
 Persistencia durable:
@@ -192,7 +191,7 @@ Source     = local | blob
 Projection = local | cosmos
 ```
 
-Estados de resolución:
+Estados de resolución de una Tool individual:
 
 ```text
 READY
@@ -201,25 +200,7 @@ UNAVAILABLE
 INVALID
 ```
 
-La composición no ejecuta health checks ni lecturas remotas obligatorias durante construcción.
-
-## Invariante de disponibilidad
-
-```text
-APPLICATION EXISTENCE
-!=
-TOOL CONFIGURATION EXISTENCE
-!=
-EXTERNAL INFRASTRUCTURE AVAILABILITY
-!=
-BUSINESS DATA AVAILABILITY
-```
-
-ADA Generic aplica esta regla en su bootstrap CURRENT.
-
-`UNCONFIGURED`, `UNAVAILABLE` e `INVALID` de Tool no eliminan la Web base.
-
-La ausencia de KPI Delivery no define la existencia del proceso Web.
+Estos estados pertenecen a Tool persistence y no se copiaron al Command Center Tool Catalog V1.
 
 ## ADA Generic Stage 1 CURRENT
 
@@ -239,52 +220,7 @@ environment / .env
 → frontera de consumo del desarrollador
 ```
 
-Semántica congelada:
-
-```text
-Latest polling      = 10 s default
-Timeseries polling  = 120 s default
-Browser refresh     = 10 s default
-Latest priority     = before Timeseries when both are due
-1 ToolComponent     = 1 logical/browser KPI Store
-Subcomponent        != Store
-browser             = cache only
-```
-
-## Frontera de render CURRENT
-
-`OperationalRenderBinding` es estructural.
-
-Contiene:
-
-```text
-ToolStructure
-OperationalComponentBinding -> ToolComponent
-```
-
-No contiene:
-
-```text
-ComponentStoreSnapshot
-KPI payload
-Collector state
-browser state
-```
-
-`AdaKpiCollector` no depende de `ada-web-operational-render-binding`.
-
-ADA Generic entrega los datos operacionales hasta los `dcc.Store` existentes.
-
-La visualización concreta de una Tool pertenece al desarrollador/aplicación específica.
-
-Por tanto:
-
-```text
-ADA-GENERIC-OPERATIONAL-STORE-TO-RENDER-WIRING
-SUPERSEDED / NOT REQUIRED
-```
-
-No crear body genérico obligatorio, adapter de KPI a render ni segunda copia de estado.
+La frontera de render permanece estructural y no se reabre desde Command Center.
 
 ## ADA Command Center Alarm Configuration CURRENT
 
@@ -294,7 +230,7 @@ Implementado bajo:
 scopes/ada-command-center/web/alarms/configuration
 ```
 
-Cadena CURRENT:
+Cadena durable CURRENT:
 
 ```text
 Manager Workspace
@@ -312,27 +248,75 @@ Alarm Rules + Message Catalog
 La Projection base conserva la Alarm Configuration de una `SourceRelease` exacta y no introduce
 Tool Catalog, evaluator resolution, B.2, Runtime ni Delivery.
 
-La composición Manager reutiliza `atlanticus.web.manager`; no existe un Manager paralelo de
-Command Center.
+## Command Center Tool Catalog V1 CURRENT
 
-La superficie Web capability-local existe en modo documental. El editor visual final de Rules,
-Messages y parameters permanece abierto sin cambiar el contrato durable.
+Implementado bajo:
+
+```text
+scopes/ada-command-center/backend/tools/catalog
+```
+
+Frontera:
+
+```text
+named Tool Projection inputs
+→ ToolCatalogConsolidator
+→ ToolCatalogSnapshot
+→ ToolCatalogStore
+→ Blob CURRENT
+```
+
+Invariantes CURRENT:
+
+- ADA Tool Configuration continúa siendo owner de Tool authoring/topology;
+- Command Center Tool Catalog es read-only derived state;
+- `tool_key` es identidad y debe ser único dentro del snapshot;
+- no existe Cosmos propio de Command Center para duplicar Tool topology;
+- el consolidator no publica snapshot parcial;
+- si cualquier input falla, falta o es inválido, `replace_current()` no se ejecuta;
+- Blob CURRENT conserva naturalmente el último snapshot publicado correctamente;
+- V1 no implementa estados AVAILABLE/STALE/MISSING, history, scheduler ni LKG separado;
+- container y blob name son configuración explícita del `BlobToolCatalogStore`.
+
+## Alarm Tool References V1 CURRENT
+
+Alarm Configuration dispone de un read model backend-only:
+
+```text
+ToolCatalogStore
+→ AlarmToolReferenceReader
+→ AlarmToolReferenceCatalog
+```
+
+Expone Tools, Components y Subcomponents utilizables por authoring sin consultar los Cosmos
+individuales.
+
+La ausencia legítima de catálogo se representa como `None`.
+
+Errores del store no se convierten silenciosamente en catálogo vacío.
+
+`STRATEGIC` no se ofrece como sugerencia porque `ToolStructure` no define proyección de alarmas para
+ese kind. Esto no cambia la validez intrínseca de Alarm Configuration ni prohíbe keys manuales.
 
 ## Siguiente foco único
 
 ```text
-COMMAND-CENTER-TOOL-CATALOG-CONTRACT
+ALARM-CONFIGURATION-STRUCTURED-AUTHORING-V1
 PLANNED / NEXT / DESIGN FIRST
 ```
 
-Command Center Tool Catalog es una capability distinta de ADA Tool Configuration.
+Objetivo:
 
-ADA Tool Configuration conserva authoring/ownership de `tool_key`, kind, Components,
-Subcomponents y topología.
+```text
+AlarmToolReferenceCatalog
+→ authoring UI Tool / Component / Subcomponent
+→ mismo AlarmConfiguration durable
+```
 
-Command Center Tool Catalog es un **consolidador/reconciliador read-only** de Tool projections
-externas. No crea Tools, no edita Tools, no se convierte en segunda source of truth y no debe
-inventar un fork de los contratos CURRENT de Tool Configuration/ToolStructure.
+No mezclar en ese incremento:
 
-El siguiente chat debe congelar primero el contrato productor consumible por B.2. No implementar
-B.2, Runtime Delivery, Cosmos reconciliation ni Blob binding antes de cerrar ese contrato.
+- B.2;
+- Runtime/Delivery materialization;
+- Tool Catalog scheduler/cadence;
+- History/Analytics;
+- Command Center application shell completo.

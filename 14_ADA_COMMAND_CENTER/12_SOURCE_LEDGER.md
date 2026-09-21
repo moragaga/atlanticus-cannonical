@@ -7,27 +7,24 @@ Estado: **AUDIT LEDGER / UPDATED 2026-09-21**
 Checkpoint CURRENT de cierre:
 
 ```text
-1c67212b21ef2241bcb59173ccb8e9cd237a0219
+4fe03660ad47d105c55167dc583f09be1f395275
 ```
 
 Parent inmediato:
 
 ```text
-07eeb8d4ecc3f1e9d9a84ab1059eaad2fd5f78ce
+8e133ad7da3524874add8323315e8c2b3c3f1ee1
 ```
 
 Tree:
 
 ```text
-ae432b5aa55183ca9f11b35ac37f4fa3859c9e78
+d893128c23939e8a1e8bdd60b5bae64d14983be8
 ```
 
-### Commits del hito
+### Commits relevantes acumulados
 
 ```text
-bc8eafc21a65e3f9aff044c232e2562cd490c49f
-→ baseline auditado antes de materializar Command Center Web
-
 8e5f7312eb7522a2345b1d225faa80c6eac6ec41
 → Alarm Configuration contract + Source/Release
 
@@ -36,145 +33,134 @@ bc8eafc21a65e3f9aff044c232e2562cd490c49f
 
 1c67212b21ef2241bcb59173ccb8e9cd237a0219
 → Manager/workspace/workflows + capability-local Web surface
+
+8e133ad7da3524874add8323315e8c2b3c3f1ee1
+→ Command Center Tool Catalog V1
+
+4fe03660ad47d105c55167dc583f09be1f395275
+→ Alarm Tool Reference read model V1 inside Alarm Configuration
 ```
 
 Inspeccionado/relevante:
 
-- `scopes/ada-command-center/backend/alarms/core`;
-- `scopes/ada-command-center/backend/alarms/persistence`;
-- `scopes/ada-command-center/backend/processes/alarms-runtime`;
+- `scopes/ada-command-center/backend/tools/catalog`;
 - `scopes/ada-command-center/web/alarms/configuration`;
+- `scopes/ada-command-center/backend/alarms/core`;
+- `scopes/ada-command-center/backend/processes/alarms-runtime`;
 - `scopes/ada/web/tools/core`;
 - `scopes/ada/web/tools/configuration`;
 - `scopes/ada/web/tools/projection-cosmos`;
-- `scopes/ada/web/application/ada-configuration-manager`;
-- `web/capabilities/manager`;
+- `connectivity/storage`;
 - `web/capabilities/projection`;
-- `web/capabilities/source`.
+- `web/capabilities/source`;
+- `web/capabilities/manager`.
 
-## Evidencia de tests del hito
+## Qualification observada
 
-Ejecutado en checkout real:
+### Tool Catalog V1
+
+Checkout real del usuario:
 
 ```text
-Alarm Configuration initial contract     17 passed
-+ base Projection                         20 passed
-+ Manager integration                     27 passed
-ruff check .                              All checks passed
-ruff format --check .                     clean before published checkpoint
+pytest                                 13 passed
+ruff check .                           All checks passed!
+ruff format --check .                  13 files already formatted
 ```
 
-## Alarm Configuration CURRENT
+### Alarm Tool References V1
+
+Checkout real del usuario:
+
+```text
+pytest                                 32 passed
+ruff check .                           All checks passed!
+ruff format --check .                  1 test required reformat
+```
+
+Se indicó formatear `tests/test_tool_references.py` antes del cierre y después se publicó
+`main@4fe03660...`.
+
+No se recibió salida explícita de una corrida post-publicación de los tres gates sobre ese SHA.
+
+Clasificación:
+
+```text
+functional qualification before final format    VERIFIED
+lint before final format                        VERIFIED
+exact post-publication full qualification       UNVERIFIED
+```
+
+## Tool Catalog CURRENT
 
 Existe físicamente:
 
 ```text
-scopes/ada-command-center/web/alarms/configuration
+scopes/ada-command-center/backend/tools/catalog
 ```
 
 Implementa:
 
-- `AlarmConfiguration` aggregate Rules + Messages;
-- full-revision intrinsic validation;
-- Source codec/service;
-- exact Source/Release round-trip;
-- base `SourceProjectionService[AlarmConfiguration]`;
-- Manager source workflow;
-- Manager draft validation workflow;
-- Manager workspace binding;
-- reusable `ManagerModule` composition;
-- capability-local Web surface/document editor;
-- history preview;
-- commented pedagogical mirror.
+- `ToolCatalogEntry`;
+- `ToolCatalogSnapshot`;
+- deterministic SHA-256 revision;
+- `ToolCatalogStore`;
+- `ToolCatalogInput`;
+- `ToolCatalogConsolidator`;
+- `BlobToolCatalogStore`;
+- JSON codec schema version 1;
+- commented pedagogical mirror;
+- unit tests.
 
-No modificó `ada-command-center/backend/alarms/core` durante este hito.
-
-## Tool Configuration CURRENT relevante
-
-ADA Tool Configuration usa `tool_key` como identidad contractual y exige consistencia de esa key en
-consumption, operational participation y structure.
-
-`ToolConfigurationKind` CURRENT:
+Document type:
 
 ```text
-PROCESS
-INTEGRATED_OPERATIONS
-STRATEGIC
+ada_command_center_tool_catalog
 ```
 
-`ToolStructure` ya expresa Components, Subcomponents y relaciones necesarias para resolución.
-
-El siguiente Tool Catalog de Command Center debe partir de estos contratos reales, no inventar un
-modelo de authoring paralelo.
-
-La unicidad global entre Tools continúa como invariante de diseño; el punto exacto que genera/enforce
-esa unicidad permanece UNVERIFIED/OPEN.
-
-## Generic Manager CURRENT
-
-La capability genérica Manager provee shell/workflow/composición Source/Projection reutilizable.
-
-Alarm Configuration ya la consume mediante `ManagerModule`.
-
-No se creó una copia del Manager ADA.
-
-El montaje dentro de la futura aplicación/shell Command Center permanece abierto.
-
-## Source / Projection CURRENT
-
-SourceStore, Release y exact ProjectionTarget están CURRENT.
-
-La base Alarm Configuration Projection no tiene dependencies externas. B.2 será una resolución
-posterior que combine snapshots/provenance y no debe deformar la Projection base para imponer orden.
-
-## Command Center Tool Catalog
-
-No existe implementación en `atlanticus:main` al checkpoint CURRENT.
-
-Dirección congelada:
+Schema version:
 
 ```text
-external ADA Tool projections
-→ Command Center consolidator/reconciler
-→ durable read-only Tool Catalog revision/LKG
-→ B.2 consumer
+1
 ```
 
-No es ADA Tool Configuration authoring y no debe crear un segundo Cosmos sólo para duplicar la
-Tool topology.
+No implementa Cosmos de Command Center, history, scheduler ni availability states por entry.
 
-## B.2
+## Alarm Tool References CURRENT
 
-Búsqueda/inspección del checkpoint CURRENT no encontró `ResolvedAlarmConfiguration` ni una
-implementación física B.2.
-
-Runtime CURRENT continúa usando:
+Existe físicamente:
 
 ```text
-alarm_configuration_revision
-tool_registry_revision
+scopes/ada-command-center/web/alarms/configuration/
+src/ada_command_center/web/alarms/configuration/tool_references.py
 ```
 
-como strings históricos que deberán reconciliarse posteriormente con provenance CURRENT.
+Implementa:
+
+- `AlarmToolSubcomponentReference`;
+- `AlarmToolComponentReference`;
+- `AlarmToolReference`;
+- `AlarmToolReferenceCatalog`;
+- `AlarmToolReferenceReader`.
+
+Alarm Configuration ahora depende explícitamente de:
+
+```text
+ada-command-center-tools-catalog==0.1.0
+ada-web-tools==0.1.0
+```
+
+No se modificaron los contratos durables de `AlarmConfiguration`.
 
 ## `atlanticus-cannonical`
 
 Checkpoint inspeccionado antes de este reemplazo:
 
 ```text
-f04ee728b157a4f64a3c0c59622d5d6702f4cd87
+fb5b000d0f38a535fca606fe01a324cb0f6185b4
 ```
 
-Ese canonical ya congelaba:
-
-- intrinsic validity separada de external resolution/readiness;
-- parameters genéricos `str | float | bool`;
-- Tool Catalog read-only reconciliado y durable en Blob;
-- múltiples Cosmos mediante conexiones nombradas;
-- misma Alarm Source revision re-resoluble contra Tool Catalog posterior.
-
-Quedó desactualizado respecto de implementación al seguir indicando que `scopes/ada-command-center/web`
-y Alarm Configuration estaban pendientes.
+Quedó desactualizado respecto de implementación al indicar Tool Catalog como NEXT/NOT IMPLEMENTED y
+al mantener como siguiente prerequisite el contrato Tool Catalog antes de B.2.
 
 ## `atlanticus-decisions`
 
@@ -186,40 +172,27 @@ Checkpoint observado:
 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-### B.1
-
-`alarm_decisions/R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md`
-
-Preserva semántica útil del contrato AlarmDefinition.
-
 ### B.2
 
-Preserva decisiones históricas sobre:
+Preserva decisiones útiles sobre:
 
 - Live vs Management Projection;
-- publication/materialization;
 - Runtime/Delivery desde una resolución común;
 - LKG;
-- distinction INVALID/REMOVED.
+- `INVALID != REMOVED`;
+- Web no resuelve prioridad ni configuración operacional.
 
-Refinamientos CURRENT frente a historia:
+Conflictos/refinamientos respecto de CURRENT:
 
-- bindings históricos SharePoint no son autoridad en dominios migrados;
-- Tool/evaluator no son requisito para persistir una Source revision intrínsecamente válida;
-- referencia Message inactiva es intrínsecamente válida en CURRENT implementation;
-- external unresolved no equivale a invalid;
-- Runtime y Delivery pueden tener readiness diferente.
+- SharePoint como autoridad física queda superseded en dominios migrados;
+- Tool/evaluator no bloquean persistencia intrínseca sólo por estar aún no resolubles;
+- V1 no implementa Confirmed Tool Catalog + reconciliation states AVAILABLE/STALE/MISSING;
+- Tool Catalog CURRENT usa Blob snapshot derivado y all-or-nothing refresh;
+- B.2 sigue sin implementación física.
 
-## Evidencia Web histórica
+## Sin cambio por este hito
 
-Existen prototipos/implementaciones históricas de dashboards de alarmas.
+No se modifican conceptualmente:
 
-Son REFERENCIA, no autoridad de la Web nueva.
-
-No portar automáticamente:
-
-- CSS;
-- geometría;
-- polling;
-- Redis assumptions;
-- contratos snapshot antiguos.
+- `04_ALARM_ENGINE/01_DOMAIN_MODEL.md`;
+- `04_ALARM_ENGINE/12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md`.
