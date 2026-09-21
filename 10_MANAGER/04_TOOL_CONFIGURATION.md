@@ -20,17 +20,21 @@ Data determina el estado de lo que ya existe.
 
 Una Tool correctamente configurada debe poder montar su UI aunque todavía no existan datos.
 
+La existencia de la aplicación Web no depende de que exista una Tool Configuration publicada.
+
 ## Tool kinds
 
 Baseline operacional congelado:
 
 ### PROCESS
+
 - ámbito operacional global;
 - Components con `layout_role`;
 - CENTER obligatorio;
 - baseline de alarmas centrado en operación central.
 
 ### INTEGRATED OPERATIONS
+
 - sin ámbito global único;
 - cada Component declara scope;
 - baseline de alarmas considera todos los Components.
@@ -39,57 +43,19 @@ Baseline operacional congelado:
 
 Component/Subcomponent keys son identidad consumible.
 
-No son sólo etiquetas visuales.
+Component es unidad funcional de datos:
 
-Se utilizan como frontera para:
-- datos;
-- KPI;
-- render;
-- routing visual;
-- alarmas.
+```text
+1 Component = 1 logical Store/Collector identity
+```
 
-## Component
+Subcomponent:
 
-Component es la unidad funcional de datos:
-
-- 1 Store;
-- 1 Collector contract;
-- destino KPI;
-- baseline/ámbito de alarmas;
-- puede contener N Subcomponents.
-
-## Subcomponent
-
-Subcomponent es granularidad visual interna:
-
-- no Store propio;
-- no Collector propio;
-- no destino KPI;
-- sí puede ser target visual independiente de alarma.
-
-## Regla
-
-`N Subcomponents != N Stores != N Collectors`
-
-No fragmentar un Component en infraestructura adicional sin escala real que lo justifique.
-
-## Render vacío
-
-Cosmos/Store vacío es un estado válido.
-
-- configurado + sin dato → `EMPTY`;
-- expectativa que no puede resolverse → `NOT_MAPPED`;
-- no pertenece a Tool → no render.
-
-## Alarmas
-
-Estado de datos y estado de alarmas son dimensiones independientes.
-
-Un Subcomponent puede:
-- data = EMPTY;
-- alarm = CRITICAL.
-
-La alarma no determina existencia estructural.
+```text
+no Store propio
+no Collector propio
+no destino KPI propio
+```
 
 ## Source CURRENT
 
@@ -123,9 +89,74 @@ ProjectionStore[ToolConfiguration]
 SourceProjectionService[ToolConfiguration]
 ```
 
-El builder decodifica la release exacta y valida la configuración con la validación operacional ADA existente.
+Persistencia durable CURRENT:
 
-No existe snapshot privado de Projection ni `projection_revision` privado como identidad paralela.
+```text
+tool_projection_to_document
+tool_projection_from_document
+LocalToolProjectionStore
+CosmosToolProjectionStore
+```
+
+No existe snapshot privado ni `projection_revision` paralelo.
+
+## Namespace CURRENT
+
+Tool persistence recibe:
+
+```text
+AdaStorageNamespace(
+    application_namespace,
+    tool_namespace,
+)
+```
+
+Local projection:
+
+```text
+<base>/<application>/<tool>/projections
+```
+
+Cosmos projection:
+
+```text
+partition_key = <application>/<tool>
+```
+
+`SourceKey('tools')` no incluye namespace de deployment.
+
+## Resilient persistence composition CURRENT
+
+```text
+ToolPersistenceSettings
+ToolPersistenceComposition
+compose_tool_persistence
+```
+
+Providers:
+
+```text
+Source     local | blob
+Projection local | cosmos
+```
+
+Resolution:
+
+```text
+resolve_active_tool_projection()
+project_current_tool_source()
+```
+
+States:
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+Runtime puede consumir Projection activa sin requerir Source disponible.
 
 ## Legacy removido
 
@@ -146,35 +177,42 @@ build_tool_configuration_projection_revision
 
 No reintroducir aliases, adapters o shims.
 
-## Manager integration CURRENT
+## Manager integration
 
-ADA Configuration Manager ya consume directamente los contratos genéricos Source/Projection
-de Tools.
+ADA Configuration Manager consume los contratos genéricos Source/Projection de Tools.
 
-Estado:
+El nuevo package `ada-web-tools-persistence` es una composición reusable de providers; no implica
+que cada runtime Manager existente ya haya sido migrado a ese package.
 
-```text
-ADA-CONFIGURATION-MANAGER-FINAL-GENERIC-CUTOVER
-CLOSED / VERIFIED / CURRENT
-```
+No crear un segundo contrato Manager específico para lograr ese wiring.
 
-KPI Configuration y KPI Definition también están cerrados sobre sus contratos genéricos.
+## Qualification relevante
 
-No existe una dependencia de dominio pendiente que justifique volver a introducir
-`ToolLifecycleServices`, `ToolConfigurationManagerWorkflowAdapter` o cualquier ruta legacy.
-
-## Qualification observada
-
-En el checkpoint publicado:
+Storage namespace:
 
 ```text
-moragaga/atlanticus@415c8263c15bae2b5d3c01b734b0f1e0101a7242
+15 passed
 ```
 
-la suite scoped de ADA Configuration Manager observada durante el cierre fue:
+Tool Projection persistence observado:
 
 ```text
-26 passed
+configuration codec  2 passed
+projection-local     3 passed
+projection-cosmos    5 passed
 ```
 
-No se afirma con esto full ADA, full Web, Docker E2E ni CI global.
+Tool persistence composition:
+
+```text
+10 passed
+ruff check PASS
+ruff format --check PASS
+git diff --check PASS
+```
+
+Checkpoint CURRENT:
+
+```text
+moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
+```

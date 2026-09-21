@@ -1,81 +1,112 @@
 # ADA Generic — Current Composition
 
-Estado: **VERIFIED**
+Estado: **VERIFIED / GAP IDENTIFIED**
 
 Implementación auditada:
 
 ```text
 scopes/ada/web/application/ada-generic-application
-moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
 ```
 
-## Actualmente compone/consume
+## Composición base CURRENT
 
-Entre otras capacidades:
-
-- branding;
-- ADA navigation;
-- ADA operational header;
-- alarm management summary;
-- alarm status;
-- content state;
-- operational render binding;
-- operational state;
-- runtime experience;
-- source consumption / operational participation;
-- time status;
-- global indicators;
-- session/runtime Web.
-
-## Generic Application y Collector
-
-La Generic Application sigue siendo válida sin Collector.
-
-El cierre de Collector **no** añadió `ada-web-kpi-collector` como dependencia obligatoria de
-`ada-generic-application`.
-
-El contrato implementado para composición externa es:
+ADA Generic compone entre otras capacidades:
 
 ```text
-create_application_definition(...)
-        ↓
-attach_ada_kpi_collector(definition, collector)
-        ↓
-create_web_application(...)
+branding
+navigation
+operational header
+alarm surfaces
+content state
+operational render binding
+operational state
+runtime experience
+source consumption / operational participation
+time status
+global indicators
+session/runtime Web
 ```
 
-Esto conserva la frontera:
+La composición base existe independientemente de Collector.
+
+## Tool resolution CURRENT dentro de ADA Generic
+
+El archivo:
 
 ```text
-Generic Application
-→ generic composition
-
-Operational composition root
-→ resolves Tool/Cosmos
-→ optionally attaches Collector
+ada/web/application/generic/operational_tool.py
 ```
 
-## Runtime
-
-`create_application_runtime` sigue reuniendo la composición Web genérica y estados de consumo
-operacional en un `WebApplicationRuntime` sin requerir Collector.
-
-Qualification posterior al cierre Collector:
+todavía contiene:
 
 ```text
-scripts/scopes/ada/check.sh application
-63 passed
-commented mirrors PASS
+_StartupToolProjectionStore
+resolve_current_tool_projection(...)
 ```
 
-## Siguiente integración
-
-No está verificado todavía el montaje del collector con una Tool operacional real.
+El resolver:
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+SourceStore
+→ select current Source
+→ project into in-process store
+→ return ProjectionRecord
+```
+
+y si Source current no existe:
+
+```text
+RuntimeError('Operational Tool source has no current release')
+```
+
+Este comportamiento permanece implementado pero ya no representa la dirección final del
+bootstrap operacional.
+
+## Infraestructura Tool disponible fuera de Generic Application
+
+CURRENT en `main`:
+
+```text
+AdaStorageNamespace
+
+LocalToolProjectionStore
+CosmosToolProjectionStore
+
+ToolPersistenceSettings
+ToolPersistenceComposition
+compose_tool_persistence
+
+resolve_active_tool_projection
+project_current_tool_source
+```
+
+`resolve_active_tool_projection()` permite leer la Projection durable sin depender de Source.
+
+## __main__ CURRENT
+
+Sigue siendo:
+
+```text
+create_application_runtime()
+→ run_web_application(runtime)
+```
+
+No existe todavía wiring desde settings/environment hacia `ToolPersistenceComposition`.
+
+## Collector
+
+Collector permanece opcional respecto de Generic Application.
+
+No hardcodear Collector ni Cosmos dentro de la composición base.
+
+## Gap CURRENT
+
+```text
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 PLANNED / NEXT
 ```
 
-El próximo incremento debe localizar el composition root real y aplicar el attachment allí. No
-hardcodear Tool/Cosmos dentro de Generic Application.
+Debe reemplazar la dependencia startup in-process de Tool por la composición durable CURRENT,
+sin perder la capacidad de levantar la Web cuando no existe Tool o una dependencia externa está
+indisponible.

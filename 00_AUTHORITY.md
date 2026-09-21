@@ -10,30 +10,24 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `d484569cbe0290f38f239481cde81b13a23deecf`
-- Parent inmediato verificado:
-  `dde1e3a114a04b22cc2118c347a7ed907852c06b`
-- Tree verificado:
-  `4c7c8209f2d0c670d3c6e8b5185b5af12172e591`
+  `21cfb2f11362c1606ad14ff8adc7551948eced6a`
+- Parent inmediato:
+  `6155dae407dc784114ff34c7b3b6f93125432713`
+- Tree:
+  `48e4115a5fb53e64d83e2ae2243a9f11d612d26f`
 - Fecha del commit:
-  `2026-09-21T01:04:47Z`
+  `2026-09-21T03:39:24Z`
 
-Estado acumulado relevante:
+Estado acumulado relevante para este cierre:
 
 ```text
-KPI-REGISTRY-CAPABILITY-CUTOVER                 CLOSED / VERIFIED / CURRENT
-KPI-DEFINITION-CAPABILITY-CUTOVER               CLOSED / VERIFIED / CURRENT
-KPI-RUNTIME-REPROCESS-CURRENT                   CLOSED / VERIFIED / CURRENT
-KPI-DELIVERY-REGISTRY-CONSUMPTION               CLOSED / VERIFIED / CURRENT
-KPI-TIMESERIES-REGISTRY-CONSUMPTION             CLOSED / VERIFIED / CURRENT
-KPI-HISTORIAN-REPROCESS-CURRENT                 CLOSED / VERIFIED / CURRENT
+ADA-STORAGE-NAMESPACE                         CLOSED / VERIFIED / CURRENT
+TOOL-PROJECTION-PERSISTENCE                   CLOSED / VERIFIED / CURRENT
+TOOL-PERSISTENCE-RESILIENT-COMPOSITION        CLOSED / VERIFIED / CURRENT
 
-ATLANTICUS-WEB-OBSERVABILITY-SERVICE            CLOSED / VERIFIED / CURRENT
-ADA-WEB-KPI-COLLECTOR-CAPABILITY                CLOSED / VERIFIED / CURRENT
-KPI-COLLECTOR-DEFINITION-ATTACHMENT             CLOSED / VERIFIED / CURRENT
-KPI-COLLECTOR-REAL-WEB-SMOKE                    CLOSED / VERIFIED / CURRENT
+ADA-WEB-KPI-COLLECTOR-CAPABILITY              CLOSED / VERIFIED / CURRENT
 
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION   PLANNED / NEXT
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP             PLANNED / NEXT
 ```
 
 ### Canonical
@@ -41,12 +35,12 @@ ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION   PLANNED / NEXT
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `a8c8c80ed3392cb189923d00bd5037e5965e2da5`
+  `4058aab3525a09b568b80f3f6a5265e45e4f6fea`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
 
-## Referencias históricas
+## Referencia histórica
 
 `moragaga/atlanticus-decisions` permanece **HISTORICAL**.
 
@@ -56,15 +50,14 @@ Checkpoint observado:
 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-Durante este cierre sólo se inspeccionó su árbol para localizar referencias históricas. No se
-auditaron los contenidos binarios de decisiones antiguas. Por tanto, cualquier conflicto
-específico nuevo con esas decisiones permanece **UNVERIFIED**.
+No se auditó el contenido binario de decisiones históricas durante este cierre.
+Cualquier contradicción específica adicional con decisiones antiguas permanece `UNVERIFIED`.
 
 ## Jerarquía
 
 1. `atlanticus:main`: realidad implementada.
-2. `atlanticus-cannonical:main`: contracts, fronteras, roadmap y estado vigente.
-3. Qualification y tests vigentes: evidencia de propiedades demostradas.
+2. `atlanticus-cannonical:main`: contratos, fronteras, roadmap y estado vigente.
+3. Qualification/tests vigentes: evidencia de propiedades demostradas.
 4. Decisiones explícitas del Project todavía no formalizadas en canonical: delta temporal.
 5. `atlanticus-decisions`: referencia histórica.
 6. Memoria/historial conversacional: pista, nunca autoridad suficiente.
@@ -123,90 +116,193 @@ expected_source_revision
 REMOVE
 ```
 
-## Collector KPI CURRENT
+## Storage namespace CURRENT
+
+ADA dispone de:
+
+```text
+AdaStorageNamespace
+application_namespace
+tool_namespace
+```
+
+Separación congelada:
+
+```text
+physical container / connection
+!=
+application namespace
+!=
+tool namespace
+!=
+SourceKey
+```
+
+Ejemplo lógico:
+
+```text
+conciencia_situacional/
+├── users/
+└── operaciones_integradas/
+    ├── sources/
+    └── projections/
+```
+
+`users` permanece global a la aplicación.
+
+El root de Tool entregado al Source provider termina en:
+
+```text
+<application>/<tool>
+```
+
+`SourceStore` agrega internamente:
+
+```text
+sources/<SourceKey>
+```
+
+No hacer que la composición conozca ni duplique ese segmento.
+
+## Tool Projection CURRENT
+
+Persistencia durable implementada:
+
+```text
+LocalToolProjectionStore
+CosmosToolProjectionStore
+```
+
+El documento conserva:
+
+```text
+ProjectionRecord[ToolConfiguration]
+SourceKey
+SourceReleaseId
+source_published_at_utc
+projected_at_utc
+dependencies exactas
+payload ToolConfiguration
+```
+
+Local:
+
+```text
+<base>/<application>/<tool>/projections
+```
+
+Cosmos:
+
+```text
+partition_key = <application>/<tool>
+SourceKey     = tools
+```
+
+El namespace de deployment pertenece al store, no al contrato `SourceKey`.
+
+## Tool persistence composition CURRENT
 
 Capability:
 
 ```text
-scopes/ada/web/kpis/collector
-ada-web-kpi-collector==0.1.0
+scopes/ada/web/tools/persistence
+ada-web-tools-persistence==0.1.0
 ```
 
-Contrato CURRENT:
+Providers independientes:
 
 ```text
-Latest polling      = 10 s default, configurable
-Timeseries polling  = 120 s default, configurable
-Browser cache read  = 10 s default, configurable
+Source     = local | blob
+Projection = local | cosmos
+```
+
+Combinaciones soportadas:
+
+```text
+local + local
+blob  + cosmos
+blob  + local
+local + cosmos
+```
+
+La construcción de `ToolPersistenceComposition` no ejecuta health check ni lectura remota.
+
+Resolución CURRENT:
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+`resolve_active_tool_projection()` lee Projection durable sin depender de Source.
+
+`project_current_tool_source()` pertenece al flujo Source -> Projection.
+
+## Invariante de disponibilidad
+
+```text
+APPLICATION EXISTENCE
+!=
+TOOL CONFIGURATION EXISTENCE
+!=
+EXTERNAL INFRASTRUCTURE AVAILABILITY
+!=
+BUSINESS DATA AVAILABILITY
+```
+
+La ausencia de Source/Projection/KPI data no debe definir la existencia del proceso Web.
+
+Una conexión Blob/Cosmos caída debe degradar la capability afectada, no convertirse
+automáticamente en caída global de la aplicación.
+
+La integración de esta regla en el bootstrap real de ADA Generic todavía está `PLANNED`.
+
+## Collector KPI CURRENT
+
+El Collector permanece cerrado y CURRENT.
+
+No rediseñar:
+
+```text
+Latest polling      = 10 s default
+Timeseries polling  = 120 s default
+Browser cache read  = 10 s default
 Latest priority     = before Timeseries when both are due
+1 ToolComponent     = 1 logical KPI Store
+Subcomponent        != Store
+browser             = cache only
 ```
-
-El collector:
-
-- consume Latest y Timeseries mediante `KpiDeliveryReader`;
-- mantiene cache in-process por worker;
-- usa snapshots inmutables por Component;
-- conserva Latest y Timeseries como superficies independientes;
-- no exige atomicidad cross-document;
-- impide regresión de `watermark_utc` y `end_utc`;
-- valida compatibilidad por `configuration_revision` + `tool_projection_revision`;
-- mantiene un store lógico por `ToolComponent`;
-- no crea stores por Subcomponent;
-- el browser lee cache, nunca Cosmos;
-- `/health/`, `/assets/` y `/.auth/` no arrancan el poller;
-- el primer request real inicia el poller del worker;
-- source failure no rompe el request ni reemplaza estado bueno por estado inválido.
-
-El contrato Web permite adjuntar la capability a una definición ya resuelta mediante:
-
-```text
-attach_ada_kpi_collector(WebApplicationDefinition, collector)
-```
-
-La Generic Application no depende obligatoriamente del collector.
-
-## Web Observability CURRENT
-
-Atlanticus Web registra la misma instancia `WebObservability` del runtime como servicio:
-
-```text
-WEB_OBSERVABILITY_SERVICE_KEY = atlanticus.web.observability
-```
-
-El collector la consume como dependencia declarada.
-
-Política CURRENT:
-
-```text
-KpiDeliveryReadError       -> WARNING deduplicado por source+signature
-KpiCollectorContractError -> ERROR deduplicado por source+signature
-otro refresh failure      -> ERROR deduplicado por source+signature
-runtime thread failure    -> CRITICAL
-refresh válido            -> limpia incidente de esa source
-```
-
-No emitir telemetría por polling exitoso normal.
 
 ## Siguiente foco único
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 PLANNED / NEXT
 ```
 
-El siguiente incremento debe **integrar el collector ya cerrado** en la composición operacional
-real que conoce la Tool y sus conexiones. No rediseñar el collector ni crear una aplicación
-paralela para evitar buscar la composición existente.
-
-Debe partir de las fuentes autoritativas y resolver, con el gap mínimo:
+Debe conectar la configuración Web real con:
 
 ```text
-ToolConfiguration / ToolStructure CURRENT
-Tool projection revision CURRENT
-Cosmos client/configuration CURRENT
-AdaKpiCollector
-attach_ada_kpi_collector
-existing ADA application composition root
+environment/.env
+→ provider settings
+→ AdaStorageNamespace
+→ ToolPersistenceComposition
+→ resolve_active_tool_projection()
+→ ADA Generic runtime/composition
 ```
 
-No abrir en paralelo Python metadata, KPI Inspection, CSS, Identity, Manager ni nuevos contratos.
+Mantener la Web ejecutable en:
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+sin reabrir Source, Projection, namespace ni Collector.
+
+El Collector se conecta después de resolver Tool/Structure; su ausencia de datos debe seguir
+siendo degradable y no una precondición de existencia de la Web.

@@ -1,80 +1,109 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT**
+Estado: **CURRENT / BOOTSTRAP GAP OPEN**
 
-## Cadena CURRENT
+## Configuration chain CURRENT
 
 ```text
-Tool Source/Projection
+Tool Source
     ↓ exact ProjectionTarget
-KPI Registry Source/Projection
-    ↓ exact ProjectionTarget
-KPI Definition Source/Projection
-
-Operational data
+Tool Projection durable
     ↓
-KPI Runtime durable evaluations
+KPI Registry Projection
     ↓
-KPI Historian materialization
-    ↓
-Latest Delivery Cosmos + Timeseries Delivery Cosmos
-    ↓
-AdaKpiCollector process cache
-    ↓
-Component KPI browser stores
+KPI Definition Projection
 ```
 
-La capability Collector y su Web attachment ya están implementados y calificados.
+Tool Projection dispone de:
+
+```text
+LocalToolProjectionStore
+CosmosToolProjectionStore
+```
+
+y de composición de providers:
+
+```text
+Source     local | blob
+Projection local | cosmos
+```
+
+## Runtime Tool read
+
+Dirección CURRENT/FROZEN:
+
+```text
+runtime
+→ resolve_active_tool_projection()
+→ durable Tool Projection
+```
+
+No requiere Source disponible cuando ya existe Projection válida.
+
+Workflow de materialización:
+
+```text
+project_current_tool_source()
+→ Source current
+→ exact target
+→ durable Tool Projection
+```
+
+No mezclar ambas operaciones.
 
 ## Regla maestra
 
 ```text
-CONFIGURATION DETERMINES EXISTENCE
+CONFIGURATION DETERMINES EXISTENCE/STRUCTURE
 DATA DETERMINES STATE
+PERSISTED STATE DOES NOT DETERMINE WEB PROCESS EXISTENCE
 ```
 
-La estructura de stores existe desde `ToolStructure`; no depende de recibir primero una medición.
-
-## Tool / KPI contracts
+## Tool resolution states
 
 CURRENT:
 
 ```text
-Tool ProjectionTarget
-→ KPI Registry ProjectionTarget
-→ KPI Definition ProjectionTarget
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
 ```
 
-No reintroducir:
+Semántica:
 
 ```text
-KpiConfiguration legacy domain
-private revision identities
-expected_source_revision
-legacy compatibility readers
+READY
+projection válida disponible
+
+UNCONFIGURED
+provider accesible pero no existe projection/configuración
+
+UNAVAILABLE
+infraestructura necesaria para esa operación no responde
+
+INVALID
+contrato/documento obtenido es inválido
 ```
 
-## Backend outputs CURRENT
+Estos estados no deben transformarse automáticamente en caída global de la Web.
 
-Latest:
+## Operational data chain
 
-```text
-container = ada-kpi-latest-delivery
-id = latest
-partition_id = kpis
-document_type = ada_kpi_latest_delivery
-schema_version = 1
-```
-
-Timeseries:
+Cuando existe Tool READY:
 
 ```text
-container = ada-kpi-timeseries-delivery
-id = timeseries
-partition_id = kpis
-document_type = ada_kpi_timeseries_delivery
-schema_version = 2
-step_seconds = 120
+ToolStructure
+    ↓
+KPI Runtime durable evaluations
+    ↓
+KPI Historian
+    ↓
+Latest Delivery + Timeseries Delivery
+    ↓
+AdaKpiCollector process cache
+    ↓
+Component KPI browser stores
 ```
 
 ## Collector CURRENT
@@ -85,34 +114,35 @@ Timeseries poll 120 s default
 Browser refresh  10 s default
 ```
 
-Compatibility:
+One logical KPI store per Tool Component.
 
-```text
-configuration_revision + tool_projection_revision
-```
-
-One logical KPI store per Tool Component; Subcomponents do not create stores.
+Subcomponents do not create stores.
 
 ## Siguiente handoff
 
-Lo que falta no es otro contrato de Collector. Falta materializar esta última composición en la
-aplicación operacional real:
+Antes de conectar Collector al startup real debe cerrarse:
 
 ```text
-ToolConfiguration CURRENT
-+ tool projection revision
-+ Cosmos client/configuration CURRENT
-    ↓
-CosmosKpiDeliveryReader
-    ↓
-AdaKpiCollector
-    ↓
-attach_ada_kpi_collector(existing application definition)
+environment/.env
+→ provider/client settings
+→ AdaStorageNamespace
+→ ToolPersistenceComposition
+→ resolve_active_tool_projection
+→ ADA Generic runtime/composition
 ```
 
 Clasificación:
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 PLANNED / NEXT
 ```
+
+Después:
+
+```text
+ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
+PLANNED / AFTER BOOTSTRAP
+```
+
+No rediseñar Collector.

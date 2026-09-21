@@ -6,96 +6,99 @@ Estado: **AUDIT LEDGER**
 
 ```text
 Implementation
-moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
 
 Parent
-dde1e3a114a04b22cc2118c347a7ed907852c06b
+6155dae407dc784114ff34c7b3b6f93125432713
 
 Tree
-4c7c8209f2d0c670d3c6e8b5185b5af12172e591
+48e4115a5fb53e64d83e2ae2243a9f11d612d26f
 
 Canonical inspected before replacement
-moragaga/atlanticus-cannonical@a8c8c80ed3392cb189923d00bd5037e5965e2da5
+moragaga/atlanticus-cannonical@4058aab3525a09b568b80f3f6a5265e45e4f6fea
+
+Historical decisions
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-## Configuration chain
+## Checkpoints de este hito
 
 ```text
-Tools            CLOSED / VERIFIED / CURRENT
-KPI Registry     CLOSED / VERIFIED / CURRENT
-KPI Definition   CLOSED / VERIFIED / CURRENT
+366e2bab5bd4de6cdf94773b4fc4be5d5b1f26c1
+Tool Source -> Tool Projection -> Collector factory baseline
+
+6155dae407dc784114ff34c7b3b6f93125432713
+AdaStorageNamespace
+Tool Projection document codec
+LocalToolProjectionStore
+CosmosToolProjectionStore
+
+21cfb2f11362c1606ad14ff8adc7551948eced6a
+ToolPersistenceSettings
+ToolPersistenceComposition
+resolve_active_tool_projection
+project_current_tool_source
 ```
 
-## Backend KPI chain
+## Sources CURRENT inspeccionadas
 
 ```text
-KPI Runtime recovery             CLOSED / VERIFIED / CURRENT
-Latest Delivery Registry cutover CLOSED / VERIFIED / CURRENT
-Timeseries Registry cutover      CLOSED / VERIFIED / CURRENT
-Historian recovery               CLOSED / VERIFIED / CURRENT
+scopes/ada/web/storage/namespace/
+scopes/ada/web/tools/configuration/
+scopes/ada/web/tools/projection-local/
+scopes/ada/web/tools/projection-cosmos/
+scopes/ada/web/tools/persistence/
+scopes/ada/web/application/ada-generic-application/
+web/capabilities/source/local/
+web/capabilities/source/blob/
+web/capabilities/projection/core/
+connectivity/storage/
+connectivity/cosmos/
 ```
 
-## Collector sources inspected
+## Qualification observada
 
 ```text
-scopes/ada/web/kpis/collector/src/ada/web/kpis/collector/
-    collector.py
-    contracts.py
-    cosmos.py
-    integration.py
-    models.py
-    presentation.py
-    runtime.py
+storage namespace
+15 passed
+ruff check PASS
+ruff format --check PASS
+git diff --check PASS
 
-scopes/ada/web/kpis/collector/tests/
-    test_collector.py
-    test_cosmos.py
-    test_integration.py
-    test_runtime.py
-    test_web_application.py
+Tool Projection persistence
+configuration codec 2 passed
+projection-local    3 passed
+projection-cosmos   5 passed
+ruff check PASS
+
+Tool persistence composition
+10 passed
+ruff check PASS
+ruff format --check PASS
+git diff --check PASS
 ```
 
-Relevant Web framework sources:
-
-```text
-web/framework/core/src/atlanticus/web/application.py
-web/framework/core/src/atlanticus/web/services.py
-web/framework/core/src/atlanticus/web/modules.py
-web/framework/observability/src/atlanticus/web/observability/
-```
-
-## Output surfaces
-
-```text
-ada-kpi-latest-delivery
-ada_kpi_latest_delivery
-
-ada-kpi-timeseries-delivery
-ada_kpi_timeseries_delivery
-```
-
-## Qualification observed
-
-```text
-kpi-collector official gate 53 passed
-application official gate   63 passed
-Web Observability pytest    PASS
-Atlanticus Web Core pytest  PASS
-git diff --check            PASS
-```
+El rerun completo de Tool Projection persistence posterior al último format antes de
+`6155dae...` no fue mostrado; permanece `UNVERIFIED` como qualification final exacta, aunque la
+implementación publicada es CURRENT.
 
 ## Canonical conflict before replacement
 
-Canonical `a8c8c80...` todavía marcaba:
+Canonical `4058aab3525a09b568b80f3f6a5265e45e4f6fea` todavía describe como siguiente paso:
 
 ```text
-ADA-GENERIC-COLLECTOR-CLOSURE = PLANNED / NEXT
-exact intervals = OPEN
-coherency = OPEN
-store wiring = OPEN
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
 ```
 
-Implementación `d484569...` ya demuestra esos contratos CURRENT.
+pero implementación CURRENT ya añadió un prerrequisito arquitectónico/persistente que ese texto
+no refleja:
+
+```text
+namespace
+Tool Projection durable
+provider composition
+resilient Tool resolution
+```
 
 Clasificación:
 
@@ -105,12 +108,20 @@ CANONICAL STALE
 REPLACEMENT REQUIRED
 ```
 
-## Siguiente frontera
+## Gap real CURRENT
+
+ADA Generic todavía usa:
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
-PLANNED / NEXT
+_StartupToolProjectionStore
+resolve_current_tool_projection
 ```
 
-No construir desde memoria. Inspeccionar el composition root operacional real y montar allí la
-capability cerrada.
+con fallo estricto ante ausencia de Source current.
+
+Siguiente frontera:
+
+```text
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+PLANNED / NEXT
+```

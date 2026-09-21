@@ -1,6 +1,6 @@
 # Manager — Source Blob Handoff
 
-Estado: **SOURCE IMPLEMENTED / MANAGER GENERIC HANDOFF CLOSED / CURRENT CONSUMERS ALIGNED**
+Estado: **SOURCE IMPLEMENTED / GENERIC HANDOFF CURRENT**
 
 ## Source productivo
 
@@ -12,23 +12,25 @@ Azure Blob Storage
 
 Local conserva semántica equivalente de desarrollo/QA.
 
-SharePoint/Power Automate pueden permanecer sólo donde consumers todavía no hayan migrado;
-no son autoridad donde Blob ya lo sea.
+SharePoint/Power Automate pueden permanecer sólo donde consumers explícitos todavía no hayan
+migrado; no son autoridad donde Blob ya lo sea.
 
 ## Source Core
 
 Source Core cubre:
 
-- `SourceKey`;
-- `SourceReleaseId`;
-- `SourceReleaseRef`;
-- immutable releases;
-- manifest;
-- `SourceStore`;
-- current/concurrency;
-- History;
-- exact reads;
-- integrity verification.
+```text
+SourceKey
+SourceReleaseId
+SourceReleaseRef
+immutable releases
+manifest
+SourceStore
+current/concurrency
+History
+exact reads
+integrity verification
+```
 
 ## Source -> Projection
 
@@ -43,32 +45,44 @@ ProjectionTarget =
 
 `project(target)` ejecuta el target exacto.
 
-## Manager generic adoption
+## Logical namespace
 
-`ManagerModule` CURRENT expone/consume los workflows genéricos Source/Projection.
+Container físico y path lógico son conceptos distintos.
 
-No convierte identidad Source/Projection a contratos legacy de revisión textual.
-
-`ManagerEntry` no participa de este handoff y no debe recibir Source/Projection ficticios.
-
-## Consumers Source/Projection CURRENT
+ADA CURRENT dispone de:
 
 ```text
-Profiles          CLOSED / VERIFIED / CURRENT
-Navigation        CLOSED / VERIFIED / CURRENT
-Tools             CLOSED / VERIFIED / CURRENT
-KPI Configuration CLOSED / VERIFIED / CURRENT
-KPI Definition    CLOSED / VERIFIED / CURRENT
-ADA Access        SOURCE/PROJECTION CURRENT
+AdaStorageNamespace
+application_namespace
+tool_namespace
 ```
 
-Profiles se integra mediante:
+Para Tool:
 
 ```text
-web/compositions/profiles-manager
+root_prefix = <application>/<tool>
 ```
 
-y su `ManagerModule` ya forma parte de ADA Configuration Manager.
+`BlobSourceStore` agrega internamente su layout Source:
+
+```text
+sources/<SourceKey>/...
+```
+
+La composición no debe pasar `<application>/<tool>/sources` como root, porque duplicaría
+responsabilidad interna de `SourceStore`.
+
+Ejemplo:
+
+```text
+container físico
+└── conciencia_situacional/
+    ├── users/
+    └── operaciones_integradas/
+        └── sources/
+```
+
+El container no se infiere del namespace.
 
 ## Users boundary
 
@@ -79,128 +93,75 @@ Users Administration
 SEPARATE ADMIN LIFECYCLE
 ```
 
-Su integración Manager ya es CURRENT mediante:
+`users` pertenece al namespace global de aplicación.
+
+La integración concreta de `AdaStorageNamespace` con el Users store no fue implementada en este
+hito; permanece fuera de alcance.
+
+## Tool Projection provider boundary
+
+Tools ahora dispone de Projection durable:
 
 ```text
-web/compositions/users-manager
-→ ManagerEntry
+LocalToolProjectionStore
+CosmosToolProjectionStore
 ```
 
-Estado:
+Cosmos separa Tools mediante:
 
 ```text
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
+partition_key = <application>/<tool>
 ```
 
-No crear Source/Projection ficticios para Users.
+sin modificar `SourceKey('tools')`.
 
-## ADA Access boundary
+## Provider composition
 
-ADA Access sí posee Source/Projection reales.
-
-CURRENT incluye:
+CURRENT:
 
 ```text
-AdaAccessSourceService
-AdaAccessProjectionBuilder
-ProjectionRecord[AdaAccessConfiguration]
-projection-local
-projection-cosmos
-exact Profiles ProjectionTarget dependency
+ToolSourceProvider     LOCAL | BLOB
+ToolProjectionProvider LOCAL | COSMOS
 ```
 
-Su superficie administrativa Manager no existe todavía.
+Las selecciones son independientes.
+
+No confundir hosting:
 
 ```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+Docker / Azure
 ```
 
-## Navigation adoption
-
-Navigation quedó cerrado sobre el handoff genérico.
-
-Local:
+con provider:
 
 ```text
-LocalSourceStore
- -> NavigationSourceService
- -> generic Manager Source workflows
-
-LocalNavigationProjectionStore
- <- SourceProjectionService
+blob / cosmos
 ```
 
-Azure:
+Azurite/Azure Blob satisfacen el mismo provider lógico Blob.
+
+## Runtime read boundary
+
+Runtime Tool puede leer:
 
 ```text
-BlobSourceStore
- -> NavigationSourceService
- -> generic Manager Source workflows
-
-CosmosNavigationProjectionStore
- <- SourceProjectionService
+resolve_active_tool_projection()
 ```
 
-No existen adapters Navigation para conservar stores legacy eliminados.
+sin consultar Source.
 
-Estado:
+Workflow de proyección usa:
 
 ```text
-NAVIGATION-GENERIC-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+project_current_tool_source()
 ```
+
+y sí depende de Source current.
 
 ## Checkpoint CURRENT
 
 ```text
-783d3578da52aeb5cf831999a7717dc8b79f2fb0
+moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
 ```
 
-Parent:
-
-```text
-e0dca2d9f9e8db9551b8cee45a37cd1ce3dd4bd5
-```
-
-Tree:
-
-```text
-5ed091d5477b8ca041ddd669de8217028ec72f35
-```
-
-El parent contiene la implementación Users Manager.
-El checkpoint CURRENT elimina únicamente el lockfile anidado accidental de esa composition.
-
-## Qualification relevante observada antes del cleanup
-
-```text
-Users core tests                    46 passed
-Manager tests                       62 passed
-users-manager tests                  1 passed
-ADA Configuration Manager tests    26 passed
-
-Web scoped combined                 109 passed
-ADA Configuration Manager           26 passed
-git diff --check                    PASS
-```
-
-El cleanup posterior no modifica código ni contracts.
-
-No se afirma:
-
-- full monorepo pytest GREEN;
-- full ADA GREEN;
-- full Ruff workspace GREEN;
-- Docker E2E;
-- CI remote GREEN.
-
-## Siguiente frontera administrativa
-
-```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
-```
-
-No mezclar con ADA Access runtime composition.
+No reintroducir rutas exact/legacy ni adapters Manager.

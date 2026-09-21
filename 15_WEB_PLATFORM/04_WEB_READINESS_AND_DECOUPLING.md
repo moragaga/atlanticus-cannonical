@@ -1,93 +1,103 @@
 # Web Platform — Readiness and Decoupling
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT / REFINED**
 
 ## Invariante
 
-La Web debe poder **existir**:
-
-- sin datos;
-- sin backend jobs;
-- sin Cosmos configurado cuando sea opcional;
-- sin Storage configurado cuando sea opcional;
-- mientras una dependencia operacional está iniciando.
-
-Esto prueba desacoplamiento real.
-
-## Separar disponibilidad y readiness
+La Web debe poder existir:
 
 ```text
-HTTP / SHELL AVAILABLE
-        ≠
-APPLICATION READY
+with data
+with partial data
+with no persisted business/configuration data
+while optional/external providers are unavailable
 ```
 
-Modelo candidato:
+No usar startup failure global como sustituto del estado de una capability.
+
+## Separar existencia y capability state
 
 ```text
-Web process
-    ↓
-PUBLIC/SYSTEM SURFACE AVAILABLE
-    ↓
-Resource + Projection readiness
-    ├── READY
-    ├── DEGRADED
-    └── ERROR
+WEB PROCESS / BASE COMPOSITION
+              ≠
+CAPABILITY READY
+```
+
+Para Tool Projection existe CURRENT:
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
 ```
 
 ### READY
 
-Todos los requisitos obligatorios están preparados y las proyecciones mínimas están disponibles.
+Projection válida disponible.
 
-### DEGRADED
+### UNCONFIGURED
 
-La Web funciona, pero falta información o una integración opcional/no disponible.
+Provider accesible pero todavía no existe la configuración/proyección.
 
-Ejemplos:
+### UNAVAILABLE
 
-- Backend aún no desplegado;
-- Cosmos opcional ausente;
-- Storage opcional ausente;
-- no existen datos todavía.
+La operación no puede acceder a su infraestructura.
 
-### ERROR
+### INVALID
 
-Existe una configuración/contrato obligatorio inválido.
+Se obtuvo un contrato/documento que no puede aceptarse.
 
-Ejemplos:
+Estos estados pertenecen a la capability Tool; no son automáticamente estados del proceso Web.
 
-- partition key incorrecta;
-- TTL incompatible;
-- source malformado;
-- proyección requerida inválida.
+## Provider composition
 
-La Web no debe fingir disponibilidad funcional de esa capability.
+Construir clientes/stores puede ser lazy respecto de conectividad.
 
-## Front sin datos
+No ejecutar health checks obligatorios durante composición sólo para demostrar que el provider
+está vivo.
 
-Las vistas deben representar explícitamente estados:
+La operación concreta debe traducir fallas técnicas al estado/contrato de su capability.
+
+## No-data behavior
 
 ```text
-READY
-STALE
-SOURCE_ERROR
-CONSTRUCTION / NO DATA
+Configuration determines existence/structure.
+Data determines state.
+Persisted state does not determine Web process existence.
 ```
 
-según el contrato correspondiente.
+Una Tool aún no configurada debe permitir probar shell/composición base.
 
-No usar crash/startup failure de toda la Web como sustituto de estado funcional cuando la shell puede explicar el problema.
+Una Tool configurada sin KPI data debe conservar su estructura y representar data ausente.
+
+## Error visibility
+
+Resiliencia no significa ocultar fallas.
+
+```text
+UNAVAILABLE
+INVALID
+```
+
+deben ser diagnosticables.
+
+No crear fallback silencioso a otro provider ni legacy data cuando un provider explícitamente
+configurado falla.
 
 ## Backend independence
 
-Después del bootstrap:
+Backend jobs y Web workers mantienen lifecycle independiente.
+
+Reiniciar Web no debe ser requisito de corrección de un backend job.
+
+## Consumer gap
+
+La infraestructura Tool ya implementa esta separación.
+
+ADA Generic startup todavía debe adoptarla:
 
 ```text
-Backend job
-→ conecta a recursos conocidos
-→ procesa
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+PLANNED / NEXT
 ```
-
-No depende de callbacks, memoria ni lifecycle del Web worker.
-
-Reiniciar Web no debe convertirse en requisito para que un job siga siendo correcto.

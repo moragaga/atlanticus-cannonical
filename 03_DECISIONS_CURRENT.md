@@ -15,177 +15,184 @@ no double contract
 one focus per increment
 ```
 
-## KPI Registry / Definition
+## Storage namespace
 
 CURRENT/FROZEN:
 
 ```text
-KpiRegistry
-KpiRegistryBinding
-SourceKey('kpis')
-ProjectionRecord[KpiRegistry]
-
-KpiDefinition
-KpiDefinitionConfiguration
-KpiDefinitionCatalog
-SourceKey('kpi-definitions')
-ProjectionRecord[KpiDefinitionCatalog]
+physical container != application namespace != tool namespace != SourceKey
 ```
 
-## REPROCESS_CURRENT
-
-Implementado y CURRENT sólo en:
+ADA:
 
 ```text
-KPI Runtime
-KPI Historian
+application namespace
+conciencia_situacional
+
+tool namespaces
+operaciones_integradas
+mina
+...
 ```
 
-Delivery/Timeseries reprocess permanece:
+Logical topology:
 
 ```text
-PROPOSED / DEFERRED / NOT AUTHORIZED
+<application>/
+├── users/
+└── <tool>/
+    ├── sources/
+    └── projections/
 ```
 
-## Backend Registry consumption
+`users` is global.
 
-Delivery y Timeseries leen directamente el KPI Registry durable desde Cosmos.
+`SourceStore` owns the `sources/` segment.
 
-Cada proceso posee su reader y traducción interna. No existe librería compartida creada sólo
-para deduplicar esta frontera.
+No `../` path reconstruction from Tool to global resources.
 
-## Collector — decisions CURRENT
-
-```text
-ADA-WEB-KPI-COLLECTOR-CAPABILITY
-CLOSED / VERIFIED / CURRENT
-```
-
-Scheduling:
-
-```text
-Latest default       10 s
-Timeseries default  120 s
-Browser default      10 s
-Latest priority      first when both due
-```
-
-Latest y Timeseries son superficies independientes. No se exige sincronización temporal exacta
-ni atomicidad cross-document.
-
-Compatibilidad server-side:
-
-```text
-(configuration_revision, tool_projection_revision)
-```
-
-Rules:
-
-```text
-Latest watermark regression    reject as STALE
-Timeseries end regression       reject as STALE
-wrong tool projection revision  INCOMPATIBLE
-Timeseries vs current Latest     INCOMPATIBLE when compatibility differs
-new incompatible Latest         drop cached Timeseries
-missing document                retain last good state
-invalid contract/source error   do not mutate state
-```
-
-## Component / Store ownership
+## Tool Projection persistence
 
 CURRENT/FROZEN:
 
 ```text
-ToolStructure.components
-→ one logical ComponentStoreSnapshot per ToolComponent
-
-Subcomponent
-→ no own KPI Store
-
-system destinations
-→ no implicit Component Store
+ProjectionRecord[ToolConfiguration]
+LocalToolProjectionStore
+CosmosToolProjectionStore
 ```
 
-Cada browser store reúne Latest + Timeseries para ese Component.
-
-## Browser merge
-
-El browser nunca lee Cosmos. Consume snapshots del worker.
-
-Para evitar regresión entre workers usa marcadores monotónicos independientes:
+Cosmos:
 
 ```text
-Latest
-revision + watermark_utc + configuration_revision
-
-Timeseries
-revision + end_utc + configuration_revision
+partition_key = <application>/<tool>
+SourceKey = tools
 ```
 
-Latest puede avanzar conservando Timeseries más nuevo ya presente en el browser cuando la
-compatibilidad lo permite.
+Namespace belongs to the store instance, not to domain Source identity.
 
-## Web Observability
+## Provider composition
 
-CURRENT:
+CURRENT/FROZEN:
 
 ```text
-Atlanticus Web owns WebObservability
-→ registered in ServiceRegistry
-→ modules consume via WEB_OBSERVABILITY_SERVICE_KEY
+Source provider     local | blob
+Projection provider local | cosmos
 ```
 
-Collector policy:
+Independent valid combinations:
 
 ```text
-Delivery unavailable -> WARNING once per incident signature/source
-Contract failure      -> ERROR once per incident signature/source
-Other refresh failure -> ERROR once per incident signature/source
-Runtime failure       -> CRITICAL
-Recovery              -> clears source incident
+local + local
+blob + cosmos
+blob + local
+local + cosmos
 ```
 
-No usar polling exitoso como telemetría periódica.
-
-## Collector attachment
-
-CURRENT:
+CURRENT API:
 
 ```text
-attach_ada_kpi_collector(WebApplicationDefinition, collector)
+compose_tool_persistence
+resolve_active_tool_projection
+project_current_tool_source
 ```
 
-La función decora una definición existente; no convierte Generic Application en dependiente
-obligatorio del collector.
-
-Attachment duplicado se rechaza.
-
-## Decisiones superseded por este cierre
+Resolution states:
 
 ```text
-Collector exact intervals OPEN
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+## Runtime dependency rule
+
+CURRENT/FROZEN:
+
+```text
+runtime active Tool read
+→ Projection durable first
+→ does not require Source availability
+```
+
+Source participates when a workflow needs to select/project the current Source release.
+
+Do not rebuild active runtime configuration from Source on every application startup.
+
+## Availability rule
+
+CURRENT/FROZEN:
+
+```text
+APPLICATION EXISTENCE
+!= TOOL CONFIGURATION EXISTENCE
+!= EXTERNAL INFRASTRUCTURE AVAILABILITY
+!= BUSINESS DATA AVAILABILITY
+```
+
+Valid non-fatal states include:
+
+```text
+no Source current
+no active Tool Projection
+no KPI Latest
+no KPI Timeseries
+provider temporarily unavailable
+```
+
+The affected capability must expose/degrade its state instead of turning absence into a global
+Web startup failure.
+
+Invalid contract remains visible and diagnostic.
+
+## Collector decisions
+
+Collector contracts remain CURRENT/FROZEN.
+
+Do not reopen:
+
+```text
+polling intervals
+one store per ToolComponent
+Subcomponent boundary
+Latest priority
+browser cache-only behavior
+compatibility semantics
+```
+
+## Decisions superseded/refined by this closure
+
+```text
+"next = attach Collector directly from Tool Source"
+SUPERSEDED / REFINED
+```
+
+The missing prerequisite was the durable Tool Projection/provider composition and its availability
+boundary.
+
+```text
+"in-process startup Tool Projection is the operational runtime route"
+SUPERSEDED AS TARGET DIRECTION
+```
+
+It remains in current ADA Generic code only until the next bootstrap cutover.
+
+```text
+"Source must be available to resolve Tool runtime"
 SUPERSEDED
-
-Collector read coherency OPEN
-SUPERSEDED
-
-Collector UI store wiring OPEN
-SUPERSEDED
-
-Collector capability PLANNED / NEXT
-SUPERSEDED
 ```
 
-Ahora son CURRENT los contratos implementados descritos arriba.
+Runtime may consume an existing durable Tool Projection independently of Source availability.
 
-## Siguiente decisión operacional
+## Next decision boundary
 
-No hay nueva arquitectura de Collector por decidir.
+No new provider architecture is required.
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 PLANNED / NEXT
 ```
 
-El siguiente incremento debe integrar las piezas existentes en la composición operacional real.
-No inventar un segundo collector, adapter, schema, service o app para hacer el wiring.
+Implement existing contracts into the real ADA Generic startup/runtime.
+
+Do not redesign namespace, Tool Projection, SourceStore, Projection Core or Collector.

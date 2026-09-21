@@ -13,9 +13,9 @@ ProjectionTarget =
     SourceKey
     +
     SourceReleaseRef
+    +
+    dependencies
 ```
-
-`SourceReleaseRef` conserva referencia resoluble exacta.
 
 `SourceReleaseId` identifica publicación y no equivale a `content_hash`.
 
@@ -29,83 +29,124 @@ Ejecución:
 project(target)
 ```
 
-resuelve exactamente la release del target y no relee current para sustituirla.
+resuelve exactamente la release del target.
 
 ## Provenance durable
 
-Projection activa conserva identidad de Source release exacta.
-
-CURRENT/OUTDATED compara release identity, nunca content hash.
-
-## Manager generic handoff
-
-Manager consume directamente Projection Core.
-
-Contrato de servicio esperado por el coordinator:
+Projection activa conserva:
 
 ```text
-get_status(source_key) -> ProjectionStatus
-select_current_target(source_key) -> ProjectionTarget | None
-project(target) -> ProjectionExecutionResult
+source_key
+source_release_id
+source_published_at_utc
+projected_at_utc
+dependencies
+payload
 ```
 
-Invariantes:
+CURRENT/OUTDATED compara identidad exacta, nunca content hash como sustituto.
 
-- el target llega completo a `project`;
-- el target debe usar el `SourceKey` del módulo;
-- Manager no reconstruye target desde revision;
-- Manager no crea un resultado paralelo;
-- `ProjectionExecutionResult.target` conserva el target ejecutado.
+## Tool Projection CURRENT
 
-## Contrato superseded
+Tool Configuration ahora materializa `ProjectionRecord[ToolConfiguration]` durable.
 
-Ya no forman parte de la frontera Manager:
+Codec:
+
+```text
+tool_projection_to_document
+tool_projection_from_document
+```
+
+Providers:
+
+```text
+LocalToolProjectionStore
+CosmosToolProjectionStore
+```
+
+Local:
+
+```text
+<base>/<application>/<tool>/projections
+```
+
+Cosmos:
+
+```text
+partition_key = <application>/<tool>
+```
+
+El deployment namespace no modifica `ProjectionTarget` ni `SourceKey`.
+
+## Runtime handoff
+
+La lectura runtime se separa de la materialización:
+
+```text
+resolve_active_tool_projection()
+→ ProjectionStore.get_active()
+→ does not require Source
+```
+
+Materialización:
+
+```text
+project_current_tool_source()
+→ select_current_target()
+→ project(target)
+```
+
+Esto evita usar Source availability como requisito para consumir una Projection durable ya
+existente.
+
+## Resolution states
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+No equivalen a estados globales del proceso Web.
+
+## Contratos superseded
+
+No reintroducir:
 
 ```text
 ExactProjectionWorkflow
 ConfigurationLifecycleWorkflow
-get_current_projection_target() sin source_key como servicio Manager específico
-project(expected_source_revision)
-projection revision textual
-```
-
-La semántica exact-release permanece; lo que se elimina es la duplicación Manager `exact` vs `legacy`.
-
-## Source publication handoff
-
-Manager publication usa `SourceSnapshot`.
-
-No usa:
-
-```text
 expected_source_revision
+projection revision textual
+revision -> ProjectionTarget reconstruction
+in-process Projection as durable authority
 ```
-
-La selección del target posterior se realiza desde el servicio Projection con el `SourceKey`.
 
 ## Qualification actual
 
-Current implementation checkpoint:
+Checkpoint CURRENT:
 
 ```text
-59fcd3ecc8f3441e64fbe0fc892b4467fa56f181
+21cfb2f11362c1606ad14ff8adc7551948eced6a
 ```
 
-Manager scoped suite:
+Tool persistence composition:
 
 ```text
-54 passed
+10 passed
+ruff check PASS
+ruff format --check PASS
+git diff --check PASS
 ```
 
 ## Fuera de este cierre
 
-OPEN:
+El consumer ADA Generic todavía no usa esta composición en startup.
 
-- Navigation consumer alignment;
-- Tools consumer alignment;
-- KPI Configuration consumer alignment;
-- KPI Definition consumer alignment;
-- global consumer qualification;
-- demás contratos especializados ya abiertos.
+```text
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+PLANNED / NEXT
+```
 
-No reabrir Projection Core para resolver un consumer.
+No reabrir Projection Core para resolver ese consumer.

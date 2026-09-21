@@ -12,11 +12,20 @@ El núcleo genérico de Atlanticus no depende de ADA.
 
 ## Configuration / Administration
 
-Manager administra Source/Projection sólo para domains que realmente son Configuration Sources.
+Manager administra Source/Projection sólo para dominios que realmente son Configuration Sources.
 
 ```text
-Source      = Local | Blob | provider equivalente
-Projection  = Local | Cosmos | provider equivalente
+Source      = Local | Blob
+Projection  = Local | Cosmos
+```
+
+Los providers son ejes independientes.
+
+```text
+local + local
+blob  + cosmos
+blob  + local
+local + cosmos
 ```
 
 Projection representa un release exacto:
@@ -32,200 +41,187 @@ No reconstruir `ProjectionTarget` desde revision textual.
 
 No mantener contratos paralelos para transición.
 
-## KPI Registry CURRENT
+## Namespace de persistencia ADA
 
-La capability operacional de participación/delivery KPI es Registry, no el monolito histórico
-`KPI Configuration`.
+CURRENT:
 
 ```text
-scopes/ada/web/kpis/registry/
-├── core
-├── configuration
-├── projection-local
-└── projection-cosmos
+AdaStorageNamespace
+├── application_namespace
+└── tool_namespace
 ```
 
-Source:
+Separar siempre:
 
 ```text
-SourceKey('kpis')
+connection
+physical container
+application namespace
+tool namespace
+SourceKey
 ```
 
-Projection:
+Ejemplo lógico:
 
 ```text
-ProjectionRecord[KpiRegistry]
+conciencia_situacional/
+├── users/
+└── operaciones_integradas/
+    ├── sources/
+    └── projections/
 ```
 
-Dependency exacta:
+`users` pertenece al nivel global de aplicación.
+
+Los domains de Tool pertenecen a `<application>/<tool>`.
+
+`SourceStore` agrega internamente `sources/<SourceKey>`.
+
+## Tool Configuration / Projection
+
+Tool Configuration es ADA-specific.
+
+CURRENT:
 
 ```text
-Tool ProjectionTarget
+ToolSourceService
+ToolProjectionBuilder
+ProjectionRecord[ToolConfiguration]
+LocalToolProjectionStore
+CosmosToolProjectionStore
+```
+
+El namespace lógico de deployment no modifica `SourceKey`.
+
+Cosmos Tool Projection usa:
+
+```text
+partition_key = <application>/<tool>
+```
+
+Local Tool Projection usa:
+
+```text
+<base>/<application>/<tool>/projections
+```
+
+## Tool persistence composition
+
+Capability CURRENT:
+
+```text
+scopes/ada/web/tools/persistence
+```
+
+Composición:
+
+```text
+ToolPersistenceSettings
         ↓
-KPI Registry ProjectionTarget
-```
-
-## KPI Definition CURRENT
-
-```text
-scopes/ada/web/kpis/definition/
-├── core
-├── configuration
-├── projection-local
-└── projection-cosmos
-```
-
-Projection:
-
-```text
-ProjectionRecord[KpiDefinitionCatalog]
-```
-
-Dependency exacta:
-
-```text
-KPI Registry ProjectionTarget
+compose_tool_persistence
         ↓
-KPI Definition ProjectionTarget
+ToolPersistenceComposition
+├── SourceStore
+├── ProjectionStore[ToolConfiguration]
+└── SourceProjectionService[ToolConfiguration]
 ```
 
-## Backend KPI configuration boundary
+Construir esta composición no debe abrir ni consultar servicios externos.
 
-Delivery y Timeseries consumen el KPI Registry durable CURRENT mediante readers propios de cada
-proceso. No existen fallback legacy ni shared reader creado sólo por deduplicación.
-
-## Backend recovery boundary
-
-`REPROCESS_CURRENT` está implementado únicamente donde fue autorizado: KPI Runtime y Historian.
-
-Nunca bypass:
+Operaciones separadas:
 
 ```text
-authority regression
-lease
-cancellation
-fencing
-write conflicts
+resolve_active_tool_projection()
+→ runtime read from durable Projection
+
+project_current_tool_source()
+→ Source current -> exact Projection
 ```
+
+Estados:
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+## Application availability boundary
+
+Invariante congelada:
+
+```text
+APPLICATION EXISTENCE
+!= CONFIGURATION EXISTENCE
+!= INFRASTRUCTURE AVAILABILITY
+!= DATA AVAILABILITY
+```
+
+Ausencia de Source/Projection/KPI data es estado funcional válido.
+
+Falla de conectividad de una dependencia debe quedar confinada a esa capability.
+
+Errores/contratos inválidos deben permanecer diagnosticables; resiliencia no significa
+ocultarlos.
+
+La aplicación real todavía no consume esta composición; ese wiring es el siguiente incremento.
+
+## KPI Registry / Definition
+
+Permanecen CURRENT sus contratos durables y exact dependencies.
+
+No reabrirlos en el bootstrap ADA Generic.
 
 ## ADA KPI Collector CURRENT
 
-Collector es una capability ADA Web separada:
-
-```text
-scopes/ada/web/kpis/collector
-```
-
-Flujo CURRENT:
+Collector permanece una capability ADA Web separada.
 
 ```text
 Latest Delivery Cosmos ─┐
                         ├─> AdaKpiCollector
-Timeseries Delivery ────┘       │
-                                ├─> immutable process snapshot
-ToolStructure ------------------┤
+Timeseries Delivery ────┘
+ToolStructure ------------------┐
 Tool projection revision -------┘
-                                ↓
-                     one logical store per Component
-                                ↓
-                         browser cache reads
 ```
 
-Fronteras:
+Fronteras congeladas:
 
 ```text
-Cosmos
-→ only reader/collector side
-
-Browser
-→ cache only
-→ never Cosmos
-
-Generic Application
-→ remains usable without collector
-
-Subcomponent
-→ never gets its own KPI store
+1 ToolComponent = 1 logical KPI Store
+Subcomponent != Store
+browser = cache only
+Generic Application usable without Collector
 ```
 
-Compatibilidad:
+## Próxima frontera arquitectónica
 
 ```text
-configuration_revision + tool_projection_revision
-```
-
-No existe atomicidad requerida entre Latest y Timeseries. Latest puede avanzar primero mientras
-Timeseries compatible anterior permanece. Un cambio incompatible de Latest invalida Timeseries.
-
-## Collector Web composition
-
-Atlanticus Web crea `WebObservability` y la registra en su `ServiceRegistry` mediante:
-
-```text
-WEB_OBSERVABILITY_SERVICE_KEY
-```
-
-Los módulos pueden declararla en `requires_services` sin crear globals.
-
-Collector se adjunta a una definición Web ya resuelta:
-
-```text
-WebApplicationDefinition
-    ↓
-attach_ada_kpi_collector
-    ↓
-WebApplicationDefinition + collector module + wrapped layout
-```
-
-No introducir dependencia inversa desde Generic Application hacia Collector.
-
-## Lifecycle
-
-```text
-one cache/poller per worker PID
-latest interval default     10 s
-timeseries interval default 120 s
-browser interval default    10 s
-```
-
-Public infrastructure paths no arrancan el poller:
-
-```text
-/health/
-/assets/
-/.auth/
-```
-
-## Siguiente frontera arquitectónica
-
-La capability está cerrada. Lo siguiente es wiring, no diseño nuevo:
-
-```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 PLANNED / NEXT
 ```
 
-Resolver en la composición operacional existente:
+Debe consumir los contratos CURRENT; no crear nuevos Source/Projection providers ni otra
+aplicación paralela.
+
+Orden:
 
 ```text
-published/current ToolConfiguration
-ToolStructure
-Tool projection revision
-Cosmos connection/client
-AdaKpiCollector
-attach_ada_kpi_collector
+Web settings/environment
+→ AdaStorageNamespace
+→ Source/Projection provider clients
+→ ToolPersistenceComposition
+→ resolve_active_tool_projection
+→ ADA Generic composition/runtime
 ```
 
-No crear un nuevo servicio remoto, schema intermedio, store por Subcomponent ni aplicación
-paralela salvo evidencia explícita posterior.
-
-## Reglas congeladas
+Después, cuando exista Tool Projection READY:
 
 ```text
-LEGACY                      REMOVE
-ADAPTERS / SHIMS / ALIASES FORBIDDEN
-DOUBLE CONTRACT             FORBIDDEN
-OLD SCHEMA READERS          FORBIDDEN IN CURRENT RUNTIME
-revision -> ProjectionTarget reconstruction REMOVE
-expected_source_revision    REMOVE
+Tool Structure
+→ Collector
+→ Latest / Timeseries states
 ```
+
+La ausencia de Tool/KPI data o la indisponibilidad de provider no debe redefinir la existencia
+de la Web.

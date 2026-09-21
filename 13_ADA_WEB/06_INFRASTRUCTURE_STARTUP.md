@@ -1,82 +1,144 @@
 # ADA Web — Infrastructure Startup
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT CONTRACT / INTEGRATION PENDING**
 
-ADA Generic debe poder levantar su shell aun cuando:
+## Invariante
 
-- Backend no esté desplegado;
-- no existan datos todavía;
-- Cosmos/Storage opcional no esté configurado.
-
-## Startup
+ADA Generic debe poder levantar su composición base aunque:
 
 ```text
-Web starts
-→ framework infrastructure services
-→ module services
-→ resource/projection readiness when applicable
-→ operational shell state
+no exista Tool Source current
+no exista Tool Projection
+no existan KPI
+no exista Latest
+no exista Timeseries
+Blob esté temporalmente indisponible
+Cosmos esté temporalmente indisponible
 ```
 
-Atlanticus Web infrastructure includes runtime-owned `WebObservability`, exposed through the
-frozen `ServiceRegistry`.
+La disponibilidad de una capability no define la existencia del proceso Web.
+
+## Separación
+
+```text
+APPLICATION EXISTENCE
+!= TOOL CONFIGURATION EXISTENCE
+!= EXTERNAL INFRASTRUCTURE AVAILABILITY
+!= BUSINESS DATA AVAILABILITY
+```
+
+## Tool persistence CURRENT
+
+Infraestructura disponible:
+
+```text
+AdaStorageNamespace
+ToolPersistenceSettings
+ToolPersistenceComposition
+```
+
+Resolver runtime:
+
+```text
+resolve_active_tool_projection()
+```
+
+Estados:
+
+```text
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
+```
+
+El resolver no consulta Source para leer Projection activa.
+
+## Lazy provider composition
+
+`compose_tool_persistence()` construye stores/servicios sin ejecutar:
+
+```text
+Storage health check
+Cosmos health check
+Source read
+Projection read
+```
+
+La conexión ocurre cuando la operación realmente lee/escribe.
+
+Esto permite que la creación de composición no dependa por sí sola de disponibilidad de red.
+
+## Estado de integración
+
+ADA Generic todavía no consume esta capability desde su startup real.
+
+CURRENT todavía contiene:
+
+```text
+_StartupToolProjectionStore
+resolve_current_tool_projection
+```
+
+con `RuntimeError` cuando Source current no existe.
+
+Por tanto:
+
+```text
+APPLICATION EMPTY/DEGRADED STARTUP
+DECIDED / INFRASTRUCTURE READY / APP WIRING NOT YET IMPLEMENTED
+```
 
 ## Collector lifecycle
 
-Collector does not poll during Web composition.
+Collector no debe poll durante Web composition.
 
 ```text
 /health/*
 /assets/*
 /.auth/*
-→ do not start collector poller
+→ no start collector poller
 ```
 
-The first real application request starts the worker-local polling thread.
+Primer request real inicia el polling worker-local cuando Collector esté adjunto.
 
-Polling is independent from request execution; Cosmos is never read inline by the browser request
-or browser refresh callback.
+Browser requests no leen Cosmos inline.
 
-## Degraded data behavior
+## Degraded behavior
 
-Collector source failure:
+Tool:
 
 ```text
+UNCONFIGURED
+→ no Tool materialized
+→ Web base remains available
+
+UNAVAILABLE
+→ capability unavailable
+→ Web base remains available
+
+INVALID
+→ capability invalid + diagnostic
+→ no silent fallback
+```
+
+Collector/data:
+
+```text
+missing KPI document
+→ no forced application startup failure
+
+source failure
 → request remains available
-→ last good cache remains
-→ incident is reported through WebObservability
+→ preserve last good cache where applicable
 ```
-
-Missing document:
-
-```text
-→ no forced error state
-→ last good cache remains
-```
-
-Invalid contract:
-
-```text
-→ cache is not mutated
-→ ERROR observability event
-```
-
-## Local / Azure infrastructure
-
-Existing resource ownership rules remain unchanged.
-
-Local may create/ensure resources only where current contracts authorize it.
-
-Azure base infrastructure remains externally provisioned where defined.
-
-Collector operational integration must reuse current Cosmos configuration/client ownership; it
-must not add provisioning on every polling cycle.
 
 ## Next
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 PLANNED / NEXT
 ```
 
-The next increment validates this lifecycle with the actual operational Tool/Cosmos composition.
+Debe implementar esta regla en el composition/runtime root real sin inventar una aplicación
+paralela.

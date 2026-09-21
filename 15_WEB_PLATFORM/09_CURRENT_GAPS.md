@@ -5,218 +5,137 @@ Estado: **CURRENT**
 Checkpoint:
 
 ```text
-moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
 ```
 
-## 1. Users
-
-CURRENT:
+## Closed in current storage/Tool persistence front
 
 ```text
-users/core
-users/blob
-users/cosmos
-users/activity
-web/compositions/users-manager
+ADA-STORAGE-NAMESPACE
+CLOSED / VERIFIED / CURRENT
 
-UserRecord.profile_key
-EffectiveUser.profile_key
-UsersAdministrationService
-Users Manager Web surface
-```
+TOOL-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
 
-Removed / forbidden:
-
-```text
-authority_key
-users/configuration
-users generic Projection
-users-manager Source/Projection module
-```
-
-## 2. Users Administration surface
-
-```text
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
+TOOL-PERSISTENCE-RESILIENT-COMPOSITION
 CLOSED / VERIFIED / CURRENT
 ```
 
-Users entra a Manager mediante `ManagerEntry`.
-
-No queda gap de superficie administrativa Users dentro de este frente.
-
-## 3. Users directory discovery
+Current Tool provider axes:
 
 ```text
-UsersDirectoryReader
-CURRENT CONTRACT
-
-concrete Entra/Graph provider
-UNVERIFIED
+Source      local | blob
+Projection  local | cosmos
 ```
 
-## 4. Profiles
-
-CURRENT:
+Current Tool resolution:
 
 ```text
-profiles/core
-profiles/configuration
-profiles/projection-local
-profiles/projection-cosmos
-Profiles Configuration Web surface
-profiles-manager composition
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
 ```
 
-No queda gap de editor/Web surface/Projection contract de Profiles.
+## ADA Generic bootstrap gap
 
-## 5. Generic Web pagination
+Current Generic Application still has:
 
 ```text
-GENERIC-WEB-PAGINATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
+_StartupToolProjectionStore
+resolve_current_tool_projection
 ```
 
-Users Manager consume el contrato compartido 10/20.
+and absence of current Tool Source raises `RuntimeError`.
 
-## 6. ADA Access
-
-CURRENT:
+It does not yet bind:
 
 ```text
-scopes/ada/web/access/core
-scopes/ada/web/access/configuration
-scopes/ada/web/access/projection-local
-scopes/ada/web/access/projection-cosmos
-
-profile_key -> access_keys
-Source schema 2
-AdaAccessProjectionBuilder
-exact dependency -> Profiles Projection
-durable local/Cosmos ProjectionRecord
+environment/.env
+AdaStorageNamespace
+ToolPersistenceSettings
+ToolPersistenceComposition
+resolve_active_tool_projection
 ```
 
-Closed:
+Gap:
 
 ```text
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+PLANNED / NEXT
 ```
 
-Gap siguiente:
+## Collector runtime wiring
+
+Collector capability itself is closed.
+
+Its final operational wiring remains:
 
 ```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+PLANNED / AFTER ADA-GENERIC-OPERATIONAL-BOOTSTRAP
 ```
 
-No existe Web surface ADA Access CURRENT.
+Do not bypass bootstrap by rebuilding Tool Projection directly from Source in the application.
 
-Además, CURRENT no contiene catálogo/definición independiente de access permissions.
-El siguiente diseño debe resolver cómo:
+## Users global namespace
+
+Logical ownership is frozen:
 
 ```text
-crear/definir accesos
-asignarlos a Profiles
-obtener un identificador estable
-permitir que el desarrollador use manualmente ese identificador en funcionalidades Web
+users = application-global
 ```
 
-No se ha decidido todavía:
+`AdaStorageNamespace.application_prefix` supports global path derivation.
+
+Concrete Users store wiring to that namespace was not changed in this hito:
 
 ```text
-nombre del modelo de definición
-schema exacto
-persistencia exacta del catálogo
-route exacta
-identificador exacto distinto de/igual a access_key
+UNVERIFIED / SEPARATE
 ```
 
-No inventarlos antes del diseño.
+## Manager provider wiring
 
-## 7. Navigation / Profiles integration
+Configuration Manager already uses generic Source/Projection contracts.
+
+Its existing concrete local runtime was not migrated by this hito to
+`ada-web-tools-persistence`.
 
 ```text
-NAVIGATION-PROFILES-DEPENDENCY-ALIGNMENT
-CLOSED / VERIFIED / CURRENT
+NOT PART OF NEXT FOCUS
 ```
 
-## 8. Manager authorization
+## Python metadata
 
-Core CURRENT:
-
-```text
-ManagerAuthorizationPolicy.can_view
-ManagerModule | ManagerEntry
-```
-
-## 9. navigation-manager consumer mismatch
-
-```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
-```
-
-## 10. Manager final administrative composition
-
-Profiles y Users ya están integrados.
-
-Permanece:
-
-```text
-MANAGER-FINAL-ADMIN-COMPOSITION
-PLANNED / AFTER ADA ACCESS
-```
-
-## 11. User Activity
-
-Permanece gap histórico de page visit history ordenada según target documentado.
-
-## 12. TTL
-
-Contrato canónico requiere 24 h para User Activity; verificar recurso físico antes de
-declarar aplicado.
-
-## 13. Cosmos provisioning / Web lifecycle
-
-Permanecen gaps de resource preparation/readiness/named connections según consumers reales.
-
-## 14. ADA Access runtime
-
-```text
-PLANNED / SEPARATE
-```
-
-No mezclar con la UI/configuration Manager.
-
-## 15. Test hygiene
-
-```text
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / OPEN
-```
-
-## 16. Python metadata
-
-Canonical:
+Project baseline:
 
 ```text
 Python 3.14.7
 ```
 
-Packages aún contienen metadata 3.14.2 en múltiples boundaries.
+Multiple packages, including new packages in this hito, still declare:
+
+```text
+requires-python ==3.14.2
+```
+
+Classification:
 
 ```text
 PYTHON-METADATA-ALIGNMENT
-PLANNED / OPEN
+PLANNED / SEPARATE
 ```
 
-## 17. CI / global lint
+Do not mix with ADA Generic bootstrap.
+
+## Qualification transversal
 
 ```text
-CI remoto
+CI remote
 UNVERIFIED
 
 full Ruff workspace
+UNVERIFIED
+
+full monorepo pytest
 UNVERIFIED
 ```
