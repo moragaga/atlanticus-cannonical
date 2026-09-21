@@ -10,13 +10,13 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `bc8eafc21a65e3f9aff044c232e2562cd490c49f`
+  `1c67212b21ef2241bcb59173ccb8e9cd237a0219`
 - Parent inmediato:
-  `d6e405e6466b1bf8d29dadae442a03062da2f1b3`
+  `07eeb8d4ecc3f1e9d9a84ab1059eaad2fd5f78ce`
 - Tree:
-  `c26c0ee18161ca7fc49c439109bec99ecae77476`
+  `ae432b5aa55183ca9f11b35ac37f4fa3859c9e78`
 - Fecha del commit:
-  `2026-09-21T11:17:34Z`
+  `2026-09-21T13:25:55Z`
 
 Estado acumulado relevante:
 
@@ -30,8 +30,13 @@ ADA-GENERIC-OPERATIONAL-BOOTSTRAP             CLOSED / VERIFIED / CURRENT
 ADA-GENERIC-COLLECTOR-RUNTIME-WIRING          CLOSED / VERIFIED / CURRENT
 ADA-GENERIC-OPERATIONAL-RENDER-RUNTIME-CONTRACT
                                                CLOSED / VERIFIED / CURRENT
-
 ADA-GENERIC-STAGE-1                           CLOSED / VERIFIED / CURRENT
+
+COMMAND-CENTER-WEB-ALARM-CONFIGURATION-CONTRACT
+                                               CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-ALARM-CONFIGURATION-PROJECTION CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-ALARM-CONFIGURATION-MANAGER-INTEGRATION
+                                               CLOSED / VERIFIED / CURRENT
 ```
 
 ### Canonical
@@ -39,7 +44,7 @@ ADA-GENERIC-STAGE-1                           CLOSED / VERIFIED / CURRENT
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `5c29631526939c52528e147b4a83e5557e610bf0`
+  `f04ee728b157a4f64a3c0c59622d5d6702f4cd87`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -53,10 +58,9 @@ ADA-GENERIC-STAGE-1                           CLOSED / VERIFIED / CURRENT
 
 Permanece **HISTORICAL**.
 
-No se verificó una decisión histórica específica que contradiga el cierre de ADA Generic Stage 1.
-Las búsquedas por bootstrap, operational render y Command Center Alarm Configuration no devolvieron
-un contrato histórico aplicable. Cualquier contradicción histórica adicional permanece
-`UNVERIFIED`.
+Las decisiones B.1/B.2 preservan semántica útil de AlarmDefinition, Live/Management y
+Runtime/Delivery, pero sus bindings físicos históricos SharePoint/Cosmos no prevalecen sobre
+Source/Projection/Blob CURRENT.
 
 ## Jerarquía
 
@@ -282,27 +286,53 @@ SUPERSEDED / NOT REQUIRED
 
 No crear body genérico obligatorio, adapter de KPI a render ni segunda copia de estado.
 
+## ADA Command Center Alarm Configuration CURRENT
+
+Implementado bajo:
+
+```text
+scopes/ada-command-center/web/alarms/configuration
+```
+
+Cadena CURRENT:
+
+```text
+Manager Workspace
+→ intrinsic validation
+→ Alarm Configuration Source/Release
+→ Alarm Configuration Projection
+```
+
+La unidad publicada es atómica:
+
+```text
+Alarm Rules + Message Catalog
+```
+
+La Projection base conserva la Alarm Configuration de una `SourceRelease` exacta y no introduce
+Tool Catalog, evaluator resolution, B.2, Runtime ni Delivery.
+
+La composición Manager reutiliza `atlanticus.web.manager`; no existe un Manager paralelo de
+Command Center.
+
+La superficie Web capability-local existe en modo documental. El editor visual final de Rules,
+Messages y parameters permanece abierto sin cambiar el contrato durable.
+
 ## Siguiente foco único
 
 ```text
-ADA-COMMAND-CENTER-ALARM-CONFIGURATION
-PLANNED / NEXT
+COMMAND-CENTER-TOOL-CATALOG-CONTRACT
+PLANNED / NEXT / DESIGN FIRST
 ```
 
-El siguiente chat debe auditar primero contratos e implementación CURRENT de Command Center y
-Alarm Engine antes de diseñar o implementar.
+Command Center Tool Catalog es una capability distinta de ADA Tool Configuration.
 
-Objetivo de siguiente frontera:
+ADA Tool Configuration conserva authoring/ownership de `tool_key`, kind, Components,
+Subcomponents y topología.
 
-```text
-human authoring
-→ Alarm Configuration contract
-→ validation
-→ Source / Release
-→ durable Projection / materialization
-→ Alarm Engine consumption
-→ alarm state delivery boundary
-→ developer-owned visualization
-```
+Command Center Tool Catalog es un **consolidador/reconciliador read-only** de Tool projections
+externas. No crea Tools, no edita Tools, no se convierte en segunda source of truth y no debe
+inventar un fork de los contratos CURRENT de Tool Configuration/ToolStructure.
 
-No implementar esa cadena desde este cierre.
+El siguiente chat debe congelar primero el contrato productor consumible por B.2. No implementar
+B.2, Runtime Delivery, Cosmos reconciliation ni Blob binding antes de cerrar ese contrato.

@@ -1,99 +1,144 @@
 # ADA Command Center — Tool Catalog
 
-Estado: **FROZEN DIRECTION / IMPLEMENTATION PENDING**
+Estado: **NEXT / DESIGN FIRST / IMPLEMENTATION PENDING**
 
 ## Propósito
 
-Command Center necesita una visión consolidada y read-only de las Tools que puede usar para resolución de Alarm Configuration.
+Command Center necesita una visión consolidada y read-only de las Tools que puede usar para
+resolución de Alarm Configuration.
 
-El Tool Catalog permite:
+El siguiente hito debe congelar primero el contrato productor que consumirá B.2.
 
-- authoring asistido;
-- resolución Tool/Component/Subcomponent;
-- validación de routing/escalation/visual targets;
-- readiness;
-- provenance;
-- continuidad ante indisponibilidad temporal de fuentes externas.
+## Frontera de ownership congelada
 
-## Ownership
-
-Tool Configuration sigue siendo autoridad de:
+ADA Tool Configuration sigue siendo autoridad de:
 
 - `tool_key`;
 - display name;
-- Tool type/tier;
+- Tool type/kind;
 - Components;
 - Subcomponents;
 - relaciones;
 - topología.
 
-Command Center Tool Catalog es estado derivado/reconciliado.
+Command Center Tool Catalog es otra capability.
+
+Es un:
+
+```text
+consolidator
++
+reconciler
++
+read-only derived catalog
+```
 
 No es:
 
 - Tool authoring;
+- una variante visual del editor ADA;
 - una segunda source of truth;
+- un fork de `ToolConfiguration`/`ToolStructure`;
 - una proyección que Command Center deba volver a publicar en Cosmos por defecto.
+
+La diferencia con ADA Tool Configuration debe permanecer explícita en nombres, ownership y
+responsabilidad.
+
+## Reality check CURRENT
+
+Al checkpoint:
+
+```text
+moragaga/atlanticus@1c67212b21ef2241bcb59173ccb8e9cd237a0219
+```
+
+no existe implementación de Command Center Tool Catalog.
+
+Sí existen contratos ADA CURRENT relevantes que deben auditarse/reutilizarse antes de diseñar:
+
+```text
+ToolConfiguration
+ToolConfigurationKind
+ToolStructure
+ToolComponent
+ToolSubcomponent
+Tool projection contracts/stores
+```
+
+No inventar otro modelo de Tool si esos contratos ya cubren la topología requerida.
+
+## Consumer responsibility
+
+El catálogo debe permitir posteriormente:
+
+- authoring asistido read-only;
+- resolución Tool/Component/Subcomponent;
+- validación externa de routing/escalation/visual targets;
+- readiness;
+- provenance;
+- continuidad ante indisponibilidad temporal de fuentes externas.
+
+B.2 consumirá una revisión concreta del catálogo junto con una Alarm Configuration Projection
+concreta.
 
 ## Identity
 
-`tool_key` es la identidad de Tool.
+`tool_key` permanece identidad de Tool.
 
-Distintas Tools tienen distintas `tool_key`, aunque compartan el mismo `display_name`.
+Distintas Tools tienen distintas `tool_key`, aunque compartan `display_name`.
 
-El catálogo se indexa conceptualmente por `tool_key`.
+No diseñar resolución de colisiones por nombre visible.
 
-No se diseña resolución de colisiones por nombre visible.
+El punto CURRENT que genera/enforce unicidad global de `tool_key` debe verificarse antes de fijar el
+reconciliador.
 
 ## Inputs
 
-El catálogo puede consumir múltiples Cosmos externos.
+La dirección congelada permite múltiples fuentes Tool externas mediante conexiones nombradas.
 
-Cada input se declara explícitamente mediante una conexión nombrada y el contrato físico necesario para leer la Tool projection correspondiente.
+Cada input debe declararse explícitamente y consumirse read-only desde Command Center.
 
-No asumir un Cosmos global.
+No asumir:
 
-Las conexiones externas son consumo read-only desde la perspectiva de Command Center.
+- Cosmos global;
+- discovery arbitrario en cada edición de Rule;
+- que Command Center provisiona containers externos;
+- que todos los providers Tool son idénticos sin inspección.
 
-Command Center no provisiona, crea ni modifica containers externos sólo por consumirlos.
-
-## Reconciliation
-
-Flujo objetivo:
+## Reconciliation direction
 
 ```text
-named external Cosmos inputs
+named external Tool projection inputs
         ↓
-read confirmed Tool projections
-        ↓
-validate/normalize
+validate/normalize against CURRENT contracts
         ↓
 reconcile
         ↓
-CommandCenterToolCatalog snapshot
+Command Center Tool Catalog snapshot
         ↓
-Blob durable revision + current/LKG
+durable revision/current/LKG
+        ↓
+B.2
 ```
 
-El reconciliador no hace Tool discovery arbitrario durante cada edición de Alarm Rule.
+Este diagrama es dirección, no un schema físico ya implementado.
 
 ## Durable state
 
-El estado/revisión consolidado se conserva en Blob.
+Blob continúa como target durable de dirección para el estado/revisión consolidado.
 
-No se agrega un Cosmos de Command Center únicamente para duplicar Tool topology.
-
-El contrato físico exacto de:
+El contrato físico exacto sigue OPEN:
 
 - container;
-- path;
+- namespace/path;
 - manifest/current pointer;
 - revision identity;
 - history retention;
+- codec/document shape.
 
-queda abierto para el incremento de implementación.
+No fijar estos campos antes de cerrar el contrato logical del catálogo.
 
-## Availability semantics
+## Availability semantics congeladas como conceptos
 
 Debe distinguirse al menos:
 
@@ -105,27 +150,31 @@ La Tool fue observada correctamente en una reconciliación válida.
 
 La fuente externa no pudo observarse actualmente y se conserva la última Tool válida conocida/LKG.
 
-Indisponibilidad de una conexión no equivale a eliminación de la Tool.
+Indisponibilidad temporal no equivale a eliminación.
 
 ### MISSING
 
-Una fuente que pudo reconciliarse correctamente confirma que una Tool previamente conocida ya no está disponible según el contrato de esa fuente.
+Una fuente reconciliada correctamente confirma que una Tool previamente conocida ya no está
+disponible según el contrato de esa fuente.
 
-La política exacta de retención/representación del entry MISSING queda abierta, pero no debe confundirse con STALE.
+La forma exacta de representar/retener MISSING todavía no está congelada.
 
-### UNRESOLVED reference
+### UNRESOLVED Alarm reference
 
-Una Alarm Configuration puede referenciar una `tool_key` que todavía no existe en el catálogo actual.
+No es un estado del Tool Catalog equivalente a los anteriores.
 
-Esto es un resultado de resolución, no un estado inválido de la Alarm Source revision.
+Es un resultado de B.2 cuando una Alarm Configuration referencia una `tool_key` que no puede
+resolverse contra la revisión de catálogo usada.
 
-## Consumer contract
+```text
+Tool availability state
+!=
+Alarm reference resolution finding
+```
 
-Alarm Configuration UI consume el catálogo como read-only.
+## Re-resolution
 
-B.2 consume una revisión concreta del catálogo para materializar readiness/provenance.
-
-La misma Alarm Source revision puede producir una nueva resolución al cambiar la Tool Catalog revision.
+La misma Alarm Source revision puede producir una nueva resolución cuando cambia el Tool Catalog.
 
 ```text
 Alarm A17 + Catalog T40 → unresolved
@@ -134,22 +183,43 @@ Alarm A17 + Catalog T41 → resolved
 
 No es necesario republicar A17 si su contenido no cambió.
 
-## Startup / failure
+## Startup / failure direction
 
-Command Center debe poder levantar usando el último catálogo durable válido aunque una o más conexiones externas estén temporalmente indisponibles.
+Command Center debe poder usar el último catálogo durable válido cuando una fuente externa esté
+temporalmente indisponible, sin presentar STALE como confirmación current.
 
-La Web debe hacer visible freshness/readiness y no presentar una observación stale como confirmación current.
+La ausencia total de catálogo puede limitar authoring asistido/resolution, pero no debe inventar
+Tools ni mutar Alarm Configuration.
 
-La ausencia total de catálogo puede limitar authoring asistido/resolution, pero no debe inventar Tools ni mutar Alarm Configuration.
+## Siguiente hito exacto
+
+```text
+COMMAND-CENTER-TOOL-CATALOG-CONTRACT
+```
+
+Scope del próximo chat:
+
+1. auditar contratos Tool CURRENT productores;
+2. definir el aggregate/snapshot mínimo del consolidator;
+3. definir entry identity + provenance + availability semantics;
+4. definir consumer interface que B.2 necesitará;
+5. testear invariantes del contrato puro.
+
+Fuera de ese primer incremento:
+
+- Cosmos reconciliation runtime;
+- Blob persistence física;
+- cadence/retry;
+- UI final;
+- B.2 implementation;
+- Runtime/Delivery changes.
 
 ## Non-goals
 
-Este contrato no define todavía:
+No crear:
 
-- cadence exacta;
-- trigger manual/automático;
-- formato físico del snapshot Blob;
-- lifecycle de clientes Cosmos;
-- UI detallada del catálogo;
-- retry/backoff;
-- métricas operacionales.
+- legacy adapters;
+- aliases de compatibilidad;
+- duplicación de Tool authoring;
+- segunda Tool Projection Cosmos de Command Center por simetría;
+- schemas especulativos no derivados de código/contratos CURRENT.

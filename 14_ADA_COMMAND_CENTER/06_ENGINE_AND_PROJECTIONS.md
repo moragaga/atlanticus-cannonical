@@ -1,14 +1,42 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT / REFINED + ANALYTICS BOUNDARY CANDIDATE**
+Estado: **CURRENT / ALARM CONFIGURATION BASE PROJECTION IMPLEMENTED / B.2 OPEN**
+
+## Alarm Configuration Projection CURRENT
+
+Existe una Projection base bajo:
+
+```text
+scopes/ada-command-center/web/alarms/configuration
+```
+
+Materializa una `SourceRelease` exacta como `AlarmConfiguration`:
+
+```text
+Alarm Configuration SourceRelease
+        ↓
+AlarmConfigurationProjectionBuilder
+        ↓
+ProjectionStore[AlarmConfiguration]
+```
+
+Su `ProjectionTarget` no declara dependencias externas.
+
+```text
+ProjectionTarget.dependencies == ()
+```
+
+Esto es intencional: Tool Catalog/evaluator resolution pertenecen a B.2, no a la base projection.
 
 ## Alarm Engine
 
 Alarm Engine recibe configuración ejecutable materializada.
 
-La persistencia de Alarm Configuration puede preceder a la resolución completa de dependencias externas. B.2 debe separar readiness por capability.
+La persistencia de Alarm Configuration puede preceder a la resolución completa de dependencias
+externas. B.2 debe separar readiness por capability.
 
-Una referencia Tool no resuelta no bloquea necesariamente Runtime si el evaluator y los datos requeridos son ejecutables sin esa referencia.
+Una referencia Tool no resuelta no bloquea necesariamente Runtime si el evaluator y los datos
+requeridos son ejecutables sin esa referencia.
 
 La Web no resuelve:
 
@@ -23,7 +51,8 @@ La Web no resuelve:
 
 ## Runtime vs Delivery readiness
 
-Runtime y Delivery derivan de la misma resolución/provenance, pero no toda dependencia afecta a ambos de la misma forma.
+Runtime y Delivery deben derivar de la misma resolución/provenance, pero no toda dependencia afecta
+a ambos de la misma forma.
 
 Ejemplo:
 
@@ -36,11 +65,33 @@ Tool visual target unresolved
 → Delivery target is NOT READY
 ```
 
-Una Rule que puede evaluarse puede generar Occurrence/Journey/Evidence durante marcha blanca aunque un destino visual/routing externo todavía no esté disponible.
+Una Rule que puede evaluarse puede generar Occurrence/Journey/Evidence durante marcha blanca aunque
+un destino visual/routing externo todavía no esté disponible.
 
 Delivery no debe despachar hacia una referencia externa no resuelta.
 
 Delivery no puede liderar la configuración EFFECTIVE de Runtime.
+
+`ResolvedAlarmConfiguration`, Runtime materialization y Delivery materialization permanecen
+PLANNED; no existen en `main` al checkpoint de este cierre.
+
+## Runtime CURRENT a reconciliar posteriormente
+
+El runtime existente todavía usa contratos históricos con:
+
+```text
+alarm_configuration_revision: str
+tool_registry_revision: str
+```
+
+en `PlannedAlarm`, `AlarmExecutionSession` y adoption.
+
+B.2 deberá reconciliar estos revision strings con provenance CURRENT, sin introducir adapters legacy
+ni doble contrato.
+
+`AlarmEvaluatorRegistry` CURRENT resuelve por `(family_key, evaluator_key)` y no expone actualmente
+una identidad/revisión de registry. La necesidad exacta de provenance para evaluator resolution
+permanece OPEN para el hito B.2; no inventarla en Tool Catalog.
 
 ## Live Projection
 
@@ -64,7 +115,8 @@ No reemplaza Live.
 
 ## History / Analytics
 
-Command Center necesita una tercera frontera conceptual para explicar la historia operacional completa.
+Command Center necesita una tercera frontera conceptual para explicar la historia operacional
+completa.
 
 Debe combinar:
 
