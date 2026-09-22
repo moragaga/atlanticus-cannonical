@@ -1,6 +1,6 @@
 # ADA Command Center — Open Items
 
-Estado: **OPEN / B.2 NEXT**
+Estado: **OPEN / B.2 IN PROGRESS / FOUNDATION CONTRACT PARTIALLY CLOSED**
 
 Cerrado antes de este checkpoint:
 - Tool Catalog V1;
@@ -10,72 +10,55 @@ Cerrado antes de este checkpoint:
 - Special Condition Runtime reappearance;
 - level-trigger semantics de Special Condition.
 
-## Siguiente foco único
+Cerrado en diseño durante B.2 y todavía **NOT YET IMPLEMENTED**:
+- resolution identity/provenance mínima;
+- `READY | BLOCKED`;
+- findings `BLOCKING | WARNING`;
+- atomicidad Runtime + Delivery;
+- `INVALID != REMOVED`;
+- Runtime artifact serializable separado de evaluator code;
+- disabled Rules continúan definidas y deben seguir siendo válidas;
+- evaluator qualification por key;
+- C1/C2/C3 routing materialization;
+- C2 cumulative waits absolutos;
+- Strategic Tool no elegible como Alarm Configuration reference.
+
+## Foco único CURRENT
 
 ```text
-B.2 — Alarm Configuration -> Runtime Materialization Contract
-PLANNED / NEXT
+B.2 — Alarm Configuration -> Runtime/Delivery Configuration Materialization
+IN PROGRESS
 ```
 
-El próximo chat debe trabajar primero el contrato y la frontera backend.
+Siguiente subfoco acordado:
 
-No implementar consumidores antes de congelar:
-- resolution identity/provenance;
-- findings;
-- Runtime readiness;
-- materialización de `PlannedAlarm`;
-- materialización de evaluator/parameters;
-- adoption.
-
-Delivery debe quedar fuera del primer incremento si mezclarlo impide cerrar un contrato verificable.
+```text
+Deactivation + Messages materialization
+```
 
 ## B.2 OPEN
 
-Debe reconciliar:
+### 1. Materialization owner
+
+Definir owner/package backend concreto sin acoplar Runtime a:
+- SharePoint download;
+- Tool discovery;
+- Message resolution;
+- cross-configuration validation.
+
+### 2. Current Tool reconciliation input
+
+B.2 necesita:
 
 ```text
-AlarmConfiguration Projection
+Confirmed Tool Catalog
 +
-Tool Catalog revision
-+
-evaluator availability/contracts
-->
-resolved/materialized Runtime inputs
+current reconciliation-GREEN qualification
 ```
 
-Sin invalidar retrospectivamente una Alarm Source revision intrínsecamente válida.
+El segundo contrato todavía no está implementado/verificado.
 
-### Mapeos Runtime que ya tienen destino CURRENT
-
-B.2 debe poder producir:
-- `identity`;
-- `kind`;
-- `criticality`;
-- `priority_group`;
-- `priority_order`;
-- evaluator key;
-- parameters/ExecutionEntry;
-- routing C1/C2/C3;
-- deactivation policy;
-- `reappearance_special_conditions`;
-- provenance Runtime.
-
-No inventar nuevos campos si ya existe un contrato Runtime suficiente.
-
-### Special Condition
-
-B.2 conserva la responsabilidad de verificar que las referencias declaradas en authoring sean triggers Special Condition válidos según el contrato vigente.
-
-Engine no necesita transportar `is_special_condition`.
-
-### Execution
-
-`is_active=false`:
-- Rule sigue definida;
-- no entra a nueva execution session;
-- adoption debe cerrar occurrence abierta como configuration-disabled cuando corresponda.
-
-### Visibility
+### 3. Visibility
 
 OPEN:
 
@@ -87,39 +70,88 @@ PlannedAlarm.delivery_enabled=false
 
 Resolver sin alterar priority/Management involuntariamente.
 
-### C2 waits
+### 4. Deactivation + Messages
 
-OPEN para congelación B.2:
+OPEN:
+- Rule default;
+- Message override completo;
+- enabled/disabled capability;
+- configured max duration;
+- approval requirement;
+- operator-selected until;
+- shift-end/effective_until;
+- distribución entre Runtime, Management input y Delivery Configuration.
+
+### 5. Delivery Configuration schema
+
+Debe compartir `resolution_key` con Runtime Configuration y ser suficiente para Live Delivery sin volver a SharePoint/Tool Catalog/unresolved catalogs.
+
+Schema detallado todavía PLANNED.
+
+### 6. Runtime provenance cleanup
+
+CURRENT:
 
 ```text
-wait_minutes_from_previous_step
--> effective cumulative delay_seconds
+tool_registry_revision
 ```
 
-No implementar hasta cerrar el contrato.
+B.2:
 
-### Adoption conflicts
+```text
+confirmed_tool_catalog_revision
+```
+
+Implementar reemplazo limpio, sin aliases permanentes.
+
+### 7. Adoption conflicts
 
 Mantener visibles:
 - origin Tool;
 - evaluator key;
 - kind;
-- priority group.
+- priority group;
+- C1 routing mutation;
+- C3 routing mutation.
 
-No resolverlos con adapters temporales.
+B.2 READY no implica que Runtime Adoption pueda adoptar toda transición hoy.
 
-## Otras áreas OPEN pero fuera del siguiente foco
+### 8. Tool routing qualification adicional
 
-- Message override efectivo con múltiples Messages;
-- deactivation effective capability;
+OPEN:
+- PROCESS ↔ INTEGRATED_OPERATIONS constraints;
 - routing tier matrix;
-- Rule area vs Tool scope;
-- Strategic visual projection;
-- presentation terminology;
+- Rule area vs Tool scope cuando corresponda.
+
+No inventar sin decisión explícita.
+
+### 9. Engine current-state output hacia Delivery
+
+CURRENT existe hot runtime state interno.
+
+OPEN:
+- contrato explícito Engine resolved current state → Delivery;
+- no usar WAL como API de Live Delivery;
+- no hacer que Delivery recalcule priority.
+
+### 10. Operation details
+
+OPEN:
+- Materialization cadence/event trigger;
+- persistence física de artifacts/findings;
+- retention/versioning;
+- exact schema versions;
+- final deployment/container topology.
+
+## Fuera del foco inmediato
+
+- UI final;
+- Message editor final;
+- visual presentation terminology;
 - application shell final;
 - History/Analytics;
 - Live/Analytics cadence;
-- Golden Path end-to-end.
+- Golden Path end-to-end posterior a los contratos backend.
 
 ## Decisions conflict
 

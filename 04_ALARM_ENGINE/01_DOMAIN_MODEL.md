@@ -1,10 +1,13 @@
 # Alarm Engine — Domain Model
 
-Estado: **CURRENT / IMPLEMENTED IN CORE / B.1 RECONCILIATION OPEN**
+Estado: **CURRENT / IMPLEMENTED IN CORE / B.2 BOUNDARY REFINED / B.1 DECISIONS CONFLICT STILL VISIBLE**
 
 Fuentes de intención:
 - `R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md`;
-- refinamientos explícitos del Project implementados y validados en `atlanticus:main`.
+- `R3.6M-006B.2-alarm-projection-boundary-DECISION-RECORDED.md`;
+- `R3.6M-006B.2-alarm-projection-and-publication-boundary-DECISION-RECORDED-INCREMENT-2.md`;
+- refinamientos explícitos del Project implementados y validados en `atlanticus:main`;
+- contrato B.2 acordado en Project y todavía no implementado.
 
 Realidad implementada auditada:
 
@@ -26,18 +29,20 @@ Alarm Engine core no conoce:
 - Alarm Configuration editable;
 - Tool Catalog como source de authoring.
 
-Recibe contratos ejecutables ya materializados.
+Recibe contratos runtime ya resueltos/materializados.
 
 ## Conceptos
 
 - `AlarmDefinition`: definición editable canónica de una Rule.
-- `PlannedAlarm`: definición resuelta para ejecución.
+- `PlannedAlarm`: política Runtime resuelta de una Rule ejecutable.
+- `AlarmEvaluatorContract`: lógica Python desplegada + `DataRequirements`, resuelta por `(family_key, evaluator_key)`.
+- `AlarmExecutionEntry`: unión Runtime de `PlannedAlarm + evaluator contract + parameters`.
 - `AlarmEvaluation`: resultado físico/técnico del ciclo.
 - `Occurrence`: activación de una Rule.
 - `Episode`: lifecycle compartido por `priority_group`.
 - `ManagementEffect`: efecto temporal de una acción de Management.
 - `CascadeSuppression`: supresión operacional derivada de un ManagementEffect.
-- `ReappearanceChange`: reapertura operacional de la misma occurrence gestionada.
+- `ReappearanceChange`: reaparición operacional de la misma occurrence gestionada.
 
 ## Identidad
 
@@ -51,9 +56,50 @@ No introducir `rule_key` paralelo.
 
 Family y `priority_group` son conceptos distintos.
 
+## AlarmDefinition, PlannedAlarm y evaluator
+
+La frontera acordada es:
+
+```text
+AlarmDefinition
+    evaluator_key
+    parameters
+    business/runtime configuration
+        |
+        v
+B.2 Configuration Resolution
+        |
+        v
+PlannedAlarm
+    evaluator_key
+    runtime policy resolved
+    NO evaluator callable
+        |
+        + parameters
+        |
+        v
+Runtime
+        +
+deployed AlarmEvaluatorRegistry
+        |
+        v
+AlarmExecutionEntry
+        |
+        v
+Engine
+```
+
+`PlannedAlarm` **no contiene la lógica Python que evalúa la condición**.
+
+La implementación de la condición pertenece al código desplegado mediante `AlarmEvaluatorContract`.
+
+B.2 puede validar que `(family_key, evaluator_key)` exista, pero no serializa ni transporta callables, `DataRequirements`, `DataLoadPlan` ni `AlarmExecutionSession` como artifact de configuración.
+
+Runtime vuelve a resolver el evaluator desplegado antes de construir la execution session.
+
 ## PlannedAlarm CURRENT
 
-`PlannedAlarm` contiene, entre otros:
+`PlannedAlarm` implementado contiene, entre otros:
 
 ```text
 identity
@@ -78,7 +124,26 @@ tuple[AlarmIdentity, ...]
 
 y no admite duplicados.
 
-El Engine no necesita transportar `is_special_condition`; recibe únicamente las identidades ya calificadas como triggers válidos. La validación de que esas referencias correspondan a Rules `is_special_condition=true` pertenece a B.2/Alarm Configuration.
+El Engine no necesita transportar `is_special_condition`; recibe únicamente las identidades ya calificadas como triggers válidos. La qualification corresponde a B.2/Alarm Configuration.
+
+## Runtime provenance — deuda de naming
+
+CURRENT todavía usa el nombre histórico:
+
+```text
+tool_registry_revision
+```
+
+La autoridad vigente externa es el `Confirmed Tool Catalog` / `ToolCatalogSnapshot.revision`.
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
+
+```text
+tool_registry_revision
+-> tool_catalog_revision / confirmed_tool_catalog_revision semantics
+```
+
+La implementación debe hacer un reemplazo limpio, sin alias permanentes ni doble provenance paralela.
 
 ## Priority
 
@@ -192,8 +257,7 @@ Una Rule no referenciada no dispara el efecto.
 
 Una occurrence principal cerrada no se resucita.
 
-El trigger es **level-triggered**:
-si una Special Condition referenciada ya está ACTIVE cuando se gestiona A, la acción de Management puede registrarse como `EFFECTIVE`, pero su ManagementEffect se crea y se limpia dentro del mismo ciclo; se mantiene la misma occurrence, `management_cycle` incrementa y se emite una única reappearance.
+El trigger es **level-triggered**: si una Special Condition referenciada ya está ACTIVE cuando se gestiona A, la acción de Management puede registrarse como `EFFECTIVE`, pero su ManagementEffect se crea y se limpia dentro del mismo ciclo; se mantiene la misma occurrence, `management_cycle` incrementa y se emite una única reappearance.
 
 El trigger se resuelve desde evaluaciones ACTIVE antes del cálculo final de priority, por lo que no depende de la disposición final de prioridad ni de visibilidad Delivery.
 
