@@ -1,12 +1,12 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN / B.2 CONTRACTS CLOSED / QUALIFICATION INPUT CONTRACTS CLOSED / PURE RESOLVER NEXT**
+Estado: **OPEN / CORE PREREQUISITES CLOSED / B.2 CONTRACTS CLOSED / PURE RESOLVER NEXT**
 
 Checkpoint:
 
 ```text
 moragaga/atlanticus:main
-bc3fffd72afb712d5b5ab84522c379abf2a19642
+cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
 ```
 
 ## CLOSED / CURRENT
@@ -15,9 +15,12 @@ bc3fffd72afb712d5b5ab84522c379abf2a19642
 - Root replacement de autoridades authored legacy.
 - Management suppression por `priority_order`.
 - Special Condition Runtime reappearance.
+- deactivation como fuente independiente de lower-rank cascade suppression.
+- deactivation domina causal attribution si Management y deactivation coexisten.
 - `PlannedAlarm.delivery_enabled` removido.
 - `PriorityDisposition.SHADOW` removido.
 - `AlarmResolutionKey` implementado en Alarm Core.
+- `PlannedAlarm.reappearance_after_seconds` implementado.
 - package `backend/alarms/materialization`.
 - `AlarmConfigurationResolution`.
 - Runtime/Delivery materialization contract types.
@@ -37,6 +40,15 @@ No I/O.
 No process orchestration.
 
 Debe producir solamente `AlarmConfigurationResolution`.
+
+Debe materializar, entre otros contratos:
+
+```text
+ReappearanceDefinition.after_minutes
+-> PlannedAlarm.reappearance_after_seconds
+```
+
+con `None -> None` y `M -> M * 60`.
 
 ### 2. Tool reconciliation qualification producer
 
@@ -103,20 +115,28 @@ resolution_key_at_start
 
 Sin aliases permanentes.
 
-### 7. Reappearance timer target
+### 7. Reappearance reconciliation during Adoption
 
-OPEN:
-- `reappearance_after_seconds`;
-- reconciliation en Adoption;
-- nullable Runtime due.
+El Runtime shape ya está CLOSED:
+
+```text
+reappearance_after_seconds
+reappearance_special_conditions
+```
+
+Sigue OPEN reconciliar hot state cuando una revisión EFFECTIVE cambia:
+- timer;
+- special condition references.
 
 No reabrir Special Condition Runtime semantics ya implementadas.
 
-### 8. Deactivation Core cleanup
+### 8. Deactivation Core ownership cleanup
 
 `PlannedAlarm.deactivation_policy` sigue CURRENT.
 
-Target Delivery/Management Capture permanece acordado, pero cleanup no se hizo en este hito.
+El comportamiento de deactivation cascade ya está CLOSED y no depende de este cleanup.
+
+Target Delivery/Management Capture permanece acordado para policy/context de decisiones futuras.
 
 ### 9. Cause/evidence contract
 
@@ -131,7 +151,8 @@ OPEN:
 - migration;
 - crash/recovery tests;
 - ADDED/ENABLED transitions;
-- integration con artifact stores.
+- integración con artifact stores;
+- reconciliation de reappearance.
 
 ### 11. Live Delivery owner/package
 
@@ -164,14 +185,18 @@ OPEN:
 
 ```text
 Project baseline: Python 3.14.7
-Command Center packages: requires-python ==3.14.2
+ADA Command Center backend: requires-python ==3.14.2
 ```
 
-No mezclar con pure resolver salvo bloqueo demostrado.
+El gate local del cierre resolvió CPython 3.14.2.
+
+No mezclar este conflicto con pure resolver salvo bloqueo demostrado.
 
 ## Historical conflicts visibles
 
 B.1 Special Cascade sigue distinto de suppression CURRENT por ranking.
+
+B.1 no expresa la deactivation vigente como fuente independiente de cascade suppression.
 
 B.1 exige Message activo en una formulación histórica; Project CURRENT considera:
 
@@ -187,5 +212,5 @@ inactive Message = válido pero no seleccionable para nuevas gestiones
 PURE B.2 ALARM CONFIGURATION RESOLVER
 ```
 
-No abrir materialization process, Adoption, Live Delivery, Management Capture ni broad Core cleanup
-en el mismo incremento.
+No abrir materialization process, Adoption, Live Delivery, Management Capture,
+deactivation ownership cleanup ni broad Core cleanup en el mismo incremento.

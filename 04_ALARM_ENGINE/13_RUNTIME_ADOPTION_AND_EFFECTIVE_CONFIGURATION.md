@@ -1,6 +1,6 @@
 # Alarm Engine — Runtime Adoption and Effective Configuration
 
-Estado: **PROJECT CONTRACT AGREED / ALARM RESOLUTION KEY IMPLEMENTED / ADOPTION NOT YET IMPLEMENTED**
+Estado: **PROJECT CONTRACT AGREED / ALARM RESOLUTION KEY + REAPPEARANCE RUNTIME SHAPE IMPLEMENTED / ADOPTION NOT YET IMPLEMENTED**
 
 ## Authority checkpoint
 
@@ -8,14 +8,14 @@ Implementación auditada:
 
 ```text
 moragaga/atlanticus:main
-bc3fffd72afb712d5b5ab84522c379abf2a19642
+cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
 ```
 
 Canonical base:
 
 ```text
 moragaga/atlanticus-cannonical:main
-2d8cbc33b7776e057e4f7d82def318d5eaf8f336
+56943d94889719544f426322ded4a877245dfaee
 ```
 
 Decisions consultado:
@@ -145,12 +145,42 @@ REJECTED
 
 No implementadas completamente.
 
-## 9. Delivery-only changes
+## 9. Reappearance Runtime shape CURRENT
+
+Core ya expone:
+
+```text
+PlannedAlarm.reappearance_after_seconds: int | None
+PlannedAlarm.reappearance_special_conditions: tuple[AlarmIdentity, ...]
+```
+
+El pure B.2 resolver debe convertir authored minutos a Runtime segundos.
+
+Esto elimina el gap de shape Runtime, pero no implementa la reconciliación durante Adoption.
+
+## 10. Reappearance reconciliation — OPEN
+
+Cuando una revisión EFFECTIVE cambie:
+
+```text
+reappearance_after_seconds
+or
+reappearance_special_conditions
+```
+
+Adoption debe decidir cómo reconciliar un ManagementEffect/hot state existente.
+
+La base histórica exige recalcular timer y aplicar referencias nuevas a la occurrence gestionada
+vigente; el contrato detallado de transición y su crash/recovery qualification siguen pendientes.
+
+No implementar esta reconciliación dentro del pure B.2 resolver.
+
+## 11. Delivery-only changes
 
 Un cambio sólo de visibility/display/Messages/deactivation policy/visual targets puede requerir
 cero hot-state mutation y aun así debe avanzar Effective Head mediante Adoption durable.
 
-## 10. CURRENT gaps
+## 12. CURRENT gaps
 
 - no Effective Configuration Head;
 - no ConfigurationAdoptionCommit;
@@ -159,20 +189,21 @@ cero hot-state mutation y aun así debe avanzar Effective Head mediante Adoption
 - occurrence provenance no usa `resolution_key_at_start`;
 - `PlannedAlarm` todavía mantiene revisions históricas;
 - ADDED/ENABLED incompletos;
-- timer/SC reconciliation target incompleto;
+- reappearance hot-state reconciliation no implementada;
 - integration con Materialization artifact stores inexistente.
 
-## 11. Estado respecto de B.2 contracts
+## 13. Estado respecto de B.2 contracts
 
 Ya CURRENT:
 - `AlarmResolutionKey`;
 - `RuntimeAlarmConfiguration`;
 - `DeliveryAlarmConfiguration`;
-- `AlarmConfigurationResolution`.
+- `AlarmConfigurationResolution`;
+- `PlannedAlarm.reappearance_after_seconds`.
 
 Esto no vuelve EFFECTIVE ningún candidate.
 
-## 12. OPEN de implementación
+## 14. OPEN de implementación
 
 - schema/version del journal discriminado;
 - generation de `adoption_id`;
@@ -180,11 +211,12 @@ Esto no vuelve EFFECTIVE ningún candidate.
 - migration desde persistence CURRENT;
 - crash/recovery qualification;
 - Runtime/Delivery artifact stores;
-- adoption transition gaps.
+- adoption transition gaps;
+- reappearance reconciliation.
 
 No resolver con adapters legacy.
 
-## 13. Foco actual
+## 15. Foco actual
 
 Runtime Adoption no es el siguiente incremento.
 

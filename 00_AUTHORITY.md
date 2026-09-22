@@ -10,34 +10,46 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `bc3fffd72afb712d5b5ab84522c379abf2a19642`
+  `cd08bd8d2c25bd89eb39fa15cbda209c8e9be617`
 - Parent inmediato:
-  `345309c07d4489a5c477f0fe61620faa91dfe9eb`
+  `431384326890d4d0b84d977a980e325a969c0e42`
 - Fecha observada del commit:
-  `2026-09-22T20:18:48Z`
+  `2026-09-22T21:53:31Z`
 
 Estado acumulado relevante para ADA Command Center Alarm Engine:
 
 ```text
-COMMAND-CENTER-ALARM-DOMAIN-EXTRACTION          CLOSED / VERIFIED / CURRENT
-ALARM-CORE-RUNTIME-VISIBILITY-ROOT-REMOVAL     CLOSED / VERIFIED / CURRENT
-B.2-MATERIALIZATION-CONTRACTS                  CLOSED / VERIFIED / CURRENT
-B.2-RESOLVER-QUALIFICATION-INPUT-CONTRACTS     CLOSED / VERIFIED / CURRENT
-PURE-B.2-RESOLVER                              PLANNED / NEXT
-B.2-MATERIALIZATION-PROCESS                    PLANNED
-RUNTIME-ADOPTION-EFFECTIVE-HEAD                PLANNED
-ALARM-LIVE-DELIVERY                            PLANNED
+COMMAND-CENTER-ALARM-DOMAIN-EXTRACTION              CLOSED / VERIFIED / CURRENT
+ALARM-CORE-RUNTIME-VISIBILITY-ROOT-REMOVAL         CLOSED / VERIFIED / CURRENT
+B.2-MATERIALIZATION-CONTRACTS                      CLOSED / VERIFIED / CURRENT
+B.2-RESOLVER-QUALIFICATION-INPUT-CONTRACTS         CLOSED / VERIFIED / CURRENT
+DEACTIVATION-CASCADE-SCOPE                         CLOSED / VERIFIED / CURRENT
+RUNTIME-REAPPEARANCE-AFTER-SECONDS-CONTRACT        CLOSED / VERIFIED / CURRENT
+PURE-B.2-RESOLVER                                  PLANNED / NEXT
+B.2-MATERIALIZATION-PROCESS                        PLANNED
+RUNTIME-ADOPTION-EFFECTIVE-HEAD                    PLANNED
+ALARM-LIVE-DELIVERY                                PLANNED
 ```
 
-Los cambios entre `345309c...` y `bc3fffd72afb712d5b5ab84522c379abf2a19642` pertenecen únicamente al incremento
-B.2 Resolver Qualification Inputs bajo `scopes/ada-command-center/backend/alarms/materialization`.
+Desde el checkpoint documental anterior `bc3fffd72afb712d5b5ab84522c379abf2a19642`,
+los cambios Alarm Core de este cierre están contenidos en:
+
+```text
+d48abf17689e7dd8ef93827415b71b7b6be4385b
+    deactivation cascade scope
+
+cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
+    PlannedAlarm.reappearance_after_seconds
+```
+
+Otros commits intermedios tocaron otros frentes y no forman parte de este cierre semántico.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `2d8cbc33b7776e057e4f7d82def318d5eaf8f336`
+  `56943d94889719544f426322ded4a877245dfaee`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -52,7 +64,7 @@ B.2 Resolver Qualification Inputs bajo `scopes/ada-command-center/backend/alarms
 Permanece **HISTORICAL**.
 
 Las decisiones B.1/B.2 preservan intención contractual útil, pero no prevalecen sobre
-implementación CURRENT cuando describen contratos ya refinados o reemplazados por el Project.
+implementación CURRENT ni sobre refinamientos explícitos posteriores del Project.
 
 ## Jerarquía
 
@@ -136,7 +148,7 @@ scopes/ada-command-center/backend/alarms/core
 ada_command_center.alarms.core
 ```
 
-El root removal de Runtime visibility está CLOSED:
+Runtime visibility cleanup CLOSED:
 
 ```text
 PlannedAlarm.delivery_enabled
@@ -148,7 +160,7 @@ REMOVED
 
 Visibility `VISIBLE | TRACE_ONLY` pertenece al authored Domain y a Delivery, no al Runtime Core.
 
-`AlarmResolutionKey` está implementado en Core como VO operacional compartido:
+`AlarmResolutionKey` CURRENT:
 
 ```text
 AlarmResolutionKey
@@ -156,7 +168,45 @@ AlarmResolutionKey
     confirmed_tool_catalog_revision
 ```
 
-No agregar evaluator revision a ese key sin contrato explícito.
+No agregar evaluator revision sin contrato explícito.
+
+`PlannedAlarm` CURRENT incluye:
+
+```text
+deactivation_policy
+reappearance_after_seconds
+reappearance_special_conditions
+```
+
+`reappearance_after_seconds` es `None | int > 0`.
+
+## Deactivation cascade CURRENT
+
+Una deactivation efectiva es una fuente independiente de cascade suppression.
+
+Mientras `DeactivationEffect` esté vigente:
+
+```text
+source -> DEACTIVATED
+active targets del mismo priority_group con menor prioridad
+(priority_order numéricamente mayor)
+-> CASCADE_SUPPRESSED
+```
+
+Una liberación temporal o por Special Condition del `ManagementEffect` no atraviesa una
+deactivation vigente.
+
+`CascadeSuppression` identifica exactamente una causa:
+
+```text
+management_effect_id XOR deactivation_effect_id
+```
+
+Si ambos efectos están vigentes, deactivation domina la atribución causal de la suppression.
+
+Pending approval no suprime hasta materializar un `DeactivationEffect`.
+
+Routing continúa durante deactivation/suppression.
 
 ## B.2 Materialization CURRENT
 
@@ -167,18 +217,6 @@ scopes/ada-command-center/backend/alarms/materialization
 ada-command-center-alarms-materialization==1.0.0
 ada_command_center.alarms.materialization
 ```
-
-Contratos CURRENT:
-- `RuntimeAlarmConfiguration`;
-- `DeliveryAlarmConfiguration`;
-- `ResolvedDeliveryAlarm`;
-- `ResolvedDeliveryMessage`;
-- `ResolvedDeactivationPolicy`;
-- resolved visual target VOs;
-- `AlarmResolutionStatus`;
-- `AlarmResolutionFindingSeverity`;
-- `AlarmResolutionFinding`;
-- `AlarmConfigurationResolution`.
 
 Atomicidad congelada:
 
@@ -195,32 +233,15 @@ BLOCKED
 => Delivery is None
 ```
 
-No existe readiness parcial por Rule ni por artifact.
-
-## B.2 Qualification Inputs CURRENT
-
-Materialization expone contratos mínimos:
+Qualification inputs CURRENT:
 
 ```text
 ToolReconciliationQualification
-    green_tool_keys
-    is_green(tool_key)
-
 EvaluatorQualificationKey
-    family_key
-    evaluator_key
-
 EvaluatorQualificationCatalog
-    qualified_keys
-    is_qualified(family_key, evaluator_key)
 ```
 
-Estos contratos no crean taxonomía RED/DRIFT/MISSING y no transportan evaluator callables,
-`DataRequirement`, `DataLoadPlan` ni Runtime registry.
-
-Un Tool ausente de `green_tool_keys` significa solamente que no está GREEN para B.2.
-
-La producción/adquisición concreta de esas qualifications sigue fuera de estos contratos.
+La adquisición concreta sigue fuera del resolver puro.
 
 ## Conflictos visibles
 
@@ -230,19 +251,18 @@ Project baseline:
 Python 3.14.7
 ```
 
-Packages Command Center CURRENT:
+ADA Command Center backend CURRENT:
 
 ```text
 requires-python ==3.14.2
 ```
 
-Permanece OPEN.
+Permanece OPEN y separado del resolver.
 
-`atlanticus-decisions` conserva formulaciones históricas incompatibles con CURRENT:
+`atlanticus-decisions` conserva formulaciones históricas incompatibles o menos precisas que CURRENT:
 - Special Cascade B.1 vs suppression uniforme por `priority_order`;
-- Message activo requerido vs inactive Message válido pero no seleccionable.
-
-No resolver silenciosamente.
+- B.1 no expresa la deactivation vigente como fuente independiente de cascade suppression;
+- Message activo requerido en formulación histórica vs inactive Message válido pero no seleccionable.
 
 ## Siguiente foco único
 
@@ -252,6 +272,14 @@ PLANNED / NEXT
 ```
 
 Debe ser puro y consumir inputs explícitos.
+
+Entre sus materializaciones Runtime deberá resolver:
+
+```text
+ReappearanceDefinition.after_minutes
+    None -> PlannedAlarm.reappearance_after_seconds = None
+    M    -> PlannedAlarm.reappearance_after_seconds = M * 60
+```
 
 No mezclar con:
 - acquisition/I/O;
@@ -263,4 +291,5 @@ No mezclar con:
 - Live Delivery;
 - Management Capture;
 - provenance migration;
+- deactivation ownership cleanup;
 - broad Engine cleanup.

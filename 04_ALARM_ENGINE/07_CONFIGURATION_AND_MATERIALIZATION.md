@@ -1,6 +1,6 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **B.2 CONTRACTS IMPLEMENTED / QUALIFICATION INPUT CONTRACTS IMPLEMENTED / PURE RESOLVER PLANNED NEXT / ADOPTION + LIVE DELIVERY NOT IMPLEMENTED**
+Estado: **B.2 CONTRACTS IMPLEMENTED / CORE PREREQUISITES READY / PURE RESOLVER PLANNED NEXT / ADOPTION + LIVE DELIVERY NOT IMPLEMENTED**
 
 ## Authority checkpoint
 
@@ -8,14 +8,14 @@ Implementación auditada:
 
 ```text
 moragaga/atlanticus:main
-bc3fffd72afb712d5b5ab84522c379abf2a19642
+cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
 ```
 
 Canonical base de este cierre:
 
 ```text
 moragaga/atlanticus-cannonical:main
-2d8cbc33b7776e057e4f7d82def318d5eaf8f336
+56943d94889719544f426322ded4a877245dfaee
 ```
 
 Decisions consultado:
@@ -163,6 +163,32 @@ removed
 No contiene evaluator callable, `DataRequirement`, `DataLoadPlan`, `AlarmExecutionSession`,
 Message catalog ni visibility metadata.
 
+## PlannedAlarm Runtime prerequisites CURRENT
+
+`PlannedAlarm` ya dispone de los dos componentes Runtime de reappearance:
+
+```text
+reappearance_after_seconds: int | None
+reappearance_special_conditions: tuple[AlarmIdentity, ...]
+```
+
+Contrato de materialización B.2 para una Rule activa:
+
+```text
+ReappearanceDefinition.after_minutes is None
+-> reappearance_after_seconds = None
+
+ReappearanceDefinition.after_minutes = M
+-> reappearance_after_seconds = M * 60
+```
+
+No introducir un segundo DTO de timer ni mantener minutos dentro del Runtime artifact.
+
+Disabled Rule:
+- permanece en `defined_alarm_identities`;
+- no produce `PlannedAlarm`;
+- por tanto no materializa timer Runtime ejecutable.
+
 ## Delivery Configuration CURRENT
 
 ```text
@@ -190,37 +216,6 @@ messages
 visual_targets
 ```
 
-`ResolvedDeliveryMessage`:
-
-```text
-message_key
-display_text
-deactivation_policy
-```
-
-`ResolvedDeactivationPolicy`:
-
-```text
-enabled
-max_duration_hours
-approval_required
-```
-
-Visual target contracts:
-
-```text
-ResolvedVisualTarget
-    tool_key
-    tool_kind
-    component_keys
-    subcomponents
-    process_projection_mode?
-
-ResolvedVisualSubcomponentTarget
-    owner_component_key
-    subcomponent_key
-```
-
 Delivery admite Rules disabled y TRACE_ONLY; removed significa ausencia.
 
 No contiene evaluator, parameters, priority source data, routing, reappearance, lifecycle hot state
@@ -232,37 +227,17 @@ Implementado:
 
 ```text
 ToolReconciliationQualification
-    green_tool_keys: tuple[str, ...]
-    is_green(tool_key) -> bool
-```
+    green_tool_keys
+    is_green(tool_key)
 
-Invariantes:
-- tuple;
-- keys no vacías;
-- sin duplicados;
-- orden determinístico.
-
-Un Tool no listado no se etiqueta RED/MISSING/DRIFT: solamente no está GREEN para B.2.
-
-Implementado:
-
-```text
 EvaluatorQualificationKey
     family_key
     evaluator_key
 
 EvaluatorQualificationCatalog
     qualified_keys
-    is_qualified(family_key, evaluator_key) -> bool
+    is_qualified(family_key, evaluator_key)
 ```
-
-Invariantes:
-- pair no vacío;
-- sin duplicados;
-- orden determinístico;
-- sin callable;
-- sin `DataRequirement`;
-- sin Runtime registry.
 
 La producción/adquisición concreta de ambos inputs sigue fuera del package contractual.
 
@@ -288,29 +263,33 @@ Acquisition pertenece al futuro Materialization Process.
 
 El resolver no debe leer Cosmos, Blob, SharePoint ni Runtime stores.
 
-## Validations acordadas que el resolver deberá cubrir
+## Validations/materializations congeladas para el resolver
 
-Cuando se implemente, debe respetar los contratos ya congelados:
+Debe respetar:
 - full candidate, no partial Rule publication;
 - evaluator qualification para toda Rule definida, incluso disabled;
 - Tool references contra exact Confirmed Tool Catalog + GREEN qualification;
 - C1/C2/C3 routing materialization;
 - Message reference validation y active-message selection;
+- inactive Message válido pero no seleccionable para nuevas gestiones;
 - deactivation override = full replacement;
 - Special Condition reference qualification;
+- `after_minutes * 60 -> reappearance_after_seconds`;
 - visual target resolution;
 - priority/cross-rule invariants que pertenezcan a B.2;
 - all findings determinísticos y sin silent correction.
 
-## Runtime gaps que NO fueron resueltos en este hito
+## Runtime gaps que siguen separados
 
-OPEN separados:
+OPEN:
 - provenance histórica de `PlannedAlarm`/occurrence -> `AlarmResolutionKey`;
-- target `reappearance_after_seconds`;
+- reconciliation de reappearance timer/SC sobre hot state durante Runtime Adoption;
 - cleanup de `PlannedAlarm.deactivation_policy`;
 - Runtime Adoption/Effective Head.
 
-El pure resolver no debe convertir esos gaps en adapters o contratos paralelos.
+Ya no está OPEN el shape Runtime `reappearance_after_seconds`.
+
+El pure resolver no debe convertir los gaps restantes en adapters o contratos paralelos.
 
 ## Runtime Adoption / EFFECTIVE
 
@@ -336,8 +315,6 @@ DeliveryAlarmConfiguration.resolution_key
 AlarmEffectiveConfigurationHead.resolution_key
 ```
 
-No se modifica `16_ALARM_LIVE_DELIVERY_CONTRACT.md` en este cierre.
-
 ## OPEN después de este checkpoint
 
 - pure B.2 resolver;
@@ -347,8 +324,8 @@ No se modifica `16_ALARM_LIVE_DELIVERY_CONTRACT.md` en este cierre.
 - artifact stores;
 - cause/evidence schema;
 - Runtime provenance cleanup;
-- reappearance timer target;
-- deactivation Core cleanup;
+- reappearance reconciliation durante Runtime Adoption;
+- deactivation Core ownership cleanup;
 - Runtime Adoption + Effective Head;
 - Live Delivery implementation;
 - Management Capture;
@@ -360,6 +337,7 @@ No se modifica `16_ALARM_LIVE_DELIVERY_CONTRACT.md` en este cierre.
 B.2 no debe:
 - reimplementar priority;
 - reimplementar Management suppression;
+- reimplementar deactivation cascade;
 - reimplementar Special Condition Runtime reappearance;
 - introducir UI semantics en Core;
 - introducir aliases/adapters legacy.
