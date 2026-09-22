@@ -1,140 +1,106 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT / ALARM CONFIGURATION BASE PROJECTION + TOOL CATALOG PRODUCER IMPLEMENTED / B.2 OPEN**
+Estado: **CURRENT / ENGINE RUNTIME CONTRACT STABILIZED / B.2 OPEN**
 
-## Alarm Configuration Projection CURRENT
+## Alarm Configuration base Projection
 
-Existe una Projection base bajo:
+Alarm Configuration SourceRelease se materializa como Projection base exacta sin resolver dependencias externas.
 
-```text
-scopes/ada-command-center/web/alarms/configuration
-```
+External resolution pertenece a B.2.
 
-Materializa una `SourceRelease` exacta como `AlarmConfiguration`:
+## Tool Catalog
 
-```text
-Alarm Configuration SourceRelease
-        ↓
-AlarmConfigurationProjectionBuilder
-        ↓
-ProjectionStore[AlarmConfiguration]
-```
+Command Center dispone de Tool Catalog V1 durable y de un read model para authoring.
 
-Su `ProjectionTarget` no declara dependencias externas.
+Tool Catalog no forma parte del payload durable de Alarm Configuration y no reemplaza B.2.
 
-```text
-ProjectionTarget.dependencies == ()
-```
+## Alarm Engine CURRENT
 
-Esto es intencional: external resolution pertenece a B.2, no a la base projection.
+Engine recibe configuración ejecutable materializada.
 
-## Tool Catalog producer CURRENT
+Después de los últimos incrementos, Runtime ya implementa:
+- priority predominance por `priority_order`;
+- Management suppression de lower-priority Rules independiente de `kind`;
+- timer reappearance;
+- Special Condition reappearance mediante `PlannedAlarm.reappearance_special_conditions`;
+- level-trigger semantics para Special Condition;
+- routing continuo durante Management suppression.
 
-Command Center ya dispone de una revisión consolidada de topología Tool:
+La Web no debe reimplementar estas reglas.
 
-```text
-Tool Projection inputs
-→ ToolCatalogConsolidator
-→ ToolCatalogSnapshot
-→ Blob CURRENT
-```
+## Special Condition boundary
 
-El catálogo tiene lifecycle/revisión independiente de Alarm Configuration.
-
-Existe además un read model backend-only para authoring. Ninguno de los dos reemplaza B.2.
-
-## Alarm Engine
-
-Alarm Engine recibe configuración ejecutable materializada.
-
-La persistencia de Alarm Configuration puede preceder a la resolución completa de dependencias
-externas. B.2 debe separar readiness por capability.
-
-Una referencia Tool no resuelta no bloquea necesariamente Runtime si el evaluator y los datos
-requeridos son ejecutables sin esa referencia.
-
-La Web no resuelve:
-
-- evaluator execution;
-- priority;
-- lifecycle;
-- Special Cascade;
-- reappearance;
-- Message catalogs;
-- deactivation authorization;
-- routing execution.
-
-## Runtime vs Delivery readiness
-
-Runtime y Delivery deben derivar de la misma resolución/provenance, pero no toda dependencia afecta
-a ambos de la misma forma.
-
-Ejemplo:
+Alarm Configuration conserva:
 
 ```text
-Alarm Configuration valid
-Evaluator available
-Tool visual target unresolved
-
-→ Runtime may be READY
-→ Delivery target is NOT READY
+is_special_condition
+reappearance.special_conditions
 ```
 
-Delivery no debe despachar hacia una referencia externa no resuelta.
-
-Delivery no puede liderar la configuración EFFECTIVE de Runtime.
-
-`ResolvedAlarmConfiguration`, Runtime materialization y Delivery materialization permanecen
-PLANNED; no existen en `main` al checkpoint de este cierre.
-
-## Runtime CURRENT a reconciliar posteriormente
-
-El runtime existente todavía usa contratos históricos con:
+Engine consume:
 
 ```text
-alarm_configuration_revision: str
-tool_registry_revision: str
+PlannedAlarm.reappearance_special_conditions
 ```
 
-en `PlannedAlarm`, `AlarmExecutionSession` y adoption.
+Engine no necesita `is_special_condition`.
 
-B.2 deberá reconciliar estos revision strings con provenance CURRENT, sin introducir adapters legacy
-ni doble contrato.
+B.2 debe validar/calificar y materializar la referencia.
 
-`AlarmEvaluatorRegistry` CURRENT resuelve por `(family_key, evaluator_key)` y no expone actualmente
-una identidad/revisión de registry. La necesidad exacta de provenance para evaluator resolution
-permanece OPEN para B.2.
+## Runtime vs Delivery
 
-## Live Projection
+Runtime y Delivery deben derivar de la misma resolución/provenance.
 
-Pregunta:
+Readiness puede diferir por capability.
 
-> ¿Qué ocurre operacionalmente ahora?
+Delivery no puede publicar referencias externas no resueltas.
 
-Se materializa después de evaluation/lifecycle/priority/management/deactivation.
+Delivery no lidera la configuración EFFECTIVE; Runtime adoption determina EFFECTIVE.
 
-Managed o deactivated no significa que la condición física haya terminado.
+## Visibility
 
-## Management Projection
+Contrato authoring:
 
-Pregunta:
+```text
+VISIBLE
+TRACE_ONLY
+```
 
-> ¿Qué acciones de gestión realizaron los usuarios y cómo terminaron?
+`TRACE_ONLY` significa ejecutar + trazar + no mostrar operacionalmente.
 
-Es histórica y está orientada a management/deactivation.
+No mapear automáticamente a:
 
-No reemplaza Live.
+```text
+PlannedAlarm.delivery_enabled=false
+```
+
+porque el flag CURRENT produce `SHADOW` y cambia priority/Management.
+
+Esta reconciliación pertenece a B.2/Delivery.
+
+## Management vs Live
+
+Managed/deactivated no significa physical false.
+
+Live Projection expresa estado operacional actual derivado.
+
+Management Projection expresa acciones/decisiones históricas de gestión.
+
+No mezclar ambas superficies.
 
 ## History / Analytics
 
-Command Center necesita una frontera derivada para explicar la historia operacional completa.
+History/Analytics consume hechos durables y no modifica Engine.
 
-Debe poder conservar provenance de:
+El boundary Engine → History/Analytics → Web permanece separado del próximo foco B.2.
 
-- Alarm Source revision;
-- resolution identity futura;
-- Tool Catalog revision usada por esa resolución.
+## Provenance
 
-Nombre/API/storage todavía no congelados.
+Runtime mantiene revision strings históricos:
 
-Este hito no modifica el Analytics Boundary existente.
+```text
+alarm_configuration_revision
+tool_registry_revision
+```
+
+B.2 debe definir una resolución concreta y reconciliar provenance sin adapters legacy permanentes.

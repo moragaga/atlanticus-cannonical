@@ -1,11 +1,75 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN**
+Estado: **OPEN / B.2 FOCUSED**
 
-1. Extraer findings tempranos de fases A-D de la campaña y enlazarlos a invariantes actuales.
-2. Completar clasificación de todas las revisiones del planner como genealogía, no como contratos vigentes independientes.
-3. Reconciliar storage SharePoint de B.2 con Blob source actual sin perder semántica.
-4. Verificar si existen nuevas decisiones de alarm authoring posteriores al commit de decisions auditado.
-5. Revisar proyección Web actual `scopes/ada/web/alarms` contra B.2.
-6. Verificar end-to-end de Runtime Projection y Delivery Projection en `main`.
-7. Mantener F-010 como baseline final y evitar que intentos FAIL anteriores lo sobrescriban.
+Cerrado antes de este documento:
+- persistence/recovery qualification;
+- concurrency leases/fencing;
+- Management suppression por `priority_order`;
+- Special Condition Runtime reappearance;
+- Special Condition level-trigger semantics.
+
+## OPEN relevantes al siguiente foco
+
+1. **B.2 materialization contract**
+   - owner concreto;
+   - resolution identity/provenance;
+   - findings;
+   - Runtime readiness;
+   - Delivery readiness;
+   - `PlannedAlarm` materialization;
+   - `AlarmExecutionEntry`/parameters materialization cuando corresponda.
+
+2. **TRACE_ONLY vs `delivery_enabled`**
+   - `TRACE_ONLY` no puede mapearse ciegamente a `delivery_enabled=false`;
+   - preservar evaluation/trace/priority semantics y filtrar visibilidad en Delivery.
+
+3. **C2 wait materialization**
+   - authoring guarda `wait_minutes_from_previous_step`;
+   - Engine necesita `delay_seconds` absoluto desde occurrence start;
+   - congelar o rechazar explícitamente la propuesta cumulative antes de implementar.
+
+4. **Adoption reconciliation**
+   - B.1 vs Engine CURRENT para origin Tool, evaluator, kind y priority group;
+   - no resolver silenciosamente.
+
+5. **Runtime provenance**
+   - reconciliar `alarm_configuration_revision` y `tool_registry_revision` históricos con B.2.
+
+6. **Special Condition qualification**
+   - B.2 debe mapear sólo referencias válidas a `PlannedAlarm.reappearance_special_conditions`;
+   - Engine no valida `is_special_condition`.
+
+7. **Deactivation materialization**
+   - Rule default;
+   - Message override;
+   - configured max duration;
+   - operator-selected until;
+   - effective capability/effective_until.
+   - No modificar Engine sin evidencia de gap.
+
+## Conflicto de decisiones todavía visible
+
+B.1 frozen Special Cascade no coincide con la implementación CURRENT de suppression uniforme por ranking.
+
+Estado:
+
+```text
+IMPLEMENTATION CURRENT / TESTED
+PROJECT REFINEMENT AGREED
+DECISIONS UPDATE PENDING
+```
+
+No declarar el conflicto resuelto dentro de canonical hasta registrar el refinamiento en `atlanticus-decisions`.
+
+## Fuera del siguiente incremento
+
+No mezclar con:
+- UI final;
+- Analytics/History;
+- Tool tier matrix;
+- Message editor;
+- visual presentation terminology;
+- broad Engine rewrite.
+
+F-010 continúa como baseline final histórico de qualification.

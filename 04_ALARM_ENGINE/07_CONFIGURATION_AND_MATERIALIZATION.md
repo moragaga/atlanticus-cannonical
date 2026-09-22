@@ -1,240 +1,159 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **CURRENT SEMANTICS / ALARM SOURCE + BASE PROJECTION + TOOL CATALOG PRODUCER CURRENT / B.2 OPEN**
+Estado: **CURRENT SEMANTICS / SOURCE + BASE PROJECTION + TOOL CATALOG CURRENT / RUNTIME CONTRACT EXTENDED / B.2 NEXT**
 
 ## Invariante central
 
-`LATEST SAVED = LATEST VALID`
-
-`VALID` significa aquí **intrínsecamente válida como Alarm Configuration persistible**.
-
-No significa que todas las dependencias externas estén disponibles o resolubles en ese instante.
-
-Una working copy intrínsecamente inválida/incompleta no se convierte en revisión persistida
-autoritativa.
-
-## Implementación CURRENT previa a B.2
-
-Bajo:
-
 ```text
-scopes/ada-command-center/web/alarms/configuration
+LATEST SAVED = LATEST INTRINSICALLY VALID
+VALID != FULLY RESOLVED != READY
 ```
 
-ya existen:
+La inexistencia o drift de Tool/evaluator no vuelve retrospectivamente inválida una Alarm Source revision intrínsecamente válida.
+
+## CURRENT antes de B.2
+
+Alarm Configuration ya dispone de:
+- aggregate durable Rules + Messages;
+- intrinsic validation;
+- Source/Release;
+- base Projection exacta;
+- Manager/history;
+- structured authoring;
+- Tool Catalog V1;
+- Alarm Tool Reference read model.
+
+External resolution/materialization B.2 todavía no existe como owner concreto.
+
+## Runtime contract CURRENT
+
+Alarm Engine recibe `PlannedAlarm`.
+
+Después de este milestone, `PlannedAlarm` incluye:
 
 ```text
-AlarmConfiguration aggregate
-→ full-revision intrinsic validation
-→ Source/Release
-→ exact base Projection[AlarmConfiguration]
-→ Manager workflow/history
+reappearance_special_conditions: tuple[AlarmIdentity, ...]
 ```
 
-La base Projection no resuelve dependencias externas y tiene:
+además de los campos históricos de execution/routing/deactivation/provenance.
+
+Esto resuelve el contrato Runtime necesario para Special Condition reappearance, pero **no implementa B.2**.
+
+No existe todavía un componente que materialice automáticamente:
 
 ```text
-ProjectionTarget.dependencies == ()
+AlarmDefinition.reappearance.special_conditions
+->
+PlannedAlarm.reappearance_special_conditions
 ```
 
-No confundirla con `ResolvedAlarmConfiguration`.
+desde una resolución B.2.
 
-También existe el productor de topología Tool consolidada:
+## B.2 boundary
+
+B.2 debe resolver una revisión concreta de Alarm Configuration contra dependencias externas concretas y producir contratos consumibles por Runtime/Delivery sin reimplementar lógica del Engine.
+
+El siguiente trabajo debe partir de autoridad y definir antes de consumidores:
+- identidad/provenance de resolución;
+- findings;
+- Runtime readiness;
+- Delivery/reference readiness;
+- materialización de `PlannedAlarm`;
+- materialización de `AlarmExecutionEntry`/parameters donde corresponda;
+- adoption de la resolución.
+
+Runtime adoption continúa siendo la autoridad para EFFECTIVE.
+
+Delivery no puede liderar Runtime.
+
+## Special Condition mapping requerido
+
+B.2 debe transformar referencias authoring:
 
 ```text
-scopes/ada-command-center/backend/tools/catalog
+AlarmDefinition.reappearance.special_conditions
 ```
+
+a:
 
 ```text
-named Tool Projection inputs
-→ ToolCatalogConsolidator
-→ ToolCatalogSnapshot
-→ Blob ToolCatalogStore CURRENT
+PlannedAlarm.reappearance_special_conditions
 ```
 
-Y existe un read model de authoring en Alarm Configuration:
+sólo después de aplicar las validaciones/qualification que correspondan.
+
+Engine no requiere `is_special_condition`.
+
+B.2 conserva responsabilidad de validar que una referencia declarada como trigger corresponda al contrato Special Condition vigente, incluido su scope cuando así lo exija B.1.
+
+## Visibility conflict aún OPEN
+
+AlarmDefinition:
 
 ```text
-ToolCatalogStore
-→ AlarmToolReferenceReader
-→ AlarmToolReferenceCatalog
+visibility_mode=TRACE_ONLY
 ```
 
-Ese read model no es B.2 y no altera la validez intrínseca del aggregate.
+significa evaluar + trazar + no publicar visiblemente.
 
-## Fases
-
-Estado actual:
-
-- working copy — **CURRENT mediante Manager workspace**;
-- intrinsic pre-save validation — **CURRENT**;
-- persisted valid Alarm Source revision — **CURRENT contract**;
-- base Alarm Configuration Projection — **CURRENT**;
-- Command Center Tool Catalog producer — **CURRENT V1**;
-- Tool reference authoring read model — **CURRENT V1**;
-- structured authoring UI — **PLANNED / NEXT**;
-- external resolution/materialization — **PLANNED / B.2**;
-- capability readiness — **PLANNED / B.2**;
-- Runtime adoption — **EXISTING RUNTIME / RECONCILIATION OPEN**;
-- EFFECTIVE — **RECONCILIATION OPEN**.
-
-## Intrinsic pre-save validation CURRENT
-
-Valida el candidate completo en aquello que pertenece a Alarm Configuration, incluyendo:
-
-- identity/uniqueness;
-- `rule_name` uniqueness within family;
-- priority invariants;
-- Special Condition references dentro del aggregate;
-- Message references dentro del aggregate;
-- deactivation/reappearance structure;
-- escalation structure;
-- parameter keys;
-- parameter values limitados a `str | float | bool`.
-
-CURRENT implementation también fija:
-
-- `message_key` único dentro del aggregate;
-- una referencia a Message inactivo sigue siendo intrínsecamente válida.
-
-Un finding intrínseco blocking rechaza save/publication del aggregate.
-
-La inexistencia actual de Tool/evaluator no pertenece a esta validación intrínseca.
-
-## Tool Catalog CURRENT antes de B.2
-
-`ToolCatalogSnapshot` contiene entradas ordenadas por `tool_key` con:
+Engine CURRENT:
 
 ```text
-tool_key
-display_name
-kind
-source_release_id
-ToolStructure
+delivery_enabled=false
 ```
 
-Su `revision` se deriva de forma determinística del contenido semántico del catálogo.
-`generated_at_utc` no participa en esa revisión.
+produce semántica `SHADOW` y afecta priority/Management.
 
-El consolidator exige que todos los inputs configurados entreguen una Projection activa válida con
-`ToolConfiguration.structure` antes de reemplazar CURRENT.
-
-Si un input falla, falta, tiene payload inválido, no tiene structure o repite `tool_key`:
+Por tanto:
 
 ```text
-refresh fails
-→ no partial snapshot
-→ CURRENT previous blob remains untouched
+TRACE_ONLY != delivery_enabled=false
 ```
 
-V1 no implementa AVAILABLE/STALE/MISSING ni LKG separado. El último CURRENT publicado correctamente
-es el estado durable disponible.
+B.2 no debe mapearlos ciegamente.
 
-## External resolution PLANNED
+## Execution
 
-B.2 podrá combinar una Alarm Configuration Projection concreta con una Tool Catalog revision
-concreta para evaluar, entre otros:
+`is_active=false` mantiene la Rule definida pero fuera de la nueva execution session.
 
-- evaluator disponible;
-- Tool disponible;
-- Component/Subcomponent resoluble;
-- Tool type/projection mode;
-- visual targets;
-- routing/escalation targets;
-- external topology drift.
+Adoption debe poder cerrar occurrence abierta por configuration-disabled sin resetear innecesariamente todo el grupo.
 
-Un finding externo no convierte retrospectivamente la Alarm Source revision en inválida.
+La representación materializada necesaria para adoption debe distinguirse de la execution session efectiva.
 
-Puede impedir que una capability quede READY.
+## Routing
 
-```text
-VALID
-!=
-FULLY RESOLVED
-!=
-READY FOR EVERY CAPABILITY
-```
+C1/C2/C3 Engine CURRENT permanece:
+- C1: origin + destinos configurados inmediatos;
+- C2: origin inmediato + destinos retardados;
+- C3: origin only.
 
-## Preconfiguration
+AlarmDefinition authoring usa waits relativos por step. La transformación futura hacia delays absolutos acumulados para C2 sigue **PROPOSED / B.2 OPEN** hasta congelarse expresamente.
 
-Se permite persistir una Rule que referencia una Tool/evaluator todavía no disponible, siempre que
-el contrato intrínseco sea válido.
+## Adoption conflicts que B.2 no debe ocultar
 
-Esa Rule:
+Persisten diferencias entre B.1 y Engine CURRENT para:
+- `origin_tool_key`;
+- `evaluator_key`;
+- `kind`;
+- `priority_group`.
 
-- no se considera removed;
-- no se considera disabled;
-- conserva su historia;
-- puede re-resolverse posteriormente sin nueva Alarm Source revision.
+No introducir adapters legacy ni doble contrato para esconderlas.
 
-El read model de authoring no cambia esta semántica: catálogo ausente o key no sugerida no transforma
-la configuración en inválida.
+## Provenance histórico
 
-## Re-resolution
-
-La identidad/provenance de resolución futura debe distinguir al menos la Alarm Source revision y la
-Tool Catalog revision utilizada.
-
-```text
-Alarm Source A17 + Tool Catalog T40
-→ unresolved Tool
-
-Alarm Source A17 + Tool Catalog T41
-→ resolved Tool
-```
-
-A17 no cambia.
-
-## Runtime / Delivery
-
-Runtime y Delivery derivarán de la misma resolución validada/provenance.
-
-La readiness puede diferir por capability.
-
-Una dependencia exclusivamente visual/routing puede dejar Delivery no READY sin impedir una
-evaluación Runtime que no necesita esa dependencia.
-
-Delivery no despacha hacia referencias externas no resueltas.
-
-Delivery no puede liderar la configuración EFFECTIVE de Runtime.
-
-No existe todavía implementación B.2 ni `ResolvedAlarmConfiguration` en `main` al checkpoint de este
-cierre.
-
-## Runtime CURRENT a reconciliar
-
-El runtime existente conserva revision strings históricos:
+Runtime todavía contiene revision strings históricos como:
 
 ```text
 alarm_configuration_revision
 tool_registry_revision
 ```
 
-La reconciliación futura debe reemplazar limpiamente ese provenance donde corresponda. No introducir
-adapters temporales ni doble contrato.
+B.2 debe reconciliarlos limpiamente con la resolución/provenance elegida.
 
-## Parameters
+No implementar compatibilidad paralela permanente.
 
-Alarm Configuration no incorpora schemas particulares por evaluator.
+## No reabrir Engine
 
-El contrato genérico permanece:
+Management suppression y Special Condition Runtime reappearance están CLOSED.
 
-```text
-mapping[str, str | float | bool]
-```
-
-Los nombres y semántica de parameters pertenecen al evaluator/desarrollador.
-
-## Storage
-
-Alarm Configuration adopta Source/Release CURRENT de Atlanticus y Blob como provider durable objetivo
-en dominios migrados.
-
-El package Alarm Configuration recibe `SourceStore` explícitamente; el binding productivo Blob de la
-aplicación Command Center permanece OPEN.
-
-Tool Catalog V1 ya implementa un `BlobToolCatalogStore` sobre `StorageClient` con `container_name` y
-`blob_name` explícitos. No introduce Cosmos propio de Command Center.
-
-La composición productiva que conecte los inputs Tool reales, Storage credentials y la ejecución del
-refresh permanece OPEN.
+B.2 debe consumir esos contratos; no rediseñarlos por conveniencia de materialización.

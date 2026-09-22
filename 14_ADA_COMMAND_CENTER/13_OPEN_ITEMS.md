@@ -1,148 +1,132 @@
 # ADA Command Center — Open Items
 
-Estado: **OPEN / REFINED AFTER TOOL CATALOG + AUTHORING REFERENCES V1**
+Estado: **OPEN / B.2 NEXT**
 
-Los contracts globales Users/Profiles/ADA Access ya cerrados no se reabren desde Command Center.
+Cerrado antes de este checkpoint:
+- Tool Catalog V1;
+- Alarm Tool References V1;
+- structured Alarm Configuration authoring;
+- Management suppression por `priority_order`;
+- Special Condition Runtime reappearance;
+- level-trigger semantics de Special Condition.
 
-Cerrado en este hito:
+## Siguiente foco único
 
 ```text
-COMMAND-CENTER-TOOL-CATALOG-V1
-COMMAND-CENTER-ALARM-TOOL-REFERENCES-V1
-```
-
-## Siguiente foco único — Alarm Configuration structured authoring
-
-```text
-ALARM-CONFIGURATION-STRUCTURED-AUTHORING-V1
+B.2 — Alarm Configuration -> Runtime Materialization Contract
 PLANNED / NEXT
 ```
 
-Debe integrar en la UI el read model CURRENT:
+El próximo chat debe trabajar primero el contrato y la frontera backend.
+
+No implementar consumidores antes de congelar:
+- resolution identity/provenance;
+- findings;
+- Runtime readiness;
+- materialización de `PlannedAlarm`;
+- materialización de evaluator/parameters;
+- adoption.
+
+Delivery debe quedar fuera del primer incremento si mezclarlo impide cerrar un contrato verificable.
+
+## B.2 OPEN
+
+Debe reconciliar:
 
 ```text
-AlarmToolReferenceCatalog
-→ Tool
-→ Component
-→ Subcomponent
+AlarmConfiguration Projection
++
+Tool Catalog revision
++
+evaluator availability/contracts
+->
+resolved/materialized Runtime inputs
 ```
 
-Invariantes:
+Sin invalidar retrospectivamente una Alarm Source revision intrínsecamente válida.
 
-- no cambiar `AlarmConfiguration` durable;
-- persistir keys, no display names;
-- mantener authoring no restrictivo cuando no exista catálogo o una referencia no esté sugerida;
-- no introducir B.2 dentro de callbacks/layout;
-- no duplicar reglas de `ToolStructure`.
+### Mapeos Runtime que ya tienen destino CURRENT
 
-No ampliar automáticamente este incremento a Message editor completo, parameters editor completo,
-B.2 o application shell.
+B.2 debe poder producir:
+- `identity`;
+- `kind`;
+- `criticality`;
+- `priority_group`;
+- `priority_order`;
+- evaluator key;
+- parameters/ExecutionEntry;
+- routing C1/C2/C3;
+- deactivation policy;
+- `reappearance_special_conditions`;
+- provenance Runtime.
 
-## Alarm Configuration refinements posteriores
+No inventar nuevos campos si ya existe un contrato Runtime suficiente.
 
-- binding productivo de `SourceStore`/provider Blob en la composición Command Center;
-- Message Catalog UI final;
-- editor visual completo de Rules;
-- editor visual genérico de parameters `str | float | bool`.
+### Special Condition
 
-No crear otro schema durable para estos editores.
+B.2 conserva la responsabilidad de verificar que las referencias declaradas en authoring sean triggers Special Condition válidos según el contrato vigente.
 
-## Tool Catalog operational composition
+Engine no necesita transportar `is_special_condition`.
 
-El contrato y Blob store V1 están CURRENT. Permanece OPEN sólo la composición operacional real:
+### Execution
 
-- declarar los inputs Tool reales de Command Center;
-- construir/injectar sus `ProjectionStore[ToolConfiguration]` con conexiones nombradas;
-- configurar Storage credentials/container/blob del catálogo;
-- decidir dónde/cuándo se ejecuta `ToolCatalogConsolidator.refresh()`;
-- definir cadence/retry sólo si la operación real lo necesita;
-- integrar startup/readiness/observability del refresh;
-- verificar permisos read-only sobre Cosmos externos.
+`is_active=false`:
+- Rule sigue definida;
+- no entra a nueva execution session;
+- adoption debe cerrar occurrence abierta como configuration-disabled cuando corresponda.
 
-No reabrir por defecto:
+### Visibility
 
-- AVAILABLE/STALE/MISSING;
-- history de catálogo;
-- LKG separado;
-- segundo Cosmos de Command Center.
-
-Esas extensiones sólo deben volver a discusión por necesidad demostrada.
-
-## B.2 — PLANNED
-
-La implementación física B.2 continúa ausente.
-
-Permanece OPEN:
-
-- definir `ResolvedAlarmConfiguration` y su identity/provenance;
-- combinar Alarm Source/Projection revision + Tool Catalog revision;
-- separar Runtime readiness de Delivery/reference readiness;
-- findings para evaluator/Tool/Component/Subcomponent/routing/visual target no resueltos;
-- materializar Runtime/Delivery desde una misma resolución;
-- reconciliar `alarm_configuration_revision`/`tool_registry_revision` históricos del runtime;
-- decidir provenance de evaluator si realmente se necesita;
-- Live Projection schema después de cerrar resolution/delivery.
-
-No mezclar B.2 con el siguiente incremento de UI authoring.
-
-## Web application
-
-Permanece OPEN:
-
-- aplicación Web propia de Command Center y entrypoint;
-- shell/header final;
-- navegación Dashboard + Historia/Explorer + Configuración;
-- montaje final del `ManagerModule` dentro del shell;
-- integración final de Profiles/Navigation/permissions.
-
-## History / Analytics
-
-Permanece OPEN:
-
-- unidad del read model;
-- History sola vs History + Aggregates;
-- storage/indexing/partitioning;
-- retention;
-- calendar/turno;
-- duración de priority dispositions;
-- normalización/comparabilidad de Evidence;
-- insight rules;
-- límites de causalidad.
-
-## Data update
-
-Permanece OPEN:
-
-- cadence Live;
-- cadence/cache Analytics;
-- separación respecto de auto-refresh de sesión.
-
-## Golden Path
-
-Permanece OPEN:
-
-- seleccionar Rule/evaluator/Tool real para la vertical integrada;
-- demostrar re-resolution de la misma Alarm Source revision cuando una Tool aparece posteriormente.
-
-## Web platform bootstrap
-
-Permanece OPEN:
-
-- `ApplicationResourcePlan`;
-- containers/configuración productiva propios de Command Center/Alarm backend;
-- bootstrap surface/readiness;
-- projection order sólo donde existan dependencias reales;
-- decisión sobre User Activity.
-
-## Cross-cutting conflict
-
-Packages CURRENT de este frente requieren Python `3.14.2`, mientras el baseline del Project declara
-Python `3.14.7`.
-
-Estado:
+OPEN:
 
 ```text
-CONFLICT / OPEN / OUTSIDE THIS MILESTONE
+visibility_mode=TRACE_ONLY
+!=
+PlannedAlarm.delivery_enabled=false
 ```
 
-No corregirlo silenciosamente dentro de structured authoring ni B.2.
+Resolver sin alterar priority/Management involuntariamente.
+
+### C2 waits
+
+OPEN para congelación B.2:
+
+```text
+wait_minutes_from_previous_step
+-> effective cumulative delay_seconds
+```
+
+No implementar hasta cerrar el contrato.
+
+### Adoption conflicts
+
+Mantener visibles:
+- origin Tool;
+- evaluator key;
+- kind;
+- priority group.
+
+No resolverlos con adapters temporales.
+
+## Otras áreas OPEN pero fuera del siguiente foco
+
+- Message override efectivo con múltiples Messages;
+- deactivation effective capability;
+- routing tier matrix;
+- Rule area vs Tool scope;
+- Strategic visual projection;
+- presentation terminology;
+- application shell final;
+- History/Analytics;
+- Live/Analytics cadence;
+- Golden Path end-to-end.
+
+## Decisions conflict
+
+B.1 frozen Special Cascade todavía difiere de la implementación CURRENT.
+
+Canonical debe mostrar el conflicto hasta que `atlanticus-decisions` registre explícitamente el refinamiento.
+
+## Cross-cutting
+
+Cualquier conflicto de baseline Python existente fuera de este milestone no debe corregirse silenciosamente dentro de B.2.
