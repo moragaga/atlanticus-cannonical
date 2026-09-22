@@ -1,6 +1,6 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **B.2 IN PROGRESS / RESOLUTION + RUNTIME ARTIFACT + ROUTING + DEACTIVATION/MESSAGES + REAPPEARANCE + VISIBILITY CONTRACT AGREED / NOT YET IMPLEMENTED**
+Estado: **B.2 IN PROGRESS / RESOLUTION + RUNTIME/DELIVERY ARTIFACTS + ADOPTION + LIVE DELIVERY CONTRACT AGREED / NOT YET IMPLEMENTED**
 
 ## Authority checkpoint
 
@@ -15,7 +15,7 @@ Canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
+3ffa87c0e4249d749af4e669a977dfd744a666bb
 ```
 
 Decisions consultado:
@@ -623,38 +623,174 @@ Incluye:
 
 ## Delivery Configuration Artifact
 
-DECISION RECORDED + PROJECT CONTRACT:
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED.
 
-Una resolución READY produce también `DeliveryAlarmConfiguration` con el mismo `resolution_key`.
-
-Debe contener suficiente configuración resuelta para que Live Delivery y Management Capture no vuelvan a SharePoint, Tool Catalog ni MessageDefinition sin resolver.
-
-Delivery nunca puede adelantarse a Runtime:
+Una resolución READY produce también:
 
 ```text
-READY artifacts
--> Runtime Adoption
--> effective_resolution_key
--> Delivery usa exactamente ese resolution_key
+DeliveryAlarmConfiguration
+    resolution_key: AlarmResolutionKey
+    alarms: tuple[ResolvedDeliveryAlarm, ...]
 ```
 
-El schema detallado del artifact Delivery es el siguiente foco B.2.
+El artifact representa todas las Rules definidas de esa revisión válida, incluidas disabled y TRACE_ONLY. Una Rule removida está ausente.
+
+Por Rule materializa sólo configuración de Delivery/Management ya resuelta:
+
+```text
+identity
+is_active
+visibility_mode
+display_name
+title
+cause_template
+kind
+criticality
+business_category
+operational_areas
+color
+default_deactivation_policy
+resolved active Messages
+resolved visual targets
+```
+
+No contiene evaluator, parameters, priority source data, routing, reappearance, lifecycle state ni ToolStructure completo.
+
+Messages activos seleccionables quedan materializados como:
+
+```text
+ResolvedDeliveryMessage
+    message_key
+    display_text
+    deactivation_policy: ResolvedDeactivationPolicy
+```
+
+El consumidor no vuelve a aplicar override precedence.
+
+Visual targets quedan resueltos como direcciones estables sobre la revisión exacta del Tool Catalog:
+
+```text
+tool_key
+tool_kind
+component_keys
+(owner_component_key, subcomponent_key)
+process_projection_mode?
+```
+
+B.2 no copia `ToolStructure`; Tool Configuration conserva ownership de topología y metadata estructural.
+
+## Engine resolved current-state output
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED.
+
+Live Delivery no lee WAL, Evidence History ni `GroupRuntimeSnapshot` como API operacional. Runtime debe exponer una salida explícita después de cada ciclo exitoso:
+
+```text
+EngineResolvedCurrentState
+    resolution_key
+    as_of
+    alarms: tuple[ResolvedCurrentAlarmState, ...]
+```
+
+Incluye sólo occurrences abiertas y, por occurrence:
+
+```text
+identity
+occurrence_id
+episode_id
+started_at
+current AlarmEvaluation / EvidenceSnapshot
+resolved priority disposition
+technical hold?
+management state?
+deactivation state?
+pending deactivation request?
+assignments
+pending assignments
+```
+
+El resultado completo del ciclo ya conserva `AlarmEvaluation`, por lo que la evidencia actual no necesita recuperarse desde sampling histórico ni persistirse por conveniencia dentro del hot snapshot.
+
+Un ciclo sin lifecycle mutation puede igualmente producir nuevo Current State cuando cambian los valores evaluados. Si el ciclo requiere commit durable, la salida Live se construye sólo después de confirmar ese commit.
+
+## Cause materialization
+
+`cause_template` es configuración estática. El Web no debe interpretarlo.
+
+Live Delivery materializa:
+
+```text
+cause_template
++ current AlarmEvaluation.evidence_snapshot.payload
+-> cause_text
+```
+
+Estados conceptuales acordados:
+
+```text
+RESOLVED
+TECHNICAL_UNAVAILABLE
+MATERIALIZATION_ERROR
+```
+
+Durante `ERROR`/technical hold no existe current physical evidence; no se presenta silenciosamente el último valor conocido como actual.
+
+Un fallo de formateo de cause no debe ocultar una occurrence operacional real: la occurrence puede publicarse con `MATERIALIZATION_ERROR` y diagnóstico, sin inventar texto.
+
+La validación estática exacta `cause_template <-> evaluator evidence schema` permanece OPEN porque CURRENT no expone un schema contractual suficiente de placeholders por evaluator.
+
+## Alarm Live Projection publication contract
+
+La unión exige exact alignment:
+
+```text
+EngineResolvedCurrentState.resolution_key
+== DeliveryAlarmConfiguration.resolution_key
+== AlarmEffectiveConfigurationHead.resolution_key
+```
+
+Para cada occurrence abierta:
+
+```text
+PUBLISH
+IFF visibility_mode == VISIBLE
+AND priority_disposition IN {PREDOMINANT, DEACTIVATED}
+```
+
+Por tanto:
+- `PREDOMINANT + VISIBLE` -> publicar;
+- `DEACTIVATED + VISIBLE` -> publicar;
+- `ECLIPSED` -> no publicar;
+- `CASCADE_SUPPRESSED` -> no publicar;
+- `TRACE_ONLY` -> no publicar cualquiera sea la disposición;
+- una TRACE_ONLY predominante no promueve una visible eclipsada;
+- Management y technical hold son atributos del current state, no filtros independientes de publicación.
+
+`PriorityDisposition.SHADOW` queda fuera del target junto con `PlannedAlarm.delivery_enabled`.
+
+El Live snapshot lógico es completo para un único `resolution_key + as_of`. Un snapshot vacío es válido. No se publica parcialmente por priority group.
+
+La definición consolidada del artifact Delivery, Engine Current State, cause materialization, publication rules y Management round-trip vive en:
+
+```text
+../14_ADA_COMMAND_CENTER/16_ALARM_LIVE_DELIVERY_CONTRACT.md
+```
 
 ## OPEN después de este checkpoint
 
 Permanece OPEN:
-- owner/package concreto de B.2;
+- owner/package concreto de B.2 y Live Delivery;
 - input contractual de current Tool reconciliation GREEN;
-- schema completo de Delivery Configuration;
-- Engine resolved current-state output hacia Delivery;
+- validación estática `cause_template <-> evaluator evidence schema`;
 - proveedor concreto de `shift_end`;
 - persistencia física del Captured Management Input;
+- cleanup/invalidation autónoma de pending deactivation requests stale;
 - provenance rename en implementación;
 - restricciones adicionales de Tool kinds/tier routing;
 - adoption gaps C1/C3/evaluator/kind/priority-group/origin Tool;
 - journal discriminated record schema/adoption persistence implementation;
 - migration desde persistence CURRENT;
-- cadence/persistence/retention exacta del Materialization Job.
+- schema versions/codecs físicos, cadence, persistence y retention de artifacts/Live Projection.
 
 ## No reabrir Engine por conveniencia
 

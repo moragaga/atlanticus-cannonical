@@ -1,6 +1,6 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT / B.2 IN PROGRESS — MATERIALIZATION + ADOPTION/EFFECTIVE CONTRACT AGREED / DELIVERY SCHEMA NEXT**
+Estado: **CURRENT / B.2 IN PROGRESS — MATERIALIZATION + ADOPTION + LIVE DELIVERY CONTRACT AGREED / IMPLEMENTATION BOUNDARY NEXT**
 
 Checkpoint de implementación auditado:
 
@@ -13,7 +13,7 @@ Checkpoint canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
+3ffa87c0e4249d749af4e669a977dfd744a666bb
 ```
 
 | Archivo | Contenido | Estado |
@@ -30,16 +30,17 @@ ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
 | `10_INITIAL_OUT_OF_SCOPE.md` | Qué no entra inicialmente. | CURRENT DIRECTION |
 | `11_GOLDEN_PATH.md` | Vertical integrada. | PARTIALLY IMPLEMENTED |
 | `12_SOURCE_LEDGER.md` | Fuentes auditadas y trazabilidad. | AUDIT LEDGER |
-| `13_OPEN_ITEMS.md` | Contratos pendientes después del checkpoint B.2. | OPEN / DELIVERY BOUNDARY NEXT |
+| `13_OPEN_ITEMS.md` | Gaps pendientes después del cierre Delivery/Live. | OPEN / IMPLEMENTATION BOUNDARY NEXT |
 | `14_TOOL_CATALOG.md` | Consolidador durable read-only de Tools. | CURRENT V1 / CLOSED |
 | `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Authoring + validation + materialization/adoption contract. | CURRENT + PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
+| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Delivery artifact, Engine current-state output, cause materialization, Live publication y Management round-trip. | PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
 
 Foco único CURRENT:
 
 ```text
-B.2 — Delivery Configuration Artifact + Live Projection Boundary
+B.2 — Materialization Owner/Package + Implementation Boundary
 ```
 
-Ya están cerrados en diseño, pero no implementados, Deactivation/Messages, reappearance materialization, TRACE_ONLY y Effective Configuration Head.
+Ya están cerrados en diseño, pero no implementados, Deactivation/Messages, reappearance materialization, TRACE_ONLY, Effective Configuration Head, Delivery Configuration, Engine Current State y Alarm Live Projection.
 
 No mezclar todavía con UI final, History/Analytics ni broad Engine rewrite.

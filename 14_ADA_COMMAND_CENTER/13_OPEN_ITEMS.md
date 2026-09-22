@@ -1,79 +1,57 @@
 # ADA Command Center — Open Items
 
-Estado: **OPEN / B.2 IN PROGRESS / MATERIALIZATION + ADOPTION FOUNDATION CONTRACT LARGELY CLOSED**
+Estado: **OPEN / B.2 IN PROGRESS / DELIVERY + LIVE BOUNDARY CLOSED IN DESIGN**
 
 Cerrado antes de este checkpoint:
 - Tool Catalog V1;
 - Alarm Tool References V1;
 - structured Alarm Configuration authoring;
 - Management suppression por `priority_order`;
-- Special Condition Runtime reappearance;
-- level-trigger semantics de Special Condition.
+- Special Condition Runtime reappearance.
 
 Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
-- `AlarmResolutionKey`;
-- `READY | BLOCKED`;
-- findings `BLOCKING | WARNING`;
-- atomicidad Runtime + Delivery;
-- `INVALID != REMOVED`;
-- Runtime artifact serializable sin evaluator code;
-- disabled Rules definidas pero no ejecutables;
-- evaluator qualification por key;
-- C1/C2/C3 routing materialization;
-- C2 cumulative waits;
-- Strategic Tool no elegible para Alarm Configuration;
-- Deactivation + Messages policy resolution;
-- Management Capture aligned al exact Effective key;
-- `DeactivationIntent(effective_until, approval_required)` target;
-- reappearance timer materialization;
-- Special Condition qualification;
+- Resolution `READY | BLOCKED`;
+- Runtime + Delivery atomic artifacts;
+- Deactivation/Messages policy resolution;
+- reappearance materialization;
 - TRACE_ONLY sólo como Delivery visibility;
-- `AlarmEffectiveConfigurationHead`;
-- durable global Adoption incluso sin hot-state mutations;
-- `ADDED` y `ENABLED` adoption dispositions.
+- Effective Configuration Head y durable Adoption;
+- `DeliveryAlarmConfiguration`;
+- `EngineResolvedCurrentState`;
+- backend `cause_text` materialization desde current evidence;
+- exact-key Live join;
+- publication de `PREDOMINANT | DEACTIVATED` visibles;
+- exclusión de `ECLIPSED`, `CASCADE_SUPPRESSED` y TRACE_ONLY;
+- current pending deactivation request en Live state;
+- Management round-trip basado en identity/occurrence/resolution, no evidence devuelto por Web.
 
 ## Foco único CURRENT
 
 ```text
-B.2 — Delivery Configuration Artifact + Live Projection Boundary
+B.2 — Materialization Owner/Package + Implementation Boundary
 IN PROGRESS
 ```
 
 ## B.2 OPEN
 
-### 1. Delivery Configuration schema
+### 1. Materialization owner/package
 
-Debe compartir `resolution_key` con Runtime Configuration y ser suficiente para Live Delivery y Management Capture sin volver a SharePoint/Tool Catalog/MessageDefinition.
+Definir el package backend concreto que:
+- adquiere Published Alarm Configuration + Confirmed Tool Catalog + reconciliation qualification;
+- ejecuta B.2;
+- persiste READY/BLOCKED findings y artifacts;
+- no convierte Runtime en downloader/resolver externo.
 
-Cerrar:
-- resolved display/title/cause contract;
-- classification/color/areas;
-- visibility;
-- resolved Messages;
-- default + per-Message deactivation capability;
-- resolved visual targets;
-- Process projection mode;
-- schema version.
+### 2. Live Delivery owner/package
 
-### 2. Engine resolved current-state output
+Definir el package que:
+- recibe `EngineResolvedCurrentState`;
+- carga `DeliveryAlarmConfiguration` del exact Effective key;
+- materializa `cause_text`;
+- publica el snapshot Live completo;
+- no recalcula lifecycle, priority, routing ni Message precedence.
 
-CURRENT existe hot runtime state interno.
-
-OPEN:
-- contrato explícito Engine resolved current state → Delivery;
-- no usar WAL como API de Live Delivery;
-- no recalcular priority en Delivery/Web;
-- estado dinámico de management/deactivation/assignment requerido por Live.
-
-### 3. Materialization owner
-
-Definir owner/package backend concreto sin acoplar Runtime a:
-- SharePoint download;
-- Tool discovery;
-- Message resolution;
-- cross-configuration validation.
-
-### 4. Current Tool reconciliation input
+### 3. Current Tool reconciliation input
 
 B.2 necesita:
 
@@ -83,30 +61,33 @@ Confirmed Tool Catalog
 current reconciliation-GREEN qualification
 ```
 
-El segundo contrato aún no está implementado/verificado.
+El segundo contrato todavía no está implementado/verificado.
+
+### 4. Cause/evidence schema
+
+OPEN:
+- schema contractual que permita validar placeholders de `cause_template` contra el output del evaluator antes del Runtime;
+- comportamiento físico exacto de diagnostics de `MATERIALIZATION_ERROR`.
+
+La regla ya cerrada es que un error de cause no oculta una occurrence operacional real.
 
 ### 5. Management Capture implementation
 
 OPEN:
 - proveedor concreto de `shift_end`;
 - storage físico de Captured Management Input;
-- stale/unavailable submission outcomes.
+- stale/unavailable submission outcomes;
+- cleanup/invalidation autónoma de pending deactivation requests stale.
 
 ### 6. Runtime provenance cleanup
 
-Reemplazar, donde corresponda:
+Reemplazar donde corresponda:
 
 ```text
 alarm_configuration_revision + tool_registry_revision
 ```
 
-por:
-
-```text
-AlarmResolutionKey
-```
-
-sin aliases permanentes.
+por `AlarmResolutionKey`, sin aliases permanentes.
 
 ### 7. Adoption implementation gaps
 
@@ -115,48 +96,44 @@ Mantener visibles:
 - evaluator key;
 - kind;
 - priority group;
-- C1 routing mutation;
-- C3 routing mutation;
-- timer/SC reconciliation aún no implementada.
-
-B.2 READY no implica que Runtime CURRENT pueda adoptar toda transición.
+- C1/C3 routing mutation;
+- timer/SC reconciliation.
 
 ### 8. Adoption persistence
 
-OPEN de implementación:
+OPEN:
 - journal record discriminado;
-- `adoption_id` generation;
+- `adoption_id`;
 - Effective Head materialization;
-- migration del persistence existente;
-- crash/recovery tests del batch global.
+- migration existente;
+- crash/recovery tests.
 
 ### 9. Tool routing qualification adicional
 
 OPEN:
 - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
 - routing tier matrix;
-- Rule area vs Tool scope cuando corresponda.
+- Rule area vs Tool scope.
 
 ### 10. Operation details
 
 OPEN:
-- Materialization cadence/event trigger;
-- persistence física de artifacts/findings;
-- retention/versioning;
-- final deployment/container topology.
+- materialization/Live cadence;
+- physical stores/containers/partitions;
+- schema versions/codecs;
+- retention;
+- final deployment topology.
 
 ## Fuera del foco inmediato
 
 - UI final;
-- Message editor final;
-- visual presentation terminology;
-- application shell final;
 - History/Analytics;
-- Live/Analytics cadence;
-- Golden Path end-to-end posterior a los contratos backend.
+- Live/Analytics cadence tuning;
+- final visual presentation;
+- broad Engine rewrite.
 
-## Decisions conflict
+## Decisions conflicts visibles
 
-B.1 frozen Special Cascade todavía difiere de la implementación CURRENT.
+B.1 frozen Special Cascade todavía difiere de la implementation CURRENT de suppression por ranking.
 
-Canonical mantiene el conflicto visible hasta que `atlanticus-decisions` registre explícitamente el refinamiento.
+B.1 también contiene una formulación que exige Message activo en B.2; el Project refinó esto a `inactive Message = válido pero no seleccionable para nuevas gestiones`. La reconciliación formal en `atlanticus-decisions` sigue pendiente.

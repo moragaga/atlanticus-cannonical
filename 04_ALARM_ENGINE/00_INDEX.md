@@ -1,6 +1,6 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT / B.2 IN PROGRESS — RESOLUTION + RUNTIME/DELIVERY ALIGNMENT + ADOPTION/EFFECTIVE CONTRACT AGREED / NOT YET IMPLEMENTED**
+Estado: **CURRENT / B.2 IN PROGRESS — MATERIALIZATION + ADOPTION + LIVE DELIVERY CONTRACT AGREED / NOT YET IMPLEMENTED**
 
 Checkpoint de implementación auditado:
 
@@ -13,7 +13,7 @@ Checkpoint canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
+3ffa87c0e4249d749af4e669a977dfd744a666bb
 ```
 
 Checkpoint decisions consultado:
@@ -31,7 +31,7 @@ moragaga/atlanticus-decisions:main
 | `04_CONCURRENCY_LEASES_AND_FENCING.md` | Authority, takeover, stale writers. | IMPLEMENTED + VALIDATED |
 | `05_PROJECTION_AND_PUBLICATION.md` | Live vs Management, Runtime/Delivery. | DECISION RECORDED |
 | `06_MANAGEMENT.md` | ManagementEffect, suppression por ranking y reappearance. | CURRENT / IMPLEMENTED / TESTED |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | B.2 resolution, findings, Runtime artifact, routing, deactivation/messages, reappearance y visibility. | IN PROGRESS / PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | B.2 resolution, Runtime/Delivery artifacts, routing, deactivation/messages, reappearance, visibility y Live Delivery boundary. | IN PROGRESS / PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
 | `08_QUALIFICATION_BASELINE.md` | Campaña R3.5 y propiedades demostradas. | CLOSED/GREEN |
 | `09_DECISION_INDEX.md` | Genealogía y decisiones individuales. | CANDIDATE |
 | `10_OPEN_ITEMS.md` | Gaps restantes después del checkpoint B.2. | OPEN / B.2 FOCUSED |
@@ -44,7 +44,7 @@ No reabrir Management suppression ni Special Condition Runtime reappearance salv
 Foco único CURRENT:
 
 ```text
-B.2 — Delivery Configuration Artifact + Live Projection Boundary
+B.2 — Materialization Owner/Package + Implementation Boundary
 ```
 
 Ya quedaron acordados, pero todavía no implementados:
@@ -55,6 +55,11 @@ Ya quedaron acordados, pero todavía no implementados:
 - TRACE_ONLY exclusivamente como visibility de Delivery;
 - `AlarmResolutionKey` explícito;
 - `AlarmEffectiveConfigurationHead`;
-- Runtime Adoption durable aunque no existan hot-state mutations.
+- Runtime Adoption durable aunque no existan hot-state mutations;
+- `DeliveryAlarmConfiguration` shape estático resuelto;
+- `EngineResolvedCurrentState` como salida dinámica de cada ciclo;
+- `AlarmLiveProjection` con publication rules backend-side;
+- `cause_text` materializado desde `cause_template + current EvidenceSnapshot.payload`;
+- Management round-trip por `resolution_key + occurrence`, sin devolver evidence como autoridad.
 
 No mezclar todavía con UI final, History/Analytics ni un broad Engine rewrite.

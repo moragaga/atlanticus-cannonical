@@ -15,7 +15,7 @@ Canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
+3ffa87c0e4249d749af4e669a977dfd744a666bb
 ```
 
 Decisions consultado:
@@ -572,10 +572,22 @@ No aliases legacy.
 No adapters temporales.
 ```
 
-## 23. Foco único siguiente
+## 23. Downstream Delivery / Live contract
+
+El cierre B.2 posterior a este authoring model está consolidado en:
 
 ```text
-B.2 — Delivery Configuration Artifact + Live Projection Boundary
+16_ALARM_LIVE_DELIVERY_CONTRACT.md
 ```
 
-Primero debate/diseño; después implementación incremental sólo tras consenso.
+Ese contrato conserva `cause_template` como configuración estática, pero Live Delivery materializa `cause_text` usando el `EvidenceSnapshot.payload` actual del Engine. También congela la proyección de Messages/deactivation capability, visual targets resueltos, TRACE_ONLY, exact Effective key y el round-trip de Management.
+
+Authoring no debe absorber esa lógica operacional.
+
+## 24. Foco único siguiente
+
+```text
+B.2 — Materialization Owner/Package + Implementation Boundary
+```
+
+Primero cerrar ownership físico/lógico mínimo; después implementación incremental backend-first sólo tras consenso.

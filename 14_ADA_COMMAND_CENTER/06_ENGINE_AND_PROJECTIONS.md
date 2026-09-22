@@ -1,6 +1,6 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT ENGINE / B.2 MATERIALIZATION + EFFECTIVE ALIGNMENT REFINED / DELIVERY EXECUTION STILL PLANNED**
+Estado: **CURRENT ENGINE / B.2 MATERIALIZATION + EFFECTIVE + LIVE DELIVERY BOUNDARY AGREED / NOT YET IMPLEMENTED**
 
 ## Authority checkpoint
 
@@ -15,7 +15,7 @@ Canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
+3ffa87c0e4249d749af4e669a977dfd744a666bb
 ```
 
 ## Alarm Configuration base Projection
@@ -280,24 +280,59 @@ REJECTED
 
 Una Adoption puede avanzar EFFECTIVE con cero group-state commits, por ejemplo ante cambios sólo de visibility, Messages o visual metadata.
 
-## Future Engine → Delivery operational boundary
+## Engine -> Delivery operational boundary
 
-Delivery no debe leer el WAL como API operacional ni recalcular priority.
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED.
 
-Frontera target:
+Delivery no lee WAL, Evidence History ni hot snapshots como API operacional y no recalcula priority.
+
+Runtime expone por cada ciclo exitoso:
 
 ```text
-Engine resolved current state
-+ Delivery Configuration[EffectiveHead.resolution_key]
-        |
-        v
-Delivery
-        |
-        v
-Alarm Live Projection
+EngineResolvedCurrentState
+    resolution_key
+    as_of
+    open occurrences
+        current AlarmEvaluation / EvidenceSnapshot
+        resolved priority
+        technical hold
+        management/deactivation
+        pending deactivation request
+        assignments
 ```
 
-El schema concreto de `Engine resolved current state` sigue OPEN y es parte del siguiente foco.
+La evaluación completa del ciclo es necesaria porque `RuntimeEvaluationState` CURRENT reduce la evidence y no basta para construir contenido Live con valores reales.
+
+Live Delivery une únicamente claves exactamente alineadas:
+
+```text
+EngineResolvedCurrentState[effective key]
++ DeliveryAlarmConfiguration[effective key]
++ AlarmEffectiveConfigurationHead[effective key]
+        |
+        v
+AlarmLiveProjection
+```
+
+`cause_template` permanece en Delivery Configuration; el backend materializa `cause_text` usando el `EvidenceSnapshot.payload` actual. Web no interpreta templates ni devuelve evidence como autoridad al gestionar.
+
+Publication rule target:
+
+```text
+VISIBLE + PREDOMINANT -> publish
+VISIBLE + DEACTIVATED -> publish
+ECLIPSED -> omit
+CASCADE_SUPPRESSED -> omit
+TRACE_ONLY -> omit
+```
+
+Management y technical hold son atributos del Live state, no filtros independientes. Una TRACE_ONLY predominante no promueve una visible eclipsada.
+
+El contrato completo está en:
+
+```text
+16_ALARM_LIVE_DELIVERY_CONTRACT.md
+```
 
 ## Management vs Live
 
