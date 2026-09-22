@@ -1,6 +1,6 @@
 # ADA Command Center — Alarm Configuration Authoring Model
 
-Estado: **CURRENT AUTHORING + B.2 PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED**
+Estado: **CURRENT AUTHORING + B.2 MATERIALIZATION/ADOPTION PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED**
 
 ## 1. Authority checkpoint
 
@@ -15,7 +15,7 @@ Canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-85a12f5ccdf0b5d03992396b13d4b1914b7062a3
+ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
 ```
 
 Decisions consultado:
@@ -25,7 +25,7 @@ moragaga/atlanticus-decisions:main
 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-Decisions conserva autoridad sobre intención frozen/recorded. Cuando una decisión frozen y `main` difieren, el conflicto se mantiene explícito.
+Decisions conserva autoridad sobre intención frozen/recorded. Cuando una decisión frozen y `main` difieren, el conflicto permanece explícito.
 
 ## 2. Aggregate durable
 
@@ -39,27 +39,17 @@ AlarmConfiguration
 
 Tool Catalog es externo al payload durable.
 
-DECISION RECORDED:
-
 ```text
 LATEST SAVED = LATEST VALID_AT_SAVE
 ```
 
-La revisión persistida pasó la validación completa exigida en el instante de save.
-
-Una revisión válida al guardar puede quedar después `BLOCKED` para materialización si una dependencia externa deriva.
-
-Por tanto:
+Una revisión válida al guardar puede quedar después BLOCKED para materialización si una dependencia externa deriva.
 
 ```text
 VALID_AT_SAVE != READY_AT_ANY_LATER_TIME != EFFECTIVE
 ```
 
-La implementación CURRENT todavía no materializa B.2 completo; este documento no debe confundir contrato acordado con código ya existente.
-
 ## 3. Validation layers
-
-Contrato transversal acordado:
 
 ```text
 LOCAL VALIDATION
@@ -78,23 +68,16 @@ RUNTIME ADOPTION
 -> transición desde el estado operacional EFFECTIVE actual
 ```
 
-La Web puede usar selects, rangos y controles para impedir entradas imposibles, pero la UI no es autoridad de validación.
-
-Backend/B.2 vuelve a validar.
+La Web puede restringir inputs, pero no es autoridad final de validación.
 
 Reglas fuertes:
 
 ```text
 disabled != invalid
+B.2 no corrige silenciosamente configuración inválida
 ```
 
 Una Rule, step, Message o referencia disabled sigue teniendo que ser contractualmente válida.
-
-```text
-B.2 no corrige silenciosamente una configuración inválida
-```
-
-Un valor contradictorio se rechaza con finding BLOCKING; no se normaliza hacia otra semántica operacional.
 
 ## 4. Identity y Family
 
@@ -102,10 +85,10 @@ Un valor contradictorio se rechaza con finding BLOCKING; no se normaliza hacia o
 AlarmIdentity(family_key, alarm_key)
 ```
 
-- `alarm_key`: identidad estable.
-- `family_key`: namespace lógico.
-- Family no equivale a `priority_group`.
-- no existe necesidad CURRENT de `FamilyDefinition` durable.
+- `alarm_key`: identidad estable;
+- `family_key`: namespace lógico;
+- Family != `priority_group`;
+- no reintroducir `rule_key`.
 
 ## 5. Rule naming
 
@@ -120,32 +103,23 @@ title
 cause_template
 ```
 
-No reintroducir aliases legacy retirados.
-
 ## 6. Execution y visibility
 
 ### Execution
 
 ```text
-is_active
+is_active=false
+-> Rule permanece definida
+-> no entra al executable target
+-> adoption puede cerrar occurrence CONFIGURATION_DISABLED
 ```
 
-`is_active=false`:
-- Rule permanece definida;
-- no entra a la execution session target;
-- adoption debe poder cerrar occurrence abierta como configuration-disabled.
-
-B.2 acordado:
+Runtime artifact:
 
 ```text
-Runtime artifact:
 defined identities = active + disabled
 PlannedAlarm = sólo active
 ```
-
-Esto permite distinguir `DISABLED` de `REMOVED`.
-
-Una Rule disabled sigue siendo validada completamente.
 
 ### Visibility
 
@@ -153,30 +127,25 @@ Una Rule disabled sigue siendo validada completamente.
 visibility_mode = VISIBLE | TRACE_ONLY
 ```
 
-`TRACE_ONLY`:
-- sigue evaluándose;
-- sigue trazándose;
-- no debe publicarse visiblemente por Delivery.
-
-No crear `not_visible`.
-
-### Conflict
-
-Engine CURRENT usa:
+PROJECT CONTRACT AGREED:
 
 ```text
-delivery_enabled=false -> SHADOW
+TRACE_ONLY
+-> sigue evaluación/tracing/lifecycle/routing/priority/management
+-> Delivery no la publica visiblemente
 ```
 
-y eso afecta priority/Management.
+No mapear a `delivery_enabled=false`.
 
-Por tanto:
+Target:
 
 ```text
-TRACE_ONLY != delivery_enabled=false
+visibility_mode -> Delivery Configuration only
+PlannedAlarm.delivery_enabled -> REMOVE
+PriorityDisposition.SHADOW -> REMOVE
 ```
 
-B.2 debe reconciliarlo. Sigue OPEN.
+Una Rule TRACE_ONLY predominante no causa promoción visual de una visible eclipsada.
 
 ## 7. Classification
 
@@ -191,7 +160,7 @@ operational_areas
 color
 ```
 
-`is_special_condition`, `kind`, `criticality` y ranking son dimensiones independientes.
+Son dimensiones independientes.
 
 ## 8. Evaluator y parameters
 
@@ -202,37 +171,9 @@ evaluator_key
 parameters: Mapping[str, str | float | bool]
 ```
 
-Runtime evaluator registry resuelve por:
+Runtime evaluator registry resuelve por `(family_key, evaluator_key)`.
 
-```text
-(family_key, evaluator_key)
-```
-
-La lógica Python no vive dentro de Alarm Configuration ni `PlannedAlarm`.
-
-Frontera acordada:
-
-```text
-AlarmDefinition
-    evaluator_key
-    parameters
-        |
-        v
-B.2 validates reference
-        |
-        v
-RuntimeAlarmConfiguration
-    PlannedAlarm.evaluator_key
-    parameters_by_alarm
-        |
-        + deployed AlarmEvaluatorRegistry
-        v
-AlarmExecutionSession
-```
-
-B.2 no persiste evaluator callable, `DataRequirements`, `DataLoadPlan` ni `AlarmExecutionSession` como artifact de configuración.
-
-No existe `evaluator_registry_revision` CURRENT; no inventarlo para completar `resolution_key`.
+B.2 valida la referencia pero no persiste evaluator callable, `DataRequirements`, `DataLoadPlan` ni `AlarmExecutionSession`.
 
 ## 9. Priority
 
@@ -243,25 +184,14 @@ priority_group
 priority_order
 ```
 
-Invariantes:
 - positivo;
 - único dentro del grupo;
 - menor número = mayor prioridad;
-- Engine todavía exige IMPACT antes de RISK si ambos existen.
-
-Priority predominance ya usa menor `priority_order`.
+- Engine todavía exige IMPACT-before-RISK si ambos existen.
 
 ## 10. Management suppression — CLOSED
 
-El coupling histórico:
-
-```text
-managed IMPACT -> lower RISK
-```
-
-fue reemplazado en `main`.
-
-CURRENT:
+CURRENT implementado:
 
 ```text
 managed source priority = P
@@ -270,40 +200,24 @@ target.priority_order < P
 -> no suppression
 
 target.priority_order > P
--> eligible para CascadeSuppression
+-> eligible
 ```
 
 `kind` no selecciona source/target.
 
-`delivery_enabled` histórico todavía participa y queda pendiente de reconciliation con visibility.
+Target elimina filtros históricos de `delivery_enabled`; visibility no altera suppression.
 
-Management suppression:
-- no cierra occurrence;
-- no detiene routing;
-- no convierte physical ACTIVE en false;
-- puede conservar scope después del cierre de la source occurrence mientras existan lower-priority targets elegibles;
-- se libera al terminar su scope/expiry;
-- permite que una Rule de mayor prioridad emerja.
-
-Evidencia:
-- characterization convertida a regresión;
-- 6 PASS;
-- full `alarms/core` suite PASS después del delta;
-- Ruff PASS.
+Management suppression no cierra occurrence y no detiene routing.
 
 ## 11. Special Conditions
 
-### Authoring
-
-Special Condition es explícita:
+Authoring:
 
 ```text
 is_special_condition=true
 ```
 
-No se infiere de ranking/kind/criticality.
-
-Reappearance authoring:
+Reappearance:
 
 ```text
 ReappearanceDefinition(
@@ -314,130 +228,81 @@ ReappearanceDefinition(
 
 Múltiples referencias usan OR.
 
-### Runtime transport — CLOSED
-
-`PlannedAlarm` CURRENT contiene:
+B.2 qualification para cada SC:
 
 ```text
-reappearance_special_conditions: tuple[AlarmIdentity, ...]
+exists
+AND is_special_condition
+AND same family
+AND same priority_group
+AND not self-reference
 ```
 
-Engine no transporta `is_special_condition`.
+Una SC disabled sigue siendo una referencia válida, aunque no pueda estar ACTIVE mientras no participe de execution.
 
-B.2 materializa sólo referencias calificadas.
+Engine no transporta `is_special_condition`; recibe identidades calificadas.
 
-### Runtime trigger — CLOSED
+Runtime trigger CURRENT está CLOSED: level-triggered, OR, INACTIVE/ERROR no disparan, occurrence cerrada no se resucita, timer+SC produce una única reappearance.
 
-CURRENT:
+## 12. Reappearance timer materialization
+
+Authoring mantiene minutos:
 
 ```text
-managed A
-AND A keeps same open occurrence
-AND A evaluated ACTIVE
-AND any referenced trigger evaluated ACTIVE
--> reappearance
+after_minutes: int | None
 ```
 
-Resultado:
-- ManagementEffect cleared;
-- misma occurrence;
-- `management_cycle + 1`;
-- `ReappearanceChange`.
-
-No trigger para:
-- unreferenced Rule;
-- `INACTIVE`;
-- `ERROR`;
-- source occurrence cerrada.
-
-Timer + trigger en mismo ciclo produce una única reappearance.
-
-El trigger se decide antes de priority final, desde evaluaciones ACTIVE, por lo que no depende de visibilidad Delivery ni de disposición final de priority.
-
-### Level-trigger semantics — CLOSED
-
-Si la Special Condition referenciada ya está ACTIVE cuando el operador gestiona A:
+Target Runtime:
 
 ```text
-ManagementAction -> EFFECTIVE
-ManagementEffect -> STARTED
-ManagementEffect -> CLEARED en el mismo ciclo
-same occurrence
-management_cycle -> increment
-one ReappearanceChange
+PlannedAlarm.reappearance_after_seconds: int | None
 ```
 
-No se requiere detectar un flanco `INACTIVE -> ACTIVE`.
-
-Evidencia final:
-- 9 PASS en `test_special_condition_reappearance_characterization.py`;
-- full `alarms/core` suite PASS;
-- `ruff check .` PASS;
-- format check PASS.
-
-## 12. Decisions conflict
-
-B.1 frozen describió Special Cascade:
+Conversión B.2:
 
 ```text
-managed predominant Special Condition
--> suppress all other active Rules in scope
+minutes * 60
 ```
 
-El Project refinó e implementó:
+Target `ManagementEffect`:
 
 ```text
-Management suppression -> priority_order para cualquier Rule gestionada
-is_special_condition -> trigger semantics explícitas
+reappearance_due_at: datetime | None
 ```
 
-Clasificación correcta:
+`None` permite representar correctamente:
+- sólo Special Conditions;
+- ningún reappearance automático.
 
-```text
-IMPLEMENTATION CURRENT / VALIDATED
-PROJECT DECISION / REFINEMENT
-DECISIONS REPOSITORY NOT YET UPDATED
-CONFLICT VISIBLE
-```
+El resolver global CURRENT queda SUPERSEDED como target.
 
-No escribir en canonical que la decisión frozen fue formalmente superseded hasta actualizar `atlanticus-decisions`.
+Adoption reconcilia un ManagementEffect abierto desde el `effective_at` original. Si el nuevo due ya pasó, reappearance ocurre en el instante de Adoption.
 
 ## 13. B.2 Resolution contract
 
-PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
-
 ```text
-resolution_key
+AlarmResolutionKey
     alarm_configuration_revision
     confirmed_tool_catalog_revision
 ```
 
-Resultado:
-
 ```text
 READY
--> no BLOCKING findings
--> Runtime artifact existe
--> Delivery artifact existe
--> ambos comparten resolution_key
+-> Runtime artifact + Delivery artifact
+-> same exact key
 
 BLOCKED
--> >= 1 BLOCKING finding
--> ningún artifact operacional
+-> no operational artifacts
 -> EFFECTIVE unchanged
 ```
 
-Una Rule inválida bloquea la revisión completa.
-
-Nunca omitir silenciosamente una Rule inválida del target.
+Una Rule inválida bloquea toda la revisión.
 
 ```text
 INVALID != REMOVED
 ```
 
 ## 14. Findings
-
-Contrato conceptual acordado:
 
 ```text
 AlarmResolutionFinding
@@ -449,83 +314,31 @@ AlarmResolutionFinding
     reference_key?
 ```
 
-`BLOCKING` cubre cualquier inconsistencia que pueda alterar Runtime, adoption, routing, management, deactivation o Delivery correcto.
-
-`WARNING` queda reservado para calidad administrativa no contractual.
-
-B.2 intenta recolectar findings independientes sin generar ruido derivado de una misma dependencia ausente.
-
 ## 15. Routing — CONTRACT AGREED
 
 CURRENT Engine:
-- C1: origin + destinos inmediatos;
-- C2: origin inmediato + destinos retardados desde occurrence start;
+- C1: origin + destinations inmediatos;
+- C2: origin inmediato + delays absolutos desde occurrence start;
 - C3: origin only.
 
-Management no detiene routing.
-
-Authoring conserva:
-
-```text
-AlarmEscalationDefinition
-    origin_tool_key
-    steps[]
-        step_order
-        target_tool_key
-        is_enabled
-        wait_minutes_from_previous_step
-```
-
-### Orden
-
-B.2 ordena steps por `step_order`; el orden físico de la tuple no es autoridad.
-
-No se exige secuencia contigua.
+B.2 ordena por `step_order`.
 
 ### C1
 
 ```text
-origin -> inmediato
-step enabled -> destination inmediata
-step enabled + wait > 0 -> BLOCKING
+enabled -> immediate
+enabled + wait > 0 -> BLOCKING
 ```
-
-`None` o `0` son coherentes con C1.
 
 ### C2
 
-Todos los steps, incluidos disabled, requieren wait no-None y `>= 0`.
+Todos los steps, incluidos disabled, requieren wait `>=0` y no-None.
 
-Los waits se acumulan sobre todos los steps ordenados.
-
-Sólo enabled steps producen destination.
-
-Ejemplo:
-
-```text
-step 1 enabled  15
-step 2 disabled 20
-step 3 enabled  30
-```
-
-materializa:
-
-```text
-step 1 -> delay_seconds=900
-step 3 -> delay_seconds=3900
-```
-
-Deshabilitar un destino no adelanta silenciosamente destinos posteriores.
+Los waits se acumulan sobre todos los steps ordenados; sólo enabled produce destination.
 
 ### C3
 
-```text
-origin only
-```
-
-Cualquier step enabled es `BLOCKING`.
-
-Steps disabled pueden permanecer, pero sus referencias y shape siguen siendo válidas.
+Cualquier step enabled es BLOCKING.
 
 ### Tool references
 
@@ -539,30 +352,148 @@ AND reconciliation-GREEN
 AND alarm-eligible Tool kind
 ```
 
-Strategic queda fuera de Alarm Configuration references en el contrato acordado.
+Strategic no es elegible como Alarm Configuration reference.
 
-Las restricciones adicionales PROCESS ↔ INTEGRATED_OPERATIONS/tier siguen OPEN.
+Restricciones adicionales PROCESS ↔ INTEGRATED_OPERATIONS/tier siguen OPEN.
 
-## 16. Deactivation — OPEN / NEXT
+## 16. Deactivation + Messages — CONTRACT AGREED
 
-AlarmDefinition conserva:
-- `enabled`;
-- `max_duration_hours`;
-- `approval_required`.
+Authoring:
 
-Messages pueden aplicar override completo.
+```text
+AlarmDeactivationDefinition
+    enabled
+    max_duration_hours
+    approval_required
+```
 
-Engine `PlannedAlarm` conserva actualmente una deactivation policy más estrecha.
+Invariantes B.1:
 
-La resolución completa default/Message/operator/max/shift es el siguiente subfoco B.2.
+```text
+enabled=false
+-> max_duration_hours=None
+-> approval_required=false
 
-No ampliar Engine por conveniencia antes de cerrar el contrato.
+enabled=true
+-> max_duration_hours required
+-> 1 <= max_duration_hours <= 12
+```
 
-## 17. Tool/visual references
+Message puede declarar override completo.
+
+Precedencia:
+
+```text
+override=None
+-> Rule default
+
+override exists
+-> replace complete default
+```
+
+B.2 materializa:
+
+```text
+ResolvedDeactivationPolicy
+    enabled
+    max_duration_hours
+    approval_required
+```
+
+por default y por Message.
+
+Message inactive se valida, pero no se ofrece para nuevas gestiones.
+
+Sin Message contextual se usa Rule default.
+
+Seleccionar Message no dispara deactivation automáticamente.
+
+## 17. Management Capture contract
+
+Management Capture valida la intención contra la Delivery Configuration de la resolución EFFECTIVE exacta.
+
+Solicitud conceptual:
+
+```text
+alarm_identity
+source_occurrence_id
+tool_key
+resolution_key
+message_key?
+requested_deactivation_until?
+```
+
+No reinterpretar una acción usando una revisión u occurrence posterior.
+
+Si hay deactivation:
+
+```text
+effective_until = min(
+    requested_until,
+    source_created_at + configured_max_duration,
+    shift_end,
+)
+```
+
+Target Engine input:
+
+```text
+DeactivationIntent
+    effective_until
+    approval_required
+```
+
+Por tanto:
+
+```text
+PlannedAlarm.deactivation_policy -> REMOVE target
+```
+
+El origen concreto de `shift_end` sigue OPEN.
+
+## 18. Effective Configuration alignment
+
+PROJECT CONTRACT AGREED:
+
+```text
+AlarmEffectiveConfigurationHead
+    resolution_key
+    effective_at
+    adoption_id
+```
+
+Delivery y Management Capture usan exactamente:
+
+```text
+EffectiveHead.resolution_key
+```
+
+Nunca `latest READY`.
+
+Una Adoption exitosa puede avanzar EFFECTIVE aunque no haya mutaciones de hot state, por ejemplo cambios sólo de visibility, Messages o visual metadata.
+
+Runtime Adoption debe clasificar sobre:
+
+```text
+source defined identities
+UNION
+target defined identities
+```
+
+incluyendo:
+
+```text
+ADDED
+ENABLED
+```
+
+además de las disposiciones existentes.
+
+Ver `04_ALARM_ENGINE/13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`.
+
+## 19. Tool/visual references
 
 Alarm Configuration guarda referencias, no duplica Tool Configuration.
-
-Tool Catalog conserva estructura/scopes.
 
 Routing y visual projection son contratos distintos.
 
@@ -570,9 +501,9 @@ Strategic visual projection sigue sin inventarse.
 
 Current reconciliation-GREEN todavía necesita un input contractual explícito para B.2.
 
-## 18. Adoption conflicts todavía OPEN
+## 20. Adoption conflicts todavía OPEN de implementación
 
-Mantener explícitos:
+Mantener visibles:
 - criticality mutation CURRENT = structural reset;
 - C2 routing mutation CURRENT = compatible;
 - C1 routing mutation CURRENT = rejected;
@@ -580,112 +511,71 @@ Mantener explícitos:
 - evaluator mutation CURRENT = rejected vs B.1 desired;
 - kind mutation CURRENT = rejected vs B.1 desired;
 - priority group mutation CURRENT = rejected vs B.1 desired;
-- origin Tool semantics conflict.
+- origin Tool semantics conflict;
+- timer/SC reconciliation target todavía no implementada.
 
-Una configuración puede ser B.2 `READY` y posteriormente ser rechazada por Runtime Adoption.
+Una configuración puede ser B.2 READY y posteriormente ser rechazada por Runtime Adoption.
 
-No resolver con adapters temporales.
+## 21. Provenance cleanup
 
-## 19. Provenance cleanup
-
-Runtime CURRENT usa:
+CURRENT usa:
 
 ```text
 alarm_configuration_revision
 tool_registry_revision
 ```
 
-B.2 acordó:
+Target:
 
 ```text
-alarm_configuration_revision
-confirmed_tool_catalog_revision
+AlarmResolutionKey
 ```
 
-La implementación debe reemplazar limpiamente el naming histórico, sin contrato dual permanente.
+Occurrence conserva `resolution_key_at_start`; Effective Head conserva la resolución global vigente.
 
-## 20. Invariantes congelados
+No mantener contrato dual permanente.
 
-Hasta decisión explícita contraria:
+## 22. Invariantes congelados
 
 ```text
 AlarmConfiguration = Rules + Messages.
-
 LATEST SAVED = LATEST VALID_AT_SAVE.
-
 VALID_AT_SAVE != READY_AT_ANY_LATER_TIME != EFFECTIVE.
-
 AlarmIdentity = family_key + alarm_key.
-
 Family != priority_group.
-
 is_active controla execution participation.
-
 disabled != invalid.
-
-TRACE_ONLY controla Delivery visibility y no equivale a Engine SHADOW.
-
-priority_order es la autoridad relativa dentro del grupo.
-
+TRACE_ONLY sólo controla visibility Delivery.
+TRACE_ONLY participa normalmente de priority/Management/routing.
+priority_order es autoridad relativa dentro del grupo.
 menor priority_order = mayor prioridad.
-
-IMPACT-before-RISK sigue CURRENT.
-
 Management suppression se gobierna por priority_order, no por kind.
-
 Management no cierra physical occurrence.
-
 Management no detiene routing.
-
 Special Condition es explícita en authoring.
-
 Engine no necesita is_special_condition.
-
-PlannedAlarm transporta reappearance_special_conditions.
-
-Special Condition reappearance usa OR.
-
-Special Condition trigger es level-triggered.
-
+Special Condition refs deben calificarse en B.2.
+Special Condition trigger usa OR y es level-triggered.
 INACTIVE/ERROR no disparan.
-
 Una occurrence cerrada no se resucita.
-
-Timer + Special Condition en el mismo ciclo produce una sola reappearance.
-
+Timer + SC en mismo ciclo produce una reappearance.
 PlannedAlarm es configuración Runtime resuelta, no evaluator code.
-
-B.2 valida evaluator key; Runtime resuelve el callable desplegado.
-
+PlannedAlarm no es dueño de Message/deactivation authoring policy.
+B.2 valida evaluator key; Runtime resuelve callable desplegado.
 B.2 READY es atómico para Runtime + Delivery artifacts.
-
 INVALID != REMOVED.
-
 C2 materializa delays acumulados absolutos desde occurrence start.
-
 Steps C2 disabled conservan su intervalo temporal.
-
-B.2 debe calificar/materializar, no reimplementar Engine.
-
-No crear aliases legacy.
-
-No crear adapters temporales.
-
-No modificar Engine por conveniencia de UI/materialización.
+Delivery y Management Capture consumen exact Effective resolution key.
+EFFECTIVE es global y puede avanzar con cero group hot-state mutations.
+No aliases legacy.
+No adapters temporales.
 ```
 
-## 21. Foco único siguiente
+## 23. Foco único siguiente
 
 ```text
-B.2 — Deactivation + Messages Materialization Contract
+B.2 — Delivery Configuration Artifact + Live Projection Boundary
 ```
 
-Primero debate/diseño.
-
-Después de consenso, continuar con el resto del Runtime/Delivery materialization contract antes de implementación.
-
-No mezclar en el mismo incremento:
-- Delivery execution final;
-- UI final;
-- History/Analytics;
-- broad Engine rewrite.
+Primero debate/diseño; después implementación incremental sólo tras consenso.

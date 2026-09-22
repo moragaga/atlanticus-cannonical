@@ -1,6 +1,22 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT ENGINE / B.2 RESOLUTION BOUNDARY REFINED / DELIVERY EXECUTION STILL PLANNED**
+Estado: **CURRENT ENGINE / B.2 MATERIALIZATION + EFFECTIVE ALIGNMENT REFINED / DELIVERY EXECUTION STILL PLANNED**
+
+## Authority checkpoint
+
+Implementación auditada:
+
+```text
+moragaga/atlanticus:main
+ebf736a1cf5193a297fbafc55c5c11ca9993f24c
+```
+
+Canonical base de este delta:
+
+```text
+moragaga/atlanticus-cannonical:main
+ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
+```
 
 ## Alarm Configuration base Projection
 
@@ -8,11 +24,11 @@ Alarm Configuration SourceRelease se materializa como Projection base exacta.
 
 PRE-SAVE validation y Materialization validation son capas distintas.
 
-B.2 External Resolution vuelve a validar la revisión persistida contra dependencias actuales antes de producir artifacts operacionales.
+B.2 vuelve a validar la revisión persistida contra dependencias actuales antes de producir artifacts operacionales.
 
 ## Tool Catalog
 
-Command Center dispone de Tool Catalog V1 durable y de un read model para authoring.
+Command Center dispone de Tool Catalog V1 durable y read model para authoring.
 
 Tool Catalog no forma parte del payload durable de Alarm Configuration y no reemplaza B.2.
 
@@ -20,23 +36,19 @@ B.2 requiere además current reconciliation qualification de las Tools referenci
 
 ## Alarm Engine CURRENT
 
-Engine recibe configuración ejecutable materializada.
-
 Runtime implementa:
 - priority predominance por `priority_order`;
 - Management suppression de lower-priority Rules independiente de `kind`;
-- timer reappearance;
+- timer reappearance CURRENT mediante due resolver global;
 - Special Condition reappearance mediante `PlannedAlarm.reappearance_special_conditions`;
-- level-trigger semantics para Special Condition;
-- routing continuo durante Management suppression;
-- durable Engine commits/WAL;
-- materialized hot runtime snapshots por `priority_group`.
+- level-trigger semantics;
+- routing continuo durante Management;
+- durable Engine WAL/commits;
+- hot snapshots por `priority_group`.
 
 La Web no debe reimplementar estas reglas.
 
 ## Durable facts vs hot state
-
-CURRENT Engine persistence mantiene dos superficies diferentes:
 
 ```text
 Engine cycle
@@ -47,40 +59,17 @@ Engine cycle
          runtime/state/groups/<priority_group>.json
 ```
 
-`GroupRuntimeSnapshot` contiene estado necesario para continuidad/recovery, incluyendo occurrence, evaluation, management/deactivation effects, assignments y episode state.
+`GroupRuntimeSnapshot` sirve continuidad/recovery; no se congela como API pública de Delivery.
 
-No se congela `GroupRuntimeSnapshot` como contrato público de Delivery.
+## Runtime Configuration vs evaluator code
 
-La futura frontera Engine → Delivery debe exponer estado operacional ya resuelto, sin obligar a Delivery a recalcular priority/lifecycle/management.
-
-## Special Condition boundary
-
-Alarm Configuration conserva:
-
-```text
-is_special_condition
-reappearance.special_conditions
-```
-
-Engine consume:
-
-```text
-PlannedAlarm.reappearance_special_conditions
-```
-
-Engine no necesita `is_special_condition`.
-
-B.2 valida/califica y materializa la referencia.
-
-## Runtime Configuration vs deployed evaluator code
-
-La configuración referencia lógica por key:
+La configuración referencia:
 
 ```text
 family_key + evaluator_key
 ```
 
-B.2 valida la existencia del evaluator, pero no serializa el callable.
+B.2 valida la key pero no serializa callable.
 
 Runtime une:
 
@@ -90,23 +79,17 @@ RuntimeAlarmConfiguration
 -> AlarmExecutionSession
 ```
 
-`AlarmExecutionSession` no es el artifact persistido producido por B.2.
-
 ## Una resolución, dos artifacts
-
-PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
 
 ```text
 B.2 Resolution
-    resolution_key
+    AlarmResolutionKey
         |
         +--> Runtime Configuration Artifact
         `--> Delivery Configuration Artifact
 ```
 
-Ambos artifacts comparten exactamente el mismo `resolution_key`.
-
-La resolution es atómica:
+Ambos comparten exactamente el mismo key.
 
 ```text
 READY
@@ -116,8 +99,6 @@ BLOCKED
 -> ninguno existe
 ```
 
-No existe readiness operacional independiente por capability dentro de una misma resolución.
-
 ## READY vs EFFECTIVE
 
 ```text
@@ -125,49 +106,189 @@ B.2 READY
 -> candidato coherente
 
 Runtime Adoption succeeds
--> effective_resolution_key advances
+-> AlarmEffectiveConfigurationHead advances
 ```
 
-Por tanto:
+`READY != EFFECTIVE`.
+
+Delivery y Management Capture siguen el Effective Head exacto y nunca lideran Runtime.
+
+## Effective Configuration Head
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
 
 ```text
-READY != EFFECTIVE
+AlarmEffectiveConfigurationHead
+    resolution_key
+    effective_at
+    adoption_id
 ```
 
-Delivery sigue `effective_resolution_key` y nunca lidera Runtime.
+Es global, no por priority group.
+
+Hot snapshot provenance y Effective Head tienen responsabilidades distintas. Un snapshot puede conservar una `state_basis` histórica anterior cuando la nueva Adoption no mutó ese grupo.
+
+El Effective Head debe materializarse desde el mismo Runtime WAL/recovery protocol, no como un JSON independiente escrito después sin protección crash-safe.
+
+Ver `04_ALARM_ENGINE/13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`.
+
+## Exact-key consumption
+
+Delivery usa:
+
+```text
+EffectiveHead.resolution_key
+        |
+        v
+DeliveryConfiguration[exact key]
+```
+
+Management Capture usa la misma regla.
+
+No usar latest READY ni fallback a otra revision si falta el artifact exacto.
 
 ## Visibility
 
-Contrato authoring:
+Authoring:
 
 ```text
 VISIBLE
 TRACE_ONLY
 ```
 
-`TRACE_ONLY` significa ejecutar + trazar + no mostrar operacionalmente.
-
-No mapear automáticamente a:
+PROJECT CONTRACT AGREED:
 
 ```text
-PlannedAlarm.delivery_enabled=false
+TRACE_ONLY
+-> sigue evaluation/trace/lifecycle/routing/priority/management
+-> Delivery no lo publica visiblemente
 ```
 
-porque el flag CURRENT produce `SHADOW` y cambia priority/Management.
+No mapear a `PlannedAlarm.delivery_enabled=false`.
 
-Esta reconciliación continúa OPEN para B.2/Delivery.
+Target:
+
+```text
+PlannedAlarm.delivery_enabled -> REMOVE
+PriorityDisposition.SHADOW -> REMOVE
+visibility_mode -> Delivery Configuration only
+```
+
+Si la Rule predominante es TRACE_ONLY, Delivery no promueve otra Rule visible eclipsada. Priority sigue siendo autoridad backend.
+
+## Deactivation + Messages
+
+B.2 resuelve:
+
+```text
+ResolvedDeactivationPolicy
+    enabled
+    max_duration_hours
+    approval_required
+```
+
+por Rule default y por Message activo aplicando override completo.
+
+Management Capture usa la configuración EFFECTIVE exacta y materializa:
+
+```text
+DeactivationIntent
+    effective_until
+    approval_required
+```
+
+El Engine no necesita Message, configured max ni shift-end.
+
+Target:
+
+```text
+PlannedAlarm.deactivation_policy -> REMOVE
+```
+
+El origen concreto de `shift_end` permanece OPEN.
+
+## Management Capture vs Management Projection
+
+No confundir:
+
+```text
+Management Capture
+-> valida una intención futura contra la config EFFECTIVE
+-> produce input operacional para Engine
+```
+
+con:
+
+```text
+Management Projection
+-> read-side histórico derivado de hechos durables ya resueltos
+```
+
+Management Capture provenance mínima acordada incluye:
+
+```text
+resolution_key
+source_occurrence_id
+selected_message_key?
+```
+
+El outcome `EFFECTIVE / ADDITIONAL / LATE` sigue siendo autoridad del Engine.
+
+## Reappearance target
+
+B.2 materializa:
+
+```text
+AlarmDefinition.after_minutes
+-> PlannedAlarm.reappearance_after_seconds
+```
+
+Target ManagementEffect:
+
+```text
+reappearance_due_at: datetime | None
+```
+
+El resolver global CURRENT se elimina como target.
+
+Adoption reconcilia timers abiertos desde el `ManagementEffect.effective_at` original.
+
+Special Condition refs se califican en B.2 y continúan usando trigger level-triggered en Runtime.
+
+## Runtime Adoption
+
+Adoption debe clasificar:
+
+```text
+source.defined_alarm_identities
+UNION
+target.defined_alarm_identities
+```
+
+Target dispositions:
+
+```text
+UNCHANGED
+COMPATIBLE
+ADDED
+ENABLED
+DISABLED
+REMOVED
+STRUCTURAL_RESET
+REJECTED
+```
+
+Una Adoption puede avanzar EFFECTIVE con cero group-state commits, por ejemplo ante cambios sólo de visibility, Messages o visual metadata.
 
 ## Future Engine → Delivery operational boundary
 
-PROJECT DIRECTION / NOT YET IMPLEMENTED:
+Delivery no debe leer el WAL como API operacional ni recalcular priority.
 
-Delivery no debe leer el WAL como API operacional ni recalcular prioridad desde Rules físicamente activas.
-
-La frontera deseada es:
+Frontera target:
 
 ```text
 Engine resolved current state
-+ Delivery Configuration matching effective_resolution_key
++ Delivery Configuration[EffectiveHead.resolution_key]
         |
         v
 Delivery
@@ -176,27 +297,7 @@ Delivery
 Alarm Live Projection
 ```
 
-El schema concreto de `Engine resolved current state` todavía no está congelado.
-
-El hot snapshot actual puede ser fuente interna para construir esa salida, pero no se declara equivalente al contrato de Delivery.
-
-## Management input vs Management Projection
-
-No confundir:
-
-```text
-Management input capture
--> entrada al Engine para evaluar acciones/decisiones
-```
-
-con:
-
-```text
-Management Projection
--> read-side histórico derivado de hechos durables ya resueltos por Engine
-```
-
-La autoridad sobre outcome `EFFECTIVE / ADDITIONAL / LATE` permanece en Engine.
+El schema concreto de `Engine resolved current state` sigue OPEN y es parte del siguiente foco.
 
 ## Management vs Live
 
@@ -204,7 +305,7 @@ Managed/deactivated no significa physical false.
 
 Live Projection expresa estado operacional actual derivado.
 
-Management Projection expresa acciones/decisiones históricas de gestión.
+Management Projection expresa acciones/decisiones históricas.
 
 No mezclar ambas superficies.
 
@@ -212,24 +313,23 @@ No mezclar ambas superficies.
 
 History/Analytics consume hechos durables y no modifica Engine.
 
-El boundary Engine → History/Analytics → Web permanece separado del foco B.2 actual.
+El boundary Engine → History/Analytics → Web permanece separado del foco B.2.
 
-No se implementa ni rediseña Analytics dentro de Configuration Materialization.
+## Provenance cleanup
 
-## Provenance
-
-Runtime mantiene strings históricos:
+CURRENT usa repetidamente:
 
 ```text
 alarm_configuration_revision
 tool_registry_revision
 ```
 
-B.2 acordó identidad mínima:
+Target, cuando ambos representan la misma base operacional:
 
 ```text
-alarm_configuration_revision
-confirmed_tool_catalog_revision
+AlarmResolutionKey
 ```
 
-La implementación debe reconciliar el naming histórico mediante reemplazo limpio, sin adapters legacy permanentes.
+Occurrence conserva `resolution_key_at_start`; Effective Head conserva la resolución global actual.
+
+No crear aliases legacy permanentes.

@@ -1,6 +1,6 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT / B.2 IN PROGRESS — RESOLUTION + RUNTIME ARTIFACT + ROUTING CONTRACT AGREED / NOT YET IMPLEMENTED**
+Estado: **CURRENT / B.2 IN PROGRESS — MATERIALIZATION + ADOPTION/EFFECTIVE CONTRACT AGREED / DELIVERY SCHEMA NEXT**
 
 Checkpoint de implementación auditado:
 
@@ -13,7 +13,7 @@ Checkpoint canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-85a12f5ccdf0b5d03992396b13d4b1914b7062a3
+ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
 ```
 
 | Archivo | Contenido | Estado |
@@ -23,27 +23,23 @@ moragaga/atlanticus-cannonical:main
 | `03_WEB_APPLICATION.md` | Web propia, shell e identidad. | PARTIALLY IMPLEMENTED |
 | `04_CONFIGURATION_SCOPE.md` | Alarm Configuration, Manager y límites. | CURRENT |
 | `05_TOOL_TO_ALARM_CONFIGURATION.md` | Tool topology → Tool Catalog → authoring references → B.2. | CURRENT / B.2 INPUT CONTRACT PARTIALLY OPEN |
-| `06_ENGINE_AND_PROJECTIONS.md` | Engine hot state, Runtime/Delivery, Live, Management e History/Analytics. | CURRENT / B.2 BOUNDARY REFINED |
+| `06_ENGINE_AND_PROJECTIONS.md` | Engine hot state, Runtime/Delivery, Effective Head, Live y Management. | CURRENT + PROJECT CONTRACT REFINED |
 | `07_ANALYTICS_AND_STORYTELLING.md` | Modelo de análisis y conclusiones trazables. | PRODUCT DIRECTION |
 | `08_INITIAL_DASHBOARD.md` | Preguntas y capacidades del dashboard inicial. | PROPOSED |
 | `09_IDENTITY_NAVIGATION_PROFILES.md` | Entra ID, Navigation y Profiles. | CURRENT DIRECTION |
 | `10_INITIAL_OUT_OF_SCOPE.md` | Qué no entra inicialmente. | CURRENT DIRECTION |
 | `11_GOLDEN_PATH.md` | Vertical integrada. | PARTIALLY IMPLEMENTED |
 | `12_SOURCE_LEDGER.md` | Fuentes auditadas y trazabilidad. | AUDIT LEDGER |
-| `13_OPEN_ITEMS.md` | Contratos pendientes después del cierre parcial de B.2. | OPEN / B.2 IN PROGRESS |
+| `13_OPEN_ITEMS.md` | Contratos pendientes después del checkpoint B.2. | OPEN / DELIVERY BOUNDARY NEXT |
 | `14_TOOL_CATALOG.md` | Consolidador durable read-only de Tools. | CURRENT V1 / CLOSED |
-| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Authoring + validation layers + B.2 resolution/routing contract. | CURRENT + PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
+| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Authoring + validation + materialization/adoption contract. | CURRENT + PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
 
 Foco único CURRENT:
 
 ```text
-B.2 — Alarm Configuration -> Runtime/Delivery Configuration Materialization
+B.2 — Delivery Configuration Artifact + Live Projection Boundary
 ```
 
-Siguiente subfoco:
+Ya están cerrados en diseño, pero no implementados, Deactivation/Messages, reappearance materialization, TRACE_ONLY y Effective Configuration Head.
 
-```text
-Deactivation + Messages materialization
-```
-
-No mezclar todavía con Delivery execution final, UI final, History/Analytics ni nuevos cambios del Engine.
+No mezclar todavía con UI final, History/Analytics ni broad Engine rewrite.

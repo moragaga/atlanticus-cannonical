@@ -1,6 +1,6 @@
 # ADA Command Center — Open Items
 
-Estado: **OPEN / B.2 IN PROGRESS / FOUNDATION CONTRACT PARTIALLY CLOSED**
+Estado: **OPEN / B.2 IN PROGRESS / MATERIALIZATION + ADOPTION FOUNDATION CONTRACT LARGELY CLOSED**
 
 Cerrado antes de este checkpoint:
 - Tool Catalog V1;
@@ -10,35 +10,62 @@ Cerrado antes de este checkpoint:
 - Special Condition Runtime reappearance;
 - level-trigger semantics de Special Condition.
 
-Cerrado en diseño durante B.2 y todavía **NOT YET IMPLEMENTED**:
-- resolution identity/provenance mínima;
+Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
+- `AlarmResolutionKey`;
 - `READY | BLOCKED`;
 - findings `BLOCKING | WARNING`;
 - atomicidad Runtime + Delivery;
 - `INVALID != REMOVED`;
-- Runtime artifact serializable separado de evaluator code;
-- disabled Rules continúan definidas y deben seguir siendo válidas;
+- Runtime artifact serializable sin evaluator code;
+- disabled Rules definidas pero no ejecutables;
 - evaluator qualification por key;
 - C1/C2/C3 routing materialization;
-- C2 cumulative waits absolutos;
-- Strategic Tool no elegible como Alarm Configuration reference.
+- C2 cumulative waits;
+- Strategic Tool no elegible para Alarm Configuration;
+- Deactivation + Messages policy resolution;
+- Management Capture aligned al exact Effective key;
+- `DeactivationIntent(effective_until, approval_required)` target;
+- reappearance timer materialization;
+- Special Condition qualification;
+- TRACE_ONLY sólo como Delivery visibility;
+- `AlarmEffectiveConfigurationHead`;
+- durable global Adoption incluso sin hot-state mutations;
+- `ADDED` y `ENABLED` adoption dispositions.
 
 ## Foco único CURRENT
 
 ```text
-B.2 — Alarm Configuration -> Runtime/Delivery Configuration Materialization
+B.2 — Delivery Configuration Artifact + Live Projection Boundary
 IN PROGRESS
-```
-
-Siguiente subfoco acordado:
-
-```text
-Deactivation + Messages materialization
 ```
 
 ## B.2 OPEN
 
-### 1. Materialization owner
+### 1. Delivery Configuration schema
+
+Debe compartir `resolution_key` con Runtime Configuration y ser suficiente para Live Delivery y Management Capture sin volver a SharePoint/Tool Catalog/MessageDefinition.
+
+Cerrar:
+- resolved display/title/cause contract;
+- classification/color/areas;
+- visibility;
+- resolved Messages;
+- default + per-Message deactivation capability;
+- resolved visual targets;
+- Process projection mode;
+- schema version.
+
+### 2. Engine resolved current-state output
+
+CURRENT existe hot runtime state interno.
+
+OPEN:
+- contrato explícito Engine resolved current state → Delivery;
+- no usar WAL como API de Live Delivery;
+- no recalcular priority en Delivery/Web;
+- estado dinámico de management/deactivation/assignment requerido por Live.
+
+### 3. Materialization owner
 
 Definir owner/package backend concreto sin acoplar Runtime a:
 - SharePoint download;
@@ -46,7 +73,7 @@ Definir owner/package backend concreto sin acoplar Runtime a:
 - Message resolution;
 - cross-configuration validation.
 
-### 2. Current Tool reconciliation input
+### 4. Current Tool reconciliation input
 
 B.2 necesita:
 
@@ -56,55 +83,32 @@ Confirmed Tool Catalog
 current reconciliation-GREEN qualification
 ```
 
-El segundo contrato todavía no está implementado/verificado.
+El segundo contrato aún no está implementado/verificado.
 
-### 3. Visibility
-
-OPEN:
-
-```text
-visibility_mode=TRACE_ONLY
-!=
-PlannedAlarm.delivery_enabled=false
-```
-
-Resolver sin alterar priority/Management involuntariamente.
-
-### 4. Deactivation + Messages
+### 5. Management Capture implementation
 
 OPEN:
-- Rule default;
-- Message override completo;
-- enabled/disabled capability;
-- configured max duration;
-- approval requirement;
-- operator-selected until;
-- shift-end/effective_until;
-- distribución entre Runtime, Management input y Delivery Configuration.
-
-### 5. Delivery Configuration schema
-
-Debe compartir `resolution_key` con Runtime Configuration y ser suficiente para Live Delivery sin volver a SharePoint/Tool Catalog/unresolved catalogs.
-
-Schema detallado todavía PLANNED.
+- proveedor concreto de `shift_end`;
+- storage físico de Captured Management Input;
+- stale/unavailable submission outcomes.
 
 ### 6. Runtime provenance cleanup
 
-CURRENT:
+Reemplazar, donde corresponda:
 
 ```text
-tool_registry_revision
+alarm_configuration_revision + tool_registry_revision
 ```
 
-B.2:
+por:
 
 ```text
-confirmed_tool_catalog_revision
+AlarmResolutionKey
 ```
 
-Implementar reemplazo limpio, sin aliases permanentes.
+sin aliases permanentes.
 
-### 7. Adoption conflicts
+### 7. Adoption implementation gaps
 
 Mantener visibles:
 - origin Tool;
@@ -112,27 +116,26 @@ Mantener visibles:
 - kind;
 - priority group;
 - C1 routing mutation;
-- C3 routing mutation.
+- C3 routing mutation;
+- timer/SC reconciliation aún no implementada.
 
-B.2 READY no implica que Runtime Adoption pueda adoptar toda transición hoy.
+B.2 READY no implica que Runtime CURRENT pueda adoptar toda transición.
 
-### 8. Tool routing qualification adicional
+### 8. Adoption persistence
+
+OPEN de implementación:
+- journal record discriminado;
+- `adoption_id` generation;
+- Effective Head materialization;
+- migration del persistence existente;
+- crash/recovery tests del batch global.
+
+### 9. Tool routing qualification adicional
 
 OPEN:
 - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
 - routing tier matrix;
 - Rule area vs Tool scope cuando corresponda.
-
-No inventar sin decisión explícita.
-
-### 9. Engine current-state output hacia Delivery
-
-CURRENT existe hot runtime state interno.
-
-OPEN:
-- contrato explícito Engine resolved current state → Delivery;
-- no usar WAL como API de Live Delivery;
-- no hacer que Delivery recalcule priority.
 
 ### 10. Operation details
 
@@ -140,7 +143,6 @@ OPEN:
 - Materialization cadence/event trigger;
 - persistence física de artifacts/findings;
 - retention/versioning;
-- exact schema versions;
 - final deployment/container topology.
 
 ## Fuera del foco inmediato
@@ -157,8 +159,4 @@ OPEN:
 
 B.1 frozen Special Cascade todavía difiere de la implementación CURRENT.
 
-Canonical debe mostrar el conflicto hasta que `atlanticus-decisions` registre explícitamente el refinamiento.
-
-## Cross-cutting
-
-Cualquier conflicto de baseline Python existente fuera de este milestone no debe corregirse silenciosamente dentro de B.2.
+Canonical mantiene el conflicto visible hasta que `atlanticus-decisions` registre explícitamente el refinamiento.

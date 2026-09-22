@@ -1,19 +1,26 @@
 # Alarm Engine — Domain Model
 
-Estado: **CURRENT / IMPLEMENTED IN CORE / B.2 BOUNDARY REFINED / B.1 DECISIONS CONFLICT STILL VISIBLE**
+Estado: **CURRENT / IMPLEMENTED IN CORE + B.2 TARGET CONTRACT REFINED / B.1 DECISIONS CONFLICT STILL VISIBLE**
 
 Fuentes de intención:
 - `R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md`;
 - `R3.6M-006B.2-alarm-projection-boundary-DECISION-RECORDED.md`;
 - `R3.6M-006B.2-alarm-projection-and-publication-boundary-DECISION-RECORDED-INCREMENT-2.md`;
 - refinamientos explícitos del Project implementados y validados en `atlanticus:main`;
-- contrato B.2 acordado en Project y todavía no implementado.
+- contratos B.2 acordados en Project y todavía no implementados.
 
 Realidad implementada auditada:
 
 ```text
 moragaga/atlanticus:main
 ebf736a1cf5193a297fbafc55c5c11ca9993f24c
+```
+
+Canonical base de este delta:
+
+```text
+moragaga/atlanticus-cannonical:main
+ed49507dbfd808585eb0eb9b89ad1f48b8b3f5a5
 ```
 
 ## Ownership
@@ -25,15 +32,16 @@ Alarm Engine core no conoce:
 - Dash/Flask;
 - geometría UI;
 - sesiones web;
-- WAL/leases como contrato de dominio;
 - Alarm Configuration editable;
-- Tool Catalog como source de authoring.
+- Tool Catalog como source de authoring;
+- Message Catalog como catálogo por resolver.
 
-Recibe contratos runtime ya resueltos/materializados.
+Core recibe contratos Runtime ya resueltos/materializados y hechos operacionales ya capturados.
 
 ## Conceptos
 
 - `AlarmDefinition`: definición editable canónica de una Rule.
+- `AlarmResolutionKey`: identidad compartida de una resolución operacional.
 - `PlannedAlarm`: política Runtime resuelta de una Rule ejecutable.
 - `AlarmEvaluatorContract`: lógica Python desplegada + `DataRequirements`, resuelta por `(family_key, evaluator_key)`.
 - `AlarmExecutionEntry`: unión Runtime de `PlannedAlarm + evaluator contract + parameters`.
@@ -41,8 +49,10 @@ Recibe contratos runtime ya resueltos/materializados.
 - `Occurrence`: activación de una Rule.
 - `Episode`: lifecycle compartido por `priority_group`.
 - `ManagementEffect`: efecto temporal de una acción de Management.
+- `DeactivationIntent`: intención operacional de deactivation ya materializada antes del Core.
 - `CascadeSuppression`: supresión operacional derivada de un ManagementEffect.
 - `ReappearanceChange`: reaparición operacional de la misma occurrence gestionada.
+- `AlarmEffectiveConfigurationHead`: read model durable de la resolución global actualmente EFFECTIVE.
 
 ## Identidad
 
@@ -56,9 +66,30 @@ No introducir `rule_key` paralelo.
 
 Family y `priority_group` son conceptos distintos.
 
+## AlarmResolutionKey
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
+
+```text
+AlarmResolutionKey
+    alarm_configuration_revision
+    confirmed_tool_catalog_revision
+```
+
+Es una identidad de configuración compartida por:
+- B.2 Materialization;
+- Runtime Configuration;
+- Delivery Configuration;
+- Runtime Adoption;
+- Effective Configuration Head;
+- Delivery;
+- Management Capture.
+
+No agregar `evaluator_registry_revision` sin un contrato real de esa provenance.
+
 ## AlarmDefinition, PlannedAlarm y evaluator
 
-La frontera acordada es:
+La frontera target es:
 
 ```text
 AlarmDefinition
@@ -89,17 +120,15 @@ AlarmExecutionEntry
 Engine
 ```
 
-`PlannedAlarm` **no contiene la lógica Python que evalúa la condición**.
+`PlannedAlarm` no contiene la lógica Python que evalúa la condición.
 
-La implementación de la condición pertenece al código desplegado mediante `AlarmEvaluatorContract`.
-
-B.2 puede validar que `(family_key, evaluator_key)` exista, pero no serializa ni transporta callables, `DataRequirements`, `DataLoadPlan` ni `AlarmExecutionSession` como artifact de configuración.
+B.2 valida que `(family_key, evaluator_key)` exista, pero no serializa ni transporta callables, `DataRequirements`, `DataLoadPlan` ni `AlarmExecutionSession` como artifact de configuración.
 
 Runtime vuelve a resolver el evaluator desplegado antes de construir la execution session.
 
 ## PlannedAlarm CURRENT
 
-`PlannedAlarm` implementado contiene, entre otros:
+CURRENT implementado contiene, entre otros:
 
 ```text
 identity
@@ -116,34 +145,67 @@ deactivation_policy
 reappearance_special_conditions
 ```
 
-`reappearance_special_conditions` es:
+`reappearance_special_conditions` es `tuple[AlarmIdentity, ...]` y no admite duplicados.
 
-```text
-tuple[AlarmIdentity, ...]
-```
-
-y no admite duplicados.
-
-El Engine no necesita transportar `is_special_condition`; recibe únicamente las identidades ya calificadas como triggers válidos. La qualification corresponde a B.2/Alarm Configuration.
-
-## Runtime provenance — deuda de naming
-
-CURRENT todavía usa el nombre histórico:
-
-```text
-tool_registry_revision
-```
-
-La autoridad vigente externa es el `Confirmed Tool Catalog` / `ToolCatalogSnapshot.revision`.
+## PlannedAlarm TARGET
 
 PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
 
 ```text
-tool_registry_revision
--> tool_catalog_revision / confirmed_tool_catalog_revision semantics
+PlannedAlarm
+    identity
+    kind
+    criticality
+    priority_group
+    priority_order
+    evaluator_key
+    resolution_key
+    routing
+    reappearance_after_seconds: int | None
+    reappearance_special_conditions: tuple[AlarmIdentity, ...]
 ```
 
-La implementación debe hacer un reemplazo limpio, sin alias permanentes ni doble provenance paralela.
+La shape exacta puede distribuir provenance fuera de `PlannedAlarm` si el Runtime artifact ya la garantiza globalmente, pero la semántica es única: no mantener dos revisions históricas como contrato paralelo.
+
+Quedan fuera del target `PlannedAlarm`:
+
+```text
+delivery_enabled
+deactivation_policy
+visibility_mode
+Message metadata
+configured deactivation max
+```
+
+Razones:
+- visibility pertenece a Delivery;
+- deactivation policy es contextual al Message/gestión y se resuelve antes del Engine;
+- `max_duration_hours` y `enabled` no son decisiones lifecycle del Core.
+
+## Runtime provenance — cleanup target
+
+CURRENT todavía usa:
+
+```text
+alarm_configuration_revision
+tool_registry_revision
+```
+
+TARGET:
+
+```text
+resolution_key: AlarmResolutionKey
+```
+
+La implementación debe reemplazar limpiamente el naming histórico, sin alias permanentes ni doble provenance paralela.
+
+Una occurrence conserva provenance histórica del momento en que nació:
+
+```text
+resolution_key_at_start
+```
+
+No se reescribe cuando cambia la configuración EFFECTIVE.
 
 ## Priority
 
@@ -155,113 +217,206 @@ priority_order único dentro del priority_group
 menor priority_order = mayor prioridad
 ```
 
-El Engine todavía valida:
+El Engine todavía valida IMPACT-before-RISK cuando ambos kinds existen en el mismo grupo.
+
+Management suppression CURRENT ya se gobierna por `priority_order`, independiente de `kind`.
+
+## Visibility — target
+
+B.1 congeló:
 
 ```text
-todos los IMPACT preceden a todos los RISK
+VISIBLE
+TRACE_ONLY
 ```
 
-cuando ambos kinds existen en el mismo grupo.
+`TRACE_ONLY`:
+- continúa evaluándose;
+- continúa trazándose;
+- participa normalmente de lifecycle, routing, priority y management;
+- no se publica como alarma operacional visible por Delivery.
 
-Ese invariante no fue modificado en este hito.
-
-## Management suppression CURRENT
-
-La supresión ya no depende de:
+CURRENT `delivery_enabled=false` produce `SHADOW` y además altera priority/Management. Por tanto:
 
 ```text
-source.kind == IMPACT
-target.kind == RISK
+TRACE_ONLY != delivery_enabled=false
 ```
 
-La regla implementada es:
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
+
+```text
+PlannedAlarm.delivery_enabled
+-> REMOVE
+
+PriorityDisposition.SHADOW
+-> REMOVE como target Runtime
+```
+
+No reemplazar `delivery_enabled` por un nuevo flag de visibilidad dentro del Engine.
+
+Una Rule TRACE_ONLY predominante puede dejar el grupo sin alarma visible; Delivery no promueve una Rule visible eclipsada porque priority ya fue resuelto por Engine.
+
+## Management suppression
+
+CURRENT implementado:
 
 ```text
 managed source priority = P
 
 target.priority_order < P
--> no suppressed por esa fuente
-
-target.priority_order == P
--> source
+-> no suppression
 
 target.priority_order > P
--> eligible para CascadeSuppression mientras el ManagementEffect conserve alcance
+-> eligible para CascadeSuppression
 ```
 
-La elegibilidad CURRENT todavía usa `delivery_enabled`; no confundir esta propiedad histórica con `visibility_mode=TRACE_ONLY`.
+TARGET elimina cualquier filtro por `delivery_enabled`/visibility.
+
+Visibility no altera suppression.
 
 Management suppression:
-- no cierra la occurrence target;
-- no cambia su condición física;
+- no cierra occurrence target;
+- no cambia condición física;
 - no detiene routing;
-- se libera cuando el ManagementEffect deja de tener alcance;
-- permite que una Rule de mayor prioridad emerja sobre una gestión de menor prioridad.
+- se libera cuando el ManagementEffect deja de tener alcance.
 
-El `kind` permanece como clasificación de negocio, no como selector de suppression.
+## Deactivation — boundary target
+
+CURRENT Engine consulta `PlannedAlarm.deactivation_policy.approval_required` al procesar una acción.
+
+Esto no soporta correctamente overrides por Message ni preserva la policy seleccionada si la configuración cambia antes del consumo de la acción.
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
+
+```text
+PlannedAlarm.deactivation_policy
+-> REMOVE
+```
+
+Management Capture resuelve la policy efectiva usando la Delivery Configuration EFFECTIVE y crea:
+
+```text
+DeactivationIntent
+    effective_until
+    approval_required
+```
+
+No llegan al Engine:
+- `enabled`;
+- `max_duration_hours`;
+- `message_key`;
+- `shift_end`;
+- `operator_selected_until`.
+
+El durable `DeactivationRequest` conserva `effective_until + approval_required`, de modo que cambios posteriores de configuración no reinterpretan la solicitud.
 
 ## Special Condition
 
-En Alarm Configuration, Special Condition sigue siendo una Rule normal marcada explícitamente:
+En Alarm Configuration, Special Condition es una Rule marcada explícitamente:
 
 ```text
 is_special_condition=true
 ```
 
-No se deriva de:
-- ranking;
-- kind;
-- criticality.
-
-En Runtime, `PlannedAlarm` no necesita el flag; consume referencias calificadas en:
+Engine no necesita ese flag; consume referencias calificadas en:
 
 ```text
 reappearance_special_conditions
 ```
 
+B.2 qualification exige, para cada referencia:
+
+```text
+referenced Rule exists
+AND is_special_condition == true
+AND same family
+AND same priority_group
+AND not self-reference
+```
+
+Self-reference queda BLOCKING porque con trigger level-triggered produciría una reappearance tautológica inmediata.
+
+Una Special Condition válida pero `is_active=false` sigue siendo una referencia válida; simplemente no está ejecutándose y por tanto no puede estar ACTIVE.
+
 ## Reappearance CURRENT
 
-Reappearance temporal existente:
+CURRENT:
 
 ```text
-ManagementEffect.reappearance_due_at
+ManagementEffect.reappearance_due_at: datetime
 ```
 
-Cuando corresponde y la occurrence principal sigue vigente:
-- se limpia el `ManagementEffect`;
-- se conserva la misma occurrence;
-- incrementa `management_cycle`;
-- se emite `ReappearanceChange`.
+y Runtime recibe un `ReappearanceDueAtResolver` global.
 
-### Reappearance por Special Condition
-
-CURRENT e implementado:
+Special Condition reappearance está implementada y validada:
 
 ```text
-managed Rule A
-AND A sigue evaluada ACTIVE
-AND A conserva la misma occurrence del ManagementEffect
-AND alguna identidad en A.reappearance_special_conditions está evaluada ACTIVE
--> A reappears
+managed A
+AND same occurrence
+AND A ACTIVE
+AND any referenced SC ACTIVE
+-> reappearance
 ```
 
-Semántica OR:
+Semántica OR, level-triggered; INACTIVE/ERROR no disparan; una occurrence cerrada no se resucita; timer + SC en el mismo ciclo produce una sola reappearance.
+
+## Reappearance TARGET
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
 
 ```text
-SC1 OR SC2 OR SC3
+AlarmDefinition.reappearance.after_minutes
+        |
+        | * 60
+        v
+PlannedAlarm.reappearance_after_seconds: int | None
 ```
 
-Una Rule no referenciada no dispara el efecto.
+Y:
 
-`INACTIVE` y `ERROR` no disparan.
+```text
+ManagementEffect.reappearance_due_at: datetime | None
+```
 
-Una occurrence principal cerrada no se resucita.
+`None` significa ausencia de timer. Combinaciones válidas:
 
-El trigger es **level-triggered**: si una Special Condition referenciada ya está ACTIVE cuando se gestiona A, la acción de Management puede registrarse como `EFFECTIVE`, pero su ManagementEffect se crea y se limpia dentro del mismo ciclo; se mantiene la misma occurrence, `management_cycle` incrementa y se emite una única reappearance.
+```text
+None + no SC        -> sin reappearance automático
+timer + no SC       -> sólo timer
+None + SC           -> sólo Special Condition
+timer + SC          -> timer OR Special Condition
+```
 
-El trigger se resuelve desde evaluaciones ACTIVE antes del cálculo final de priority, por lo que no depende de la disposición final de prioridad ni de visibilidad Delivery.
+`ReappearanceDueAtResolver` global queda SUPERSEDED como target.
 
-Si timer y Special Condition coinciden en el mismo ciclo, sólo se produce una reappearance.
+El due se deriva de:
+
+```text
+management_effect.effective_at
++
+planned_alarm.reappearance_after_seconds
+```
+
+Un cambio de timer durante una gestión activa se reconcilia desde el `effective_at` original. Si el nuevo due teórico ya venció, la reappearance ocurre en el instante efectivo de Adoption, no retroactivamente.
+
+Cambiar a `None` cancela sólo el mecanismo temporal; Special Conditions pueden seguir disparando.
+
+## Effective configuration
+
+La configuración EFFECTIVE global no se infiere desde snapshots individuales.
+
+PROJECT CONTRACT AGREED:
+
+```text
+AlarmEffectiveConfigurationHead
+    resolution_key
+    effective_at
+    adoption_id
+```
+
+`GroupRuntimeSnapshot.state_basis` conserva provenance de la última mutación de ese hot state y puede ser anterior al Effective Head sin ser inconsistente.
+
+Ver `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`.
 
 ## Conflicto con B.1 FROZEN
 
