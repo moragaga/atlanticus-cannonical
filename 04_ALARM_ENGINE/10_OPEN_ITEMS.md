@@ -1,6 +1,6 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN / B.2 FOCUSED / MATERIALIZATION + ADOPTION + LIVE DELIVERY CONTRACT CLOSED IN DESIGN**
+Estado: **OPEN / B.2 DESIGN LARGELY CLOSED / DOMAIN EXTRACTION PREREQUISITE NEXT**
 
 Cerrado antes de este checkpoint:
 - persistence/recovery qualification;
@@ -29,61 +29,85 @@ Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
 - `EngineResolvedCurrentState`;
 - backend materialization de `cause_text`;
 - Live publication rules;
-- Management round-trip sin evidence devuelto como autoridad.
+- Management round-trip sin evidence devuelto como autoridad;
+- B.2 pure resolver/package boundary;
+- B.2 process orchestration boundary.
 
-## OPEN relevantes al último tramo B.2
+## Prerequisito de implementación
 
-1. **Owner/package concreto de Configuration Resolution / Materialization**
-   - package y responsibility boundary;
-   - dependencias permitidas;
-   - artifact stores;
-   - no acoplar Engine a SharePoint/Tool discovery/Message resolution.
+Antes de implementar B.2 funcional:
 
-2. **Owner/package de Live Delivery**
-   - construir `EngineResolvedCurrentState`;
-   - join exacto con `DeliveryAlarmConfiguration`;
+```text
+Command Center — Alarm Domain Extraction
+```
+
+Target:
+
+```text
+scopes/ada-command-center/domain/alarms
+```
+
+Debe concentrar fundamentos + authoring definitions + `AlarmConfiguration` aggregate/document contract compartidos por Web y Backend.
+
+Ver `../14_ADA_COMMAND_CENTER/17_DOMAIN_OWNERSHIP_AND_MIGRATION.md`.
+
+## OPEN relevantes
+
+1. **Domain extraction implementation**
+   - root replacement sin aliases;
+   - actualización coordinada de Web + Engine imports;
+   - tests de dominio movidos a su nuevo owner;
+   - comportamiento sin cambios.
+
+2. **B.2 materialization implementation**
+   - target pure capability `backend/alarms/materialization`;
+   - target process `backend/processes/alarms-materialization`;
+   - artifact stores aún OPEN.
+
+3. **Owner/package de Live Delivery**
+   - construir/consumir `EngineResolvedCurrentState`;
+   - exact-key join con `DeliveryAlarmConfiguration`;
    - materializar `cause_text`;
-   - publicar snapshot lógico sin recalcular Engine semantics.
+   - publicar snapshot sin recalcular Engine semantics.
 
-3. **Current Tool reconciliation qualification**
-   - B.2 requiere Confirmed Tool Catalog + reconciliation-GREEN actual;
-   - el contrato exacto de este segundo input aún no está implementado/verificado.
+4. **Current Tool reconciliation qualification**
+   - Confirmed Tool Catalog + reconciliation-GREEN actual;
+   - contrato exacto de este segundo input aún no implementado/verificado.
 
-4. **Cause/evidence contract**
-   - CURRENT `EvidenceSnapshot` aporta `contract_key`, `contract_version`, `payload`;
-   - falta un schema por evaluator suficientemente explícito para validar placeholders de `cause_template` antes del Runtime.
+5. **Cause/evidence contract**
+   - falta schema evaluator suficientemente explícito para validar placeholders de `cause_template` antes del Runtime.
 
-5. **Management Capture implementation details**
-   - proveedor concreto de `shift_end`;
-   - persistence física de `CapturedManagementInput`;
-   - stale/unavailable submission outcomes;
-   - cleanup/invalidation autónoma de pending requests stale.
+6. **Management Capture implementation details**
+   - `shift_end` provider;
+   - persistence de Captured Management Input;
+   - stale/unavailable outcomes;
+   - pending request stale cleanup.
 
-6. **Runtime provenance cleanup**
+7. **Runtime provenance cleanup**
    - reemplazar pares históricos por `AlarmResolutionKey` donde representen una sola base;
    - `resolution_key_at_start` para occurrence provenance;
    - no aliases/adapters permanentes.
 
-7. **Adoption implementation gaps**
+8. **Adoption implementation gaps**
    - C1/C3 routing mutation;
    - evaluator/kind/priority-group/origin Tool transitions;
    - timer/Special Condition reconciliation target.
 
-8. **Adoption persistence**
+9. **Adoption persistence**
    - journal record discriminado y schema/version;
    - `adoption_id` generation;
-   - materialización del Effective Head;
+   - materialización Effective Head;
    - migration desde persistence CURRENT;
    - crash/recovery tests.
 
-9. **Tool routing qualification adicional**
-   - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
-   - routing tier matrix;
-   - Rule area vs Tool scope cuando corresponda.
+10. **Tool routing qualification adicional**
+    - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
+    - routing tier matrix;
+    - Rule area vs Tool scope cuando corresponda.
 
-10. **Operation details**
+11. **Operation details**
     - cadence/event triggers;
-    - persistence física de READY/BLOCKED y Live Projection;
+    - persistence física READY/BLOCKED y Live Projection;
     - schema versions/codecs;
     - retention;
     - deployment/container topology.
@@ -92,12 +116,14 @@ Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
 
 B.1 frozen Special Cascade sigue distinto de la suppression uniforme CURRENT por ranking.
 
-Además, B.1 contiene texto que exige Message activo durante B.2, mientras el Project acordó `inactive Message = válido pero no seleccionable para nuevas gestiones`. La reconciliación formal en `atlanticus-decisions` sigue pendiente.
+B.1 contiene texto que exige Message activo durante B.2, mientras el Project acordó `inactive Message = válido pero no seleccionable para nuevas gestiones`. La reconciliación formal en `atlanticus-decisions` sigue pendiente.
+
+Project baseline Python 3.14.7 difiere de `requires-python ==3.14.2` observado en packages CURRENT de Command Center. No mezclar ese cambio con Domain extraction salvo bloqueo real.
 
 ## Foco siguiente único
 
 ```text
-B.2 — Materialization Owner/Package + Implementation Boundary
+Command Center — Alarm Domain Extraction
 ```
 
-Este foco debe convertir los contratos ya cerrados en un incremento backend-first pequeño y verificable, sin mezclar UI final, Analytics/History ni broad Engine rewrite.
+Mover ownership sin cambiar semántica; B.2 funcional comienza en un incremento posterior.

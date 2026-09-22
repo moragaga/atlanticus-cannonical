@@ -1,6 +1,6 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT / B.2 IN PROGRESS — MATERIALIZATION + ADOPTION + LIVE DELIVERY CONTRACT AGREED / IMPLEMENTATION BOUNDARY NEXT**
+Estado: **CURRENT / DOMAIN OWNERSHIP CLOSED IN DESIGN — ALARM DOMAIN EXTRACTION NEXT**
 
 Checkpoint de implementación auditado:
 
@@ -13,7 +13,7 @@ Checkpoint canonical base de este delta:
 
 ```text
 moragaga/atlanticus-cannonical:main
-3ffa87c0e4249d749af4e669a977dfd744a666bb
+b85e6b2b27e39d0531b95f3fbe97ef6c8fd06949
 ```
 
 | Archivo | Contenido | Estado |
@@ -30,17 +30,24 @@ moragaga/atlanticus-cannonical:main
 | `10_INITIAL_OUT_OF_SCOPE.md` | Qué no entra inicialmente. | CURRENT DIRECTION |
 | `11_GOLDEN_PATH.md` | Vertical integrada. | PARTIALLY IMPLEMENTED |
 | `12_SOURCE_LEDGER.md` | Fuentes auditadas y trazabilidad. | AUDIT LEDGER |
-| `13_OPEN_ITEMS.md` | Gaps pendientes después del cierre Delivery/Live. | OPEN / IMPLEMENTATION BOUNDARY NEXT |
+| `13_OPEN_ITEMS.md` | Gaps posteriores al cierre de ownership y Live Delivery. | OPEN / IMPLEMENTATION NEXT |
 | `14_TOOL_CATALOG.md` | Consolidador durable read-only de Tools. | CURRENT V1 / CLOSED |
 | `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Authoring + validation + materialization/adoption contract. | CURRENT + PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
 | `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Delivery artifact, Engine current-state output, cause materialization, Live publication y Management round-trip. | PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
+| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | `domain/backend/web`, ownership transversal de Alarm Configuration, B.2 package boundary y orden de migración. | PROJECT CONTRACT AGREED / MIGRATION NOT IMPLEMENTED |
 
 Foco único CURRENT:
 
 ```text
-B.2 — Materialization Owner/Package + Implementation Boundary
+Command Center — Alarm Domain Extraction
 ```
 
-Ya están cerrados en diseño, pero no implementados, Deactivation/Messages, reappearance materialization, TRACE_ONLY, Effective Configuration Head, Delivery Configuration, Engine Current State y Alarm Live Projection.
+Target arquitectónico previo al B.2 funcional:
 
-No mezclar todavía con UI final, History/Analytics ni broad Engine rewrite.
+```text
+scopes/ada-command-center/domain/alarms
+```
+
+Web Configuration y Backend Alarm Engine consumen el mismo dominio; B.2 pure materialization queda target en `backend/alarms/materialization` y su proceso en `backend/processes/alarms-materialization`.
+
+No mezclar el primer incremento de migración con B.2 funcional, Runtime Adoption, Live Delivery, UI final ni History/Analytics.

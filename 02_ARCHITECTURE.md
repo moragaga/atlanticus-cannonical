@@ -1,6 +1,6 @@
 # Atlanticus — Architecture
 
-Estado: **CURRENT**
+Estado: **CURRENT + COMMAND CENTER DOMAIN LAYER TARGET AGREED**
 
 ## Regla principal
 
@@ -9,6 +9,51 @@ Atlanticus es plataforma modular reusable.
 ADA consume Atlanticus.
 
 El núcleo genérico de Atlanticus no depende de ADA.
+
+## ADA Command Center domain layer
+
+PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
+
+ADA Command Center distingue tres categorías en su scope:
+
+```text
+scopes/ada-command-center/
+├── domain/
+├── backend/
+└── web/
+```
+
+`domain/` contiene contratos funcionales puros que tienen consumidores independientes en Web y Backend y no pertenecen exclusivamente a ninguna capa técnica.
+
+Primer dominio acordado:
+
+```text
+scopes/ada-command-center/domain/alarms
+```
+
+Debe convertirse en autoridad de:
+- fundamentos de identidad/clasificación compartidos;
+- Alarm Configuration authoring definitions;
+- `AlarmConfiguration` aggregate;
+- invariantes/validation pura del aggregate;
+- durable document encode/decode del aggregate.
+
+Reglas:
+
+```text
+Web -> Domain
+Backend -> Domain
+Domain -X-> Web
+Domain -X-> Runtime/Persistence/Infrastructure
+```
+
+No usar `shared` como cajón genérico.
+
+No duplicar DTOs equivalentes entre Web y Backend.
+
+La migración se hace como root replacement sin aliases legacy permanentes.
+
+Ver `14_ADA_COMMAND_CENTER/17_DOMAIN_OWNERSHIP_AND_MIGRATION.md`.
 
 ## Configuration / Administration
 
