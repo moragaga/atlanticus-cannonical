@@ -1,22 +1,25 @@
 # Alarm Engine — Qualification Baseline
 
-Estado: **R3.5 CLOSED PASS/GREEN**
+Estado: **R3.5 CLOSED PASS/GREEN / B.2 PURE RESOLVER IMPLEMENTATION EVIDENCE ADDED**
 
-## Campaña
+## Campaña R3.5
 
-`alarm_test/` conserva una campaña acumulativa R3.5 con fases A, B, C, D, E y F, múltiples revisiones del planner y contratos/checkpoints.
+`alarm_test/` conserva una campaña acumulativa R3.5 con fases A, B, C, D, E y F, múltiples revisiones
+del planner y contratos/checkpoints.
 
 No usar solo el último XLSX para borrar la genealogía de findings.
 
 ## Hallazgos de método
 
-La campaña aisló presiones: source unavailable, invalid candidate, lease loss, cache promotion failure, drain y soak no se combinaron arbitrariamente. Esto evita adjudicar una falla a múltiples causas simultáneas.
+La campaña aisló presiones: source unavailable, invalid candidate, lease loss, cache promotion failure,
+drain y soak no se combinaron arbitrariamente. Esto evita adjudicar una falla a múltiples causas.
 
 ## E-008
 
 Source Unavailable / CACHE_FALLBACK.
 
-Propiedad: fallback controlado bajo source no disponible; no confundir ausencia de source con autorización para adoptar estado inválido.
+Propiedad: fallback controlado bajo source no disponible; no confundir ausencia de source con
+autorización para adoptar estado inválido.
 
 Estado de campaña: CLOSED según planner v1.0.92.
 
@@ -142,6 +145,63 @@ Cierre final recuperado:
 - sin product findings abiertos;
 - F011 profiling no requerido.
 
+## Pure B.2 Resolver — qualification observada
+
+Checkpoint implementado:
+
+```text
+moragaga/atlanticus:main
+9398786ae9af7c00de1bcca9d7a311fe9ef2155f
+```
+
+El incremento cubre:
+- READY Runtime + Delivery atómico;
+- disabled Rule y evaluator qualification;
+- Tool existence + GREEN;
+- C1/C2/C3;
+- C2 cumulative offsets y disabled-step exclusion;
+- Process/Integrated Operations/Strategic visual target behavior;
+- active/inactive Messages y deactivation override;
+- deterministic findings;
+- minutos -> segundos para reappearance.
+
+Ejecución local reportada:
+
+```text
+uv run pytest
+31 passed in 0.07s
+
+uv run ruff check .
+All checks passed!
+```
+
+El último `ruff format --check .` mostrado antes de la publicación del commit todavía indicaba:
+
+```text
+commented/.../resolver.py
+src/.../resolver.py
+```
+
+como archivos a reformatear.
+
+No existe en la evidencia de este cierre una salida posterior explícita del formatter.
+
+Por tanto:
+
+```text
+B.2 behavior/unit tests   VERIFIED / GREEN
+B.2 lint                  VERIFIED / GREEN
+B.2 implementation main  VERIFIED / CURRENT
+B.2 final format gate     UNVERIFIED
+```
+
+Confirmar una sola vez el formatter sobre el checkpoint CURRENT como gate de entrada del próximo
+incremento. No repetir la qualification funcional si no aparece nueva evidencia.
+
 ## Regla posterior
 
-El cierre redirigió la siguiente fase hacia productization/clean integration. No repetir campañas largas por rutina; hacerlo solo ante nueva evidencia/riesgo.
+El cierre R3.5 redirigió hacia productization/clean integration.
+
+El cierre B.2 pure resolver redirige hacia el **Materialization Process**.
+
+No repetir campañas largas ni reabrir resolver por rutina; hacerlo sólo ante nueva evidencia/riesgo.

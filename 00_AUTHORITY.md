@@ -10,11 +10,20 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `cd08bd8d2c25bd89eb39fa15cbda209c8e9be617`
+  `9398786ae9af7c00de1bcca9d7a311fe9ef2155f`
 - Parent inmediato:
-  `431384326890d4d0b84d977a980e325a969c0e42`
+  `b9d0085387388b662bbaf7e76030b7a983b8c76e`
 - Fecha observada del commit:
-  `2026-09-22T21:53:31Z`
+  `2026-09-22T23:26:38Z`
+
+El commit `9398786ae9af7c00de1bcca9d7a311fe9ef2155f` contiene el incremento relevante de este cierre:
+- `resolver.py` productivo B.2;
+- export público `resolve_alarm_configuration`;
+- espejo pedagógico comentado;
+- `tests/test_resolver.py`.
+
+Los commits intermedios posteriores al checkpoint Alarm anterior que sólo tocaron tooling u otros scopes no
+cambian los contratos de Alarm Engine y no forman parte de este cierre semántico.
 
 Estado acumulado relevante para ADA Command Center Alarm Engine:
 
@@ -25,31 +34,44 @@ B.2-MATERIALIZATION-CONTRACTS                      CLOSED / VERIFIED / CURRENT
 B.2-RESOLVER-QUALIFICATION-INPUT-CONTRACTS         CLOSED / VERIFIED / CURRENT
 DEACTIVATION-CASCADE-SCOPE                         CLOSED / VERIFIED / CURRENT
 RUNTIME-REAPPEARANCE-AFTER-SECONDS-CONTRACT        CLOSED / VERIFIED / CURRENT
-PURE-B.2-RESOLVER                                  PLANNED / NEXT
-B.2-MATERIALIZATION-PROCESS                        PLANNED
+PURE-B.2-RESOLVER                                  CURRENT / IMPLEMENTED
+B.2-MATERIALIZATION-PROCESS                        PLANNED / NEXT
 RUNTIME-ADOPTION-EFFECTIVE-HEAD                    PLANNED
 ALARM-LIVE-DELIVERY                                PLANNED
 ```
 
-Desde el checkpoint documental anterior `bc3fffd72afb712d5b5ab84522c379abf2a19642`,
-los cambios Alarm Core de este cierre están contenidos en:
+Qualification observada durante el cierre del resolver:
 
 ```text
-d48abf17689e7dd8ef93827415b71b7b6be4385b
-    deactivation cascade scope
+uv run pytest
+31 passed
 
-cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
-    PlannedAlarm.reappearance_after_seconds
+uv run ruff check .
+All checks passed
 ```
 
-Otros commits intermedios tocaron otros frentes y no forman parte de este cierre semántico.
+El último `ruff format --check .` compartido antes del commit todavía pedía reformatear los dos
+`resolver.py`. El commit CURRENT contiene blobs posteriores distintos de aquel ZIP previo, pero este
+cierre no dispone de una salida explícita posterior de `ruff format --check .`.
+
+Clasificación:
+
+```text
+resolver implementation on main       VERIFIED / CURRENT
+31 tests                               VERIFIED
+ruff check                             VERIFIED
+final ruff format --check evidence     UNVERIFIED
+```
+
+No inferir el último gate sólo por la existencia del commit. Confirmarlo como gate de entrada del
+siguiente incremento; si está GREEN, no reabrir diseño ni comportamiento del resolver.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `56943d94889719544f426322ded4a877245dfaee`
+  `7fea2819aa4c22f9d7494cbe79ab8740ee3f4366`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -63,8 +85,8 @@ Otros commits intermedios tocaron otros frentes y no forman parte de este cierre
 
 Permanece **HISTORICAL**.
 
-Las decisiones B.1/B.2 preservan intención contractual útil, pero no prevalecen sobre
-implementación CURRENT ni sobre refinamientos explícitos posteriores del Project.
+Las decisiones B.1/B.2 preservan intención contractual útil, pero no prevalecen sobre implementación
+CURRENT ni sobre refinamientos explícitos posteriores del Project.
 
 ## Jerarquía
 
@@ -178,7 +200,89 @@ reappearance_after_seconds
 reappearance_special_conditions
 ```
 
-`reappearance_after_seconds` es `None | int > 0`.
+## B.2 Materialization CURRENT
+
+Package:
+
+```text
+scopes/ada-command-center/backend/alarms/materialization
+ada-command-center-alarms-materialization==1.0.0
+ada_command_center.alarms.materialization
+```
+
+Punto de entrada CURRENT:
+
+```python
+resolve_alarm_configuration(...)
+```
+
+Frontera:
+
+```text
+AlarmConfiguration
++ alarm_configuration_revision
++ Confirmed Tool Catalog compatible con revision + get(tool_key)
++ ToolReconciliationQualification
++ EvaluatorQualificationCatalog
+        |
+        v
+pure deterministic resolver
+        |
+        v
+AlarmConfigurationResolution
+```
+
+No I/O, stores, scheduler, acquisition ni orchestration.
+
+Atomicidad:
+
+```text
+READY
+=> no BLOCKING
+=> Runtime existe
+=> Delivery existe
+=> ambos usan la misma AlarmResolutionKey
+
+BLOCKED
+=> existe BLOCKING
+=> Runtime is None
+=> Delivery is None
+```
+
+El resolver construye `AlarmResolutionKey` desde la revisión Alarm authored y la revisión exacta del
+Confirmed Tool Catalog; no recibe una segunda revisión Tool independiente.
+
+## Resolver CURRENT — invariantes congeladas
+
+- candidate completo; no publication parcial por Rule;
+- evaluator qualification para toda Rule definida, incluso disabled;
+- todas las referencias Tool definidas deben existir en el catálogo exacto y estar GREEN;
+- los escalation steps disabled no son routing ejecutable, pero su referencia Tool sigue siendo
+  parte de la definición y se califica;
+- C1: enabled steps sólo admiten `None | 0` y materializan destinos inmediatos;
+- C2: cada enabled step exige wait `> 0`; las esperas relativas se acumulan y se materializan como
+  offsets absolutos `delay_seconds` desde el inicio de la occurrence;
+- steps disabled no contribuyen al acumulado C2;
+- C3: no admite enabled escalation steps y Runtime queda sólo con origin;
+- active Rule -> defined + PlannedAlarm + parameters;
+- disabled Rule -> defined + Delivery, sin PlannedAlarm ni parameters Runtime;
+- inactive Message es válido pero no se materializa como opción para nueva gestión;
+- Message `deactivation_override` reemplaza completamente el default;
+- `ReappearanceDefinition.after_minutes`: `None -> None`, `M -> M * 60`;
+- Process visual target requiere `process_projection_mode`;
+- Integrated Operations visual target no admite `process_projection_mode`;
+- Strategic visual target queda BLOCKED mientras la proyección Alarm siga indefinida;
+- visual components/subcomponents deben existir en `ToolStructure`;
+- Delivery materializa referencias estables y no copia `ToolStructure`;
+- findings CURRENT usados por el resolver:
+  `evaluator_not_qualified`,
+  `tool_reference_not_found`,
+  `tool_reference_not_green`,
+  `routing_invalid_for_criticality`,
+  `visual_target_invalid`;
+- findings se producen en orden determinístico;
+- validaciones internas ya garantizadas por `AlarmConfiguration` no se duplican en el resolver;
+- malformed DTO/input contract sigue siendo error de programación, no finding B.2.
 
 ## Deactivation cascade CURRENT
 
@@ -208,41 +312,6 @@ Pending approval no suprime hasta materializar un `DeactivationEffect`.
 
 Routing continúa durante deactivation/suppression.
 
-## B.2 Materialization CURRENT
-
-Package:
-
-```text
-scopes/ada-command-center/backend/alarms/materialization
-ada-command-center-alarms-materialization==1.0.0
-ada_command_center.alarms.materialization
-```
-
-Atomicidad congelada:
-
-```text
-READY
-=> no BLOCKING
-=> Runtime existe
-=> Delivery existe
-=> ambos usan la misma AlarmResolutionKey
-
-BLOCKED
-=> existe BLOCKING
-=> Runtime is None
-=> Delivery is None
-```
-
-Qualification inputs CURRENT:
-
-```text
-ToolReconciliationQualification
-EvaluatorQualificationKey
-EvaluatorQualificationCatalog
-```
-
-La adquisición concreta sigue fuera del resolver puro.
-
 ## Conflictos visibles
 
 Project baseline:
@@ -257,39 +326,32 @@ ADA Command Center backend CURRENT:
 requires-python ==3.14.2
 ```
 
-Permanece OPEN y separado del resolver.
+Permanece OPEN y separado de Materialization salvo bloqueo demostrado.
 
 `atlanticus-decisions` conserva formulaciones históricas incompatibles o menos precisas que CURRENT:
 - Special Cascade B.1 vs suppression uniforme por `priority_order`;
-- B.1 no expresa la deactivation vigente como fuente independiente de cascade suppression;
-- Message activo requerido en formulación histórica vs inactive Message válido pero no seleccionable.
+- B.1 no expresa deactivation vigente como fuente independiente de cascade suppression;
+- Message activo requerido históricamente vs inactive Message válido pero no seleccionable;
+- Strategic visual behavior quedó históricamente sin contrato específico; CURRENT B.2 bloquea
+  Strategic visual targets;
+- el detalle C2 relativo -> offset acumulado queda refinado por implementación CURRENT.
 
 ## Siguiente foco único
 
 ```text
-PURE B.2 ALARM CONFIGURATION RESOLVER
+B.2 MATERIALIZATION PROCESS
 PLANNED / NEXT
 ```
 
-Debe ser puro y consumir inputs explícitos.
+Gate de entrada:
+- confirmar una vez `uv run ruff format --check .` sobre el checkpoint CURRENT;
+- si GREEN, no reabrir el resolver.
 
-Entre sus materializaciones Runtime deberá resolver:
+El siguiente incremento debe diseñar primero la frontera del proceso que:
+- adquiere los inputs;
+- compara revisions cuando corresponda;
+- invoca el resolver puro;
+- persiste/publica artifacts y findings según contratos explícitos;
+- emite diagnósticos operacionales.
 
-```text
-ReappearanceDefinition.after_minutes
-    None -> PlannedAlarm.reappearance_after_seconds = None
-    M    -> PlannedAlarm.reappearance_after_seconds = M * 60
-```
-
-No mezclar con:
-- acquisition/I/O;
-- stores;
-- scheduler;
-- `backend/processes/alarms-materialization`;
-- Runtime Adoption;
-- Effective Head;
-- Live Delivery;
-- Management Capture;
-- provenance migration;
-- deactivation ownership cleanup;
-- broad Engine cleanup.
+No mezclar con Runtime Adoption, Live Delivery, Management Capture ni broad Core cleanup.

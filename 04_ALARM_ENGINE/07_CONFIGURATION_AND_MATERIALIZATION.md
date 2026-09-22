@@ -1,6 +1,6 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **B.2 CONTRACTS IMPLEMENTED / CORE PREREQUISITES READY / PURE RESOLVER PLANNED NEXT / ADOPTION + LIVE DELIVERY NOT IMPLEMENTED**
+Estado: **B.2 CONTRACTS + PURE RESOLVER CURRENT / MATERIALIZATION PROCESS PLANNED NEXT / ADOPTION + LIVE DELIVERY NOT IMPLEMENTED**
 
 ## Authority checkpoint
 
@@ -8,14 +8,14 @@ Implementación auditada:
 
 ```text
 moragaga/atlanticus:main
-cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
+9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 ```
 
-Canonical base de este cierre:
+Canonical inspeccionado antes de este reemplazo:
 
 ```text
 moragaga/atlanticus-cannonical:main
-56943d94889719544f426322ded4a877245dfaee
+7fea2819aa4c22f9d7494cbe79ab8740ee3f4366
 ```
 
 Decisions consultado:
@@ -43,8 +43,6 @@ B.2 no elimina silenciosamente una Rule rota para construir un artifact parcial.
 
 ## Owner CURRENT
 
-Implementado:
-
 ```text
 scopes/ada-command-center/backend/alarms/materialization
 ```
@@ -61,12 +59,19 @@ Namespace:
 ada_command_center.alarms.materialization
 ```
 
-Dependencias CURRENT:
+Dependencias declaradas CURRENT:
 - Alarm Core;
 - Alarm Domain;
-- `ada-web-tools` para `ToolConfigurationKind`.
+- `ada-web-tools`.
 
-No contiene resolver completo, I/O, stores, scheduler ni orchestration.
+El resolver no agregó dependencia directa al package operacional `ada-command-center-tools-catalog`.
+Consume estructuralmente el catálogo confirmado por:
+- `revision`;
+- `get(tool_key)`;
+- entries con `kind` y `structure`.
+
+Esto permite recibir el `ToolCatalogSnapshot` real sin acoplar Materialization a stores,
+consolidator o dependencias de infraestructura del package de catálogo.
 
 ## AlarmResolutionKey CURRENT
 
@@ -82,6 +87,12 @@ Shape:
 alarm_configuration_revision
 confirmed_tool_catalog_revision
 ```
+
+El resolver construye la key desde:
+- `alarm_configuration_revision` explícita;
+- `confirmed_tool_catalog.revision`.
+
+No se pasa una revisión Tool separada.
 
 No contiene evaluator revision.
 
@@ -112,7 +123,7 @@ AlarmConfigurationResolution
     delivery_configuration?
 ```
 
-Atomicidad implementada:
+Atomicidad:
 
 ```text
 READY
@@ -129,121 +140,21 @@ BLOCKED
 
 No existe readiness parcial.
 
-## Runtime Configuration CURRENT
+## Pure B.2 resolver CURRENT
 
-```text
-RuntimeAlarmConfiguration
-    resolution_key
-    defined_alarm_identities
-    planned_alarms
-    parameters_by_alarm
+Punto de entrada:
+
+```python
+resolve_alarm_configuration(
+    configuration,
+    alarm_configuration_revision,
+    confirmed_tool_catalog,
+    tool_qualification,
+    evaluator_qualification,
+) -> AlarmConfigurationResolution
 ```
 
-Invariantes implementadas:
-- no identities definidas duplicadas;
-- no plans duplicados;
-- todo planned alarm debe estar definido;
-- las revisions CURRENT del `PlannedAlarm` deben coincidir con `AlarmResolutionKey`;
-- parameters sólo para planned alarms;
-- valores de parámetros: `str | float | bool`.
-
-Representación:
-
-```text
-active executable
--> defined + PlannedAlarm
-
-disabled
--> defined + no PlannedAlarm
-
-removed
--> absent
-```
-
-No contiene evaluator callable, `DataRequirement`, `DataLoadPlan`, `AlarmExecutionSession`,
-Message catalog ni visibility metadata.
-
-## PlannedAlarm Runtime prerequisites CURRENT
-
-`PlannedAlarm` ya dispone de los dos componentes Runtime de reappearance:
-
-```text
-reappearance_after_seconds: int | None
-reappearance_special_conditions: tuple[AlarmIdentity, ...]
-```
-
-Contrato de materialización B.2 para una Rule activa:
-
-```text
-ReappearanceDefinition.after_minutes is None
--> reappearance_after_seconds = None
-
-ReappearanceDefinition.after_minutes = M
--> reappearance_after_seconds = M * 60
-```
-
-No introducir un segundo DTO de timer ni mantener minutos dentro del Runtime artifact.
-
-Disabled Rule:
-- permanece en `defined_alarm_identities`;
-- no produce `PlannedAlarm`;
-- por tanto no materializa timer Runtime ejecutable.
-
-## Delivery Configuration CURRENT
-
-```text
-DeliveryAlarmConfiguration
-    resolution_key
-    alarms: tuple[ResolvedDeliveryAlarm, ...]
-```
-
-`ResolvedDeliveryAlarm` CURRENT:
-
-```text
-identity
-is_active
-visibility_mode
-display_name
-title
-cause_template
-kind
-criticality
-business_category
-operational_areas
-color
-default_deactivation_policy
-messages
-visual_targets
-```
-
-Delivery admite Rules disabled y TRACE_ONLY; removed significa ausencia.
-
-No contiene evaluator, parameters, priority source data, routing, reappearance, lifecycle hot state
-ni `ToolStructure`.
-
-## Qualification input contracts CURRENT
-
-Implementado:
-
-```text
-ToolReconciliationQualification
-    green_tool_keys
-    is_green(tool_key)
-
-EvaluatorQualificationKey
-    family_key
-    evaluator_key
-
-EvaluatorQualificationCatalog
-    qualified_keys
-    is_qualified(family_key, evaluator_key)
-```
-
-La producción/adquisición concreta de ambos inputs sigue fuera del package contractual.
-
-## Pure B.2 resolver — NEXT / NOT IMPLEMENTED
-
-Frontera objetivo:
+Frontera:
 
 ```text
 AlarmConfiguration
@@ -259,27 +170,223 @@ pure deterministic resolver
 AlarmConfigurationResolution
 ```
 
+El resolver:
+- no hace I/O;
+- no lee Cosmos, Blob, SharePoint ni Runtime stores;
+- no adquiere qualification;
+- no persiste artifacts;
+- no decide EFFECTIVE;
+- no ejecuta scheduler/orchestration;
+- no reimplementa priority, Management suppression, deactivation cascade ni Special Condition
+  Runtime behavior.
+
 Acquisition pertenece al futuro Materialization Process.
 
-El resolver no debe leer Cosmos, Blob, SharePoint ni Runtime stores.
+## Qualification externa CURRENT
 
-## Validations/materializations congeladas para el resolver
+Evaluator:
+- toda Rule definida debe estar qualified por `(family_key, evaluator_key)`;
+- aplica incluso a Rules disabled.
 
-Debe respetar:
-- full candidate, no partial Rule publication;
-- evaluator qualification para toda Rule definida, incluso disabled;
-- Tool references contra exact Confirmed Tool Catalog + GREEN qualification;
-- C1/C2/C3 routing materialization;
-- Message reference validation y active-message selection;
-- inactive Message válido pero no seleccionable para nuevas gestiones;
-- deactivation override = full replacement;
-- Special Condition reference qualification;
-- `after_minutes * 60 -> reappearance_after_seconds`;
-- visual target resolution;
-- priority/cross-rule invariants que pertenezcan a B.2;
-- all findings determinísticos y sin silent correction.
+Tools:
+- origin;
+- cada escalation target, incluso step disabled;
+- cada visual target;
+- deben existir en el catálogo confirmado exacto y estar GREEN.
 
-## Runtime gaps que siguen separados
+Finding codes CURRENT:
+
+```text
+evaluator_not_qualified
+tool_reference_not_found
+tool_reference_not_green
+routing_invalid_for_criticality
+visual_target_invalid
+```
+
+Todos los findings usados hoy son `BLOCKING`.
+`WARNING` existe en el contrato, pero el resolver CURRENT no inventa warnings.
+
+El recorrido y orden de findings son determinísticos.
+
+## Routing CURRENT
+
+Los steps se consideran por `step_order`.
+
+### C1
+
+Enabled step:
+
+```text
+wait_minutes_from_previous_step in {None, 0}
+-> RoutingDestination(delay_seconds=None)
+```
+
+Un wait positivo bloquea el candidato.
+
+### C2
+
+Cada enabled step requiere:
+
+```text
+wait_minutes_from_previous_step > 0
+```
+
+La definición authored expresa espera relativa respecto del step ejecutable previo.
+
+Runtime requiere offsets absolutos desde el inicio de la occurrence.
+
+Por tanto:
+
+```text
+waits 10, 5, 7 minutos
+-> delay_seconds 600, 900, 1320
+```
+
+Los steps disabled:
+- no se materializan como destinos;
+- no contribuyen al acumulado temporal;
+- su `target_tool_key` sigue siendo una referencia definida y debe existir + estar GREEN.
+
+### C3
+
+No admite enabled escalation steps.
+
+Runtime:
+
+```text
+AlarmRouting(origin_tool_key=..., destinations=())
+```
+
+## Runtime Configuration CURRENT
+
+```text
+RuntimeAlarmConfiguration
+    resolution_key
+    defined_alarm_identities
+    planned_alarms
+    parameters_by_alarm
+```
+
+Representación:
+
+```text
+active executable
+-> defined + PlannedAlarm + parameters
+
+disabled
+-> defined + no PlannedAlarm + no parameters
+
+removed
+-> absent
+```
+
+`PlannedAlarm` materializado recibe:
+- identity/kind/criticality/priority;
+- evaluator key;
+- revisions alineadas con `AlarmResolutionKey`;
+- routing;
+- `DeactivationPolicy` sólo si default deactivation está enabled;
+- reappearance timer;
+- reappearance Special Conditions.
+
+Conversión:
+
+```text
+ReappearanceDefinition.after_minutes is None
+-> reappearance_after_seconds = None
+
+ReappearanceDefinition.after_minutes = M
+-> reappearance_after_seconds = M * 60
+```
+
+## Delivery Configuration CURRENT
+
+Delivery conserva toda Rule definida, incluidas:
+- disabled;
+- TRACE_ONLY.
+
+Message selection:
+- referencias inválidas ya son rechazadas por `AlarmConfiguration`;
+- inactive Message permanece definición válida;
+- inactive Message no se materializa como opción para nueva gestión;
+- sin override: usa default deactivation de la Rule;
+- con override: reemplazo completo, no merge campo a campo.
+
+Visual targets:
+- Tool debe existir y estar GREEN;
+- Process requiere `process_projection_mode`;
+- Integrated Operations no admite `process_projection_mode`;
+- Strategic queda BLOCKED mientras Alarm projection siga indefinida;
+- component/subcomponent deben existir;
+- Delivery conserva referencias estables;
+- no copia `ToolStructure`.
+
+## Responsabilidad del Domain que B.2 no duplica
+
+`AlarmConfiguration` sigue siendo owner de:
+- identity uniqueness;
+- `rule_name` uniqueness por family;
+- prioridad/cross-rule authoring invariants;
+- Message existence/scope;
+- Special Condition existence/family/priority_group;
+- invariantes locales de definitions.
+
+El resolver no vuelve a implementar esas validaciones.
+
+## Qualification observada
+
+Ejecución compartida con CPython 3.14.2:
+
+```text
+uv run pytest
+31 passed in 0.07s
+
+uv run ruff check .
+All checks passed!
+```
+
+El último output de:
+
+```text
+uv run ruff format --check .
+```
+
+mostrado antes del commit todavía indicaba dos `resolver.py` por reformatear.
+
+El checkpoint CURRENT `9398786...` contiene versiones posteriores del incremento, pero no se preservó
+en este cierre una nueva salida explícita del formatter.
+
+Estado de evidencia:
+
+```text
+functional tests     VERIFIED / GREEN
+lint                 VERIFIED / GREEN
+final formatter gate UNVERIFIED
+implementation main  VERIFIED / CURRENT
+```
+
+## Materialization Process — NEXT / NOT IMPLEMENTED
+
+Target físico acordado:
+
+```text
+scopes/ada-command-center/backend/processes/alarms-materialization
+```
+
+Responsabilidad futura:
+- acquisition de inputs;
+- revision comparison cuando corresponda;
+- creación/adquisición de ToolReconciliationQualification;
+- creación/adquisición de EvaluatorQualificationCatalog;
+- invocación del resolver puro;
+- persistencia/publicación de artifacts y findings;
+- diagnostics/telemetry/retry/exit behavior.
+
+No asumir automatización total: el proceso puede incluir operación humana controlada si el contrato lo
+requiere; esa decisión operacional todavía no está cerrada.
+
+## Runtime gaps separados
 
 OPEN:
 - provenance histórica de `PlannedAlarm`/occurrence -> `AlarmResolutionKey`;
@@ -287,9 +394,7 @@ OPEN:
 - cleanup de `PlannedAlarm.deactivation_policy`;
 - Runtime Adoption/Effective Head.
 
-Ya no está OPEN el shape Runtime `reappearance_after_seconds`.
-
-El pure resolver no debe convertir los gaps restantes en adapters o contratos paralelos.
+El resolver no debe convertir estos gaps en adapters o contratos paralelos.
 
 ## Runtime Adoption / EFFECTIVE
 
@@ -299,13 +404,11 @@ Sigue NOT IMPLEMENTED.
 B.2 READY != EFFECTIVE
 ```
 
-Ver `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`.
-
 ## Live Delivery
 
-Contrato de diseño permanece acordado y no fue implementado en este hito.
+Contrato de diseño permanece acordado y no fue implementado.
 
-Exact-key alignment sigue congelado:
+Exact-key alignment:
 
 ```text
 EngineResolvedCurrentState.resolution_key
@@ -317,11 +420,12 @@ AlarmEffectiveConfigurationHead.resolution_key
 
 ## OPEN después de este checkpoint
 
-- pure B.2 resolver;
+- evidence final de formatter del resolver;
 - productor/adquisición de current Tool reconciliation GREEN;
 - productor/adaptación de evaluator qualification;
 - `backend/processes/alarms-materialization`;
-- artifact stores;
+- Runtime/Delivery/findings artifact stores;
+- codecs/schema versions/retention;
 - cause/evidence schema;
 - Runtime provenance cleanup;
 - reappearance reconciliation durante Runtime Adoption;
@@ -330,11 +434,16 @@ AlarmEffectiveConfigurationHead.resolution_key
 - Live Delivery implementation;
 - Management Capture;
 - routing tier/kind constraints adicionales;
-- cadence, codecs, schema versions, retention y deployment topology.
+- Rule area vs Tool scope qualification;
+- cadence/event trigger/deployment topology;
+- Python baseline conflict.
 
 ## No reabrir por conveniencia
 
-B.2 no debe:
+B.2 resolver CURRENT no debe:
+- adquirir datos;
+- leer stores;
+- persistir;
 - reimplementar priority;
 - reimplementar Management suppression;
 - reimplementar deactivation cascade;

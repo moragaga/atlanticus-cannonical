@@ -1,12 +1,12 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN / CORE PREREQUISITES CLOSED / B.2 CONTRACTS CLOSED / PURE RESOLVER NEXT**
+Estado: **OPEN / PURE B.2 RESOLVER IMPLEMENTED / MATERIALIZATION PROCESS NEXT**
 
 Checkpoint:
 
 ```text
 moragaga/atlanticus:main
-cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
+9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 ```
 
 ## CLOSED / CURRENT
@@ -28,27 +28,50 @@ cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
 - `ToolReconciliationQualification`.
 - `EvaluatorQualificationKey`.
 - `EvaluatorQualificationCatalog`.
+- pure deterministic B.2 resolver implementado y exportado.
+- C1/C2/C3 materialization implementada.
+- active-message selection y full deactivation override implementados.
+- visual target qualification/materialization implementada.
+- reappearance minutes -> seconds implementada.
+
+## Qualification pendiente mínima
+
+La última evidencia compartida confirma:
+- 31 tests PASS;
+- Ruff lint PASS.
+
+No conserva una salida posterior explícita del formatter tras la corrección/commit.
+
+Estado:
+
+```text
+final ruff format --check evidence
+UNVERIFIED
+```
+
+Gate de entrada del siguiente incremento: confirmarlo una vez. No es un nuevo frente de arquitectura.
 
 ## OPEN relevantes
 
-### 1. Pure B.2 resolver — NEXT
+### 1. Materialization Process — NEXT
 
-Implementar resolución/validación determinística contra inputs explícitos.
-
-No I/O.
-
-No process orchestration.
-
-Debe producir solamente `AlarmConfigurationResolution`.
-
-Debe materializar, entre otros contratos:
+Target:
 
 ```text
-ReappearanceDefinition.after_minutes
--> PlannedAlarm.reappearance_after_seconds
+scopes/ada-command-center/backend/processes/alarms-materialization
 ```
 
-con `None -> None` y `M -> M * 60`.
+Debe diseñarse antes de implementar.
+
+Responsabilidad:
+- acquisition;
+- revision comparison cuando corresponda;
+- resolver invocation;
+- artifact/findings persistence;
+- diagnostics;
+- retry/exit/operational behavior.
+
+No meter esta responsabilidad dentro del resolver.
 
 ### 2. Tool reconciliation qualification producer
 
@@ -73,31 +96,17 @@ EvaluatorQualificationCatalog
 Sigue OPEN cómo se deriva desde el deployed evaluator registry/catalog sin transportar callables ni
 `DataRequirement` al artifact.
 
-### 4. Materialization process
-
-Target:
-
-```text
-scopes/ada-command-center/backend/processes/alarms-materialization
-```
-
-Responsabilidad futura:
-- acquisition;
-- revision comparison;
-- resolver invocation;
-- artifact/findings persistence;
-- process diagnostics.
-
-### 5. Artifact persistence
+### 4. Artifact persistence
 
 OPEN:
 - Runtime Configuration store;
 - Delivery Configuration store;
 - findings/history;
 - codecs/schema versions;
-- retention.
+- retention;
+- exact physical keys/containers.
 
-### 6. Runtime provenance cleanup
+### 5. Runtime provenance cleanup
 
 CURRENT todavía usa pares históricos donde corresponde:
 
@@ -115,14 +124,9 @@ resolution_key_at_start
 
 Sin aliases permanentes.
 
-### 7. Reappearance reconciliation during Adoption
+### 6. Reappearance reconciliation during Adoption
 
-El Runtime shape ya está CLOSED:
-
-```text
-reappearance_after_seconds
-reappearance_special_conditions
-```
+Runtime shape y B.2 materialization ya están CLOSED/CURRENT.
 
 Sigue OPEN reconciliar hot state cuando una revisión EFFECTIVE cambia:
 - timer;
@@ -130,19 +134,19 @@ Sigue OPEN reconciliar hot state cuando una revisión EFFECTIVE cambia:
 
 No reabrir Special Condition Runtime semantics ya implementadas.
 
-### 8. Deactivation Core ownership cleanup
+### 7. Deactivation Core ownership cleanup
 
 `PlannedAlarm.deactivation_policy` sigue CURRENT.
 
 El comportamiento de deactivation cascade ya está CLOSED y no depende de este cleanup.
 
-Target Delivery/Management Capture permanece acordado para policy/context de decisiones futuras.
-
-### 9. Cause/evidence contract
+### 8. Cause/evidence contract
 
 Falta schema evaluator explícito para validar placeholders de `cause_template` antes de Runtime.
 
-### 10. Runtime Adoption / Effective Head
+El resolver CURRENT no inventa esa validación.
+
+### 9. Runtime Adoption / Effective Head
 
 OPEN:
 - discriminated journal record;
@@ -154,11 +158,11 @@ OPEN:
 - integración con artifact stores;
 - reconciliation de reappearance.
 
-### 11. Live Delivery owner/package
+### 10. Live Delivery owner/package
 
 Contrato de diseño cerrado; implementación física pendiente.
 
-### 12. Management Capture
+### 11. Management Capture
 
 OPEN:
 - `shift_end` provider;
@@ -166,31 +170,34 @@ OPEN:
 - stale/unavailable outcomes;
 - pending deactivation cleanup.
 
-### 13. Tool routing qualification adicional
+### 12. Tool routing qualification adicional
 
-OPEN:
+OPEN deliberadamente fuera del resolver actual:
 - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
 - routing tier matrix;
 - Rule area vs Tool scope.
 
-### 14. Operation details
+No agregarlos retroactivamente sin contrato.
+
+### 13. Operation details
 
 OPEN:
 - materialization/Live cadence;
 - event trigger;
 - physical containers/partitions;
-- final deployment topology.
+- final deployment topology;
+- degree of automatic vs controlled manual operation.
 
-### 15. Python baseline conflict
+### 14. Python baseline conflict
 
 ```text
 Project baseline: Python 3.14.7
 ADA Command Center backend: requires-python ==3.14.2
 ```
 
-El gate local del cierre resolvió CPython 3.14.2.
+La qualification compartida del resolver ejecutó CPython 3.14.2.
 
-No mezclar este conflicto con pure resolver salvo bloqueo demostrado.
+No mezclar este conflicto con el Materialization Process salvo bloqueo demostrado.
 
 ## Historical conflicts visibles
 
@@ -198,19 +205,24 @@ B.1 Special Cascade sigue distinto de suppression CURRENT por ranking.
 
 B.1 no expresa la deactivation vigente como fuente independiente de cascade suppression.
 
-B.1 exige Message activo en una formulación histórica; Project CURRENT considera:
+B.1 exige Message activo en una formulación histórica; CURRENT considera inactive Message válido
+pero no seleccionable.
 
-```text
-inactive Message = válido pero no seleccionable para nuevas gestiones
-```
+B.1 no define Alarm projection Strategic; CURRENT resolver bloquea Strategic visual targets.
+
+El detalle C2 relativo -> acumulado absoluto queda refinado por implementación CURRENT.
 
 `atlanticus-decisions` no está reconciliado.
 
 ## Foco siguiente único
 
 ```text
-PURE B.2 ALARM CONFIGURATION RESOLVER
+B.2 MATERIALIZATION PROCESS
 ```
 
-No abrir materialization process, Adoption, Live Delivery, Management Capture,
-deactivation ownership cleanup ni broad Core cleanup en el mismo incremento.
+Primera acción:
+- verificar formatter GREEN sobre `atlanticus:main` CURRENT;
+- si GREEN, continuar inmediatamente con diseño del process.
+
+No abrir Runtime Adoption, Live Delivery, Management Capture, deactivation ownership cleanup ni broad
+Core cleanup en el mismo incremento.

@@ -1,6 +1,6 @@
 # Alarm Engine — Runtime Adoption and Effective Configuration
 
-Estado: **PROJECT CONTRACT AGREED / ALARM RESOLUTION KEY + REAPPEARANCE RUNTIME SHAPE IMPLEMENTED / ADOPTION NOT YET IMPLEMENTED**
+Estado: **PROJECT CONTRACT AGREED / B.2 RESOLVER CURRENT / ADOPTION NOT YET IMPLEMENTED**
 
 ## Authority checkpoint
 
@@ -8,14 +8,14 @@ Implementación auditada:
 
 ```text
 moragaga/atlanticus:main
-cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
+9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 ```
 
-Canonical base:
+Canonical inspeccionado antes de este reemplazo:
 
 ```text
 moragaga/atlanticus-cannonical:main
-56943d94889719544f426322ded4a877245dfaee
+7fea2819aa4c22f9d7494cbe79ab8740ee3f4366
 ```
 
 Decisions consultado:
@@ -27,7 +27,8 @@ moragaga/atlanticus-decisions:main
 
 ## 1. Propósito
 
-B.2 Materialization produce candidatos READY.
+B.2 Materialization ya dispone de pure resolver y puede producir candidatos `READY | BLOCKED`
+cuando el futuro process le entregue inputs.
 
 Runtime Adoption determina si y cómo un candidato READY pasa a EFFECTIVE sin perder hot state durable.
 
@@ -37,15 +38,17 @@ READY != EFFECTIVE
 
 ## 2. AlarmResolutionKey CURRENT
 
-Ya implementado en Alarm Core:
-
 ```text
 AlarmResolutionKey
     alarm_configuration_revision
     confirmed_tool_catalog_revision
 ```
 
-Materialization Runtime/Delivery artifacts usan este mismo VO.
+El pure resolver CURRENT construye esta key directamente desde:
+- revisión Alarm;
+- revisión del Confirmed Tool Catalog.
+
+Runtime/Delivery artifacts usan el mismo VO.
 
 No agregar evaluator revision, deployment id ni runtime build.
 
@@ -145,18 +148,23 @@ REJECTED
 
 No implementadas completamente.
 
-## 9. Reappearance Runtime shape CURRENT
+## 9. Reappearance Runtime shape + B.2 conversion CURRENT
 
-Core ya expone:
+Core:
 
 ```text
 PlannedAlarm.reappearance_after_seconds: int | None
 PlannedAlarm.reappearance_special_conditions: tuple[AlarmIdentity, ...]
 ```
 
-El pure B.2 resolver debe convertir authored minutos a Runtime segundos.
+Pure B.2 resolver:
 
-Esto elimina el gap de shape Runtime, pero no implementa la reconciliación durante Adoption.
+```text
+after_minutes None -> reappearance_after_seconds None
+after_minutes M    -> reappearance_after_seconds M * 60
+```
+
+Esto cierra materialización de shape, pero no hot-state reconciliation durante Adoption.
 
 ## 10. Reappearance reconciliation — OPEN
 
@@ -170,15 +178,12 @@ reappearance_special_conditions
 
 Adoption debe decidir cómo reconciliar un ManagementEffect/hot state existente.
 
-La base histórica exige recalcular timer y aplicar referencias nuevas a la occurrence gestionada
-vigente; el contrato detallado de transición y su crash/recovery qualification siguen pendientes.
-
-No implementar esta reconciliación dentro del pure B.2 resolver.
+No implementar esta reconciliación dentro del Materialization Process ni del resolver.
 
 ## 11. Delivery-only changes
 
-Un cambio sólo de visibility/display/Messages/deactivation policy/visual targets puede requerir
-cero hot-state mutation y aun así debe avanzar Effective Head mediante Adoption durable.
+Un cambio sólo de visibility/display/Messages/deactivation policy/visual targets puede requerir cero
+hot-state mutation y aun así debe avanzar Effective Head mediante Adoption durable.
 
 ## 12. CURRENT gaps
 
@@ -192,14 +197,16 @@ cero hot-state mutation y aun así debe avanzar Effective Head mediante Adoption
 - reappearance hot-state reconciliation no implementada;
 - integration con Materialization artifact stores inexistente.
 
-## 13. Estado respecto de B.2 contracts
+## 13. Estado respecto de B.2
 
-Ya CURRENT:
+CURRENT:
 - `AlarmResolutionKey`;
 - `RuntimeAlarmConfiguration`;
 - `DeliveryAlarmConfiguration`;
 - `AlarmConfigurationResolution`;
-- `PlannedAlarm.reappearance_after_seconds`.
+- qualification input contracts;
+- `PlannedAlarm.reappearance_after_seconds`;
+- `resolve_alarm_configuration`.
 
 Esto no vuelve EFFECTIVE ningún candidate.
 
@@ -223,5 +230,8 @@ Runtime Adoption no es el siguiente incremento.
 Siguiente:
 
 ```text
-PURE B.2 ALARM CONFIGURATION RESOLVER
+B.2 MATERIALIZATION PROCESS
 ```
+
+El process debe adquirir inputs, invocar el resolver CURRENT y persistir/publicar candidates/artifacts.
+Adoption sigue después y no debe mezclarse con ese incremento.
