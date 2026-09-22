@@ -1,6 +1,6 @@
 # Atlanticus — Architecture
 
-Estado: **CURRENT + COMMAND CENTER DOMAIN LAYER TARGET AGREED**
+Estado: **CURRENT**
 
 ## Regla principal
 
@@ -12,7 +12,7 @@ El núcleo genérico de Atlanticus no depende de ADA.
 
 ## ADA Command Center domain layer
 
-PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED:
+CURRENT / IMPLEMENTED:
 
 ADA Command Center distingue tres categorías en su scope:
 
@@ -25,20 +25,35 @@ scopes/ada-command-center/
 
 `domain/` contiene contratos funcionales puros que tienen consumidores independientes en Web y Backend y no pertenecen exclusivamente a ninguna capa técnica.
 
-Primer dominio acordado:
+Primer dominio implementado:
 
 ```text
 scopes/ada-command-center/domain/alarms
 ```
 
-Debe convertirse en autoridad de:
-- fundamentos de identidad/clasificación compartidos;
-- Alarm Configuration authoring definitions;
-- `AlarmConfiguration` aggregate;
-- invariantes/validation pura del aggregate;
-- durable document encode/decode del aggregate.
+Package:
 
-Reglas:
+```text
+ada-command-center-alarms-domain
+```
+
+Namespace:
+
+```python
+ada_command_center.domain.alarms
+```
+
+Es autoridad CURRENT de:
+- `AlarmIdentity`;
+- `AlarmKind`;
+- `Criticality`;
+- Alarm Configuration authoring definitions;
+- `AlarmConfiguration`;
+- validación pura del aggregate;
+- document encode/decode durable del aggregate;
+- `AlarmConfigurationValidationError`.
+
+Reglas CURRENT:
 
 ```text
 Web -> Domain
@@ -51,7 +66,16 @@ No usar `shared` como cajón genérico.
 
 No duplicar DTOs equivalentes entre Web y Backend.
 
-La migración se hace como root replacement sin aliases legacy permanentes.
+La migración fue un root replacement:
+- `backend/alarms/core/definition.py` dejó de existir;
+- `web/alarms/configuration/models.py` dejó de existir;
+- no se conservaron aliases legacy para esas autoridades.
+
+Engine runtime/lifecycle permanece en Backend.
+
+Source/Projection/Manager permanece en Web.
+
+Los artifacts Runtime-resolved y Delivery-resolved no pertenecen al authored domain.
 
 Ver `14_ADA_COMMAND_CENTER/17_DOMAIN_OWNERSHIP_AND_MIGRATION.md`.
 
@@ -207,16 +231,11 @@ Ausencia de Source/Projection/KPI data es estado funcional válido.
 
 Falla de conectividad de una dependencia debe quedar confinada a esa capability.
 
-Errores/contratos inválidos deben permanecer diagnosticables; resiliencia no significa
-ocultarlos.
-
-La aplicación real todavía no consume esta composición; ese wiring es el siguiente incremento.
+Errores/contratos inválidos deben permanecer diagnosticables; resiliencia no significa ocultarlos.
 
 ## KPI Registry / Definition
 
 Permanecen CURRENT sus contratos durables y exact dependencies.
-
-No reabrirlos en el bootstrap ADA Generic.
 
 ## ADA KPI Collector CURRENT
 
@@ -239,34 +258,26 @@ browser = cache only
 Generic Application usable without Collector
 ```
 
-## Próxima frontera arquitectónica
+## Command Center — próxima frontera
+
+Después del cierre de Alarm Domain Extraction:
 
 ```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+B.2 — Materialization Contracts
 PLANNED / NEXT
 ```
 
-Debe consumir los contratos CURRENT; no crear nuevos Source/Projection providers ni otra
-aplicación paralela.
-
-Orden:
+Target acordado:
 
 ```text
-Web settings/environment
-→ AdaStorageNamespace
-→ Source/Projection provider clients
-→ ToolPersistenceComposition
-→ resolve_active_tool_projection
-→ ADA Generic composition/runtime
+scopes/ada-command-center/backend/alarms/materialization
 ```
 
-Después, cuando exista Tool Projection READY:
-
-```text
-Tool Structure
-→ Collector
-→ Latest / Timeseries states
-```
-
-La ausencia de Tool/KPI data o la indisponibilidad de provider no debe redefinir la existencia
-de la Web.
+El primer incremento B.2 debe implementar contratos puros ya congelados, sin:
+- I/O;
+- stores;
+- scheduler;
+- process orchestration;
+- Runtime Adoption;
+- Live Delivery;
+- Management Capture.

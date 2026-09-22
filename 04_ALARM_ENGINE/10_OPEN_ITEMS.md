@@ -1,6 +1,6 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN / B.2 DESIGN LARGELY CLOSED / DOMAIN EXTRACTION PREREQUISITE NEXT**
+Estado: **OPEN / B.2 DESIGN LARGELY CLOSED / DOMAIN EXTRACTION CLOSED / MATERIALIZATION CONTRACTS NEXT**
 
 Cerrado antes de este checkpoint:
 - persistence/recovery qualification;
@@ -8,6 +8,16 @@ Cerrado antes de este checkpoint:
 - Management suppression por `priority_order`;
 - Special Condition Runtime reappearance;
 - Special Condition level-trigger semantics.
+
+Cerrado en este hito:
+- Command Center Alarm Domain Extraction;
+- `scopes/ada-command-center/domain/alarms` como autoridad transversal;
+- root replacement sin aliases legacy;
+- Engine Core consumiendo Domain;
+- Runtime declarando Domain cuando usa sus contratos;
+- Web Alarm Configuration consumiendo Domain sin depender de Engine Core por authoring DTOs;
+- Configuration Manager consumiendo Domain explícitamente;
+- tests de definición/configuración movidos al owner de dominio.
 
 Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
 - `AlarmResolutionKey` y `READY | BLOCKED`;
@@ -33,79 +43,64 @@ Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
 - B.2 pure resolver/package boundary;
 - B.2 process orchestration boundary.
 
-## Prerequisito de implementación
-
-Antes de implementar B.2 funcional:
-
-```text
-Command Center — Alarm Domain Extraction
-```
-
-Target:
-
-```text
-scopes/ada-command-center/domain/alarms
-```
-
-Debe concentrar fundamentos + authoring definitions + `AlarmConfiguration` aggregate/document contract compartidos por Web y Backend.
-
-Ver `../14_ADA_COMMAND_CENTER/17_DOMAIN_OWNERSHIP_AND_MIGRATION.md`.
-
 ## OPEN relevantes
 
-1. **Domain extraction implementation**
-   - root replacement sin aliases;
-   - actualización coordinada de Web + Engine imports;
-   - tests de dominio movidos a su nuevo owner;
-   - comportamiento sin cambios.
+1. **B.2 materialization contracts**
+   - target `backend/alarms/materialization`;
+   - implementar value objects/DTOs ya acordados;
+   - sin I/O ni resolver completo en el primer incremento.
 
-2. **B.2 materialization implementation**
-   - target pure capability `backend/alarms/materialization`;
-   - target process `backend/processes/alarms-materialization`;
+2. **Pure B.2 resolver**
+   - implementar después de los contratos;
+   - resolution/validation contra inputs explícitos;
+   - no mezclar con process orchestration.
+
+3. **Materialization process**
+   - target `backend/processes/alarms-materialization`;
+   - acquisition/orchestration/persistence posterior al pure resolver;
    - artifact stores aún OPEN.
 
-3. **Owner/package de Live Delivery**
-   - construir/consumir `EngineResolvedCurrentState`;
-   - exact-key join con `DeliveryAlarmConfiguration`;
-   - materializar `cause_text`;
-   - publicar snapshot sin recalcular Engine semantics.
+4. **Owner/package de Live Delivery**
+   - todavía no implementado;
+   - debe consumir `EngineResolvedCurrentState` + exact `DeliveryAlarmConfiguration`;
+   - no recalcular Engine semantics.
 
-4. **Current Tool reconciliation qualification**
+5. **Current Tool reconciliation qualification**
    - Confirmed Tool Catalog + reconciliation-GREEN actual;
    - contrato exacto de este segundo input aún no implementado/verificado.
 
-5. **Cause/evidence contract**
+6. **Cause/evidence contract**
    - falta schema evaluator suficientemente explícito para validar placeholders de `cause_template` antes del Runtime.
 
-6. **Management Capture implementation details**
+7. **Management Capture implementation details**
    - `shift_end` provider;
    - persistence de Captured Management Input;
    - stale/unavailable outcomes;
    - pending request stale cleanup.
 
-7. **Runtime provenance cleanup**
+8. **Runtime provenance cleanup**
    - reemplazar pares históricos por `AlarmResolutionKey` donde representen una sola base;
    - `resolution_key_at_start` para occurrence provenance;
    - no aliases/adapters permanentes.
 
-8. **Adoption implementation gaps**
+9. **Adoption implementation gaps**
    - C1/C3 routing mutation;
    - evaluator/kind/priority-group/origin Tool transitions;
    - timer/Special Condition reconciliation target.
 
-9. **Adoption persistence**
-   - journal record discriminado y schema/version;
-   - `adoption_id` generation;
-   - materialización Effective Head;
-   - migration desde persistence CURRENT;
-   - crash/recovery tests.
+10. **Adoption persistence**
+    - journal record discriminado y schema/version;
+    - `adoption_id` generation;
+    - materialización Effective Head;
+    - migration desde persistence CURRENT;
+    - crash/recovery tests.
 
-10. **Tool routing qualification adicional**
+11. **Tool routing qualification adicional**
     - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
     - routing tier matrix;
     - Rule area vs Tool scope cuando corresponda.
 
-11. **Operation details**
+12. **Operation details**
     - cadence/event triggers;
     - persistence física READY/BLOCKED y Live Projection;
     - schema versions/codecs;
@@ -116,14 +111,38 @@ Ver `../14_ADA_COMMAND_CENTER/17_DOMAIN_OWNERSHIP_AND_MIGRATION.md`.
 
 B.1 frozen Special Cascade sigue distinto de la suppression uniforme CURRENT por ranking.
 
-B.1 contiene texto que exige Message activo durante B.2, mientras el Project acordó `inactive Message = válido pero no seleccionable para nuevas gestiones`. La reconciliación formal en `atlanticus-decisions` sigue pendiente.
+B.1 contiene texto que exige Message activo durante B.2, mientras el Project acordó:
 
-Project baseline Python 3.14.7 difiere de `requires-python ==3.14.2` observado en packages CURRENT de Command Center. No mezclar ese cambio con Domain extraction salvo bloqueo real.
+```text
+inactive Message = válido pero no seleccionable para nuevas gestiones
+```
+
+La reconciliación formal en `atlanticus-decisions` sigue pendiente.
+
+Project baseline:
+
+```text
+Python 3.14.7
+```
+
+Packages Command Center CURRENT auditados:
+
+```text
+requires-python ==3.14.2
+```
+
+El conflicto permanece OPEN y fuera de este incremento.
 
 ## Foco siguiente único
 
 ```text
-Command Center — Alarm Domain Extraction
+B.2 — Materialization Contracts
 ```
 
-Mover ownership sin cambiar semántica; B.2 funcional comienza en un incremento posterior.
+Implementar sólo contratos puros en:
+
+```text
+scopes/ada-command-center/backend/alarms/materialization
+```
+
+No abrir aún resolver completo, I/O, stores, job orchestration, Runtime Adoption ni Live Delivery.
