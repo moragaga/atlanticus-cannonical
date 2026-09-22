@@ -10,11 +10,9 @@ ADA consume Atlanticus.
 
 El núcleo genérico de Atlanticus no depende de ADA.
 
-## ADA Command Center domain layer
+## ADA Command Center layers
 
-CURRENT / IMPLEMENTED:
-
-ADA Command Center distingue tres categorías en su scope:
+CURRENT:
 
 ```text
 scopes/ada-command-center/
@@ -23,37 +21,16 @@ scopes/ada-command-center/
 └── web/
 ```
 
-`domain/` contiene contratos funcionales puros que tienen consumidores independientes en Web y Backend y no pertenecen exclusivamente a ninguna capa técnica.
+`domain/` contiene contratos funcionales puros con consumidores independientes en Web y Backend.
 
-Primer dominio implementado:
+Authority authored de Alarm Configuration:
 
 ```text
 scopes/ada-command-center/domain/alarms
-```
-
-Package:
-
-```text
-ada-command-center-alarms-domain
-```
-
-Namespace:
-
-```python
 ada_command_center.domain.alarms
 ```
 
-Es autoridad CURRENT de:
-- `AlarmIdentity`;
-- `AlarmKind`;
-- `Criticality`;
-- Alarm Configuration authoring definitions;
-- `AlarmConfiguration`;
-- validación pura del aggregate;
-- document encode/decode durable del aggregate;
-- `AlarmConfigurationValidationError`.
-
-Reglas CURRENT:
+Reglas:
 
 ```text
 Web -> Domain
@@ -66,18 +43,92 @@ No usar `shared` como cajón genérico.
 
 No duplicar DTOs equivalentes entre Web y Backend.
 
-La migración fue un root replacement:
-- `backend/alarms/core/definition.py` dejó de existir;
-- `web/alarms/configuration/models.py` dejó de existir;
-- no se conservaron aliases legacy para esas autoridades.
+La extracción fue root replacement:
+- `backend/alarms/core/definition.py` removido;
+- `web/alarms/configuration/models.py` removido;
+- sin aliases legacy.
 
-Engine runtime/lifecycle permanece en Backend.
+## Alarm backend boundaries CURRENT
 
-Source/Projection/Manager permanece en Web.
+```text
+backend/alarms/core
+    Runtime/lifecycle/priority/management/deactivation contracts
 
-Los artifacts Runtime-resolved y Delivery-resolved no pertenecen al authored domain.
+backend/alarms/persistence
+    durable Engine persistence/recovery
 
-Ver `14_ADA_COMMAND_CENTER/17_DOMAIN_OWNERSHIP_AND_MIGRATION.md`.
+backend/alarms/materialization
+    pure B.2 contracts and qualification inputs
+
+backend/processes/alarms-runtime
+    Runtime orchestration/execution
+
+backend/processes/alarms-materialization
+    PLANNED / not implemented
+```
+
+### Shared operational identity
+
+`AlarmResolutionKey` vive en Alarm Core:
+
+```text
+alarm_configuration_revision
+confirmed_tool_catalog_revision
+```
+
+Es compartido por Materialization y futuras superficies Runtime Adoption/Delivery sin hacer que Core dependa de Materialization.
+
+No pertenece al authored Domain.
+
+## Visibility boundary CURRENT
+
+```text
+Authored Domain:
+VISIBLE | TRACE_ONLY
+
+Runtime Core:
+no visibility flag
+no SHADOW disposition
+
+Delivery:
+visibility_mode
+```
+
+`TRACE_ONLY` participa de Runtime normal; Delivery decide publicación visible.
+
+## Materialization contracts CURRENT
+
+`backend/alarms/materialization` implementa contratos puros:
+
+```text
+AlarmConfigurationResolution
+RuntimeAlarmConfiguration
+DeliveryAlarmConfiguration
+ResolvedDeliveryAlarm
+ResolvedDeliveryMessage
+ResolvedDeactivationPolicy
+ResolvedVisualTarget
+ResolvedVisualSubcomponentTarget
+```
+
+No contiene:
+- resolver B.2 completo;
+- I/O;
+- stores;
+- scheduler;
+- process orchestration;
+- Runtime Adoption;
+- Live Delivery.
+
+Qualification inputs implementados:
+
+```text
+ToolReconciliationQualification(green_tool_keys)
+EvaluatorQualificationKey(family_key, evaluator_key)
+EvaluatorQualificationCatalog(qualified_keys)
+```
+
+No copiar estados internos de Tool reconciliation ni evaluator runtime machinery.
 
 ## Configuration / Administration
 
@@ -88,137 +139,13 @@ Source      = Local | Blob
 Projection  = Local | Cosmos
 ```
 
-Los providers son ejes independientes.
+Providers independientes.
 
-```text
-local + local
-blob  + cosmos
-blob  + local
-local + cosmos
-```
-
-Projection representa un release exacto:
-
-```text
-ProjectionTarget
-= SourceKey
-+ SourceReleaseRef
-+ dependencies
-```
-
-No reconstruir `ProjectionTarget` desde revision textual.
-
-No mantener contratos paralelos para transición.
-
-## Namespace de persistencia ADA
-
-CURRENT:
-
-```text
-AdaStorageNamespace
-├── application_namespace
-└── tool_namespace
-```
-
-Separar siempre:
-
-```text
-connection
-physical container
-application namespace
-tool namespace
-SourceKey
-```
-
-Ejemplo lógico:
-
-```text
-conciencia_situacional/
-├── users/
-└── operaciones_integradas/
-    ├── sources/
-    └── projections/
-```
-
-`users` pertenece al nivel global de aplicación.
-
-Los domains de Tool pertenecen a `<application>/<tool>`.
-
-`SourceStore` agrega internamente `sources/<SourceKey>`.
-
-## Tool Configuration / Projection
-
-Tool Configuration es ADA-specific.
-
-CURRENT:
-
-```text
-ToolSourceService
-ToolProjectionBuilder
-ProjectionRecord[ToolConfiguration]
-LocalToolProjectionStore
-CosmosToolProjectionStore
-```
-
-El namespace lógico de deployment no modifica `SourceKey`.
-
-Cosmos Tool Projection usa:
-
-```text
-partition_key = <application>/<tool>
-```
-
-Local Tool Projection usa:
-
-```text
-<base>/<application>/<tool>/projections
-```
-
-## Tool persistence composition
-
-Capability CURRENT:
-
-```text
-scopes/ada/web/tools/persistence
-```
-
-Composición:
-
-```text
-ToolPersistenceSettings
-        ↓
-compose_tool_persistence
-        ↓
-ToolPersistenceComposition
-├── SourceStore
-├── ProjectionStore[ToolConfiguration]
-└── SourceProjectionService[ToolConfiguration]
-```
-
-Construir esta composición no debe abrir ni consultar servicios externos.
-
-Operaciones separadas:
-
-```text
-resolve_active_tool_projection()
-→ runtime read from durable Projection
-
-project_current_tool_source()
-→ Source current -> exact Projection
-```
-
-Estados:
-
-```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
-```
+Projection representa un release exacto; no reconstruir targets desde revision textual y no mantener contratos paralelos para transición.
 
 ## Application availability boundary
 
-Invariante congelada:
+Invariante:
 
 ```text
 APPLICATION EXISTENCE
@@ -227,57 +154,26 @@ APPLICATION EXISTENCE
 != DATA AVAILABILITY
 ```
 
-Ausencia de Source/Projection/KPI data es estado funcional válido.
+Ausencia de Source/Projection/data puede ser estado funcional válido.
 
-Falla de conectividad de una dependencia debe quedar confinada a esa capability.
-
-Errores/contratos inválidos deben permanecer diagnosticables; resiliencia no significa ocultarlos.
-
-## KPI Registry / Definition
-
-Permanecen CURRENT sus contratos durables y exact dependencies.
-
-## ADA KPI Collector CURRENT
-
-Collector permanece una capability ADA Web separada.
-
-```text
-Latest Delivery Cosmos ─┐
-                        ├─> AdaKpiCollector
-Timeseries Delivery ────┘
-ToolStructure ------------------┐
-Tool projection revision -------┘
-```
-
-Fronteras congeladas:
-
-```text
-1 ToolComponent = 1 logical KPI Store
-Subcomponent != Store
-browser = cache only
-Generic Application usable without Collector
-```
+Errores contractuales deben permanecer diagnosticables.
 
 ## Command Center — próxima frontera
 
-Después del cierre de Alarm Domain Extraction:
+Después de cerrar Materialization Contracts + Qualification Inputs:
 
 ```text
-B.2 — Materialization Contracts
+PURE B.2 ALARM CONFIGURATION RESOLVER
 PLANNED / NEXT
 ```
 
-Target acordado:
+El incremento debe permanecer pure backend:
 
 ```text
-scopes/ada-command-center/backend/alarms/materialization
+explicit inputs
+-> deterministic validation/materialization
+-> AlarmConfigurationResolution
 ```
 
-El primer incremento B.2 debe implementar contratos puros ya congelados, sin:
-- I/O;
-- stores;
-- scheduler;
-- process orchestration;
-- Runtime Adoption;
-- Live Delivery;
-- Management Capture.
+No mezclar con acquisition, stores, Runtime Adoption, Live Delivery, Management Capture,
+provenance migration ni process orchestration.

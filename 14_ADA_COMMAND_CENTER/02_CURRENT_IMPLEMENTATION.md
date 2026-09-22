@@ -5,10 +5,10 @@ Estado: **VERIFIED / UPDATED 2026-09-22**
 Corte auditado:
 
 ```text
-moragaga/atlanticus@7a8c36a29860c8f010c3fe5b840c5f5af4d87d0f
+moragaga/atlanticus@bc3fffd72afb712d5b5ab84522c379abf2a19642
 ```
 
-## Físicamente en `main`
+## Físicamente en main
 
 ```text
 scopes/ada-command-center/
@@ -17,6 +17,7 @@ scopes/ada-command-center/
 ├── backend/
 │   ├── alarms/
 │   │   ├── core/
+│   │   ├── materialization/
 │   │   └── persistence/
 │   ├── processes/
 │   │   └── alarms-runtime/
@@ -29,10 +30,9 @@ scopes/ada-command-center/
         └── ada-command-center-configuration-manager/
 ```
 
-Todavía **no existen**:
+Todavía no existe:
 
 ```text
-scopes/ada-command-center/backend/alarms/materialization
 scopes/ada-command-center/backend/processes/alarms-materialization
 ```
 
@@ -41,252 +41,208 @@ scopes/ada-command-center/backend/processes/alarms-materialization
 ```text
 Alarm Domain shared package                         IMPLEMENTED / VERIFIED / CURRENT
 Backend Alarm Engine                                IMPLEMENTED / CURRENT
-Alarm Configuration Source/Release                  IMPLEMENTED / VERIFIED / CURRENT
-Alarm Configuration base Projection                IMPLEMENTED / VERIFIED / CURRENT
-Alarm Configuration Manager integration            IMPLEMENTED / VERIFIED / CURRENT
-Alarm Configuration Web authoring                   IMPLEMENTED / CURRENT
-Command Center Tool Catalog V1                     IMPLEMENTED / VERIFIED / CURRENT
+Alarm Core runtime visibility cleanup               IMPLEMENTED / VERIFIED / CLOSED
+Alarm Configuration Source/Release                  IMPLEMENTED / CURRENT
+Alarm Configuration base Projection                IMPLEMENTED / CURRENT
+Command Center Tool Catalog V1                     IMPLEMENTED / CURRENT
 Alarm Tool Reference read model V1                 IMPLEMENTED / CURRENT
-B.2 materialization contracts package              NOT YET IMPLEMENTED
-Pure B.2 resolver                                   NOT YET IMPLEMENTED
-B.2 materialization process                        NOT YET IMPLEMENTED
-Runtime/Delivery materialization from B.2           NOT YET IMPLEMENTED
-Runtime Effective Head target                       NOT YET IMPLEMENTED
-Alarm Live Delivery target                          NOT YET IMPLEMENTED
+B.2 Materialization contract package               IMPLEMENTED / VERIFIED / CURRENT
+B.2 Qualification input contracts                  IMPLEMENTED / VERIFIED / CURRENT
+Pure B.2 resolver                                   NOT YET IMPLEMENTED / NEXT
+B.2 Materialization process                        NOT YET IMPLEMENTED
+Runtime Effective Head                             NOT YET IMPLEMENTED
+Alarm Live Delivery                                NOT YET IMPLEMENTED
 Management Projection                              NOT YET IMPLEMENTED
 ```
 
 ## Alarm Domain CURRENT
 
+```text
+scopes/ada-command-center/domain/alarms
+ada-command-center-alarms-domain==1.0.0
+ada_command_center.domain.alarms
+```
+
+Authority:
+- `AlarmIdentity`;
+- `AlarmKind`;
+- `Criticality`;
+- authoring definitions;
+- `MessageDefinition`;
+- `AlarmDefinition`;
+- `AlarmConfiguration`;
+- pure aggregate validation.
+
+No productive dependencies.
+
+## Alarm Core CURRENT
+
+`AlarmResolutionKey` es público en Core:
+
+```text
+alarm_configuration_revision
+confirmed_tool_catalog_revision
+```
+
+Runtime visibility root removal CLOSED:
+
+```text
+delivery_enabled  absent
+SHADOW            absent
+```
+
+Priority CURRENT:
+
+```text
+PREDOMINANT
+ECLIPSED
+CASCADE_SUPPRESSED
+DEACTIVATED
+```
+
+## B.2 Materialization CURRENT
+
 Package:
 
 ```text
-scopes/ada-command-center/domain/alarms
+scopes/ada-command-center/backend/alarms/materialization
 ```
 
 Distribución:
 
 ```text
-ada-command-center-alarms-domain==1.0.0
+ada-command-center-alarms-materialization==1.0.0
 ```
-
-Namespace:
-
-```python
-ada_command_center.domain.alarms
-```
-
-Dependencias productivas del package:
-
-```text
-[]
-```
-
-Authority CURRENT:
-- `AlarmIdentity`;
-- `AlarmKind`;
-- `Criticality`;
-- `AlarmDefinition`;
-- `MessageDefinition`;
-- authoring enums/definitions;
-- `AlarmConfiguration`;
-- `AlarmConfigurationValidationError`.
 
 Módulos productivos:
 
 ```text
-models.py
-definition.py
-configuration.py
-errors.py
 __init__.py
+delivery.py
+qualification.py
+resolution.py
+runtime.py
+py.typed
 ```
 
-Existe mirror pedagógico equivalente bajo `commented/`.
+Mirror pedagógico equivalente bajo `commented/`.
 
-## Root replacement CLOSED
-
-Las autoridades anteriores ya no existen:
+Tests:
 
 ```text
-backend/alarms/core/
-    src/ada_command_center/alarms/core/definition.py
-
-web/alarms/configuration/
-    src/ada_command_center/web/alarms/configuration/models.py
+support.py
+test_delivery.py
+test_qualification.py
+test_resolution.py
+test_runtime.py
 ```
 
-No se conservaron re-exports legacy para mantener esos contratos en sus namespaces anteriores.
-
-Backend Alarm Core declara:
+## Resolution CURRENT
 
 ```text
-ada-command-center-alarms-domain==1.0.0
-```
-
-Alarm Runtime declara Domain explícitamente además de Core/Persistence.
-
-Web Alarm Configuration declara Domain y ya no depende de Alarm Core para authoring DTOs.
-
-Configuration Manager declara Domain directamente porque construye/consume `AlarmConfiguration` y authoring definitions.
-
-## Alarm Configuration CURRENT
-
-La unidad editable/publicable sigue siendo:
-
-```text
-AlarmConfiguration
-├── rules: tuple[AlarmDefinition, ...]
-└── messages: tuple[MessageDefinition, ...]
-```
-
-La migración de ownership no cambió el contrato durable ni su semántica.
-
-Permanece:
-
-```text
-VALID
-!=
-FULLY RESOLVED
-!=
 READY
-!=
-EFFECTIVE
+BLOCKED
 ```
 
-Web continúa siendo dueña de:
-- Source/Release;
-- Projection orchestration;
-- Manager workflows;
-- Tool reference assistance;
-- UI authoring.
+`READY` requiere ambos artifacts y misma key.
 
-El authored contract pertenece al Domain transversal.
+`BLOCKED` requiere al menos un BLOCKING y prohíbe artifacts parciales.
 
-## Qualification observada del hito
-
-Ejecutada durante la integración antes del cierre:
+## Runtime artifact CURRENT
 
 ```text
-Alarm Domain
-pytest                    49 passed
-ruff check .              All checks passed!
-ruff format --check .     12 files already formatted
-
-Backend Alarm Core
-pytest                    179 passed
-ruff check .              All checks passed!
-ruff format --check .     39 files already formatted
-
-Alarms Runtime
-pytest                    16 passed
-ruff check .              All checks passed!
-ruff format --check .     18 files already formatted
-
-Web Alarm Configuration
-pytest                    28 passed
-ruff check .              All checks passed!
-ruff format --check .     26 files already formatted
-
-Configuration Manager
-pytest                    11 passed
-ruff check .              All checks passed!
-ruff format --check .     12 files already formatted
+RuntimeAlarmConfiguration
+    resolution_key
+    defined_alarm_identities
+    planned_alarms
+    parameters_by_alarm
 ```
 
-Total de tests observados sobre superficies directamente afectadas:
+Disabled sigue definida sin plan.
+
+Removed está ausente.
+
+## Delivery artifact CURRENT
+
+Incluye configuration ya resuelta para Delivery:
+- visibility;
+- display/title/cause template;
+- kind/criticality/category/areas/color;
+- deactivation policy;
+- Messages;
+- visual targets.
+
+No contiene evaluator, parameters, routing, lifecycle ni ToolStructure.
+
+## Qualification inputs CURRENT
 
 ```text
-283 passed
+ToolReconciliationQualification(green_tool_keys)
+EvaluatorQualificationKey(family_key, evaluator_key)
+EvaluatorQualificationCatalog(qualified_keys)
 ```
 
-También pasó:
+No implementan discovery/reconciliation ni evaluator runtime registry.
+
+## Qualification observada durante integración
+
+Antes del primer B.2 commit:
 
 ```text
-Alarm Domain extraction static verification
-git diff --check
+Materialization
+14 passed
+ruff check: GREEN
 ```
 
-No se capturó una segunda corrida completa de esos gates después del commit final `7a8c36a...`.
+Antes del Qualification Inputs commit:
+
+```text
+Materialization
+19 passed
+ruff check: GREEN
+```
+
+En esa corrida `ruff format --check` solicitó formato sobre los dos nuevos `qualification.py`;
+posteriormente el commit `bc3fffd72afb712d5b5ab84522c379abf2a19642` contiene esos archivos formateados.
+
+No se capturó en esta conversación una rerun completa de `pytest/ruff` sobre los bytes exactos
+posteriores al último format y al commit.
 
 Por tanto:
-- la qualification del árbol integrado previo al commit está **VERIFIED**;
-- el checkpoint `main@7a8c36a...` y su estructura final están **VERIFIED**;
-- una rerun post-commit exacta permanece **UNVERIFIED** si se exige como gate formal separado.
-
-## Tool Catalog V1 CURRENT
-
-Paquete:
 
 ```text
-scopes/ada-command-center/backend/tools/catalog
+implementation bytes at bc3fffd72afb712d5b5ab84522c379abf2a19642   VERIFIED
+pre-final-format 19-test run              VERIFIED
+exact post-commit full gate               UNVERIFIED
 ```
 
-Contrato:
+Core había observado:
 
 ```text
-ToolCatalogEntry
-├── tool_key
-├── display_name
-├── kind
-├── source_release_id
-└── structure: ToolStructure
-
-ToolCatalogSnapshot
-├── revision
-├── generated_at_utc
-└── tools
+177 passed
+ruff check: GREEN
+ruff format --check: GREEN
 ```
 
-`tools` se ordena por `tool_key`; duplicados se rechazan.
+antes del incremento Qualification Inputs; ese incremento no modificó Core.
 
-`revision` es SHA-256 determinístico sobre el contenido contractual de las entries.
+## Root replacements / no legacy
 
-El snapshot se publica sólo después de consolidación completa de todos los inputs requeridos.
+No existen authorities authored duplicadas en Core/Web.
 
-## Alarm Tool Reference read model CURRENT
-
-Permanece implementado en:
-
-```text
-scopes/ada-command-center/web/alarms/configuration/
-src/ada_command_center/web/alarms/configuration/tool_references.py
-```
-
-Conserva:
-- catalog revision;
-- Tool source release;
-- components;
-- subcomponents;
-- `owner_component_key`.
-
-Omite `STRATEGIC` de sugerencias de Alarm Configuration.
-
-No transforma Tool Catalog en autoridad del authored payload.
-
-## Base histórica disponible
-
-Alarm Engine conserva Journey/Evidence/Occurrence y demás hechos operacionales ya auditados.
-
-Alarm Domain Extraction no cambió:
-- lifecycle semantics;
-- Management suppression;
-- Special Condition Runtime reappearance;
-- persistence/recovery;
-- Analytics boundary.
+No se introdujeron aliases, shims ni adapters para B.2.
 
 ## Conflicto técnico visible
 
-Project baseline:
-
 ```text
-Python 3.14.7
+Project baseline       Python 3.14.7
+Command Center pins    requires-python ==3.14.2
 ```
 
-Packages Command Center CURRENT, incluido el nuevo Domain:
+OPEN.
+
+## Siguiente incremento
 
 ```text
-requires-python ==3.14.2
+PURE B.2 ALARM CONFIGURATION RESOLVER
 ```
-
-Este hito no modificó ese pin.

@@ -10,43 +10,34 @@ Estado: **CURRENT**
 - Rama: `main`
 - Realidad implementada: siempre `atlanticus:main`
 - Checkpoint CURRENT verificado para este cierre:
-  `4fe03660ad47d105c55167dc583f09be1f395275`
+  `bc3fffd72afb712d5b5ab84522c379abf2a19642`
 - Parent inmediato:
-  `8e133ad7da3524874add8323315e8c2b3c3f1ee1`
-- Tree:
-  `d893128c23939e8a1e8bdd60b5bae64d14983be8`
-- Fecha del commit:
-  `2026-09-21T18:52:46Z`
+  `345309c07d4489a5c477f0fe61620faa91dfe9eb`
+- Fecha observada del commit:
+  `2026-09-22T20:18:48Z`
 
-Estado acumulado relevante:
+Estado acumulado relevante para ADA Command Center Alarm Engine:
 
 ```text
-ADA-STORAGE-NAMESPACE                         CLOSED / VERIFIED / CURRENT
-TOOL-PROJECTION-PERSISTENCE                   CLOSED / VERIFIED / CURRENT
-TOOL-PERSISTENCE-RESILIENT-COMPOSITION        CLOSED / VERIFIED / CURRENT
-
-ADA-WEB-KPI-COLLECTOR-CAPABILITY              CLOSED / VERIFIED / CURRENT
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP             CLOSED / VERIFIED / CURRENT
-ADA-GENERIC-COLLECTOR-RUNTIME-WIRING          CLOSED / VERIFIED / CURRENT
-ADA-GENERIC-OPERATIONAL-RENDER-RUNTIME-CONTRACT
-                                               CLOSED / VERIFIED / CURRENT
-ADA-GENERIC-STAGE-1                           CLOSED / VERIFIED / CURRENT
-
-COMMAND-CENTER-WEB-ALARM-CONFIGURATION-CONTRACT
-                                               CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-ALARM-CONFIGURATION-PROJECTION CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-ALARM-CONFIGURATION-MANAGER-INTEGRATION
-                                               CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-TOOL-CATALOG-V1                CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-ALARM-TOOL-REFERENCES-V1       CLOSED / CURRENT
+COMMAND-CENTER-ALARM-DOMAIN-EXTRACTION          CLOSED / VERIFIED / CURRENT
+ALARM-CORE-RUNTIME-VISIBILITY-ROOT-REMOVAL     CLOSED / VERIFIED / CURRENT
+B.2-MATERIALIZATION-CONTRACTS                  CLOSED / VERIFIED / CURRENT
+B.2-RESOLVER-QUALIFICATION-INPUT-CONTRACTS     CLOSED / VERIFIED / CURRENT
+PURE-B.2-RESOLVER                              PLANNED / NEXT
+B.2-MATERIALIZATION-PROCESS                    PLANNED
+RUNTIME-ADOPTION-EFFECTIVE-HEAD                PLANNED
+ALARM-LIVE-DELIVERY                            PLANNED
 ```
+
+Los cambios entre `345309c...` y `bc3fffd72afb712d5b5ab84522c379abf2a19642` pertenecen únicamente al incremento
+B.2 Resolver Qualification Inputs bajo `scopes/ada-command-center/backend/alarms/materialization`.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
 - Checkpoint inspeccionado antes de este reemplazo:
-  `fb5b000d0f38a535fca606fe01a324cb0f6185b4`
+  `2d8cbc33b7776e057e4f7d82def318d5eaf8f336`
 
 `atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
 `atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
@@ -60,20 +51,8 @@ COMMAND-CENTER-ALARM-TOOL-REFERENCES-V1       CLOSED / CURRENT
 
 Permanece **HISTORICAL**.
 
-Las decisiones B.1/B.2 preservan semántica útil de AlarmDefinition, Live/Management y
-Runtime/Delivery, pero no prevalecen sobre la implementación CURRENT cuando describen:
-
-- SharePoint como autoridad física de dominios ya migrados a Source/Release + Blob;
-- una pre-save validation externa estricta que impide persistir referencias Tool/evaluator todavía
-  no resolubles;
-- un Confirmed Tool Catalog con estados de reconciliación no implementados en V1.
-
-CURRENT conserva:
-
-```text
-VALID != FULLY RESOLVED != READY
-UNRESOLVED != INVALID
-```
+Las decisiones B.1/B.2 preservan intención contractual útil, pero no prevalecen sobre
+implementación CURRENT cuando describen contratos ya refinados o reemplazados por el Project.
 
 ## Jerarquía
 
@@ -119,9 +98,6 @@ No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorizació
 No reabrir sin conflicto demostrado:
 
 ```text
-LEGACY
-REMOVE
-
 ADAPTERS / SHIMS / ALIASES
 FORBIDDEN
 
@@ -130,193 +106,161 @@ FORBIDDEN
 
 OLD SCHEMA RUNTIME READERS
 FORBIDDEN
-
-revision -> ProjectionTarget reconstruction
-REMOVE
-
-expected_source_revision
-REMOVE
 ```
 
-## Storage namespace CURRENT
+## ADA Command Center Alarm Domain CURRENT
 
-ADA dispone de:
+Authority authored:
 
 ```text
-AdaStorageNamespace
-application_namespace
-tool_namespace
+scopes/ada-command-center/domain/alarms
+ada_command_center.domain.alarms
 ```
 
-Separación congelada:
+Owner de:
+- `AlarmIdentity`;
+- `AlarmKind`;
+- `Criticality`;
+- authoring definitions;
+- `AlarmConfiguration`;
+- validación pura del aggregate.
+
+Web y Backend consumen este dominio. Domain no depende de Web, Runtime, Persistence ni infraestructura.
+
+## Alarm Core CURRENT
+
+Backend owner:
 
 ```text
-physical container / connection
-!=
-application namespace
-!=
-tool namespace
-!=
-SourceKey
+scopes/ada-command-center/backend/alarms/core
+ada_command_center.alarms.core
 ```
 
-## Tool Projection CURRENT
-
-Persistencia durable:
+El root removal de Runtime visibility está CLOSED:
 
 ```text
-LocalToolProjectionStore
-CosmosToolProjectionStore
+PlannedAlarm.delivery_enabled
+REMOVED
+
+PriorityDisposition.SHADOW
+REMOVED
 ```
 
-Runtime activo:
+Visibility `VISIBLE | TRACE_ONLY` pertenece al authored Domain y a Delivery, no al Runtime Core.
+
+`AlarmResolutionKey` está implementado en Core como VO operacional compartido:
 
 ```text
-resolve_active_tool_projection()
-→ durable Tool Projection
+AlarmResolutionKey
+    alarm_configuration_revision
+    confirmed_tool_catalog_revision
 ```
 
-Source sólo participa en workflows de materialización/update:
+No agregar evaluator revision a ese key sin contrato explícito.
+
+## B.2 Materialization CURRENT
+
+Package:
 
 ```text
-project_current_tool_source()
+scopes/ada-command-center/backend/alarms/materialization
+ada-command-center-alarms-materialization==1.0.0
+ada_command_center.alarms.materialization
 ```
 
-## Tool persistence composition CURRENT
+Contratos CURRENT:
+- `RuntimeAlarmConfiguration`;
+- `DeliveryAlarmConfiguration`;
+- `ResolvedDeliveryAlarm`;
+- `ResolvedDeliveryMessage`;
+- `ResolvedDeactivationPolicy`;
+- resolved visual target VOs;
+- `AlarmResolutionStatus`;
+- `AlarmResolutionFindingSeverity`;
+- `AlarmResolutionFinding`;
+- `AlarmConfigurationResolution`.
 
-Providers independientes:
-
-```text
-Source     = local | blob
-Projection = local | cosmos
-```
-
-Estados de resolución de una Tool individual:
+Atomicidad congelada:
 
 ```text
 READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
+=> no BLOCKING
+=> Runtime existe
+=> Delivery existe
+=> ambos usan la misma AlarmResolutionKey
+
+BLOCKED
+=> existe BLOCKING
+=> Runtime is None
+=> Delivery is None
 ```
 
-Estos estados pertenecen a Tool persistence y no se copiaron al Command Center Tool Catalog V1.
+No existe readiness parcial por Rule ni por artifact.
 
-## ADA Generic Stage 1 CURRENT
+## B.2 Qualification Inputs CURRENT
 
-Cadena implementada:
+Materialization expone contratos mínimos:
 
 ```text
-environment / .env
-→ provider settings
-→ AdaStorageNamespace
-→ ToolPersistenceComposition
-→ resolve_active_tool_projection()
-→ ToolStructure
-→ AdaKpiCollector
-→ Latest Delivery / Timeseries Delivery
-→ process cache
-→ browser dcc.Store por ToolComponent
-→ frontera de consumo del desarrollador
+ToolReconciliationQualification
+    green_tool_keys
+    is_green(tool_key)
+
+EvaluatorQualificationKey
+    family_key
+    evaluator_key
+
+EvaluatorQualificationCatalog
+    qualified_keys
+    is_qualified(family_key, evaluator_key)
 ```
 
-La frontera de render permanece estructural y no se reabre desde Command Center.
+Estos contratos no crean taxonomía RED/DRIFT/MISSING y no transportan evaluator callables,
+`DataRequirement`, `DataLoadPlan` ni Runtime registry.
 
-## ADA Command Center Alarm Configuration CURRENT
+Un Tool ausente de `green_tool_keys` significa solamente que no está GREEN para B.2.
 
-Implementado bajo:
+La producción/adquisición concreta de esas qualifications sigue fuera de estos contratos.
+
+## Conflictos visibles
+
+Project baseline:
 
 ```text
-scopes/ada-command-center/web/alarms/configuration
+Python 3.14.7
 ```
 
-Cadena durable CURRENT:
+Packages Command Center CURRENT:
 
 ```text
-Manager Workspace
-→ intrinsic validation
-→ Alarm Configuration Source/Release
-→ Alarm Configuration Projection
+requires-python ==3.14.2
 ```
 
-La unidad publicada es atómica:
+Permanece OPEN.
 
-```text
-Alarm Rules + Message Catalog
-```
+`atlanticus-decisions` conserva formulaciones históricas incompatibles con CURRENT:
+- Special Cascade B.1 vs suppression uniforme por `priority_order`;
+- Message activo requerido vs inactive Message válido pero no seleccionable.
 
-La Projection base conserva la Alarm Configuration de una `SourceRelease` exacta y no introduce
-Tool Catalog, evaluator resolution, B.2, Runtime ni Delivery.
-
-## Command Center Tool Catalog V1 CURRENT
-
-Implementado bajo:
-
-```text
-scopes/ada-command-center/backend/tools/catalog
-```
-
-Frontera:
-
-```text
-named Tool Projection inputs
-→ ToolCatalogConsolidator
-→ ToolCatalogSnapshot
-→ ToolCatalogStore
-→ Blob CURRENT
-```
-
-Invariantes CURRENT:
-
-- ADA Tool Configuration continúa siendo owner de Tool authoring/topology;
-- Command Center Tool Catalog es read-only derived state;
-- `tool_key` es identidad y debe ser único dentro del snapshot;
-- no existe Cosmos propio de Command Center para duplicar Tool topology;
-- el consolidator no publica snapshot parcial;
-- si cualquier input falla, falta o es inválido, `replace_current()` no se ejecuta;
-- Blob CURRENT conserva naturalmente el último snapshot publicado correctamente;
-- V1 no implementa estados AVAILABLE/STALE/MISSING, history, scheduler ni LKG separado;
-- container y blob name son configuración explícita del `BlobToolCatalogStore`.
-
-## Alarm Tool References V1 CURRENT
-
-Alarm Configuration dispone de un read model backend-only:
-
-```text
-ToolCatalogStore
-→ AlarmToolReferenceReader
-→ AlarmToolReferenceCatalog
-```
-
-Expone Tools, Components y Subcomponents utilizables por authoring sin consultar los Cosmos
-individuales.
-
-La ausencia legítima de catálogo se representa como `None`.
-
-Errores del store no se convierten silenciosamente en catálogo vacío.
-
-`STRATEGIC` no se ofrece como sugerencia porque `ToolStructure` no define proyección de alarmas para
-ese kind. Esto no cambia la validez intrínseca de Alarm Configuration ni prohíbe keys manuales.
+No resolver silenciosamente.
 
 ## Siguiente foco único
 
 ```text
-ALARM-CONFIGURATION-STRUCTURED-AUTHORING-V1
-PLANNED / NEXT / DESIGN FIRST
+PURE B.2 ALARM CONFIGURATION RESOLVER
+PLANNED / NEXT
 ```
 
-Objetivo:
+Debe ser puro y consumir inputs explícitos.
 
-```text
-AlarmToolReferenceCatalog
-→ authoring UI Tool / Component / Subcomponent
-→ mismo AlarmConfiguration durable
-```
-
-No mezclar en ese incremento:
-
-- B.2;
-- Runtime/Delivery materialization;
-- Tool Catalog scheduler/cadence;
-- History/Analytics;
-- Command Center application shell completo.
+No mezclar con:
+- acquisition/I/O;
+- stores;
+- scheduler;
+- `backend/processes/alarms-materialization`;
+- Runtime Adoption;
+- Effective Head;
+- Live Delivery;
+- Management Capture;
+- provenance migration;
+- broad Engine cleanup.

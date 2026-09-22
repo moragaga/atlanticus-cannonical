@@ -1,6 +1,6 @@
 # ADA Command Center — Domain Ownership and Alarm Configuration Migration
 
-Estado: **CURRENT / IMPLEMENTED / QUALIFIED / CLOSED**
+Estado: **CURRENT / DOMAIN MIGRATION CLOSED / MATERIALIZATION OWNER IMPLEMENTED**
 
 ## 1. Authority checkpoint
 
@@ -8,317 +8,112 @@ Implementación CURRENT:
 
 ```text
 moragaga/atlanticus:main
-7a8c36a29860c8f010c3fe5b840c5f5af4d87d0f
+bc3fffd72afb712d5b5ab84522c379abf2a19642
 ```
 
-Canonical base de este cierre:
+Canonical base:
 
 ```text
 moragaga/atlanticus-cannonical:main
-8f915fa75b6f4eaaa80fb003b290c613aa9ad735
+2d8cbc33b7776e057e4f7d82def318d5eaf8f336
 ```
 
-Decisions consultado:
+Decisions:
 
 ```text
 moragaga/atlanticus-decisions:main
 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-## 2. Resultado
-
-El problema de ownership quedó resuelto mediante una capa transversal de dominio:
-
-```text
-scopes/ada-command-center/
-├── domain/
-│   └── alarms/
-├── backend/
-└── web/
-```
-
-Alarm Configuration:
-- es editada/publicada desde Web;
-- es consumida por backend;
-- no pertenece exclusivamente a ninguna de esas capas;
-- tiene una única autoridad contractual.
-
-## 3. Package CURRENT
+## 2. Authored Domain CLOSED
 
 ```text
 scopes/ada-command-center/domain/alarms
-```
-
-Package:
-
-```text
 ada-command-center-alarms-domain==1.0.0
-```
-
-Namespace:
-
-```python
 ada_command_center.domain.alarms
 ```
 
-Dependencias productivas:
+Una única autoridad contractual para Alarm Configuration.
+
+No depende de Web, Runtime, Persistence ni infraestructura.
+
+## 3. Root replacement CLOSED
+
+Removidas como authorities:
 
 ```text
-[]
+backend/alarms/core/definition.py
+web/alarms/configuration/models.py
 ```
 
-El package no depende de:
-- Dash;
-- Manager;
-- Web framework;
-- Runtime process;
-- Alarm persistence;
-- Azure;
-- Cosmos;
-- Blob;
-- SourceStore;
-- ProjectionStore;
-- job orchestration.
+Sin aliases/re-exports legacy.
 
-## 4. Authority CURRENT del dominio
+## 4. Backend Core ownership CURRENT
 
-Fundamentos:
+Core conserva Runtime/lifecycle contracts.
+
+También es owner físico de:
 
 ```text
-AlarmIdentity
-AlarmKind
-Criticality
+AlarmResolutionKey
 ```
 
-Authoring definitions:
+porque es identidad operacional compartida y deberá ser usable por Core/Adoption sin crear
+dependencia Core -> Materialization.
+
+Shape:
 
 ```text
-BusinessCategory
-AlarmColor
-OperationalArea
-VisibilityMode
-MessageScope
-ProcessAlarmProjectionMode
-
-AlarmDeactivationDefinition
-MessageDeactivationDefinition
-ReappearanceDefinition
-
-AlarmEscalationStepDefinition
-AlarmEscalationDefinition
-
-AlarmVisualSubcomponentTarget
-AlarmVisualTarget
-
-MessageDefinition
-AlarmDefinition
+alarm_configuration_revision
+confirmed_tool_catalog_revision
 ```
 
-Aggregate:
+## 5. Materialization ownership CURRENT
 
-```text
-AlarmConfiguration
-    rules: tuple[AlarmDefinition, ...]
-    messages: tuple[MessageDefinition, ...]
-```
-
-Error de dominio:
-
-```text
-AlarmConfigurationValidationError
-```
-
-El aggregate conserva:
-- identity uniqueness;
-- `rule_name` uniqueness por Family;
-- invariantes CURRENT de `priority_group`;
-- Message key uniqueness;
-- Rule -> Message scope/reference validation;
-- Special Condition structural/reference validation CURRENT;
-- `to_document()`;
-- `from_document()`.
-
-La migración no cambió semántica deliberadamente.
-
-## 5. Estructura física CURRENT
-
-```text
-domain/alarms/
-├── src/ada_command_center/domain/alarms/
-│   ├── __init__.py
-│   ├── models.py
-│   ├── definition.py
-│   ├── configuration.py
-│   ├── errors.py
-│   └── py.typed
-├── commented/ada_command_center/domain/alarms/
-│   └── mirror pedagógico equivalente
-├── tests/
-├── pyproject.toml
-└── uv.lock
-```
-
-No se crearon subdominios artificiales debajo de `domain/alarms`.
-
-Los módulos Python internos separan responsabilidades, pero forman un único package/domain.
-
-## 6. Qué permanece fuera
-
-Backend Alarm Engine conserva:
-- `AlarmStatus`;
-- `AlarmEvaluation`;
-- `EvidenceSnapshot`;
-- `PlannedAlarm`;
-- routing/runtime state;
-- occurrences/episodes;
-- Management/Deactivation runtime;
-- priority;
-- lifecycle;
-- journey;
-- commit materialization.
-
-Web Alarm Configuration conserva:
-- Source/Release;
-- Projection;
-- Tool references;
-- Manager workflows;
-- workspace;
-- Web authoring/presentation.
-
-## 7. Dependency direction CURRENT
-
-```text
-                 ada_command_center.domain.alarms
-                        /               \
-                       v                 v
-        Web Alarm Configuration    Backend Alarm Core
-```
-
-Además, Alarm Runtime declara Domain directamente donde consume sus contratos.
-
-Configuration Manager declara Domain directamente donde construye/consume authored Alarm Configuration.
-
-Reglas congeladas:
-
-```text
-Web Configuration -> Domain
-Backend Alarm Core -> Domain
-Runtime -> Domain cuando usa tipos de dominio
-Domain -X-> Web
-Domain -X-> Runtime
-Domain -X-> Persistence
-Domain -X-> Infrastructure
-```
-
-## 8. Root replacement CLOSED
-
-Eliminadas como autoridades:
-
-```text
-scopes/ada-command-center/backend/alarms/core/
-    src/ada_command_center/alarms/core/definition.py
-
-scopes/ada-command-center/web/alarms/configuration/
-    src/ada_command_center/web/alarms/configuration/models.py
-```
-
-Ambas están ausentes de `main@7a8c36a...`.
-
-No existen aliases/re-exports de compatibilidad destinados a preservar esas autoridades legacy.
-
-Los consumers fueron actualizados en el mismo incremento.
-
-## 9. Tests y ownership
-
-Los tests de:
-- shared fundamentals;
-- Alarm definitions;
-- `AlarmConfiguration`;
-- cross-Rule validation;
-- document round-trip;
-
-viven bajo:
-
-```text
-scopes/ada-command-center/domain/alarms/tests
-```
-
-Engine conserva tests de runtime/lifecycle.
-
-Web conserva tests de Source/Projection/Manager/Tool references/UI authoring.
-
-## 10. Qualification del hito
-
-Qualification observada durante integración:
-
-```text
-Alarm Domain
-49 passed
-
-Backend Alarm Core
-179 passed
-
-Alarms Runtime
-16 passed
-
-Web Alarm Configuration
-28 passed
-
-Configuration Manager
-11 passed
-```
-
-Total:
-
-```text
-283 passed
-```
-
-Para cada package afectado también quedaron GREEN:
-
-```text
-ruff check .
-ruff format --check .
-```
-
-Además:
-
-```text
-Alarm Domain extraction static verification passed
-git diff --check
-```
-
-Los mirrors pedagógicos fueron sincronizados y sus tests de equivalencia quedaron GREEN.
-
-No se capturó una rerun completa posterior al commit final; si se requiere un gate formal sobre bytes exactos del SHA final, queda UNVERIFIED.
-
-## 11. B.2 ownership después de la extracción
-
-Target acordado para pure materialization:
+Implementado:
 
 ```text
 scopes/ada-command-center/backend/alarms/materialization
+ada-command-center-alarms-materialization==1.0.0
+ada_command_center.alarms.materialization
 ```
 
-Responsabilidad futura:
+Responsabilidad:
+- pure resolution DTOs;
+- Runtime Configuration contract;
+- Delivery Configuration contract;
+- findings/status;
+- qualification input contracts.
+
+No es owner de:
+- authored AlarmDefinition/Configuration;
+- Engine lifecycle;
+- Tool discovery;
+- evaluator runtime code;
+- I/O;
+- stores;
+- process orchestration.
+
+## 6. Dependency direction CURRENT
 
 ```text
-AlarmConfiguration
-+ qualified external inputs
-        |
-        v
-AlarmConfigurationResolution
+domain.alarms
+      ^
+      |
+alarms.core
+      ^
+      |
+alarms.materialization
 ```
 
-Target acordado para process orchestration:
+Materialization también consume `ada-web-tools` únicamente para `ToolConfigurationKind` en resolved
+visual targets.
 
-```text
-scopes/ada-command-center/backend/processes/alarms-materialization
-```
+Domain no depende hacia arriba.
 
-Ambos paths están ausentes todavía de `main@7a8c36a...`.
+Core no depende de Materialization.
 
-## 12. Separación congelada
+## 7. Separación congelada
 
 ```text
 AUTHORED DOMAIN
@@ -326,77 +121,110 @@ AlarmConfiguration
 AlarmDefinition
 MessageDefinition
 
+RUNTIME CORE
+PlannedAlarm
+AlarmResolutionKey
+Engine state/lifecycle
+
 RUNTIME RESOLVED
 RuntimeAlarmConfiguration
-PlannedAlarm
 
 DELIVERY RESOLVED
 DeliveryAlarmConfiguration
 ResolvedDeliveryAlarm
+ResolvedDeliveryMessage
+ResolvedDeactivationPolicy
+ResolvedVisualTarget
 ```
 
-No mover artifacts operacionales al authored Domain.
+No mover artifacts resueltos al authored Domain.
 
-## 13. SUPERSEDED
+## 8. Runtime visibility cleanup CLOSED
 
-Quedan reemplazadas las propuestas previas de ubicar el contrato compartido bajo:
+Removido de Core:
 
 ```text
-scopes/ada-command-center/backend/alarms/configuration
+delivery_enabled
+PriorityDisposition.SHADOW
 ```
 
-o:
+No reemplazar por otro visibility flag.
+
+## 9. Qualification inputs CURRENT
 
 ```text
-scopes/ada-command-center/alarms/configuration/core
+ToolReconciliationQualification
+EvaluatorQualificationKey
+EvaluatorQualificationCatalog
 ```
 
-Authority CURRENT:
+Son contratos de consumo B.2, no owners del sistema que produce reconciliation/evaluator state.
+
+## 10. Process ownership PLANNED
+
+Future orchestration:
 
 ```text
-scopes/ada-command-center/domain/alarms
+scopes/ada-command-center/backend/processes/alarms-materialization
 ```
 
-También queda reemplazada la organización histórica donde:
-- authoring definitions pertenecían físicamente a Alarm Core;
-- `AlarmConfiguration` pertenecía físicamente a Web.
+Todavía ausente.
 
-## 14. Conflicto fuera de alcance
+Responsabilidad futura:
+- acquire inputs;
+- compare revisions;
+- invoke pure resolver;
+- persist artifacts/findings;
+- diagnostics.
 
-Project baseline:
+No mover esa responsabilidad al contract package.
+
+## 11. SUPERSEDED
+
+Siguen reemplazadas propuestas de authored contract bajo:
 
 ```text
-Python 3.14.7
+backend/alarms/configuration
+alarms/configuration/core
 ```
 
-Package CURRENT:
+Authority authored permanece:
 
 ```text
-requires-python ==3.14.2
+domain/alarms
 ```
 
-La migración no corrigió este conflicto.
+También queda refinada la propuesta inicial de ubicar `AlarmResolutionKey` en Materialization:
+CURRENT owner es Core.
 
-## 15. Foco único siguiente
+Esto no crea legacy; es la única autoridad implementada del key.
 
-```text
-B.2 — Materialization Contracts
-```
+## 12. OPEN separado
 
-Primer incremento:
-
-```text
-scopes/ada-command-center/backend/alarms/materialization
-```
-
-Implementar sólo contratos puros ya acordados.
-
-No implementar todavía:
-- resolver B.2 completo;
-- I/O;
-- stores;
-- scheduler;
+- pure B.2 resolver;
+- producer/adapters concretos de qualification inputs;
 - process orchestration;
+- artifact stores;
+- Runtime provenance cleanup;
 - Runtime Adoption;
 - Live Delivery;
 - Management Capture.
+
+## 13. Python conflict
+
+```text
+Project 3.14.7
+Command Center requires-python ==3.14.2
+```
+
+OPEN.
+
+## 14. Foco único siguiente
+
+```text
+PURE B.2 ALARM CONFIGURATION RESOLVER
+```
+
+Primero diseño contra contracts CURRENT; luego implementación incremental.
+
+No mezclar con process, I/O, Adoption, Delivery ni provenance migration.

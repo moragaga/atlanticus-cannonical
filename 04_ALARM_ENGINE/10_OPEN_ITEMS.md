@@ -1,148 +1,191 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN / B.2 DESIGN LARGELY CLOSED / DOMAIN EXTRACTION CLOSED / MATERIALIZATION CONTRACTS NEXT**
+Estado: **OPEN / B.2 CONTRACTS CLOSED / QUALIFICATION INPUT CONTRACTS CLOSED / PURE RESOLVER NEXT**
 
-Cerrado antes de este checkpoint:
-- persistence/recovery qualification;
-- concurrency leases/fencing;
-- Management suppression por `priority_order`;
-- Special Condition Runtime reappearance;
-- Special Condition level-trigger semantics.
+Checkpoint:
 
-Cerrado en este hito:
-- Command Center Alarm Domain Extraction;
-- `scopes/ada-command-center/domain/alarms` como autoridad transversal;
-- root replacement sin aliases legacy;
-- Engine Core consumiendo Domain;
-- Runtime declarando Domain cuando usa sus contratos;
-- Web Alarm Configuration consumiendo Domain sin depender de Engine Core por authoring DTOs;
-- Configuration Manager consumiendo Domain explícitamente;
-- tests de definición/configuración movidos al owner de dominio.
+```text
+moragaga/atlanticus:main
+bc3fffd72afb712d5b5ab84522c379abf2a19642
+```
 
-Cerrado en diseño B.2 y todavía **NOT YET IMPLEMENTED**:
-- `AlarmResolutionKey` y `READY | BLOCKED`;
-- atomicidad Runtime + Delivery;
-- Runtime artifact serializable y `DISABLED != REMOVED`;
-- evaluator qualification por key;
-- C1/C2/C3 routing materialization;
-- Deactivation + Messages policy resolution;
-- Management Capture aligned al exact Effective key;
-- `DeactivationIntent(effective_until, approval_required)` target;
-- Special Condition qualification;
-- `reappearance_after_seconds` y nullable Runtime due;
-- TRACE_ONLY exclusivamente como Delivery visibility;
-- eliminación target de `delivery_enabled`/`SHADOW`;
-- `AlarmEffectiveConfigurationHead`;
-- same-WAL `ConfigurationAdoptionCommit`;
-- Adoption sobre union de defined identities con `ADDED`/`ENABLED`;
-- `DeliveryAlarmConfiguration` shape;
-- `EngineResolvedCurrentState`;
-- backend materialization de `cause_text`;
-- Live publication rules;
-- Management round-trip sin evidence devuelto como autoridad;
-- B.2 pure resolver/package boundary;
-- B.2 process orchestration boundary.
+## CLOSED / CURRENT
+
+- Command Center Alarm Domain Extraction.
+- Root replacement de autoridades authored legacy.
+- Management suppression por `priority_order`.
+- Special Condition Runtime reappearance.
+- `PlannedAlarm.delivery_enabled` removido.
+- `PriorityDisposition.SHADOW` removido.
+- `AlarmResolutionKey` implementado en Alarm Core.
+- package `backend/alarms/materialization`.
+- `AlarmConfigurationResolution`.
+- Runtime/Delivery materialization contract types.
+- atomicidad `READY | BLOCKED`.
+- `ToolReconciliationQualification`.
+- `EvaluatorQualificationKey`.
+- `EvaluatorQualificationCatalog`.
 
 ## OPEN relevantes
 
-1. **B.2 materialization contracts**
-   - target `backend/alarms/materialization`;
-   - implementar value objects/DTOs ya acordados;
-   - sin I/O ni resolver completo en el primer incremento.
+### 1. Pure B.2 resolver — NEXT
 
-2. **Pure B.2 resolver**
-   - implementar después de los contratos;
-   - resolution/validation contra inputs explícitos;
-   - no mezclar con process orchestration.
+Implementar resolución/validación determinística contra inputs explícitos.
 
-3. **Materialization process**
-   - target `backend/processes/alarms-materialization`;
-   - acquisition/orchestration/persistence posterior al pure resolver;
-   - artifact stores aún OPEN.
+No I/O.
 
-4. **Owner/package de Live Delivery**
-   - todavía no implementado;
-   - debe consumir `EngineResolvedCurrentState` + exact `DeliveryAlarmConfiguration`;
-   - no recalcular Engine semantics.
+No process orchestration.
 
-5. **Current Tool reconciliation qualification**
-   - Confirmed Tool Catalog + reconciliation-GREEN actual;
-   - contrato exacto de este segundo input aún no implementado/verificado.
+Debe producir solamente `AlarmConfigurationResolution`.
 
-6. **Cause/evidence contract**
-   - falta schema evaluator suficientemente explícito para validar placeholders de `cause_template` antes del Runtime.
+### 2. Tool reconciliation qualification producer
 
-7. **Management Capture implementation details**
-   - `shift_end` provider;
-   - persistence de Captured Management Input;
-   - stale/unavailable outcomes;
-   - pending request stale cleanup.
+El contrato de consumo existe:
 
-8. **Runtime provenance cleanup**
-   - reemplazar pares históricos por `AlarmResolutionKey` donde representen una sola base;
-   - `resolution_key_at_start` para occurrence provenance;
-   - no aliases/adapters permanentes.
+```text
+ToolReconciliationQualification(green_tool_keys)
+```
 
-9. **Adoption implementation gaps**
-   - C1/C3 routing mutation;
-   - evaluator/kind/priority-group/origin Tool transitions;
-   - timer/Special Condition reconciliation target.
+Sigue OPEN quién/qué lo construye a partir del estado actual de reconciliation.
 
-10. **Adoption persistence**
-    - journal record discriminado y schema/version;
-    - `adoption_id` generation;
-    - materialización Effective Head;
-    - migration desde persistence CURRENT;
-    - crash/recovery tests.
+No inventar taxonomía RED/DRIFT/MISSING dentro de Materialization.
 
-11. **Tool routing qualification adicional**
-    - PROCESS ↔ INTEGRATED_OPERATIONS constraints;
-    - routing tier matrix;
-    - Rule area vs Tool scope cuando corresponda.
+### 3. Evaluator qualification producer
 
-12. **Operation details**
-    - cadence/event triggers;
-    - persistence física READY/BLOCKED y Live Projection;
-    - schema versions/codecs;
-    - retention;
-    - deployment/container topology.
+El contrato de consumo existe:
 
-## Conflictos/OPEN que no deben resolverse silenciosamente
+```text
+EvaluatorQualificationCatalog
+```
 
-B.1 frozen Special Cascade sigue distinto de la suppression uniforme CURRENT por ranking.
+Sigue OPEN cómo se deriva desde el deployed evaluator registry/catalog sin transportar callables ni
+`DataRequirement` al artifact.
 
-B.1 contiene texto que exige Message activo durante B.2, mientras el Project acordó:
+### 4. Materialization process
+
+Target:
+
+```text
+scopes/ada-command-center/backend/processes/alarms-materialization
+```
+
+Responsabilidad futura:
+- acquisition;
+- revision comparison;
+- resolver invocation;
+- artifact/findings persistence;
+- process diagnostics.
+
+### 5. Artifact persistence
+
+OPEN:
+- Runtime Configuration store;
+- Delivery Configuration store;
+- findings/history;
+- codecs/schema versions;
+- retention.
+
+### 6. Runtime provenance cleanup
+
+CURRENT todavía usa pares históricos donde corresponde:
+
+```text
+alarm_configuration_revision
+tool_registry_revision
+```
+
+TARGET:
+
+```text
+AlarmResolutionKey
+resolution_key_at_start
+```
+
+Sin aliases permanentes.
+
+### 7. Reappearance timer target
+
+OPEN:
+- `reappearance_after_seconds`;
+- reconciliation en Adoption;
+- nullable Runtime due.
+
+No reabrir Special Condition Runtime semantics ya implementadas.
+
+### 8. Deactivation Core cleanup
+
+`PlannedAlarm.deactivation_policy` sigue CURRENT.
+
+Target Delivery/Management Capture permanece acordado, pero cleanup no se hizo en este hito.
+
+### 9. Cause/evidence contract
+
+Falta schema evaluator explícito para validar placeholders de `cause_template` antes de Runtime.
+
+### 10. Runtime Adoption / Effective Head
+
+OPEN:
+- discriminated journal record;
+- `adoption_id`;
+- Effective Head materialization;
+- migration;
+- crash/recovery tests;
+- ADDED/ENABLED transitions;
+- integration con artifact stores.
+
+### 11. Live Delivery owner/package
+
+Contrato de diseño cerrado; implementación física pendiente.
+
+### 12. Management Capture
+
+OPEN:
+- `shift_end` provider;
+- persistence;
+- stale/unavailable outcomes;
+- pending deactivation cleanup.
+
+### 13. Tool routing qualification adicional
+
+OPEN:
+- PROCESS ↔ INTEGRATED_OPERATIONS constraints;
+- routing tier matrix;
+- Rule area vs Tool scope.
+
+### 14. Operation details
+
+OPEN:
+- materialization/Live cadence;
+- event trigger;
+- physical containers/partitions;
+- final deployment topology.
+
+### 15. Python baseline conflict
+
+```text
+Project baseline: Python 3.14.7
+Command Center packages: requires-python ==3.14.2
+```
+
+No mezclar con pure resolver salvo bloqueo demostrado.
+
+## Historical conflicts visibles
+
+B.1 Special Cascade sigue distinto de suppression CURRENT por ranking.
+
+B.1 exige Message activo en una formulación histórica; Project CURRENT considera:
 
 ```text
 inactive Message = válido pero no seleccionable para nuevas gestiones
 ```
 
-La reconciliación formal en `atlanticus-decisions` sigue pendiente.
-
-Project baseline:
-
-```text
-Python 3.14.7
-```
-
-Packages Command Center CURRENT auditados:
-
-```text
-requires-python ==3.14.2
-```
-
-El conflicto permanece OPEN y fuera de este incremento.
+`atlanticus-decisions` no está reconciliado.
 
 ## Foco siguiente único
 
 ```text
-B.2 — Materialization Contracts
+PURE B.2 ALARM CONFIGURATION RESOLVER
 ```
 
-Implementar sólo contratos puros en:
-
-```text
-scopes/ada-command-center/backend/alarms/materialization
-```
-
-No abrir aún resolver completo, I/O, stores, job orchestration, Runtime Adoption ni Live Delivery.
+No abrir materialization process, Adoption, Live Delivery, Management Capture ni broad Core cleanup
+en el mismo incremento.

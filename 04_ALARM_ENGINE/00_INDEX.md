@@ -1,19 +1,19 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT / B.2 DESIGN CLOSED THROUGH LIVE DELIVERY / DOMAIN EXTRACTION CLOSED / MATERIALIZATION CONTRACTS NEXT**
+Estado: **CURRENT / DOMAIN EXTRACTION CLOSED / RUNTIME VISIBILITY CLEANUP CLOSED / B.2 CONTRACTS CLOSED / PURE RESOLVER NEXT**
 
 Checkpoint de implementación auditado:
 
 ```text
 moragaga/atlanticus:main
-7a8c36a29860c8f010c3fe5b840c5f5af4d87d0f
+bc3fffd72afb712d5b5ab84522c379abf2a19642
 ```
 
 Checkpoint canonical base de este cierre:
 
 ```text
 moragaga/atlanticus-cannonical:main
-8f915fa75b6f4eaaa80fb003b290c613aa9ad735
+2d8cbc33b7776e057e4f7d82def318d5eaf8f336
 ```
 
 Checkpoint decisions consultado:
@@ -25,53 +25,49 @@ moragaga/atlanticus-decisions:main
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_DOMAIN_MODEL.md` | AlarmDefinition, PlannedAlarm, evaluator boundary, priority, management, deactivation, visibility y reappearance. | CURRENT / IMPLEMENTED + TARGET CONTRACT REFINED |
+| `01_DOMAIN_MODEL.md` | Domain/Core boundaries, PlannedAlarm, priority, management, deactivation, visibility y provenance. | CURRENT / IMPLEMENTATION + TARGET GAPS |
 | `02_RUNTIME_AND_LIFECYCLE.md` | Cycle, evaluation, lifecycle, management finalization, routing y priority. | IMPLEMENTED / TESTED |
 | `03_PERSISTENCE_AND_RECOVERY.md` | WAL, durable head, snapshots, recovery. | IMPLEMENTED + VALIDATED |
 | `04_CONCURRENCY_LEASES_AND_FENCING.md` | Authority, takeover, stale writers. | IMPLEMENTED + VALIDATED |
 | `05_PROJECTION_AND_PUBLICATION.md` | Live vs Management, Runtime/Delivery. | DECISION RECORDED |
 | `06_MANAGEMENT.md` | ManagementEffect, suppression por ranking y reappearance. | CURRENT / IMPLEMENTED / TESTED |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | B.2 resolution, Runtime/Delivery artifacts, routing, deactivation/messages, reappearance, visibility y Live Delivery boundary. | PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | B.2 contracts, qualification inputs, resolver boundary y Runtime/Delivery artifacts. | CONTRACTS IMPLEMENTED / PURE RESOLVER NEXT |
 | `08_QUALIFICATION_BASELINE.md` | Campaña R3.5 y propiedades demostradas. | CLOSED/GREEN |
 | `09_DECISION_INDEX.md` | Genealogía y decisiones individuales. | CANDIDATE |
-| `10_OPEN_ITEMS.md` | Gaps de implementación después de Domain Extraction. | OPEN / B.2 IMPLEMENTATION FOCUSED |
-| `11_SOURCE_LEDGER.md` | Inventario de fuentes preservadas y duplicados conocidos. | AUDIT LEDGER |
-| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Engine → History/Analytics → Command Center Web. | CANDIDATE / FUERA DEL FOCO B.2 |
-| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Adoption global, Effective Configuration Head, WAL/recovery y exact revision alignment. | PROJECT CONTRACT AGREED / NOT IMPLEMENTED |
+| `10_OPEN_ITEMS.md` | Gaps posteriores a contratos B.2. | OPEN / PURE RESOLVER FOCUSED |
+| `11_SOURCE_LEDGER.md` | Inventario de fuentes preservadas. | AUDIT LEDGER |
+| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Engine → History/Analytics → Command Center Web. | CANDIDATE / FUERA DEL FOCO |
+| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Adoption global, Effective Head, WAL/recovery y exact revision alignment. | CONTRACT AGREED / NOT IMPLEMENTED |
 
-No reabrir Management suppression ni Special Condition Runtime reappearance salvo regresión o contradicción nueva entre autoridad e implementación.
-
-Prerequisito arquitectónico B.2:
+## CLOSED
 
 ```text
 Command Center Alarm Domain Extraction
--> scopes/ada-command-center/domain/alarms
+Alarm Core delivery_enabled / SHADOW root removal
+B.2 Materialization Contracts
+B.2 Resolver Qualification Input Contracts
 ```
 
-Estado:
-
-```text
-CLOSED / IMPLEMENTED / QUALIFIED
-```
-
-El authored Alarm domain ya no pertenece físicamente a Engine Core ni a Web Configuration.
-
-B.2 pure materialization tiene target acordado:
+Physical owner CURRENT:
 
 ```text
 scopes/ada-command-center/backend/alarms/materialization
 ```
 
-y la orquestación operacional futura:
+Future orchestration owner remains:
 
 ```text
 scopes/ada-command-center/backend/processes/alarms-materialization
 ```
 
-Foco siguiente único:
+No reabrir Management suppression, Special Condition Runtime reappearance ni Runtime visibility
+salvo regresión o conflicto nuevo demostrado.
+
+## Siguiente foco único
 
 ```text
-B.2 — Materialization Contracts
+PURE B.2 ALARM CONFIGURATION RESOLVER
 ```
 
-No mezclar ese incremento con resolver completo, I/O, Runtime Adoption, Live Delivery, UI final, History/Analytics ni broad Engine rewrite.
+No mezclar con I/O, stores, job orchestration, Runtime Adoption, Live Delivery,
+Management Capture, History/Analytics ni broad Engine rewrite.
