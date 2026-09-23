@@ -1,282 +1,116 @@
 # ADA Command Center — Tool Catalog
 
-Estado: **CURRENT V1 / IMPLEMENTED / CLOSED**
+Estado: **CURRENT V1 / STORAGE OUTPUT CLOSED / ALARM DEPENDENCY FREEZE INTEGRATED**
 
-## Propósito
-
-Command Center mantiene una visión consolidada y read-only de las Tools que necesita para authoring
-asistido y para una futura resolución B.2.
-
-Implementado bajo:
+## Backend owner
 
 ```text
 scopes/ada-command-center/backend/tools/catalog
 ```
 
-## Ownership congelado
-
-ADA Tool Configuration continúa siendo autoridad de:
-
-- `tool_key`;
-- display name;
-- Tool kind;
-- Components;
-- Subcomponents;
-- relaciones;
-- topología.
-
-Command Center Tool Catalog es estado derivado/read-only.
-
-No es:
-
-- Tool authoring;
-- segunda source of truth;
-- fork de `ToolConfiguration`/`ToolStructure`;
-- Cosmos propio de Command Center para duplicar Tool topology.
-
-## Identity CURRENT
-
-`tool_key` es identidad de Tool.
-
-El catálogo exige unicidad dentro de cada snapshot y el consolidator rechaza dos inputs que entreguen
-el mismo `tool_key`.
-
-`display_name` es presentación. Forma parte del contenido versionado del snapshot, pero no reemplaza
-la identidad por key.
-
-## Contract CURRENT
+## Contract
 
 ```text
 ToolCatalogEntry
-├── tool_key: str
-├── display_name: str
-├── kind: ToolConfigurationKind
-├── source_release_id: SourceReleaseId
-└── structure: ToolStructure
-```
+    tool_key
+    display_name
+    kind
+    source_release_id
+    structure
 
-`structure.tool_key` y `structure.kind` deben coincidir con la entry.
-
-```text
 ToolCatalogSnapshot
-├── revision: str
-├── generated_at_utc: datetime
-└── tools: tuple[ToolCatalogEntry, ...]
+    revision
+    generated_at_utc
+    tools
 ```
 
-Las Tools se normalizan ordenadas por `tool_key`.
+Revision is deterministic from normalized Tool entries.
 
-## Revision CURRENT
+## Consolidation
 
-`revision` es el SHA-256 de una serialización JSON canónica de las entries ordenadas.
+The package consumes configured Tool ProjectionStore inputs and produces an all-or-nothing snapshot.
 
-Participan:
+A failed refresh does not overwrite current Storage state.
 
-- `tool_key`;
-- `display_name`;
-- `kind`;
-- `source_release_id`;
-- `ToolStructure.to_document()`.
-
-No participa:
-
-- `generated_at_utc`.
-
-Mismo contenido semántico produce la misma revision aunque cambie la hora de generación.
-
-## Inputs CURRENT
-
-```text
-ToolCatalogInput
-├── input_key: str
-├── projection: ProjectionStore[ToolConfiguration]
-└── source_key: SourceKey = SourceKey('tools')
-```
-
-`input_key` identifica el input dentro del consolidator y debe ser único.
-
-La composición puede inyectar múltiples stores físicos distintos. El package Tool Catalog no conoce
-Cosmos directamente.
-
-No asumir un Cosmos global.
-
-## Consolidation CURRENT
-
-```text
-configured ToolCatalogInputs
-        ↓
-get_active(source_key)
-        ↓
-ToolConfiguration + ToolStructure
-        ↓
-ToolCatalogEntries
-        ↓
-ToolCatalogSnapshot
-        ↓
-replace_current(snapshot)
-```
-
-El refresh es all-or-nothing.
-
-Falla sin publicar si cualquier input:
-
-- lanza error al leer;
-- no tiene Projection activa;
-- entrega payload que no es `ToolConfiguration`;
-- no tiene `structure`;
-- colisiona en `tool_key`.
-
-No existe `first wins` ni `last wins`.
-
-## Durable state CURRENT
-
-Implementado:
+## Durable output
 
 ```text
 ToolCatalogStore
 BlobToolCatalogStore
-BlobToolCatalogStoreSettings
 ```
 
-Settings físicos:
+V1 persists one CURRENT catalog in Storage/Blob.
+
+No catalog history or retention is implemented here.
+
+## Command Center topology
+
+Operational integration may observe multiple upstream Tool Cosmos/projection surfaces plus prior
+Storage state during reconciliation/certification.
+
+Confirmed output:
 
 ```text
-container_name
-blob_name
+Confirmed Tool Catalog -> Storage
 ```
 
-`BlobToolCatalogStore` usa `atlanticus.connectivity.storage.StorageClient`.
+It intentionally does not project back into Command Center Cosmos.
 
-`get_current()`:
+## Consumer — Alarm Configuration
 
-- descarga y decodifica el snapshot;
-- retorna `None` si el blob no existe;
-- expone error de store si Storage falla.
-
-`replace_current()`:
-
-- sobrescribe el único blob CURRENT;
-- usa `application/json`.
-
-## Codec CURRENT
-
-```text
-document_type = ada_command_center_tool_catalog
-schema_version = 1
-```
-
-Documento:
-
-```text
-document_type
-schema_version
-revision
-generated_at_utc
-tools[]
-```
-
-Al leer se reconstruye `ToolStructure` con su contrato CURRENT y se verifica que `revision`
-corresponda al payload.
-
-## Failure/LKG semantics V1
-
-V1 no modela availability state por Tool.
-
-No existen en el snapshot:
-
-```text
-AVAILABLE
-STALE
-MISSING
-```
-
-Si refresh falla, `replace_current()` no se ejecuta y el blob CURRENT anterior queda sin cambios.
-
-Por tanto, V1 obtiene continuidad mediante **last successfully published CURRENT**, no mediante un
-segundo documento LKG ni entries STALE.
-
-La dirección canonical anterior que exigía availability states desde V1 queda
-**SUPERSEDED / REFINED**.
-
-Podrán introducirse en un incremento posterior sólo si existe una necesidad operacional concreta.
-
-## History / scheduler
-
-No implementado en V1:
-
-- history de snapshots;
-- retention;
-- manifest separado;
-- cadence;
-- retry/backoff;
-- scheduler/job;
-- startup orchestration;
-- metrics específicas del consolidator.
-
-Estas capacidades no son requisito para considerar cerrado el contrato V1.
-
-## Consumer CURRENT — Alarm Configuration authoring
-
-Alarm Configuration ya consume el catálogo mediante:
-
-```text
-AlarmToolReferenceReader
-```
-
-Produce:
+One exact snapshot produces:
 
 ```text
 AlarmToolReferenceCatalog
-→ Tool
-→ Component
-→ visible Subcomponent address
+    catalog_revision
+    UI tools
+    dependencies: ToolDependencyManifest
 ```
 
-Conserva:
+UI tools omit STRATEGIC.
+Dependency catalog preserves all snapshot entries.
 
-- `catalog_revision`;
-- `source_release_id` por Tool;
-- `owner_component_key` real para subcomponentes linked.
+## Shared downstream Tool contract
 
-Reutiliza operaciones de `ToolStructure`; no duplica la topología.
-
-`STRATEGIC` no se expone como sugerencia de alarmas porque el contrato Tool CURRENT no define esa
-proyección.
-
-## Authoring no restrictivo
-
-Catálogo y read model son ayuda de authoring.
-
-No son requisito para persistir una Alarm Configuration intrínsecamente válida.
+Owner:
 
 ```text
-catalog missing
-!=
-Alarm Configuration invalid
+scopes/ada-command-center/domain/tools
 ```
-
-El consumer read model retorna `None` cuando todavía no existe snapshot CURRENT.
-
-## B.2
-
-B.2 permanece PLANNED.
-
-Será un consumidor posterior de:
 
 ```text
-Alarm Configuration Projection revision
-+
-Tool Catalog revision
+ToolDependencyEntry
+ToolDependencyManifest
 ```
 
-No introducir resolución B.2 dentro del Tool Catalog ni dentro del reader de authoring.
+Shared by Alarm publication/history and backend Materialization.
 
-## Siguiente foco
+## History strategy
 
-Tool Catalog V1 está cerrado.
+Tool Catalog Store still keeps only CURRENT.
 
-El siguiente foco no es ampliar este package sino consumir el read model ya disponible en:
+Historical exact Tool evidence required by an Alarm revision is persisted in:
 
 ```text
-ALARM-CONFIGURATION-STRUCTURED-AUTHORING-V1
+AlarmConfigurationSnapshot.tool_dependencies
 ```
+
+Therefore B.2 does not require versioned historical lookup from `BlobToolCatalogStore`.
+
+## Authoring behavior
+
+`AlarmConfiguration` remains Rules + Messages.
+
+But Alarm Manager publication is no longer externally unrestricted:
+- Save Draft requires current Confirmed Tool Catalog;
+- validation requires referenced keys in pinned revision;
+- publish rejects revision drift.
+
+This refines the old "catalog is only optional authoring assistance" statement.
+
+## Non-goals
+
+- Tool authoring in Command Center;
+- consolidated Tool Cosmos output;
+- B.2 inside Tool Catalog;
+- Tool catalog history solely for Alarm materialization.

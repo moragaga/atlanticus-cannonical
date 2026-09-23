@@ -1,51 +1,95 @@
 # Alarm Engine — Projection and Publication
 
-Estado: **DECISION RECORDED**
+Estado: **CURRENT / BASE SNAPSHOT V3 IMPLEMENTED / OPERATIONAL COSMOS PROJECTION NEXT**
 
-## Live Projection != Management Projection
+## Capas distintas
 
-Son proyecciones distintas y no deben fusionarse.
+No mezclar:
 
-Una alarma físicamente activa puede seguir en Live aunque:
-- haya sido managed;
-- haya sido deactivated administrativamente.
+```text
+Alarm Source/Release
+Alarm Configuration base Projection
+B.2 Runtime Configuration
+B.2 Delivery Configuration
+Alarm Live Projection
+Alarm Management Projection
+```
 
-Management state no convierte por sí solo la condición física en false.
+## Alarm Source CURRENT
 
-## Priority
+```text
+AlarmConfigurationSnapshot
+    configuration: AlarmConfiguration
+    tool_dependencies: ToolDependencyManifest
+```
 
-Priority se resuelve antes de Live Projection.
+Source schema:
 
-Web no vuelve a decidir predominancia.
+```text
+ada_command_center_alarm_configuration_release
+schema_version = 3
+```
 
-## Occurrence
+No existe decoder legacy v2.
 
-Una misma occurrence puede alimentar varias superficies sin duplicar identidad.
+## Base Projection CURRENT
 
-## Live payload
+La Projection base conserva exactamente el snapshot publicado y no vuelve a consultar Tools.
 
-Debe llegar suficientemente resuelto para Web, incluyendo según contrato:
-- identity;
-- status/priority;
-- title/display/cause;
-- kind/criticality/category/areas;
-- color semantic;
-- visual targets;
-- active messages;
-- management/deactivation;
-- capabilities.
+```text
+Alarm Source release Rn
+-> AlarmConfigurationSnapshot(Rn, Cn)
+-> base Projection payload = same snapshot
+```
 
-Web no debe reconstruir AlarmDefinition ni catálogos para decidir qué significa la alarma.
+La Projection base no produce Runtime/Delivery artifacts y no decide `READY` ni `EFFECTIVE`.
 
-## Runtime / Delivery projections
+## Operational Cosmos Projection — NEXT
 
-Increment 1 congeló:
-- una resolución validada produce Runtime Config Projection;
-- produce Delivery Config Projection;
-- ambas comparten `resolution_key`;
-- Delivery no puede adelantarse a Runtime;
-- Runtime adoption determina `EFFECTIVE`.
+Todavía no existe una proyección operacional específica de Alarm Configuration a Cosmos en
+`scopes/ada-command-center`.
 
-## Storage
+Siguiente incremento:
 
-Los documentos originales describen SharePoint como authority/history. Esa parte es binding histórico y debe reconciliarse con Blob Storage. Las invariantes anteriores permanecen hasta decisión explícita en contrario.
+```text
+AlarmConfigurationSnapshot v3
+-> durable operational Projection in Cosmos
+```
+
+Debe preservar:
+- source release;
+- ToolDependencyManifest;
+- confirmed Tool revision;
+- payload completo del snapshot.
+
+No debe volver a consultar Tool Catalog al proyectar.
+
+## B.2 Runtime / Delivery
+
+Una resolución coherente produce Runtime + Delivery con la misma `AlarmResolutionKey`.
+
+```text
+READY != EFFECTIVE
+```
+
+Runtime Adoption controla `EFFECTIVE`.
+
+## Live vs Management
+
+Live representa current operational state.
+Management Projection representa historical user management activity.
+
+No fusionarlas.
+
+## Storage boundary
+
+Para dominios migrados, Storage/Blob es autoridad durable.
+
+```text
+Confirmed Tool Catalog -> Storage -> END
+```
+
+No proyectar el consolidado Tool de vuelta a Cosmos.
+
+Cosmos puede ser superficie operacional de consumo para Alarm Configuration sin cambiar Source
+authority.

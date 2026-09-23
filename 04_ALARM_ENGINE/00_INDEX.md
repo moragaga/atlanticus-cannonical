@@ -1,82 +1,68 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT / DOMAIN + CORE + B.2 PURE RESOLVER IMPLEMENTED / MATERIALIZATION PROCESS NEXT**
+Estado: **CURRENT / PURE B.2 RESOLVER + EXACT ALARM/TOOL SNAPSHOT CURRENT / OPERATIONAL PROJECTION NEXT**
 
-Checkpoint de implementación auditado:
+Checkpoint de implementación:
 
 ```text
 moragaga/atlanticus:main
-9398786ae9af7c00de1bcca9d7a311fe9ef2155f
+880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
 ```
 
-Checkpoint canonical inspeccionado antes de este reemplazo:
+Último commit semántico de este cierre:
 
 ```text
-moragaga/atlanticus-cannonical:main
-7fea2819aa4c22f9d7494cbe79ab8740ee3f4366
-```
-
-Checkpoint decisions consultado:
-
-```text
-moragaga/atlanticus-decisions:main
-50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
 ```
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_DOMAIN_MODEL.md` | Domain/Core boundaries, PlannedAlarm, priority, management, deactivation, visibility y provenance. | CURRENT / IMPLEMENTATION + TARGET GAPS |
-| `02_RUNTIME_AND_LIFECYCLE.md` | Cycle, evaluation, lifecycle, deactivation/management cascade, routing y priority. | CURRENT / IMPLEMENTED / TESTED |
-| `03_PERSISTENCE_AND_RECOVERY.md` | WAL, durable head, snapshots, recovery. | IMPLEMENTED + VALIDATED |
-| `04_CONCURRENCY_LEASES_AND_FENCING.md` | Authority, takeover, stale writers. | IMPLEMENTED + VALIDATED |
-| `05_PROJECTION_AND_PUBLICATION.md` | Live vs Management, Runtime/Delivery. | DECISION RECORDED |
-| `06_MANAGEMENT.md` | ManagementEffect, deactivation barrier, rank suppression y reappearance. | CURRENT / IMPLEMENTED / TESTED |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | B.2 contracts, pure resolver, qualification inputs y artifacts Runtime/Delivery. | CURRENT / RESOLVER IMPLEMENTED |
-| `08_QUALIFICATION_BASELINE.md` | Campaña R3.5 y qualification observada del resolver B.2. | CURRENT / EVIDENCE |
-| `09_DECISION_INDEX.md` | Genealogía histórica y refinamientos CURRENT del Project. | CURRENT |
-| `10_OPEN_ITEMS.md` | Gaps posteriores al resolver B.2. | OPEN / MATERIALIZATION PROCESS FOCUSED |
-| `11_SOURCE_LEDGER.md` | Inventario de fuentes preservadas. | AUDIT LEDGER |
-| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Engine → History/Analytics → Command Center Web. | CANDIDATE / FUERA DEL FOCO |
-| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Adoption global, Effective Head, WAL/recovery y exact revision alignment. | CONTRACT AGREED / NOT IMPLEMENTED |
+| `01_DOMAIN_MODEL.md` | Domain/Core boundaries y Runtime model. | CURRENT |
+| `02_RUNTIME_AND_LIFECYCLE.md` | Cycle, lifecycle, routing, priority. | CURRENT / IMPLEMENTED |
+| `03_PERSISTENCE_AND_RECOVERY.md` | WAL, recovery, snapshots. | CURRENT / IMPLEMENTED |
+| `04_CONCURRENCY_LEASES_AND_FENCING.md` | Authority y stale writers. | CURRENT / IMPLEMENTED |
+| `05_PROJECTION_AND_PUBLICATION.md` | Source/base projection vs Runtime/Delivery/Live/Management. | CURRENT / UPDATED |
+| `06_MANAGEMENT.md` | Management, deactivation, suppression, reappearance. | CURRENT |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | B.2 resolver + exact Tool dependency evidence. | CURRENT / UPDATED |
+| `08_QUALIFICATION_BASELINE.md` | Qualification histórica. | EVIDENCE |
+| `09_DECISION_INDEX.md` | Genealogía y refinamientos. | CURRENT / UPDATED |
+| `10_OPEN_ITEMS.md` | Gaps posteriores al snapshot v3. | OPEN / COSMOS PROJECTION NEXT |
+| `11_SOURCE_LEDGER.md` | Fuentes y checkpoints. | AUDIT LEDGER / UPDATED |
+| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | History/Analytics boundary. | SEPARATE |
+| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Effective Head y adoption. | CONTRACT AGREED / NOT IMPLEMENTED |
 
-## CLOSED / CURRENT
-
-```text
-Command Center Alarm Domain Extraction
-Alarm Core delivery_enabled / SHADOW root removal
-B.2 Materialization Contracts
-B.2 Resolver Qualification Input Contracts
-Deactivation cascade scope
-PlannedAlarm.reappearance_after_seconds Runtime contract
-Pure B.2 Alarm Configuration Resolver implementation
-```
-
-Pure resolver CURRENT:
+## CLOSED / CURRENT acumulado
 
 ```text
-AlarmConfiguration
-+ alarm revision
-+ exact Confirmed Tool Catalog
-+ Tool reconciliation qualification
-+ Evaluator qualification
--> AlarmConfigurationResolution
+Alarm Domain extraction
+Alarm Core visibility cleanup
+B.2 Materialization contracts
+B.2 qualification input contracts
+Pure B.2 resolver
+Command Center Tools domain contract
+ToolDependencyManifest
+AlarmConfigurationSnapshot v3
+Alarm/Tool validate-publish correlation
 ```
 
-Sin I/O ni orchestration.
+## Frontera exacta hacia B.2
 
-Qualification observada:
-- 31 tests PASS;
-- `ruff check` PASS;
-- salida final posterior de `ruff format --check` no preservada en este cierre.
+```text
+Alarm Source release Rn
+    |
+    v
+AlarmConfigurationSnapshot
+    configuration
+    ToolDependencyManifest(Cn)
+    |
+    v
+B.2 resolver
+```
+
+No usar `latest Tool Catalog` para reinterpretar una release Alarm ya publicada.
 
 ## Siguiente foco único
 
 ```text
-B.2 MATERIALIZATION PROCESS
+Alarm Configuration operational Projection to Cosmos
 ```
-
-Gate de entrada: confirmar formatter GREEN una vez y continuar; no reabrir semántica B.2 si no
-aparece un conflicto real.
-
-No mezclar con Runtime Adoption, Live Delivery, Management Capture, History/Analytics,
-provenance migration ni broad Engine rewrite.

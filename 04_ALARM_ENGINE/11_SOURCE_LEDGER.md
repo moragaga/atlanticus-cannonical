@@ -1,120 +1,79 @@
 # Alarm Engine — Source Ledger
 
-Estado: **AUDIT LEDGER**
+Estado: **AUDIT LEDGER / UPDATED 2026-09-23**
 
-Commit de decisiones auditado:
-`ae28a733f9a973026182068af630a82ce39416bd`
+## Implementation checkpoints
 
-Tree completo:
-`9ea2223aa28502ae14929daece99ba75318aacc2`
+```text
+Pure B.2 resolver
+9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 
-## alarm_decisions
+Command Center Tools domain
+9b9600ae96c9153cf70d0fb401905963b8583c2f
 
-Preservados y clasificados:
+Alarm Tool Dependency Manifest v3
+d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
 
-- `Atlanticus_R3.6M_006B1_Canonical_Alarm_Definition_DESIGN_FROZEN.docx` — FROZEN.
-- `Atlanticus_R3.6M_006B1_Canonical_Alarm_Definition_DRAFT_3.docx` — HISTORICAL DRAFT.
-- `Atlanticus_R3.6M_006B2_Alarm_Projection_Boundary_DECISION_RECORDED.docx` — RECORDED.
-- `Atlanticus_R3.6M_006B2_Alarm_Projection_and_Publication_Boundary_DECISION_RECORDED_INCREMENT_1.docx` — RECORDED.
-- `Atlanticus_R3.6M_006B2_Alarm_Projection_and_Publication_Boundary_DECISION_RECORDED_INCREMENT_2.docx` — RECORDED.
-- `R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md` — FROZEN / preferred machine-readable authority.
-- `R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT.docx` — HISTORICAL.
-- `R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT_2.docx` — DUPLICATE of prior SHA.
-- `R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT.md` — HISTORICAL.
-- `R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT_2.md` — DUPLICATE of prior SHA.
-- `R3.6M-006B.1-alarm-definition-contract-inventory-DRAFT_3.md` — HISTORICAL predecessor to frozen.
-- `R3.6M-006B.2-alarm-projection-boundary-DECISION-RECORDED.md` — CURRENT semantic base.
-- `R3.6M-006B.2-alarm-projection-and-publication-boundary-DECISION-RECORDED-INCREMENT-1.md` — CURRENT semantic extension.
-- `R3.6M-006B.2-alarm-projection-and-publication-boundary-DECISION-RECORDED-INCREMENT-2.md` — CURRENT semantic extension.
+CURRENT main
+880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
+```
 
-## alarm_test — Contracts/checkpoints
+`880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6` está dos commits por delante de `d2a5e14822d3711e64668b8e70cfa15d7ddae2f0`.
+Esos commits posteriores afectan `operational-data`/tooling y no alteran este cierre Alarm.
 
-Preservados explícitamente:
+## Canonical base inspected
 
-### E-008
-- `Atlanticus_R35_E008_Source_Unavailable_CACHE_FALLBACK_Contract_v1.0.0.docx`
+```text
+148b178df74ee3083681140f3bb7997a02435b80
+```
 
-### E-009
-- `Atlanticus_R35_E009_Invalid_Source_Candidate_Contract_v1.0.0.docx`
+## Historical decisions
 
-### E-010
-- Aborted Run Corrective Checkpoint
-- Closure Checkpoint
-- Cumulative Harness Corrective Checkpoint
-- Cumulative Harness Gate Checkpoint
-- Lease Lost After WAL Before Cache Contract
-- el archivo `(1)` del Lease Lost Contract es DUPLICATE byte-a-byte
-- SMB Preflight Checkpoint
+```text
+50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+```
 
-### E-011
-- Adjudicator Corrective Checkpoint
-- Cache Promotion Failure Contract
-- Closure Checkpoint
-- Harness Gate Checkpoint
-- Harness Gate Corrective Checkpoint
-- Harness Ready Checkpoint
+Relevant:
+- B.1 Alarm Definition frozen inventory;
+- B.2 Projection Boundary;
+- B.2 Publication/Materialization increments 1 y 2.
 
-### E-012
-- Closure Checkpoint
-- Drain Cancellation Product Finding
-- Drain Under Workload Contract
-- Harness Ready Checkpoint
-- Product Fix Ready Checkpoint
+## CURRENT refinements
 
-### F-001
-- Closure Checkpoint
-- Harness Corrective Checkpoint
-- Harness Gate Checkpoint
-- Harness Ready Checkpoint
-- Soak 500 Local 30m Contract
+Historical only:
+- SharePoint as general physical authority;
+- confirmed Tool catalog projected to Command Center Cosmos;
+- same Alarm revision re-resolved against later Tool revision;
+- full B.2 validity identical to save validity.
 
-### F-002
-- Closure Checkpoint
-- Harness Ready Checkpoint
-- Soak 1000 Local 30m Contract
+CURRENT:
+- Storage/Blob authority where migrated;
+- consolidated Tool Catalog ends in Storage;
+- Alarm source v3 freezes exact Tool evidence;
+- `VALID_AT_SAVE != READY != EFFECTIVE`.
 
-### F-007
-- Controlled Physical Dataset Bank Contract
-- Dataset Capture Manifest Contract
-- Docker Constrained Alarm Saturation Contract
-- Docker Stress Harness Ready Checkpoint
-- Harness Corrective Checkpoint
-- Phase A Harness Corrective Checkpoint
-- Physical Capacity Search Contract
-- Physical Volume v2 Final Closed Checkpoint
-- Real Volume v2 Contract
-- JSON templates: dataset bank, dataset manifest, representativeness, synthetic conformance
+## Qualification evidence
 
-### F-010
-- Final Docker Qualification Closed Checkpoint
-- Final Docker Qualification Contract
-- Performance Campaign Final Closure / R36 Entry Decision
+```text
+domain/tools                   8 passed
+domain/alarms                 50 passed
+web/alarms/configuration      35 passed
+configuration-manager         11 passed
 
-### Historical next-step
-- `Atlanticus_R36A001_Azure_Runtime_Deployment_Contract_v1.0.0.docx` — HISTORICAL/SUPERSEDED AS ACTIVE NEXT STEP.
+ruff check                    GREEN
+ruff format --check           GREEN
+```
 
-## Performance Campaign Planner
+## Central implementation paths
 
-El repositorio conserva una secuencia acumulativa extensa desde:
-- A001-A005;
-- B001-B004 y B007-B011;
-- C001-C008 con múltiples reruns/correctives de C004;
-- D001-D010, incluyendo interrupted runtime lease, logical time, clock/routing/test/adjudication fixes;
-- E001-E012;
-- F001, F002 y F007 hasta `v1.0.135_F007_CLOSED_F010_CONTRACT_PROPOSED`.
-
-Los XLSX intermedios son **genealogía/evidencia de campaña**, no decisiones canónicas independientes.
-
-Duplicados conocidos por SHA:
-- `...C004_R3_PRODUCT_FIX_READY (1).xlsx` == versión sin `(1)`.
-- tres copias `...D002_CLOSED_D003_DESIGN_READY` comparten SHA.
-- otros duplicados deben seguir detectándose por SHA durante la segunda pasada.
-
-## Implementación actual relacionada
-
-- `scopes/ada-command-center/backend/alarms/core`
-- `scopes/ada-command-center/backend/alarms/persistence`
-- `scopes/ada-command-center/backend/processes/alarms-runtime`
-- `scopes/ada/web/alarms`
-
-Este ledger no sustituye los artefactos originales. Su función es evitar que una fuente desaparezca silenciosamente durante la compactación.
+```text
+scopes/ada-command-center/domain/tools/
+scopes/ada-command-center/domain/alarms/.../snapshot.py
+scopes/ada-command-center/web/alarms/configuration/.../tool_dependencies.py
+scopes/ada-command-center/web/alarms/configuration/.../tool_references.py
+scopes/ada-command-center/web/alarms/configuration/.../workspace.py
+scopes/ada-command-center/web/alarms/configuration/.../workflows.py
+scopes/ada-command-center/web/alarms/configuration/.../source_release.py
+scopes/ada-command-center/web/alarms/configuration/.../web/callbacks.py
+scopes/ada-command-center/web/application/ada-command-center-configuration-manager/.../local_runtime.py
+```
