@@ -118,3 +118,18 @@ Alarm-specific semantics remain in:
 - workspace binding;
 - validation workflow;
 - source workflow.
+
+## Manager UX y presentación visual — decisión posterior
+
+El agregado `rules + messages` y el schema v3 se mantienen. Las familias son agrupaciones
+derivadas de `AlarmIdentity.family_key` y del scope de Messages; no se agrega `Family` durable.
+
+La configuración authored de cada Rule conserva `visual_targets` con Tool, Components,
+Subcomponents `(owner_component_key, subcomponent_key)` y `process_projection_mode` sólo para
+Process. El tipo de presentación futuro se deduce del Tool kind: Integrated Operations
+`QUEUE_IN_QUEUE`; Process `CAROUSEL`. **No introducir todavía estos nombres como campos nuevos**
+del snapshot. Las reglas de rotación futura y el plan de cierre del editor se registran en
+`18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
+
+El Manager UX y las mejoras de draft recuperable/diagnóstico siguen IN PROGRESS/OPEN; su
+aceptación no se deduce de la existencia del contrato v3.

@@ -98,6 +98,13 @@ Source release
 
 No Tool reread.
 
-## NEXT
+## Estado posterior y foco actual
 
-Persist that base Projection operationally in Cosmos.
+En `atlanticus:main@7b61eaea463bab10a595166fa12d015e4c015c78` existen adapters
+local/Cosmos, stores de Source local/Blob y composición de persistencia de Alarm Configuration.
+Esto **reemplaza** la afirmación histórica de que todavía faltaba crear el adapter Cosmos,
+pero no demuestra un despliegue Azure end-to-end.
+
+La prioridad inmediata es cerrar la UX del Manager. Ver
+`18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`; Materialization y Live Delivery son
+frentes posteriores y no se implementan aquí.
