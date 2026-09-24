@@ -1,10 +1,10 @@
 # Web Platform — Deployment Order
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT DIRECTION / ADA GENERIC PARTIALLY IMPLEMENTED / E2E OPEN**
 
-## Orden real productivo
+Checkpoint de implementación del cierre parcial: `moragaga/atlanticus@ce1213ec14cdee0be905c042c1cf513d71fb5b2d`.
 
-La secuencia de aplicación queda:
+## Orden objetivo productivo
 
 ```text
 0. Base Cloud Infrastructure
@@ -36,15 +36,9 @@ La secuencia de aplicación queda:
    └── demás jobs
 ```
 
-## Regla
+**Web se despliega antes que Backend.** Eso no exige datos de negocio al iniciar la Web: Web debe ofrecer preparación, diagnóstico y evidencia de readiness antes de habilitar productores.
 
-**Web se despliega antes que Backend**.
-
-Esto no significa que Web deba tener datos para arrancar.
-
-Significa que Web es el punto de preparación y diagnóstico de recursos/configuración antes de habilitar procesos productores.
-
-## Local Docker
+## Local Docker — objetivo
 
 ```text
 Docker infra/emulators
@@ -60,37 +54,40 @@ project saved configuration
 Backend jobs
 ```
 
-El objetivo es:
+El objetivo `docker compose up` sobre un entorno limpio **no está cerrado**.
+
+## Qué existe en ADA Generic — CURRENT
+
+`ADA_MANAGER_PERSISTENCE_PROVIDER=durable` permite a la composición local conectar Manager con Blob Source, Cosmos Projection y Users Registry/Runtime; el CLI de recursos se ejecuta por separado:
 
 ```text
-docker compose up
+uv run ada-generic-manager-resources ensure-local
+uv run ada-generic-manager-resources validate
+uv run ada-generic-application
 ```
 
-sobre un ambiente limpio sin crear manualmente la base funcional.
+`ensure-local` comprueba que exista el contenedor Blob configurado y luego asegura la base Cosmos y los seis contenedores **del plan Manager**. `validate` no modifica recursos. El contenedor Blob aún debe prepararse fuera de ese comando. Ni el plan global de aplicación ni la automatización completa de Docker están implementados aquí.
 
-## Cloud
+## Cloud — dirección, sin declarar completado
 
 ```text
 Support / IaC
-→ base resources
-
-Web
-→ application resources
+→ infraestructura base (incluida base Cosmos y cuenta Storage)
+→ Web
+→ recursos de aplicación permitidos
 → projection bootstrap
-
-Backend
-→ processing
+→ Backend
 ```
 
-## Soporte
+No ejecutar `ensure-local` en `production`. La identidad productiva concreta y los permisos Cloud de aprovisionamiento no se cualificaron en este hito.
 
-Este flujo permite entregar a soporte una secuencia clara:
+## Criterio de soporte futuro
 
-1. preparar infraestructura base;
-2. desplegar Web;
-3. verificar página de bootstrap/readiness;
-4. ejecutar/confirmar proyecciones;
-5. confirmar READY;
-6. desplegar/habilitar Backend.
+1. Preparar infraestructura base.
+2. Desplegar Web.
+3. Verificar bootstrap/readiness cuando exista superficie integrada.
+4. Ejecutar/confirmar proyecciones.
+5. Confirmar READY.
+6. Desplegar/habilitar Backend.
 
-La Web actúa como evidencia de readiness del producto.
+Esta secuencia es un contrato de dirección. La prueba siguiente se limita a reproducir y verificar el flujo ADA Generic/Manager durable, sin declarar cerrados los productores u otras aplicaciones.
