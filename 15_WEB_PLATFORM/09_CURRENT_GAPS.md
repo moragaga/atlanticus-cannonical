@@ -1,60 +1,36 @@
 # Web Platform — Current Gaps
 
-Estado: **CURRENT / ADA GENERIC + NAVIGATION LOCAL CLOSED / REAL DISTRIBUTION OPEN**
+Estado: **CURRENT / WEB STARTER PORTABLE CLOSED / MANAGER STARTER + PRODUCTION OPEN**
 
-Implementación para este delta: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
-Canonical previo inspeccionado: `55c531b192fedcc6343b3c9e2ee1f9ec4ffa8fab`.
+Checkpoint de implementación Web inspeccionado: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`. El resto de capacidades conserva sus checkpoints históricos, sin requalification integral en este hito.
 
-## CLOSED en el alcance implementado/local
+## Core CLOSED en alcance previo
 
-```text
-ADA-STORAGE-NAMESPACE
-TOOL-PROJECTION-PERSISTENCE
-TOOL-PERSISTENCE-RESILIENT-COMPOSITION
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-ADA-WEB-KPI-COLLECTOR-OPERATIONAL-ATTACHMENT WHEN TOOL READY
-ADA-GENERIC-INTEGRATED-MANAGER-LOCAL-BOOTSTRAP
-ADA-GENERIC-MANAGER-DURABLE-ADAPTER-COMPOSITION (STATIC/TESTED PREVIOUSLY)
-ADA-GENERIC-MANAGER-RESOURCE-CLI CONTRACT
-ADA-GENERIC-COSMOS-CONTAINER-ENV-CUTOVER
-ADA-GENERIC-NAVIGATION-INTEGRATION
-ADA-GENERIC-NAVIGATION-LOCAL-PUBLISH-PROJECT-CONSUME
-ADA-GENERIC-NAVIGATION-CLIENT-CORRECTION (MANUAL)
-```
+ADA Storage Namespace, Tool Projection Persistence, bootstrap resiliente, Collector runtime wiring, Manager local/durable composition, recursos parciales del Manager, Navigation core/publish/project/consume local. No reabrirlos sin finding y no extender sus GREEN históricos a infraestructura real del Starter.
 
-La qualification local de Navigation no cambia el estado de los recursos productivos.
-Evidencia previamente reportada: integración ADA Generic `169 passed` y Ruff verde;
-posterior correctivo `172 passed` y Ruff verde; shell `8 passed`, `1 skipped` y fallo
-Ruff en el test nuevo previo a `a6061ffe`. No extrapolar esos valores al commit final.
+## Nuevo cierre VERIFIED MANUAL
 
-## Implementación que no debe reconstruirse
+- Starter editable Generic y overlay ADA, `distribution/` con manifests y Python **3.14.2**.
+- SOURCE_SMOKE y PORTABLE PASS en ambos perfiles offline con wheelhouses Generic **36** y ADA **108**; no confundir wheels internos con dependencias externas empaquetadas físicamente dentro de ellos.
+- Docker local: imágenes construidas en ambos perfiles y respuesta positiva de `/health/live`. Generic entregó `/example`. ADA soporta `APPLICATION_PUBLICATIONS_ROOT` externo (tests reportados).
 
-- `AdaGenericSettings`: Source `local|blob` y Projection `local|cosmos` independientes.
-- Cosmos container names se derivan de contratos; no reintroducir container names en `.env`.
-- Blob usa `ADA_TOOL_SOURCE_BLOB_CONTAINER_NAME` y credenciales separadas por contrato.
-- Manager selector `auto|local|durable|disabled`.
-- Durable Manager reutiliza Tool Blob/Tool Cosmos bajo la composición actual; `__main__.py`
-  limita durable local a `LocalIdentityProvider` y requiere host externo para producción.
-- `ada-generic-manager-resources ensure-local|validate` existe; `ensure-local` exige que
-  Blob ya exista y prepara/verifica sólo los recursos permitidos por el contrato.
-- Navigation consume su proyección compartida con Manager y tiene excepción administrativa
-  explícita según `administrative_override`; no es un acceso general a Manager.
+## Gaps OPEN / PLANNED
 
-## OPEN
-
-| Elemento | Estado | Razón |
+| Elemento | Estado | Evidencia / motivo |
 |---|---|---|
-| ADA-GENERIC-DOCKER-REAL-PERSISTENCE-QUALIFICATION | PLANNED / UNVERIFIED | No hay evidencia aquí de workflow completo sobre Blob/Cosmos emulados/reales y reinicio. |
-| ADA-GENERIC-WEB-DISTRIBUTABLE-ARTIFACT | PLANNED / UNVERIFIED | Build/deploy portable fuera del checkout no cualificado. |
-| Blob local preprovisioning | OPEN | CLI Manager comprueba Blob; no lo crea. |
-| AccessRuntime Identity/Manager | UNVERIFIED | La observación estática histórica de instancias separadas requiere revalidación específica tras integración. No atribuir fallo no observado. |
-| ApplicationResourcePlan global/readiness | PLANNED / OPEN | No confundir plan parcial Manager con inventario global. |
-| Entra/Graph host productivo | PLANNED / UNVERIFIED | No se probó ni se asumió un proveedor real. |
-| Python metadata 3.14.7 | PLANNED / CONFLICT | La definición distribuible inspeccionada usa `3.14.2`. |
-| CI remoto, workspace Ruff y monorepo tests | UNVERIFIED | No hay salida del HEAD final para esas gates. |
-| Navigation authorization consumer | CLOSED en el alcance actual | Código y tests de integración presentes; no conservar el viejo BLOCKED de canonical sin reevaluación. |
+| Manager Home/header/sidebar desde Starter | OPEN / NEXT | Qualification y contenedor ADA usan Manager disabled; no se comprobó administración visible. |
+| Navigation browser de `/example` | OPEN / FINDING | ADA devolvió Acceso denegado; prueba anterior no reprodujo `Accept: text/html`. |
+| Apariencia completa Atlanticus | OPEN | No se probó visualmente Manager, Navigation y operacional integrados desde Starter. |
+| Dockerfile unificado local/productivo Gunicorn/8000 | PROPOSED / PLANNED | Docker CURRENT es local-only, 8050 y servidor de desarrollo. |
+| Identidad productiva Entra | PLANNED / UNVERIFIED | CLI productivo no debe inventar LocalIdentityProvider. |
+| Plantillas inactivas de secretos y mapping DEV/UAT/PRD | PLANNED | Falta definición/validación de selección de plantilla por consumidor; sin datos sensibles en repo. |
+| Cosmos/Azurite local, persistencia durable y restart | PLANNED / UNVERIFIED | No probado con emuladores en este frente. |
+| Global ApplicationResourcePlan/readiness | OPEN / OTHER SCOPE | Plan del Manager no equivale al inventario global. |
+| AccessRuntime Identity/Manager histórico | UNVERIFIED | Observación estática previa de dos instancias; impacto real no probado en Starter. |
+| Azure, CI remoto, full monorepo pytest/Ruff | UNVERIFIED | Fuera de evidencia aportada. |
 
-## Regla
+## Desfase documental refinado
 
-Calificar cada frontera por su evidencia. No sustituir los stores durable o los credenciales
-reales por los stores in-memory de la prueba local, ni introducir adaptadores temporales.
+Canonical anterior describía toda portabilidad Web como UNVERIFIED; queda **SUPERSEDED sólo para PORTABLE offline probado**, no para Docker productivo ni Manager visual. Python 3.14.7 se difiere como migración futura; 3.14.2 es CURRENT. Manager/Navigation del core existentes no contradicen su ausencia de la qualification: se deshabilitó Manager en ese escenario.
+
+Siguiente foco único **PROPOSED**: `WEB-STARTER-MANAGER-NAVIGATION-VISUAL-INTEGRATION-QUALIFICATION`. Primero diseño/consenso y después implementación aislada. No mezclar Gunicorn, secretos, emuladores, Backend o Command Center.

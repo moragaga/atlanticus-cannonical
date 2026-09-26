@@ -1,59 +1,33 @@
 # Web Platform — Open Items
 
-Estado: **CURRENT / NAVIGATION LOCAL CLOSED / REAL DISTRIBUTION AND PROVIDERS OPEN**
+Estado: **CURRENT / NEXT: STARTER MANAGER–NAVIGATION–VISUAL QUALIFICATION**
 
-Checkpoint del delta: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
+Checkpoint Web: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`.
 
-## CLOSED / CURRENT
+## CLOSED en el alcance demostrado
 
-```text
-ADA-STORAGE-NAMESPACE
-TOOL-PROJECTION-PERSISTENCE
-TOOL-PERSISTENCE-RESILIENT-COMPOSITION
-ADA-WEB-KPI-COLLECTOR-CAPABILITY
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-ADA-GENERIC-MANAGER-LOCAL-INTEGRATION
-ADA-GENERIC-MANAGER-DURABLE-ADAPTER-COMPOSITION
-ADA-GENERIC-MANAGER-RESOURCE-CLI
-ADA-GENERIC-INTERNAL-COSMOS-CONTAINER-NAMES
-NAVIGATION-OPERATIONAL-AUTHORIZATION-INTEGRATION
-NAVIGATION-MANAGER-LOCAL-RECOVERY
-NAVIGATION-LOCAL-PUBLISH-PROJECT-CONSUME (VERIFIED MANUAL)
-NAVIGATION-CLIENT-CORRECTION (USER-REPORTED FUNCTIONAL)
-```
+- Núcleo ADA Generic y Collector, Manager local/durable y Navigation previa, según sus propios checkpoints históricos.
+- Starter Generic y ADA `SOURCE_SMOKE / PASS`, construcción wheelhouse (36 / 108) y `PORTABLE / PASS` offline con Python 3.14.2, reportados por el usuario.
+- Docker local Generic/ADA: construcción de ambas imágenes y liveness verificada manualmente; qualification integrada sólo parcial.
 
-## Abiertos separados — ninguna implementación autorizada por este cierre
+## OPEN explícitos
 
-```text
-ADA-GENERIC-DOCKER-REAL-PERSISTENCE-QUALIFICATION   PLANNED / UNVERIFIED
-ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION  PLANNED / NEXT
-FIRST REAL TOOL GOLDEN PATH                       PLANNED / OPEN
-BLOB-PROVISIONING-PARITY                         OPEN
-APPLICATION-RESOURCE-PLAN GLOBAL                 PLANNED / OPEN
-PRODUCTION-IDENTITY-PROVIDER / ENTRA             PLANNED / UNVERIFIED
-FULL WEB READINESS / RESOURCE ORCHESTRATION      PLANNED / OPEN
-PYTHON-METADATA-ALIGNMENT 3.14.7 / 3.14.2         CONFLICT / PLANNED
-CI REMOTE / FULL RUFF WORKSPACE / MONOREPO TESTS UNVERIFIED
-```
+| Item | Estado | Por qué sigue abierto |
+|---|---|---|
+| Starter Manager Home/header/sidebar | OPEN / NEXT | Pruebas ADA usan `ADA_MANAGER_PERSISTENCE_PROVIDER=disabled`; no hay recorrido de Manager visible desde distribución. |
+| Configuración/proyección Navigation y `/example` HTML | OPEN / NEXT | El contenedor ADA mostró Acceso denegado; el probe HTTP no imitó el browser. |
+| Estilo completo Atlanticus desde Starter | OPEN / NEXT | Falta qualification visual de Manager/shell/nav/assets integrados. |
+| Un Dockerfile local/productivo, Gunicorn, 8000 | PROPOSED / PLANNED | Dockerfile CURRENT es local-only/8050/dev server. |
+| Host de identidad productivo / Entra | PLANNED / UNVERIFIED | Identidad local no representa producción. |
+| Plantillas `secrets.json`, `dev/uat/prd.mapping-env.csv` | PLANNED | Deben ser inactivas, sin valores sensibles y selección explícita. |
+| Cosmos/Azurite Docker + provisioning/restart | PLANNED / UNVERIFIED | No hay prueba de los proveedores durables en este frente. |
+| Global resource plan, primer Tool real | OPEN / OTHER SCOPE | No pertenece al cierre de Starter. |
+| Doble AccessRuntime Identity/Manager histórico | UNVERIFIED | Revalidar con integración si la evidencia lo exige, no inventar defecto. |
+| Python 3.14.7 | PLANNED / DEFERRED | 3.14.2 permanece CURRENT por decisión del usuario. |
+| Azure, CI remoto, full Ruff/pytest | UNVERIFIED | Sin evidencia sobre esos entornos. |
 
-La antigua etiqueta `NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT BLOCKED` está
-**SUPERSEDED**: el consumidor actual se implementó y el usuario verificó el recorrido
-local. No inferir producción cualificada por esa corrección.
+## Próximo foco único
 
-La antigua observación estática de dos `AccessRuntime` se mantiene como hallazgo
-histórico pendiente de revalidación, no como defecto runtime demostrado.
+`WEB-STARTER-MANAGER-NAVIGATION-VISUAL-INTEGRATION-QUALIFICATION`. Debatir primero la composición explícita de Manager en el perfil correspondiente y la autorización local legítima; diseñar el recorrido de publicación/proyección Navigation para `/example`, requests reales `Accept: text/html` (permitido y 403), Manager Home/sidebar/header y revisión visual del estilo. Solo después de consenso implementar un incremento pequeño verificable, con espejo comentado. Sin nuevo framework, sin bypass, sin mezclar shells ni acoplar Atlanticus Generic a ADA.
 
-## Siguiente foco único
-
-`ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION`.
-Revisar el generador realmente existente antes de decidir si se necesita código adicional;
-identificar la entrega mínima transportable, el cierre de dependencias, el `.env.detail`,
-el arranque fuera del checkout y los límites del host productivo.
-
-No incorporar aquí refactor/backend, Tool real, Entra o nueva UI.
-
-## Atajos prohibidos
-
-No legacy, aliases, shims, múltiples contratos equivalentes, hardcoded Tool configuration,
-nombres de contenedores Cosmos en `.env`, polling Cosmos inline desde browser, fallback a
-Source en runtime, o permisos Navigation como sustituto del control de Manager.
+La antigua etiqueta de Navigation core BLOCKED no se reabre: el finding pertenece al **consumidor Starter distribuido**, no demuestra ausencia del capability core.

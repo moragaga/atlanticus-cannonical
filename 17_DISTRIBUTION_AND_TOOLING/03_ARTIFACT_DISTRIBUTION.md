@@ -1,69 +1,50 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT IMPLEMENTATION PARTIAL / FULL DISTRIBUTION UNVERIFIED**
+Estado: **CURRENT / WEB PORTABLE QUALIFIED / DOCKER PARTIAL / PRODUCTION OPEN**
 
-Inspeccionado: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
+Checkpoint Web inspeccionado: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`.
 
-## Frontera congelada
+## Frontera contractual
 
 ```text
 SOURCE → ARTIFACT → DISTRIBUTION INPUT
 ```
 
-Atlanticus posee artifact y su contrato de entrega. El pipeline corporativo y su
-implementación pertenecen a DevOps. No instalar un framework paralelo para reconstruir
-lo que ya existe.
+Atlanticus produce artifact y contrato de entrega. El pipeline corporativo y el despliegue concreto pertenecen a DevOps/consumidor; no crear un framework de distribución paralelo.
 
-## Backend CURRENT observado
+## Backend — contexto histórico no revalidado aquí
 
-`deployment/processes/bundle.py` existe y descubre procesos exportables a partir de
-`pyproject.toml` bajo los layouts `scopes/<scope>/processes/*` y
-`scopes/<scope>/backend/processes/*`; usa `[tool.atlanticus.container]`, resuelve
-dependencias internas, valida inputs y produce bundles de procesos. Se verificó
-**existencia y contrato estático**, no se ejecutó build/distribution en este cierre.
+`deployment/processes/bundle.py` y scripts existentes proporcionan generación y controles backend. Los procesos KPI tienen su propio alcance. Este cierre Web **no** reejecutó builds de procesos backend ni comprueba que la referencia histórica `scripts/local-process.sh` exista hoy.
 
-Los procesos ADA KPI Runtime, Delivery, Historian y Timeseries Delivery tienen
-`pyproject.toml` y archivos de configuración; no atribuirles éxito de un build final
-sin ejecutar el bundler y sus tests sobre el checkout actual.
+## Web — CURRENT
 
-`scripts/scopes/ada/backend/check.py` posee gates y wheel build de capabilities backend.
-El árbol inspeccionado **no contiene** `scripts/local-process.sh`, aunque un canonical
-anterior lo describía como CURRENT. Esto se registra como discrepancia documental;
-no inventar un sustituto con ese nombre.
+`generate_starter.py` produce Starters editables Generic/ADA con manifest por archivo. `build_wheelhouse.py` construye la clausura de dependencias runtime y build a partir de locks, incorporando ruedas internas y externas con integridad SHA256 y compatibilidad de plataforma. `qualify_starter.py` prueba instalación aislada offline y comportamiento de endpoints/callback/assets.
 
-## Web CURRENT observado
+Evidencia manual compartida: `SOURCE_SMOKE / PASS` y `PORTABLE / PASS` para ambos perfiles con Python 3.14.2; wheelhouses observados de **36** y **108** archivos, respectivamente. Los wheels de bibliotecas externas son dependencias directas/transitivas o de build; no están embebidos dentro de nuestros wheels, ni todas las ruedas del wheelhouse necesariamente se instalan en runtime final.
 
-`scopes/ada/web/application/ada-generic-application/pyproject.toml` existe, declara
-entrypoints `ada-generic-application` y `ada-generic-manager-resources`, y usa fuentes
-locales del monorepo bajo `tool.uv.sources`. La Web ejecutó el flujo Navigation local.
+## Docker parcial
 
-La portabilidad de su build final, el cierre de wheels/dependencias, el entrypoint
-fuera del monorepo, el setup de host productivo y un artifact Web integral permanecen
-**UNVERIFIED**. Un `uv run` local no representa esa evidencia.
+Template actual multistage: `python:3.14.2-slim-bookworm`, instalación offline, verificador de hashes, usuario no root, healthcheck, `python -m application`, puerto **8050**, entorno **local-only**. El usuario construyó ambas imágenes; ambas contestaron `/health/live`. Generic sirvió `/example`; ADA devolvió una página HTML de acceso denegado. No interpretar liveness como autorización de Navigation, Manager accesible o despliegue productivo.
 
-## Conflicto de runtime objetivo
+## Estados de qualification independientes
 
-Project baseline: `Python 3.14.7`, imagen objetivo `python:3.14.7-slim-trixie`.
-Inspección del source CURRENT:
+| Frontera | Estado |
+|---|---|
+| SOURCE_SMOKE Generic y ADA | CLOSED / VERIFIED MANUAL |
+| PORTABLE Generic y ADA | CLOSED / VERIFIED MANUAL |
+| Docker build/liveness de ambas imágenes | VERIFIED MANUAL / PARTIAL |
+| ADA `/example` permitido vía Navigation en navegador | OPEN / FINDING |
+| Manager Home/header/sidebar/Navigation visibles desde Starter | OPEN |
+| Host Gunicorn y puerto 8000 local+producción | PROPOSED / PLANNED |
+| Identidad productiva y despliegue Azure | PLANNED / UNVERIFIED |
+| Cosmos/Azurite local, restart y aprovisionamiento | PLANNED / UNVERIFIED |
 
-```text
-deployment/processes/bundle.py                PYTHON_VERSION 3.14.2
-deployment/processes/Dockerfile               python:3.14.2-slim-bookworm
-ada-generic-application/pyproject.toml        requires-python ==3.14.2
-scripts/scopes/ada/backend/check.py           EXPECTED_PYTHON_VERSION 3.14.2
-```
+## Decisión posterior, todavía no implementada
 
-**CONFLICT / PLANNED**: decidir y cualificar la alineación en el frente de productización.
-No modificar silenciosamente versiones ni fingir compatibilidad.
+La opción recomendada es **un solo Dockerfile** para local y producción, con Gunicorn, puerto interno **8000**, healthcheck y configuración/secretos inyectados. El punto de entrada productivo debe reutilizar la composición real y no inventar una identidad local en producción. Esta recomendación no sustituye al Dockerfile CURRENT hasta que se implemente y cualifique.
 
-## Separación de entregables
+## Configuración y servicios
 
-```text
-KPI Collector existente                        CLOSED / CURRENT
-Local Navigation configuration consumption     CLOSED / VERIFIED MANUAL
-Backend process bundling infrastructure       IMPLEMENTED / UNQUALIFIED HERE
-ADA Generic Web distributable                  PLANNED / UNVERIFIED
-Real Tool Golden Path + target environment     OPEN
-```
+Los templates de secretos y mappings DEV/UAT/PRD viajarán inactivos y sin valores sensibles; su incorporación permanece PLANNED. Los servicios locales Cosmos/Azurite apoyarán qualification, pero el artifact no crea infraestructura Cloud productiva. Los contratos Tool Source, Tool Projection y KPI Delivery pueden requerir conexiones distintas.
 
-Primero auditar lo existente; después materializar únicamente la brecha demostrada.
+Las referencias canónicas previas que describían toda la Web portable como UNVERIFIED están **SUPERSEDED para la prueba PORTABLE observada**, no para producción, navegación real ni Azure. Python actual 3.14.2; 3.14.7 es migración futura.
