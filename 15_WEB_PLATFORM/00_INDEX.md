@@ -1,105 +1,76 @@
 # Atlanticus Web Platform — Canonical Index
 
-Estado: **CURRENT**
+Estado: **CURRENT / ADA GENERIC LOCAL BOOTSTRAP + MANAGER PERSISTENCE COMPOSITION CLOSED**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
 | `01_CAPABILITY_INDEPENDENCE.md` | Fronteras de capabilities Web. | CURRENT / REFINED |
 | `02_USER_ACTIVITY_HISTORY.md` | Historia ordenada por página y TTL 24 h. | CURRENT DIRECTION / CONTRACT DESIGN |
-| `03_RESOURCE_PROVISIONING.md` | Provisionamiento de Cosmos/Storage y ownership. | CURRENT DIRECTION |
-| `04_WEB_READINESS_AND_DECOUPLING.md` | Web disponible aun sin datos/backend/infra. | CURRENT DIRECTION |
-| `05_DEPLOYMENT_ORDER.md` | Orden Web → preparación → Backend. | CURRENT DIRECTION |
+| `03_RESOURCE_PROVISIONING.md` | Provisionamiento Cosmos/Storage; plan Manager parcial implementado, inventario global abierto. | CURRENT / GLOBAL OPEN |
+| `04_WEB_READINESS_AND_DECOUPLING.md` | Separación Web/capability, bootstrap ADA Generic y límites de qualification. | CURRENT / REFINED |
+| `05_DEPLOYMENT_ORDER.md` | Web → preparación → Backend; implementación parcial local. | CURRENT DIRECTION / E2E OPEN |
 | `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md` | Superficie previa al Manager. | CURRENT DIRECTION |
 | `07_PROJECTION_ORCHESTRATION.md` | Proyección determinística por dependencias. | CONTRACT DESIGN |
 | `08_EXTERNAL_RESOURCE_REQUIREMENTS.md` | Recursos externos declarados por consumers. | CONTRACT DESIGN |
-| `09_CURRENT_GAPS.md` | Diferencias entre `main` y objetivos abiertos. | CURRENT |
-| `10_SOURCE_LEDGER.md` | Evidencia recuperada del código auditado. | AUDIT LEDGER |
-| `11_OPEN_ITEMS.md` | Contracts todavía abiertos. | OPEN |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Boundary CURRENT Users/Profiles/Access/Navigation/Manager. | CURRENT DECISION / REFINED |
+| `09_CURRENT_GAPS.md` | Estado implementado y qualification pendiente después de 1H.1. | CURRENT CHECKPOINT |
+| `10_SOURCE_LEDGER.md` | Evidencia histórica más checkpoint de ADA Generic. | AUDIT LEDGER |
+| `11_OPEN_ITEMS.md` | Siguiente foco único y pendientes explícitos. | NEXT QUALIFICATION |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Fronteras CURRENT de Users/Profiles/Access/Navigation/Manager; UI y domain contracts. | CURRENT DECISION / REFINED |
 
-Checkpoint de implementación CURRENT:
-
-```text
-moragaga/atlanticus@ce07ada07e3f4f100b97ad2ac5e7285b54419c20
-```
-
-Parent:
+## Autoridad y checkpoint de este corte
 
 ```text
-df5b99502265758e873e0565abf2176cc617104b
+Implementación CURRENT inspeccionada:
+moragaga/atlanticus@ce1213ec14cdee0be905c042c1cf513d71fb5b2d
+
+Canonical base inspeccionado antes del reemplazo:
+moragaga/atlanticus-cannonical@6bd7f1f2616f954b422f3ddc1549a53a9b479682
+
+Decisiones históricas consultadas:
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-Tree:
+Este checkpoint de plataforma **no sustituye la evidencia histórica** de otros cierres registrada en `10_SOURCE_LEDGER.md` o en `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md`.
+
+## Alcance cerrado en esta etapa
 
 ```text
-825dbaffba30b42199c54dbd4da9ba234f3ef437
+ADA-STORAGE-NAMESPACE
+CLOSED / VERIFIED / CURRENT
+
+TOOL-PROJECTION-PERSISTENCE
+CLOSED / VERIFIED / CURRENT
+
+ADA-GENERIC-OPERATIONAL-BOOTSTRAP
+CLOSED / VERIFIED LOCAL / CURRENT
+
+ADA-WEB-KPI-COLLECTOR-OPERATIONAL-ATTACHMENT
+CLOSED / VERIFIED LOCAL / CURRENT
+
+ADA-GENERIC-INTEGRATED-MANAGER-LOCAL-BOOTSTRAP
+CLOSED / VERIFIED LOCAL / CURRENT
+
+ADA-GENERIC-MANAGER-DURABLE-ADAPTER-COMPOSITION
+CLOSED / VERIFIED LOCAL / CURRENT
+
+ADA-GENERIC-MANAGER-RESOURCE-CLI
+CLOSED / VERIFIED LOCAL CONTRACT / CURRENT
+
+ADA-GENERIC-COSMOS-CONTAINER-ENV-CUTOVER
+CLOSED / VERIFIED LOCAL / CURRENT
 ```
 
-Canonical inspeccionado antes de este reemplazo:
+La verificación reportada por el usuario para ADA Generic fue: **157 tests aprobados, Ruff, mirrors y wheel correctos**. No se ejecutó qualification contra Cosmos y Blob reales ni CI/monorepo global.
+
+## Contratos existentes no alterados
+
+`ManagerModule` representa una capability administrativa con Source/Projection; `ManagerEntry` integra administración sin Source/Projection ficticios. Users sigue como `ManagerEntry`, con promoción explícita individual, actualización inmediata y relación global `user -> profile_key`. Profiles es genérico; ADA Access es específico de aplicación; Navigation es genérico e independiente. `guest` puede ser transitorio, pero no un perfil administrativamente asignable; `local` es runtime-only.
+
+## Siguiente foco único
 
 ```text
-moragaga/atlanticus-cannonical@50e364bc4bd61b1ecbd9c3aebb5ad4b8e4ee8e4f
+ADA-GENERIC-DOCKER-REAL-PERSISTENCE-QUALIFICATION
+PLANNED / NEXT / UNVERIFIED
 ```
 
-Estado relevante:
-
-```text
-PROFILES-MANAGER-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-USERS-PROFILES-CONTRACT-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-USERS-MANAGER-UI-REVIEW
-CLOSED / CURRENT / ACCEPTED WITH NON-BLOCKING POLISH
-
-USERS-GUEST-ASSIGNMENT-BOUNDARY
-CURRENT / IMPLEMENTED
-
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-ACCESS-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-CONFIGURATION-UI-PASS
-CLOSED / VERIFIED MANUAL / CURRENT
-
-MANAGER-UI-CONSISTENCY-REVIEW
-CLOSED FOR CURRENT V1 / NON-BLOCKING POLISH DEFERRED
-
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
-```
-
-Users continúa siendo una `ManagerEntry`: no recibe Source/Projection sintético ni workflow global de
-borrador/publicación.
-
-La administración de Users opera con commits explícitos por usuario:
-
-```text
-Promover
-→ operación inmediata de promoción
-
-Editar → Guardar
-→ operación inmediata de actualización
-```
-
-`guest` puede representar estado transitorio previo a la promoción, pero no es un perfil
-administrativo asignable. `local` continúa siendo runtime-only.
-
-La qualification automática posterior al correctivo final de Users y la qualification de wiring
-productivo Blob/Cosmos permanecen explícitamente abiertas; no bloquean el cambio de foco hacia
-backend ADA, pero tampoco deben declararse verificadas sin evidencia.
+Probar el flujo existente con infraestructura real/emulada y registrar hallazgos; no abrir Command Center/alarmas, frontend adicional, Entra productivo ni cambios de backend en el mismo incremento.

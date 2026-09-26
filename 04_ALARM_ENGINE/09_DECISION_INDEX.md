@@ -1,35 +1,93 @@
 # Alarm Engine — Decision Index
 
-Estado: **CANDIDATE**
+Estado: **CURRENT / HISTORICAL SOURCES + IMPLEMENTATION REFINEMENTS**
 
-| ID | Tema | Estado | Fuente principal |
-|---|---|---|---|
-| ALARM-DEF-B1 | Canonical Alarm Definition | DESIGN FROZEN | `R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md` |
-| ALARM-PROJ-B2-BASE | Live vs Management Projection | DECISION RECORDED | `R3.6M-006B.2-alarm-projection-boundary-DECISION-RECORDED.md` |
-| ALARM-PROJ-B2-I1 | Publication/runtime/delivery boundary | DECISION RECORDED | `...INCREMENT-1.md` |
-| ALARM-PROJ-B2-I2 | Latest Saved = Latest Valid | DECISION RECORDED | `...INCREMENT-2.md` |
-| ALARM-DURABILITY | WAL -> durable -> snapshots -> materialized | IMPLEMENTED + VALIDATED | persistence `store.py`, recovery/fencing tests |
-| ALARM-FENCING | stale writer cannot complete after takeover | IMPLEMENTED + VALIDATED | `test_fencing.py`, E-010 |
-| ALARM-RECOVERY | replay/discard/fail-closed by durable authority | IMPLEMENTED + VALIDATED | `test_recovery.py` |
-| ALARM-E011 | empty reset snapshot adjudication | CLOSED HARNESS FINDING | E-011 corrective |
-| ALARM-E012 | drain cancellation behavior | CLOSED PRODUCT FINDING/FIX | E-012 finding + fix + closure |
-| ALARM-F010 | final constrained Docker qualification | CLOSED PASS/GREEN | F-010 closure |
+| ID | Tema | Estado |
+|---|---|---|
+| ALARM-DEF-B1 | Historical Alarm Definition base | HISTORICAL / FROZEN INPUT |
+| ALARM-PROJ-B2 | Historical projection/publication decisions | HISTORICAL / REFINED |
+| ALARM-B2-PURE-RESOLVER | Pure deterministic resolver | CURRENT / IMPLEMENTED |
+| ALARM-TOOL-MANIFEST | Exact Tool evidence frozen with Alarm source | CURRENT / IMPLEMENTED |
+| ALARM-SOURCE-V3 | AlarmConfigurationSnapshot + ToolDependencyManifest | CURRENT / IMPLEMENTED |
+| ALARM-TOOLS-FREEZE | validate/publish Cn correlation | CURRENT / IMPLEMENTED |
+| ALARM-RANK-SUPPRESSION | priority_order suppression | CURRENT |
+| ALARM-DEACTIVATION-CASCADE | active deactivation sustains cascade | CURRENT |
+| ALARM-RUNTIME-VISIBILITY | no delivery_enabled / no SHADOW | CURRENT |
 
-## Genealogía B.1
+## Historical decisions
 
-- DRAFT `.docx`
-- DRAFT_2 `.docx`: **DUPLICATE byte-a-byte** del DRAFT.
-- DRAFT `.md`
-- DRAFT_2 `.md`: **DUPLICATE byte-a-byte** del DRAFT markdown.
-- DRAFT_3
-- DESIGN_FROZEN
+```text
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+```
 
-El frozen es autoridad del contrato, no los drafts.
+Se preserva:
+- Live vs Management separation;
+- one coherent resolution -> Runtime + Delivery;
+- `INVALID != REMOVED`;
+- `READY != EFFECTIVE`;
+- backend priority authority.
 
-## Genealogía B.2
+## Refinements CURRENT
 
-- Base DECISION RECORDED.
-- Increment 1 amplía publicación/materialización/adopción.
-- Increment 2 endurece persistencia con `LATEST SAVED = LATEST VALID`.
+### Physical authority
 
-No tratar los tres como alternativas mutuamente excluyentes; el estado actual es acumulativo salvo binding de storage supersedido.
+SharePoint wording histórico no es CURRENT para dominios migrados.
+Storage/Blob es durable target authority.
+
+### Tool topology
+
+```text
+Confirmed Tool Catalog -> Command Center Cosmos
+```
+
+queda SUPERSEDED.
+
+CURRENT:
+
+```text
+upstream Tool projections
++ Storage prior state
+-> reconciliation/certification
+-> Confirmed Tool Catalog
+-> Storage
+-> END
+```
+
+### Alarm/Tool correlation
+
+Historical:
+
+```text
+same Alarm revision + later Tool revision
+```
+
+queda SUPERSEDED.
+
+CURRENT:
+
+```text
+Alarm release Rn
+-> ToolDependencyManifest(Cn)
+```
+
+### Save validity
+
+```text
+LATEST SAVED = LATEST VALID_AT_SAVE
+VALID_AT_SAVE != B.2 READY != EFFECTIVE
+```
+
+CURRENT publication valida intrinsic Alarm + Tool revision/existence correlation.
+Evaluator qualification y otras checks B.2 son posteriores.
+
+### History
+
+`display_name` + `ToolStructure` se congelan para que historia no dependa del contrato Tool actual.
+
+## Authority
+
+```text
+atlanticus:main CURRENT
+> atlanticus-cannonical CURRENT
+> atlanticus-decisions history
+```

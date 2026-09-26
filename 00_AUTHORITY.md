@@ -6,261 +6,286 @@ Estado: **CURRENT**
 
 ### Implementación
 
-- Repositorio: `moragaga/atlanticus`
-- Rama: `main`
-- Realidad implementada: siempre `atlanticus:main`
-- Checkpoint CURRENT verificado para este cierre:
-  `bc3fffd72afb712d5b5ab84522c379abf2a19642`
-- Parent inmediato:
-  `345309c07d4489a5c477f0fe61620faa91dfe9eb`
-- Fecha observada del commit:
-  `2026-09-22T20:18:48Z`
+```text
+moragaga/atlanticus:main
+880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
+```
 
-Estado acumulado relevante para ADA Command Center Alarm Engine:
+Ese SHA es la realidad implementada CURRENT observada al cierre.
+
+El último commit semántico de este hito Alarm/Tool es:
 
 ```text
-COMMAND-CENTER-ALARM-DOMAIN-EXTRACTION          CLOSED / VERIFIED / CURRENT
-ALARM-CORE-RUNTIME-VISIBILITY-ROOT-REMOVAL     CLOSED / VERIFIED / CURRENT
-B.2-MATERIALIZATION-CONTRACTS                  CLOSED / VERIFIED / CURRENT
-B.2-RESOLVER-QUALIFICATION-INPUT-CONTRACTS     CLOSED / VERIFIED / CURRENT
-PURE-B.2-RESOLVER                              PLANNED / NEXT
-B.2-MATERIALIZATION-PROCESS                    PLANNED
+d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
+```
+
+Los dos commits posteriores hasta `880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6` modifican `operational-data` y tooling,
+sin cambiar los contratos de ADA Command Center Alarm Configuration cerrados aquí.
+
+### Canonical
+
+```text
+moragaga/atlanticus-cannonical:main
+```
+
+Checkpoint inspeccionado antes de este reemplazo:
+
+```text
+148b178df74ee3083681140f3bb7997a02435b80
+```
+
+### Historical decisions
+
+```text
+moragaga/atlanticus-decisions:main
+50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+```
+
+`atlanticus-decisions` preserva genealogía e intención histórica.
+No prevalece sobre implementación CURRENT ni sobre canonical actualizado.
+
+## Jerarquía
+
+1. `atlanticus:main` — realidad implementada.
+2. `atlanticus-cannonical:main` — contratos, fronteras y estado vigente.
+3. qualification/tests vigentes — evidencia.
+4. decisiones explícitas del Project todavía no canonizadas — delta temporal.
+5. `atlanticus-decisions` — historia.
+6. memoria/conversaciones — pista.
+
+## Git
+
+Git permanece **SOLO LECTURA** por defecto.
+
+No crear commits, push, ramas, PR, issues ni otra mutación remota sin autorización explícita.
+
+## Cierre CURRENT — Alarm Tool Dependency Manifest v3
+
+```text
+COMMAND-CENTER-TOOLS-DOMAIN                    CLOSED / VERIFIED / CURRENT
+ALARM-TOOL-DEPENDENCY-MANIFEST                 CLOSED / VERIFIED / CURRENT
+ALARM-CONFIGURATION-SNAPSHOT-V3                CLOSED / VERIFIED / CURRENT
+ALARM-TOOLS-VALIDATE-PUBLISH-FREEZE            CLOSED / VERIFIED / CURRENT
+PURE-B.2-RESOLVER                              CLOSED / VERIFIED / CURRENT
+
+ALARM-CONFIGURATION-COSMOS-PROJECTION          PLANNED / NEXT
+B.2-MATERIALIZATION-PROCESS                    PLANNED / AFTER
 RUNTIME-ADOPTION-EFFECTIVE-HEAD                PLANNED
 ALARM-LIVE-DELIVERY                            PLANNED
 ```
 
-Los cambios entre `345309c...` y `bc3fffd72afb712d5b5ab84522c379abf2a19642` pertenecen únicamente al incremento
-B.2 Resolver Qualification Inputs bajo `scopes/ada-command-center/backend/alarms/materialization`.
-
-### Canonical
-
-- Repositorio: `moragaga/atlanticus-cannonical`
-- Rama: `main`
-- Checkpoint inspeccionado antes de este reemplazo:
-  `2d8cbc33b7776e057e4f7d82def318d5eaf8f336`
-
-`atlanticus-cannonical:main` es autoridad documental vigente, subordinada a
-`atlanticus:main` cuando la implementación publicada demuestra un estado posterior.
-
-### Historical decisions
-
-- Repositorio: `moragaga/atlanticus-decisions`
-- Rama: `main`
-- Checkpoint observado:
-  `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`
-
-Permanece **HISTORICAL**.
-
-Las decisiones B.1/B.2 preservan intención contractual útil, pero no prevalecen sobre
-implementación CURRENT cuando describen contratos ya refinados o reemplazados por el Project.
-
-## Jerarquía
-
-1. `atlanticus:main`: realidad implementada.
-2. `atlanticus-cannonical:main`: contratos, fronteras, roadmap y estado vigente.
-3. Qualification/tests vigentes: evidencia de propiedades demostradas.
-4. Decisiones explícitas del Project todavía no formalizadas en canonical: delta temporal.
-5. `atlanticus-decisions`: referencia histórica.
-6. Memoria/historial conversacional: pista, nunca autoridad suficiente.
-
-## Clasificación obligatoria
+## Tool authority CURRENT
 
 ```text
-VERIFIED
-INFERRED
-ASSUMED
-PROPOSED
-UNVERIFIED
+multiple upstream Tool projections/Cosmos
+        +
+prior/current Storage state
+        |
+        v
+Tool reconciliation / controlled certification
+        |
+        v
+Confirmed Tool Catalog Cn
+        |
+        v
+Storage
+        |
+       END
 ```
 
-Estados:
+No existe como target:
 
 ```text
-CURRENT
-IN PROGRESS
-PLANNED
-SUPERSEDED
-BLOCKED
-CLOSED
+Confirmed Tool Catalog -> Command Center Cosmos
 ```
 
-Si implementación y canonical se contradicen, exponer el conflicto y actualizar canonical;
-nunca retroceder implementación CURRENT para satisfacer documentación obsoleta.
+La ausencia de esa proyección Cosmos es intencional.
 
-## Git
+## Alarm Configuration persistence CURRENT
 
-Git es **READ ONLY** por defecto.
-
-No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorización explícita.
-
-## Continuidad congelada
-
-No reabrir sin conflicto demostrado:
+Authored aggregate:
 
 ```text
-ADAPTERS / SHIMS / ALIASES
-FORBIDDEN
-
-DOUBLE CONTRACT
-FORBIDDEN
-
-OLD SCHEMA RUNTIME READERS
-FORBIDDEN
+AlarmConfiguration
+    rules
+    messages
 ```
 
-## ADA Command Center Alarm Domain CURRENT
-
-Authority authored:
+Snapshot durable:
 
 ```text
-scopes/ada-command-center/domain/alarms
-ada_command_center.domain.alarms
+AlarmConfigurationSnapshot
+    configuration
+    tool_dependencies: ToolDependencyManifest
 ```
 
-Owner de:
-- `AlarmIdentity`;
-- `AlarmKind`;
-- `Criticality`;
-- authoring definitions;
-- `AlarmConfiguration`;
-- validación pura del aggregate.
-
-Web y Backend consumen este dominio. Domain no depende de Web, Runtime, Persistence ni infraestructura.
-
-## Alarm Core CURRENT
-
-Backend owner:
+La revisión Tool no se duplica:
 
 ```text
-scopes/ada-command-center/backend/alarms/core
-ada_command_center.alarms.core
+AlarmConfigurationSnapshot.confirmed_tool_catalog_revision
+==
+AlarmConfigurationSnapshot.tool_dependencies.revision
 ```
 
-El root removal de Runtime visibility está CLOSED:
+Source contract:
 
 ```text
-PlannedAlarm.delivery_enabled
-REMOVED
-
-PriorityDisposition.SHADOW
-REMOVED
+document_type = ada_command_center_alarm_configuration_release
+schema_version = 3
 ```
 
-Visibility `VISIBLE | TRACE_ONLY` pertenece al authored Domain y a Delivery, no al Runtime Core.
+Schema v2 queda **SUPERSEDED**.
+No existe decoder legacy v2.
 
-`AlarmResolutionKey` está implementado en Core como VO operacional compartido:
+## Tool Dependency Manifest CURRENT
+
+Owner:
 
 ```text
-AlarmResolutionKey
-    alarm_configuration_revision
+scopes/ada-command-center/domain/tools
+ada-command-center-tools-domain==1.0.0
+```
+
+Entry:
+
+```text
+ToolDependencyEntry
+    tool_key
+    display_name
+    source_release_id
+    kind
+    structure: ToolStructure
+```
+
+Manifest:
+
+```text
+ToolDependencyManifest
     confirmed_tool_catalog_revision
+    tools
 ```
 
-No agregar evaluator revision a ese key sin contrato explícito.
+El manifest conserva nombres y estructura histórica para no depender de contratos Tool futuros.
 
-## B.2 Materialization CURRENT
+## Freeze validate -> publish CURRENT
 
-Package:
+El Manager genérico permanece intacto.
+
+Alarm Configuration usa un sidecar específico del workspace:
 
 ```text
-scopes/ada-command-center/backend/alarms/materialization
-ada-command-center-alarms-materialization==1.0.0
-ada_command_center.alarms.materialization
+_confirmed_tool_catalog_revision = Cn
 ```
 
-Contratos CURRENT:
-- `RuntimeAlarmConfiguration`;
-- `DeliveryAlarmConfiguration`;
-- `ResolvedDeliveryAlarm`;
-- `ResolvedDeliveryMessage`;
-- `ResolvedDeactivationPolicy`;
-- resolved visual target VOs;
-- `AlarmResolutionStatus`;
-- `AlarmResolutionFindingSeverity`;
-- `AlarmResolutionFinding`;
-- `AlarmConfigurationResolution`.
-
-Atomicidad congelada:
+Regla:
 
 ```text
-READY
-=> no BLOCKING
-=> Runtime existe
-=> Delivery existe
-=> ambos usan la misma AlarmResolutionKey
+Save Draft
+-> fija Cn current
 
-BLOCKED
-=> existe BLOCKING
-=> Runtime is None
-=> Delivery is None
+Validate
+-> exige Cn todavía current
+-> exige que todas las Tool references definidas existan
+
+Publish
+-> vuelve a exigir Cn todavía current
+-> captura manifest desde esa misma revisión
+-> persiste AlarmConfigurationSnapshot v3
 ```
 
-No existe readiness parcial por Rule ni por artifact.
-
-## B.2 Qualification Inputs CURRENT
-
-Materialization expone contratos mínimos:
+Si Tools cambia `Cn -> Cn+1` entre validation y publication:
 
 ```text
-ToolReconciliationQualification
-    green_tool_keys
-    is_green(tool_key)
-
-EvaluatorQualificationKey
-    family_key
-    evaluator_key
-
-EvaluatorQualificationCatalog
-    qualified_keys
-    is_qualified(family_key, evaluator_key)
+publication -> BLOCKED
 ```
 
-Estos contratos no crean taxonomía RED/DRIFT/MISSING y no transportan evaluator callables,
-`DataRequirement`, `DataLoadPlan` ni Runtime registry.
+No se enlaza silenciosamente `Cn+1`.
 
-Un Tool ausente de `green_tool_keys` significa solamente que no está GREEN para B.2.
+## B.2 exact evidence CURRENT
 
-La producción/adquisición concreta de esas qualifications sigue fuera de estos contratos.
+B.2 no debe resolver una Alarm revision guardada contra `latest Tool Catalog`.
 
-## Conflictos visibles
-
-Project baseline:
+Para una Alarm source release `Rn`:
 
 ```text
-Python 3.14.7
+Rn
+-> AlarmConfigurationSnapshot
+-> ToolDependencyManifest(Cn)
 ```
 
-Packages Command Center CURRENT:
+Materialization usa esa evidencia exacta.
+
+La aparición de `C2` no invalida `R1/C1`.
+Una nueva publicación Alarm adopta la revisión Tool current sólo mediante el flujo explícito de
+workspace/validation/publication.
+
+## Decisions históricas refinadas
+
+Quedan **SUPERSEDED / REFINED** las formulaciones históricas que implicaban:
 
 ```text
-requires-python ==3.14.2
+same Alarm revision R1
++ later Tool Catalog C2
+-> re-resolve R1/C2 without a new Alarm publication
 ```
 
-Permanece OPEN.
+También queda superada la topología histórica:
 
-`atlanticus-decisions` conserva formulaciones históricas incompatibles con CURRENT:
-- Special Cascade B.1 vs suppression uniforme por `priority_order`;
-- Message activo requerido vs inactive Message válido pero no seleccionable.
+```text
+Confirmed Tool Catalog -> Command Center Cosmos
+```
 
-No resolver silenciosamente.
+y SharePoint como autoridad física general en dominios ya migrados.
+
+`LATEST SAVED = LATEST VALID_AT_SAVE` permanece, pero:
+
+```text
+VALID_AT_SAVE != B.2 READY != EFFECTIVE
+```
+
+El save/publish gate CURRENT valida aggregate + Tool correlation/existence.
+Evaluator qualification y demás qualification B.2 siguen perteneciendo a Materialization.
+
+## Qualification observada del hito
+
+```text
+domain/tools
+8 passed
+ruff check GREEN
+ruff format GREEN
+
+domain/alarms
+50 passed
+ruff check GREEN
+ruff format GREEN
+
+web/alarms/configuration
+35 passed
+ruff check GREEN
+ruff format GREEN
+
+configuration-manager
+11 passed
+ruff check GREEN
+ruff format GREEN
+```
+
+## Conflictos abiertos
+
+```text
+Project baseline Python           3.14.7
+Command Center package metadata  3.14.2
+```
+
+OPEN / SEPARATE.
+
+También queda diferida la normalización de ownership entre `domain/tools` y `ada-web-tools`.
 
 ## Siguiente foco único
 
 ```text
-PURE B.2 ALARM CONFIGURATION RESOLVER
-PLANNED / NEXT
+ALARM CONFIGURATION OPERATIONAL PROJECTION TO COSMOS
 ```
 
-Debe ser puro y consumir inputs explícitos.
-
-No mezclar con:
-- acquisition/I/O;
-- stores;
-- scheduler;
-- `backend/processes/alarms-materialization`;
-- Runtime Adoption;
-- Effective Head;
-- Live Delivery;
-- Management Capture;
-- provenance migration;
-- broad Engine cleanup.
+Primero diseñar contrato/store/composición de la proyección del snapshot v3 autocontenido.
+No mezclar todavía con Materialization Process, Runtime Adoption, Live Delivery o Management Capture.

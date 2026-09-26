@@ -1,178 +1,110 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT / CORE FLOW + TOOL REFERENCE BACKEND IMPLEMENTED / STRUCTURED UI NEXT**
+Estado: **CURRENT / ALARM CONFIGURATION SNAPSHOT V3 IMPLEMENTED**
 
-Command Center es owner de Alarm Configuration.
+Command Center owns Alarm Configuration administration.
 
-No replica el Manager ADA como implementación paralela. Alarm Configuration CURRENT reutiliza la
-capability genérica `atlanticus.web.manager`; el layout/editor específico permanece bajo ownership
-de Command Center.
+It reuses `atlanticus.web.manager`; the Manager generic remains unchanged.
 
-## Implementación CURRENT
-
-Paquete:
+## Editable aggregate
 
 ```text
-scopes/ada-command-center/web/alarms/configuration
+AlarmConfiguration
+    rules
+    messages
 ```
 
-Cadena durable implementada:
+The editor does not embed Tool definitions.
+
+## Durable published aggregate
 
 ```text
-Manager Workspace
-→ intrinsic validation
-→ Source publication/history
-→ Alarm Configuration Projection
+AlarmConfigurationSnapshot
+    configuration: AlarmConfiguration
+    tool_dependencies: ToolDependencyManifest
 ```
 
-El Manager module recibe explícitamente stores, `SourceKey`, principal, `access_key` y metadatos de
-composición. No fija el provider productivo ni el shell final de Command Center.
+This is the CURRENT durable Alarm source payload.
 
-## NO Tool authoring
+The earlier statement that Tool Catalog metadata did not change the durable Alarm snapshot is
+SUPERSEDED.
 
-Command Center no crea/edita:
+## Tool correlation
 
-- Tool identity;
-- Tool type/kind;
-- Components;
-- Subcomponents;
-- Tool topology.
-
-Eso pertenece a ADA Tool Configuration.
-
-Command Center consume una vista consolidada/read-only mediante `ToolCatalogStore`.
-
-## Alarm Configuration aggregate
-
-La unidad editable/publicable CURRENT contiene atómicamente:
-
-- Alarm Rules;
-- Message Catalog.
-
-Tool Catalog no forma parte de este payload editable y tiene lifecycle/revisión independiente.
-
-La incorporación del catálogo no cambió el documento durable de `AlarmConfiguration`.
-
-## Tool reference authoring backend CURRENT
-
-Alarm Configuration dispone de:
+Workspace-specific metadata:
 
 ```text
-AlarmToolReferenceReader
-→ AlarmToolReferenceCatalog
+_confirmed_tool_catalog_revision
 ```
 
-El reader traduce el Tool Catalog CURRENT a opciones backend de:
+is not part of `AlarmConfiguration`.
+
+## Save/validate/publish
 
 ```text
-Tool
-→ Component
-→ visible Subcomponent address
+Save Draft
+-> read current Confirmed Tool Catalog
+-> pin Cn in workspace
+
+Validate
+-> intrinsic AlarmConfiguration validation
+-> require pinned Cn == current Cn
+-> require every referenced Tool key exists
+
+Verify Source
+-> generic Manager source concurrency
+
+Publish
+-> require Cn still current
+-> select referenced ToolDependencyEntries
+-> persist AlarmConfigurationSnapshot v3
 ```
 
-Cada subcomponent reference conserva:
+No in-memory validation cache is required.
+
+## Drift behavior
 
 ```text
-owner_component_key
-subcomponent_key
-display_name
+saved workspace C1
+Tools becomes C2
+publish without new save/validation
+-> rejected
 ```
 
-La topología no se recalcula en Alarm Configuration: se reutilizan las operaciones CURRENT de
-`ToolStructure`.
+Existing durable `R1/C1` remains unchanged.
 
-`STRATEGIC` se omite de las sugerencias porque `ToolStructure` no define proyección de alarmas para
-ese kind.
+## Tool references persisted
 
-Esto es **authoring assistance**, no resolución B.2.
+Includes Tools referenced by:
+- origin;
+- every escalation step, including disabled;
+- every visual target;
+- every Rule, including inactive.
 
-## Authoring no restrictivo
+## Authoring UI
 
-Se conserva congelado:
+UI read model continues to expose Tool/Component/Subcomponent suggestions.
+
+STRATEGIC is excluded from Alarm authoring suggestions, but the full dependency catalog derived from
+the same Tool snapshot retains every Tool entry.
+
+## Projection base
 
 ```text
-catalog available
-!=
-requirement to create/save Alarm Configuration
+Source release
+-> AlarmConfigurationProjectionBuilder
+-> ProjectionRecord[AlarmConfigurationSnapshot]
 ```
 
-Si no existe catálogo CURRENT, `AlarmToolReferenceReader.load()` devuelve `None`.
+No Tool reread.
 
-Si una key no está presente en las opciones, Alarm Configuration sigue validándose únicamente por su
-contrato intrínseco CURRENT.
+## Estado posterior y foco actual
 
-No se agregó enforcement externo a:
+En `atlanticus:main@7b61eaea463bab10a595166fa12d015e4c015c78` existen adapters
+local/Cosmos, stores de Source local/Blob y composición de persistencia de Alarm Configuration.
+Esto **reemplaza** la afirmación histórica de que todavía faltaba crear el adapter Cosmos,
+pero no demuestra un despliegue Azure end-to-end.
 
-- `AlarmConfiguration.from_document()`;
-- draft validation;
-- Source publication;
-- base Projection.
-
-## Tool identity
-
-Alarm Configuration persiste referencias escalares:
-
-- `tool_key`;
-- `component_key` donde corresponda;
-- `owner_component_key` + `subcomponent_key` donde corresponda.
-
-`display_name` es presentación y no identidad.
-
-## Evaluator / parameters
-
-`evaluator_key` identifica código de evaluator registrado por desarrollo.
-
-Alarm Configuration no define schemas particulares por evaluator.
-
-`parameters` conserva:
-
-```text
-mapping[str, str | float | bool]
-```
-
-La existencia del evaluator y el uso correcto de sus parámetros pertenecen a
-resolution/readiness/ejecución.
-
-## Projection base CURRENT
-
-```text
-Alarm SourceRelease exacta
-→ AlarmConfigurationProjectionBuilder
-→ AlarmConfiguration Projection
-```
-
-No tiene dependencias externas:
-
-```text
-ProjectionTarget.dependencies == ()
-```
-
-Tool Catalog y evaluator resolution entran después, en B.2.
-
-## Persistencia
-
-Alarm Configuration adopta Source/Release CURRENT de Atlanticus.
-
-Para dominios migrados, Blob continúa siendo el provider durable objetivo.
-
-El package CURRENT recibe `SourceStore`; el binding físico productivo de Command Center permanece
-abierto para la composición de aplicación.
-
-## Web editor CURRENT
-
-La UI actual sigue siendo Document mode.
-
-No se modificaron `layout.py` ni callbacks durante el hito Tool References.
-
-Permanece OPEN y es el siguiente foco único:
-
-```text
-ALARM-CONFIGURATION-STRUCTURED-AUTHORING-V1
-```
-
-Debe consumir el read model ya implementado para presentar Tool/Component/Subcomponent sin crear un
-schema durable paralelo y manteniendo entrada manual/fallback compatible con authoring no
-restrictivo.
-
-Message UI, editor visual completo de Rules y editor de parameters pueden continuar incrementalmente,
-pero no deben mezclarse automáticamente en el mismo incremento si amplían el foco.
+La prioridad inmediata es cerrar la UX del Manager. Ver
+`18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`; Materialization y Live Delivery son
+frentes posteriores y no se implementan aquí.

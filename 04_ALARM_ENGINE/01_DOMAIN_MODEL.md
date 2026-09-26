@@ -1,19 +1,19 @@
 # Alarm Engine — Domain Model
 
-Estado: **CURRENT / CORE VISIBILITY CLEANUP IMPLEMENTED / B.2 CONTRACT TYPES IMPLEMENTED / TARGET RUNTIME CLEANUPS OPEN**
+Estado: **CURRENT / CORE PREREQUISITES IMPLEMENTED / B.2 CONTRACT TYPES IMPLEMENTED / TARGET CLEANUPS OPEN**
 
 Realidad implementada auditada:
 
 ```text
 moragaga/atlanticus:main
-bc3fffd72afb712d5b5ab84522c379abf2a19642
+cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
 ```
 
 Canonical base:
 
 ```text
 moragaga/atlanticus-cannonical:main
-2d8cbc33b7776e057e4f7d82def318d5eaf8f336
+56943d94889719544f426322ded4a877245dfaee
 ```
 
 Decisions consultado:
@@ -70,18 +70,9 @@ Es VO operacional compartido.
 
 No agregar `evaluator_registry_revision` sin contrato real.
 
-Ownership en Core evita la dependencia circular futura:
-
-```text
-Core -> Materialization -> Core
-```
-
-que ocurriría si el key perteneciera físicamente a Materialization y Core necesitara usarlo para
-provenance/adoption.
-
 ## PlannedAlarm CURRENT
 
-CURRENT ya no contiene visibility:
+CURRENT no contiene visibility:
 
 ```text
 identity
@@ -94,8 +85,19 @@ alarm_configuration_revision
 tool_registry_revision
 routing
 deactivation_policy
+reappearance_after_seconds
 reappearance_special_conditions
 ```
+
+`reappearance_after_seconds`:
+
+```text
+None
+or
+int > 0
+```
+
+`bool`, cero y negativos son inválidos.
 
 Removido:
 
@@ -139,7 +141,7 @@ Runtime:
 - lifecycle normal;
 - routing normal;
 - priority normal;
-- management/suppression normal;
+- management/deactivation suppression normal;
 - no filtra por visibility.
 
 Delivery:
@@ -156,7 +158,40 @@ priority_order único dentro del priority_group
 menor priority_order = mayor prioridad
 ```
 
-Management suppression CURRENT se gobierna por `priority_order` e ignora visibility.
+La suppression CURRENT se gobierna por `priority_order` e ignora visibility.
+
+## DeactivationEffect CURRENT
+
+```text
+DeactivationEffect
+    effect_id
+    source_occurrence_id
+    effective_from
+    effective_until
+```
+
+La provenance de la occurrence fuente se conserva aunque la occurrence cierre.
+
+Una deactivation vigente es una barrera operacional independiente de Management:
+
+```text
+source -> DEACTIVATED
+
+target activo
+AND mismo priority_group
+AND target.priority_order > source.priority_order
+-> CASCADE_SUPPRESSED
+```
+
+`CascadeSuppression` conserva exactamente una causa:
+
+```text
+management_effect_id XOR deactivation_effect_id
+```
+
+Si ambos efectos están vigentes, la causa atribuida es deactivation.
+
+Pending approval no equivale a effect vigente.
 
 ## RuntimeAlarmConfiguration CURRENT
 
@@ -199,34 +234,69 @@ resolution_key_at_start
 
 No implementar aliases permanentes ni doble provenance.
 
-## Deactivation boundary OPEN
+## Deactivation ownership cleanup OPEN
 
 `PlannedAlarm.deactivation_policy` todavía existe en Core CURRENT.
 
 El target acordado sigue siendo resolver deactivation contextualmente en Delivery/Management Capture
-y no convertir `max_duration_hours`/Message semantics en lifecycle Core.
+y no convertir Message semantics en lifecycle Core.
 
-No mezclar este cleanup con el pure B.2 resolver sin una decisión explícita si se vuelve prerequisite.
+Este cleanup está separado de las semánticas de deactivation ya implementadas y probadas.
 
-## Reappearance boundary OPEN
+## Reappearance CURRENT y OPEN
 
-CURRENT conserva `reappearance_special_conditions`.
+Authored Domain:
 
-El target de `reappearance_after_seconds` y la reconciliación de timer durante Runtime Adoption
-siguen abiertos.
+```text
+ReappearanceDefinition
+    after_minutes: int | None
+    special_conditions: tuple[AlarmIdentity, ...]
+```
+
+Runtime Core CURRENT:
+
+```text
+PlannedAlarm.reappearance_after_seconds: int | None
+PlannedAlarm.reappearance_special_conditions: tuple[AlarmIdentity, ...]
+```
+
+El pure B.2 resolver debe materializar:
+
+```text
+after_minutes is None -> reappearance_after_seconds = None
+after_minutes = M     -> reappearance_after_seconds = M * 60
+```
+
+La reconciliación de timer/special conditions sobre hot state durante Runtime Adoption sigue OPEN.
 
 Special Condition Runtime reappearance ya está implementada y no se reabre por conveniencia.
 
 ## Conflict con B.1 historical
 
-B.1 Special Cascade difiere de suppression CURRENT por ranking.
+B.1 Special Cascade:
+
+```text
+managed predominant Special Condition
+-> suppress all other active Rules in group
+```
+
+difiere de CURRENT:
+
+```text
+Management/deactivation suppression
+-> sólo targets activos de prioridad numéricamente menor
+   (priority_order mayor)
+```
+
+La deactivation como fuente independiente de cascade suppression es un refinamiento posterior no
+expresado por B.1.
 
 Estado:
 
 ```text
 IMPLEMENTATION CURRENT / VALIDATED
-PROJECT REFINEMENT AGREED
-DECISIONS REPOSITORY NOT RECONCILED
+PROJECT REFINEMENT CURRENT
+DECISIONS REPOSITORY HISTORICAL / NOT RECONCILED
 ```
 
 No resolver silenciosamente.

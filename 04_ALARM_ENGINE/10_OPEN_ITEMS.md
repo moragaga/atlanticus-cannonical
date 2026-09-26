@@ -1,191 +1,114 @@
 # Alarm Engine — Open Items
 
-Estado: **OPEN / B.2 CONTRACTS CLOSED / QUALIFICATION INPUT CONTRACTS CLOSED / PURE RESOLVER NEXT**
+Estado: **OPEN / EXACT ALARM-TOOL SNAPSHOT CLOSED / OPERATIONAL PROJECTION NEXT**
 
 Checkpoint:
 
 ```text
-moragaga/atlanticus:main
-bc3fffd72afb712d5b5ab84522c379abf2a19642
+moragaga/atlanticus@880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
 ```
 
 ## CLOSED / CURRENT
 
-- Command Center Alarm Domain Extraction.
-- Root replacement de autoridades authored legacy.
-- Management suppression por `priority_order`.
-- Special Condition Runtime reappearance.
-- `PlannedAlarm.delivery_enabled` removido.
-- `PriorityDisposition.SHADOW` removido.
-- `AlarmResolutionKey` implementado en Alarm Core.
-- package `backend/alarms/materialization`.
-- `AlarmConfigurationResolution`.
-- Runtime/Delivery materialization contract types.
-- atomicidad `READY | BLOCKED`.
-- `ToolReconciliationQualification`.
-- `EvaluatorQualificationKey`.
-- `EvaluatorQualificationCatalog`.
+- Pure B.2 resolver.
+- Runtime/Delivery resolution contracts.
+- READY/BLOCKED atomicity.
+- Tool/Evaluator qualification input contracts.
+- Command Center `domain/tools`.
+- `ToolDependencyManifest`.
+- AlarmConfigurationSnapshot v3.
+- exact Alarm release -> Tool revision correlation.
+- validate/publish Tool drift guard.
+- referenced Tool subset capture including inactive Rules and disabled steps.
+- historical Tool names/structure evidence.
 
-## OPEN relevantes
+## 1. Alarm Configuration operational Projection to Cosmos — NEXT
 
-### 1. Pure B.2 resolver — NEXT
-
-Implementar resolución/validación determinística contra inputs explícitos.
-
-No I/O.
-
-No process orchestration.
-
-Debe producir solamente `AlarmConfigurationResolution`.
-
-### 2. Tool reconciliation qualification producer
-
-El contrato de consumo existe:
+Diseñar e implementar:
 
 ```text
-ToolReconciliationQualification(green_tool_keys)
+ProjectionRecord[AlarmConfigurationSnapshot]
 ```
 
-Sigue OPEN quién/qué lo construye a partir del estado actual de reconciliation.
+en Cosmos.
 
-No inventar taxonomía RED/DRIFT/MISSING dentro de Materialization.
+Debe:
+- conservar exact Source release;
+- conservar snapshot v3 completo;
+- no volver a leer Tool Catalog;
+- soportar lectura operacional posterior.
 
-### 3. Evaluator qualification producer
+OPEN de diseño:
+- database/container;
+- partition key;
+- item id;
+- codec físico;
+- connection/settings composition;
+- failure/retry semantics.
 
-El contrato de consumo existe:
+## 2. B.2 Materialization Process — AFTER
 
 ```text
-EvaluatorQualificationCatalog
+backend/processes/alarms-materialization
 ```
 
-Sigue OPEN cómo se deriva desde el deployed evaluator registry/catalog sin transportar callables ni
-`DataRequirement` al artifact.
+No implementar en el mismo incremento.
 
-### 4. Materialization process
+## 3. Tool reconciliation qualification producer
 
-Target:
+OPEN cómo obtener evidencia GREEN upstream sin reimplementar reconciliation en Alarm backend.
+
+## 4. Evaluator qualification producer
+
+OPEN integración con deployed evaluator registry/catalog.
+
+## 5. Runtime/Delivery/findings stores
+
+OPEN.
+
+## 6. Runtime provenance cleanup
+
+OPEN.
+
+## 7. Runtime Adoption / Effective Head
+
+PLANNED.
+
+## 8. Live Delivery
+
+PLANNED.
+
+## 9. Management Capture
+
+PLANNED.
+
+## 10. Catalog/domain normalization
+
+DEFERRED.
+
+CURRENT:
 
 ```text
-scopes/ada-command-center/backend/processes/alarms-materialization
+domain/alarms
+-> domain/tools
+-> ada-web-tools
 ```
 
-Responsabilidad futura:
-- acquisition;
-- revision comparison;
-- resolver invocation;
-- artifact/findings persistence;
-- process diagnostics.
+## 11. Source v2 deployment history
 
-### 5. Artifact persistence
+Schema v2 está SUPERSEDED y no existe legacy decoder.
 
-OPEN:
-- Runtime Configuration store;
-- Delivery Configuration store;
-- findings/history;
-- codecs/schema versions;
-- retention.
+UNVERIFIED si existen releases v2 durables en ambientes objetivo que requieran reset/migración.
 
-### 6. Runtime provenance cleanup
-
-CURRENT todavía usa pares históricos donde corresponde:
+## 12. Python baseline
 
 ```text
-alarm_configuration_revision
-tool_registry_revision
+Project 3.14.7
+Command Center metadata 3.14.2
 ```
 
-TARGET:
+OPEN / SEPARATE.
 
-```text
-AlarmResolutionKey
-resolution_key_at_start
-```
+## Foco único
 
-Sin aliases permanentes.
-
-### 7. Reappearance timer target
-
-OPEN:
-- `reappearance_after_seconds`;
-- reconciliation en Adoption;
-- nullable Runtime due.
-
-No reabrir Special Condition Runtime semantics ya implementadas.
-
-### 8. Deactivation Core cleanup
-
-`PlannedAlarm.deactivation_policy` sigue CURRENT.
-
-Target Delivery/Management Capture permanece acordado, pero cleanup no se hizo en este hito.
-
-### 9. Cause/evidence contract
-
-Falta schema evaluator explícito para validar placeholders de `cause_template` antes de Runtime.
-
-### 10. Runtime Adoption / Effective Head
-
-OPEN:
-- discriminated journal record;
-- `adoption_id`;
-- Effective Head materialization;
-- migration;
-- crash/recovery tests;
-- ADDED/ENABLED transitions;
-- integration con artifact stores.
-
-### 11. Live Delivery owner/package
-
-Contrato de diseño cerrado; implementación física pendiente.
-
-### 12. Management Capture
-
-OPEN:
-- `shift_end` provider;
-- persistence;
-- stale/unavailable outcomes;
-- pending deactivation cleanup.
-
-### 13. Tool routing qualification adicional
-
-OPEN:
-- PROCESS ↔ INTEGRATED_OPERATIONS constraints;
-- routing tier matrix;
-- Rule area vs Tool scope.
-
-### 14. Operation details
-
-OPEN:
-- materialization/Live cadence;
-- event trigger;
-- physical containers/partitions;
-- final deployment topology.
-
-### 15. Python baseline conflict
-
-```text
-Project baseline: Python 3.14.7
-Command Center packages: requires-python ==3.14.2
-```
-
-No mezclar con pure resolver salvo bloqueo demostrado.
-
-## Historical conflicts visibles
-
-B.1 Special Cascade sigue distinto de suppression CURRENT por ranking.
-
-B.1 exige Message activo en una formulación histórica; Project CURRENT considera:
-
-```text
-inactive Message = válido pero no seleccionable para nuevas gestiones
-```
-
-`atlanticus-decisions` no está reconciliado.
-
-## Foco siguiente único
-
-```text
-PURE B.2 ALARM CONFIGURATION RESOLVER
-```
-
-No abrir materialization process, Adoption, Live Delivery, Management Capture ni broad Core cleanup
-en el mismo incremento.
+Cosmos Projection de Alarm Configuration.
