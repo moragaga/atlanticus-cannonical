@@ -1,55 +1,26 @@
 # Manager — Navigation and Home
 
-Estado: **CURRENT / MODULES + ENTRIES / NAVIGATION CONFIGURATION SLICE CLOSED**
+Estado: **CURRENT / NAVIGATION CONFIGURATION CLOSED / ADA LOCAL FLOW QUALIFIED**
 
-## `/manager`
+Última verificación de implementación para este delta: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
 
-`/manager` es una Home real.
+## `/manager` y Registry
 
-No representa el primer item administrativo y no redirige implícitamente a un módulo.
+`/manager` es una Home real. No corresponde al primer módulo ni redirige implícitamente.
+`ManagerModuleRegistry` posee `modules`, `entries` e `items = modules + entries`.
+Home, sidebar y routing derivan de ese mismo registry. Un ítem sólo se representa cuando
+`visible_items(principal, policy)` autoriza su visibilidad.
 
-## Registry
+## Fronteras de navegación
 
-`ManagerModuleRegistry` es la fuente única de items administrativos visibles y rutas.
+- Manager posee su botón lateral, Home, grupos, módulos, rutas administrativas y sidebar.
+- Navigation Core/Configuration posee rutas operacionales configurables y su autorización.
+- ADA Generic integra ambos sin fusionar la navegación administrativa con el menú operacional.
+- Las capacidades administrativas conservan sus propias claves Manager, por ejemplo
+  `navigation.manage`. La excepción de recuperación Navigation **no concede** por sí misma
+  permisos de otros módulos Manager.
 
-Mantiene:
-
-```text
-modules
-entries
-items = modules + entries
-```
-
-Home, sidebar y routing derivan del mismo registry.
-
-## Visibilidad
-
-```text
-ManagerModuleRegistry
-        ↓
-visible_items(principal, policy)
-        ↓
-render Home / sidebar
-```
-
-No renderizar un item antes de comprobar autorización.
-
-## Navegación Manager vs Navigation capability
-
-Manager conserva navegación administrativa propia:
-
-- botón/trigger lateral;
-- Home;
-- grupos;
-- items administrativos;
-- retorno explícito;
-- sidebar.
-
-Navigation capability mantiene navegación operacional/configurable.
-
-No fusionar ambos ownerships.
-
-## Grupos CURRENT en ADA Configuration Manager
+## Grupos CURRENT de ADA Configuration Manager
 
 ```text
 Administración
@@ -66,82 +37,35 @@ Configuraciones
 
 ## Navigation Configuration CURRENT
 
-La surface administrativa de Navigation es propiedad de Navigation Configuration.
+La superficie administrativa pertenece a Navigation Configuration y no depende físicamente de
+Profiles. Los proveedores opcionales son `NavigationProfileOption` y
+`NavigationProfileOptionsProvider`; ADA adapta Profiles a esas opciones.
 
-No depende físicamente de Profiles.
+Paginación top-level: default `10`, valores `10/20`; mezcla root links y sections en orden
+durable. Una section es un ítem; sus hijos no cuentan en el total. Estado expandido efímero.
+El empty state conserva su área; corregir geometría, no esconder overflow como solución.
 
-Contrato opcional para opciones de acceso:
+## Qualification local adicional — 2026-09-25
 
-```text
-NavigationProfileOption
-NavigationProfileOptionsProvider
-```
+**VERIFIED MANUAL / CLOSED en el entorno local del usuario:** ADA Generic arranca,
+Navigation permite guardar/publicar/proyectar, y la página Home consume el menú configurado.
+Tras una regresión posterior del callback, el usuario confirmó que el menú funciona sobre
+`a6061ffe`.
 
-ADA composition adapta Profiles a este contrato.
+**VERIFIED STATIC:** `a6061ffe` contiene controller fuera del Offcanvas, ruta previa en Store,
+distinción entre clic y cambio efectivo de pathname, y triggers sin atributo `title` de tooltip,
+con texto oculto accesible. No deducir ejecución de tests finales a partir de esa inspección.
 
-## Navigation top-level pagination
+**UNVERIFIED:** clic móvil/escritorio bajo matriz de navegadores; persistencia real en
+Blob/Cosmos después de reiniciar; identidad Entra en un host productivo.
 
-CURRENT:
-
-```text
-DEFAULT
-10
-
-ALLOWED
-10 / 20
-```
-
-La colección paginada mezcla los nodos top-level según el orden durable:
+## Estado
 
 ```text
-root links
-sections
+NAVIGATION CONFIGURATION ADMIN UI           CLOSED / CURRENT
+ADA GENERIC NAVIGATION LOCAL FLOW           CLOSED / VERIFIED MANUAL / CURRENT
+NAVIGATION CLIENT CODE CORRECTION           CURRENT / USER-REPORTED FUNCTIONAL
+MANAGER REAL DURABLE PERSISTENCE            PLANNED / UNVERIFIED
 ```
 
-Cada section cuenta como un item.
-
-Los child links no cuentan para el total de página.
-
-Una section expandida muestra todos sus hijos y puede hacer crecer la página sobre su
-min-height visual.
-
-El estado expandido es efímero.
-
-## Empty state y overflow
-
-Cuando no existen nodos, Navigation conserva la superficie reservada para la página y centra
-el empty state.
-
-El control Dash de page size contiene su `dash-dropdown-focus-target` dentro del wrapper para
-evitar overflow horizontal.
-
-No usar `overflow-x: hidden` como sustituto de corregir geometría defectuosa.
-
-## Manager UI review
-
-Navigation:
-
-```text
-CLOSED / VERIFIED MANUAL / CURRENT
-```
-
-Overall:
-
-```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
-```
-
-Siguiente página:
-
-```text
-Herramienta
-```
-
-## Principio
-
-La navegación Manager organiza capabilities administrativas.
-
-Navigation organiza la navegación operacional/configurable.
-
-Son responsabilidades distintas aunque convivan en ADA Configuration Manager.
+El Manager genérico no cambia de contrato por esta qualification local.

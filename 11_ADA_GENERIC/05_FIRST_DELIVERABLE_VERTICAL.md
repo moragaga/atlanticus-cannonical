@@ -1,94 +1,74 @@
 # ADA Generic — First Deliverable Vertical
 
-Estado: **CURRENT / GENERIC STAGE 1 CLOSED / TOOL GOLDEN PATH OPEN**
+Estado: **CURRENT / GENERIC STAGE 1 CLOSED / LOCAL NAVIGATION QUALIFIED / TOOL GOLDEN PATH OPEN**
 
-## Separación de hitos
+## Separación de entregables
 
-La base genérica y la primera vertical completa de una Tool no son el mismo entregable.
+La base ADA Generic, la qualification de Navigation local, el artifact distribuible y la
+primera Tool real no son equivalentes.
 
-### ADA Generic Stage 1
-
-CLOSED:
+### Stage 1 — CLOSED
 
 ```text
 Tool Projection durable
 → resilient Tool resolution
 → ToolStructure
-→ KPI Collector
+→ KPI Collector (si Tool READY y Cosmos configurado)
 → Latest / Timeseries
 → process cache
-→ browser dcc.Store / ToolComponent
+→ browser dcc.Store por ToolComponent
 → developer handoff
 ```
 
-La base genérica entrega datos y contratos.
+El Collector no es un componente pendiente por crear para esta frontera. No imponer
+visualización Tool específica en ADA Generic.
 
-No posee la visualización específica de una Tool.
+### Navigation local — CLOSED / VERIFIED MANUAL
 
-### Tool Golden Path
+Con la configuración de desarrollo, el usuario pudo guardar, publicar y proyectar Navigation
+y consumir sus enlaces desde Home. Después de corregir el callback, el menú funciona según
+la comprobación final sobre `a6061ffe`.
 
-Permanece OPEN.
+Esto califica ese flujo local; **no** prueba persistencia Blob/Cosmos real tras reinicio,
+identidad Entra ni distribución portable.
 
-Debe demostrar una Tool concreta recorriendo, según corresponda:
+### Primer artifact distribuible — PLANNED / UNVERIFIED
+
+Hay tooling de procesos (`deployment/processes/bundle.py`) y validadores por frontera.
+No se ha acreditado todavía aquí que un artifact final de ADA Generic + sus dependencias
+sea portable y ejecutable fuera del checkout; tampoco se ha acreditado un pipeline de
+web distribution. Antes de agregar código, auditar las herramientas reales existentes.
+
+### Golden Path de Tool — OPEN
+
+Una Tool concreta debe recorrer, según corresponda:
 
 ```text
-Configuration
-→ Source / Release
-→ Projection / materialization
-→ Operational Data
-→ KPI
-→ Alarm
-→ concrete visualization
-→ Manager / operational workflows
-→ E2E
+Tool Configuration
+→ Source/Release
+→ Projection/materialization
+→ operational data
+→ KPI processes/Latest/Timeseries
+→ ADA Generic Collector + browser stores
+→ concrete Tool visualization
+→ E2E y artifact/distribution qualification
 ```
 
-## Operaciones Integradas
+Las partes Alarm/Command Center se integran sólo donde la Tool las necesite, en su frente.
+No son prerequisito universal impuesto al núcleo genérico.
 
-El orden funcional vigente permanece:
+## Orden de Tool congelado
 
 ```text
 1. Operaciones Integradas
 2. Mina
 ```
 
-Operaciones Integradas es la primera Tool destinada a revelar gaps reales de consumo, layout,
-alarm integration y distribución.
+No elevar particularidades visuales de la primera Tool a arquitectura obligatoria.
 
-Sus casos visuales especiales no deben generalizarse automáticamente dentro de ADA Generic.
+## Siguiente frontera única
 
-## Criterio de cierre de ADA Generic Stage 1
-
-Cumplido:
-
-- runtime Tool read desde Projection durable;
-- estados degradados no eliminan Web base;
-- Collector wiring sobre Tool `READY`;
-- Latest y Timeseries con cadencias independientes;
-- un browser store por ToolComponent;
-- Subcomponent sin store propio;
-- separación estructural de Operational Render;
-- frontera explícita de entrega al desarrollador.
-
-## Lo que no pertenece al cierre genérico
-
-No es requisito de Stage 1:
-
-```text
-body universal
-cards KPI obligatorias
-layout de Operaciones Integradas
-visualización de Mina
-alarm visualization concreta
-```
-
-Esas decisiones pertenecen a consumidores concretos.
-
-## Siguiente frontera del Project
-
-Antes de continuar el Golden Path visual de una Tool, el siguiente foco solicitado es:
-
-```text
-ADA-COMMAND-CENTER-ALARM-CONFIGURATION
-PLANNED / NEXT
-```
+`ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION`:
+identificar la vía existente de empaquetado Web, verificar dependencias, configuración,
+arranque fuera del checkout y criterios de entrega; diseñar sólo el gap demostrado.
+Los procesos KPI/backend usan su propio bundler y no se reimplementan en este frente.

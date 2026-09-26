@@ -1,139 +1,102 @@
 # ADA Generic — Current Composition
 
-Estado: **CLOSED / VERIFIED / CURRENT**
+Estado: **CURRENT / STAGE 1 CLOSED / NAVIGATION LOCAL CLOSED**
 
-Implementación auditada:
+Implementación inspeccionada: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
+No se ejecutaron pruebas del repositorio remoto desde este cierre.
 
-```text
-scopes/ada/web/application/ada-generic-application
-moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
-```
+## Composición general
 
-## Composición base CURRENT
+ADA Generic integra branding, shell/navigation, header, alarm surfaces, content state,
+operational render binding, operational state, runtime experience, global indicators,
+time status y consumos configurados. Las capacidades conservan ownership independiente.
+Atlanticus core no depende de ADA.
 
-ADA Generic compone capacidades como:
-
-```text
-branding
-navigation
-operational header
-alarm surfaces
-content state
-operational render binding
-operational state
-runtime experience
-source consumption / operational participation
-time status
-global indicators
-session/runtime Web
-```
-
-La composición base existe independientemente de Collector.
-
-## Bootstrap operacional CURRENT
-
-Entrada:
+## Bootstrap Tool y Collector — CURRENT
 
 ```text
 AdaGenericSettings
-```
-
-Cadena:
-
-```text
-environment / .env
 → Tool persistence settings
-→ optional Storage client
-→ optional Tool Projection Cosmos client
+→ optional Storage client / Tool Projection Cosmos client
 → ToolPersistenceComposition
 → resolve_operational_tool_projection()
-→ resolve_active_tool_projection()
+→ Tool resolution READY | UNCONFIGURED | UNAVAILABLE | INVALID
 ```
 
-No existe la ruta startup legacy basada en:
+Un resultado no READY mantiene la Web base y expone el estado correspondiente. No recurrir
+a Source ni a otro proveedor de manera silenciosa. Una Projection Tool válida puede
+consumirse sin Source disponible.
+
+Cuando Tool está READY y KPI Delivery Cosmos está configurado:
 
 ```text
-_StartupToolProjectionStore
-resolve_current_tool_projection
-```
-
-Esos símbolos no están presentes en `main` para este cierre.
-
-## Tool resolution
-
-Estados:
-
-```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
-```
-
-`READY` exige además validación operacional ADA de la `ToolConfiguration`.
-
-Estados no READY mantienen disponible la Web base con diagnóstico.
-
-No existe fallback silencioso a Source ni a otro provider.
-
-## Collector runtime wiring
-
-Cuando Tool está `READY` y KPI Delivery Cosmos está configurado:
-
-```text
-Tool Projection
-→ ToolStructure
+Tool Projection → ToolStructure
 → create_operational_kpi_collector()
 → attach_operational_kpi_collector()
 → create_web_application()
 ```
 
-La conexión KPI Delivery usa configuración de consumo separada de Tool Projection.
-
-La ausencia completa de configuración KPI no elimina la Web.
-
-Collector permanece lazy respecto del polling.
-
-## Operational Render CURRENT
-
-`OperationalRenderBinding` es estructural:
+Tool Projection y KPI Delivery conservan configuraciones de consumo separadas. Collector
+realiza polling asíncrono con cache de proceso; el navegador no consulta Cosmos inline.
+`OperationalRenderBinding` representa estructura, no snapshots KPI.
 
 ```text
-ToolStructure
-→ one OperationalComponentBinding per ToolComponent
+1 ToolComponent → 1 dcc.Store KPI
+0..N Subcomponents → sin Store adicional
 ```
 
-Fue removido el acoplamiento con `ComponentStoreSnapshot`.
+La representación específica corresponde al consumidor/desarrollador de la Tool. No hay body
+universal obligatorio ni acoplamiento Collector → OperationalRenderBinding.
 
-Collector no depende de `operational-render-binding`.
+## Identity, Manager y Navigation — CURRENT
 
-## Data delivery boundary
+- La composición operacional base monta Navigation y su autorización sin exigir Identity.
+- Navigation inicia vacío sin projection configurada; la Home sigue siendo accesible.
+- Manager se integra explícitamente cuando existen dependencies/stores; un `ManagerPrincipalBinding`
+  local puede necesitar Identity explícita y el bootstrap la agrega conforme al entorno.
+- La definición Navigation se lee desde la misma `navigation_projection_store` compartida con
+  Manager, empleando `NAVIGATION_SOURCE_KEY`; no se usa un menú fijo como autoridad.
+- Principal público sin perfil administrado cuando no existe binding.
+- `root` administrado y Local confiable admiten `administrative_override` según el contrato
+  implementado; un usuario desconocido o sin privilegios no hereda la excepción.
+- La autorización de navegación de documentos HTML no reemplaza el control de acceso Manager.
+- No se transfiere ownership de Profiles, Users o ADA Access a Navigation.
 
-Collector publica browser stores existentes:
+## Presentación del menú CURRENT en a6061ffe
 
 ```text
-1 ToolComponent
-→ 1 dcc.Store
+ADA operational layout
+├── Header + desktop/mobile triggers
+├── Navigation controller fuera del Offcanvas
+│   ├── dcc.Location
+│   └── dcc.Store(last pathname)
+├── Navigation Offcanvas
+└── Main
 ```
 
-Subcomponents no crean store propio.
+El callback diferencia inicialización, primera pulsación y cambio real de ruta. Los triggers
+no tienen `title='Abrir navegación'`; conservan texto `visually-hidden` accesible.
+El comentario pedagógico no es runtime alternativo ni contrato legacy.
 
-ADA Generic termina su responsabilidad genérica en esa superficie de datos.
+## Evidencia y alcance
 
-No construye un body obligatorio para cada Tool.
+**VERIFIED AUTOMATED previamente reportado:** después de la integración principal, ADA Generic
+`169 passed` y Ruff verde; durante el correctivo del menú, ADA Generic `172 passed` y Ruff
+verde. Las pruebas del shell informadas antes de la corrección final: `8 passed`,
+`1 skipped` y un error Ruff en el test añadido. No atribuir estos resultados al commit final.
 
-## Estado del hito
+**VERIFIED MANUAL declarado por el usuario:** guardado, publicación, proyección y consumo del
+menú desde Home, y menú funcional después del último correctivo en `a6061ffe`.
+
+**UNVERIFIED:** ejecución íntegra de tests/Node y Ruff en `a6061ffe`; recuperación durable
+tras reinicio sobre Blob/Cosmos real/emulado; matriz responsive; entrega Azure/Entra.
+
+## Estados
 
 ```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-CLOSED / VERIFIED / CURRENT
-
-ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
-CLOSED / VERIFIED / CURRENT
-
-ADA-GENERIC-OPERATIONAL-RENDER-RUNTIME-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
+ADA GENERIC STAGE 1                          CLOSED / CURRENT
+ADA GENERIC NAVIGATION INTEGRATION            CLOSED / CURRENT
+LOCAL NAVIGATION PUBLICATION/PROJECTION       CLOSED / VERIFIED MANUAL
+FIRST CLICK/TOOLTIP CODE CORRECTION           CURRENT / USER-REPORTED FUNCTIONAL
+REAL PERSISTENCE/DISTRIBUTION QUALIFICATION   PLANNED / UNVERIFIED
 ```

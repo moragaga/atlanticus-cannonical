@@ -1,196 +1,54 @@
 # Web Platform — Users / Profiles / Access / Navigation Capability Boundary
 
-Estado: **CURRENT DECISION / REFINED AFTER USERS UI CLOSURE**
+Estado: **CURRENT / NAVIGATION OPERATIONAL CONSUMER REFINED 2026-09-25**
 
-## Propósito
+Autoridad implementation inspeccionada para este delta:
+`moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
+El resto de los contratos Users/Profiles/Access del checkpoint canónico previo
+permanece congelado: no se reabre desde este incremento.
 
-Fijar la frontera CURRENT entre:
-
-```text
-Global Users
-Generic Profiles
-Application-specific ADA Access
-Generic Navigation
-Manager administrative shell
-```
-
-sin reintroducir estado app-specific en Users, catálogos paralelos, hard dependencies
-innecesarias ni contracts legacy.
-
-## Autoridad de implementación
+## Propósito y propiedad
 
 ```text
-moragaga/atlanticus@ce07ada07e3f4f100b97ad2ac5e7285b54419c20
+Atlanticus Global Users           identity + lifecycle + user → profile_key
+Atlanticus Generic Profiles      definition + catalog + Source + Projection
+ADA Access                        declared access keys + profile_key → access_keys
+Atlanticus Generic Navigation    route structure and profile visibility
+Atlanticus Manager               own administrative shell and authorization
+ADA Generic                       explicit composition/consumer of the above
 ```
 
-Parent:
+Atlanticus Core no depende de ADA. Navigation Core/Configuration no depende de Users ni
+ADA Access; Navigation Configuration no depende físicamente de Profiles. ADA composition
+puede conectar capacidades mediante contratos públicos sin traspasar su ownership.
 
-```text
-df5b99502265758e873e0565abf2176cc617104b
-```
+## Users CURRENT — contrato conservado
 
-Tree:
-
-```text
-825dbaffba30b42199c54dbd4da9ba234f3ef437
-```
-
-## Estado del frente
-
-```text
-PROFILES-MANAGER-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-PROFILES-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-USERS-PROFILES-CONTRACT-REALIGNMENT
-CLOSED / VERIFIED / CURRENT
-
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-USERS-MANAGER-UI-REVIEW
-CLOSED / CURRENT / ACCEPTED WITH NON-BLOCKING POLISH
-
-USERS-GUEST-ASSIGNMENT-BOUNDARY
-CURRENT / IMPLEMENTED
-
-ADA-ACCESS-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-CLOSED / VERIFIED / CURRENT
-
-ACCESS-MANAGER-UI-REVIEW
-CLOSED / VERIFIED MANUAL / CURRENT
-
-MANAGER-FINAL-ADMIN-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PUBLIC-ACCESS-CONTRACT
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-PROFILE-OPTIONS-DECOUPLING
-CLOSED / VERIFIED / CURRENT
-
-NAVIGATION-CONFIGURATION-UI-PASS
-CLOSED / VERIFIED MANUAL / CURRENT
-
-MANAGER-UI-CONSISTENCY-REVIEW
-CLOSED FOR CURRENT V1 / NON-BLOCKING POLISH DEFERRED
-
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / OPEN
-```
-
-## Regla principal
-
-### Profiles
-
-```text
-profile definition + catalog + configuration + Source + Projection
-```
-
-Generic Atlanticus.
-
-### Users
-
-```text
-identity + lifecycle + user -> profile_key
-```
-
-Generic Atlanticus.
-
-No contiene ADA-specific access state.
-
-### ADA Access
-
-```text
-declared access_keys
-profile_key -> access_keys
-```
-
-Application-specific.
-
-### Navigation
-
-```text
-navigation structure + route visibility by profile keys
-```
-
-Generic Atlanticus.
-
-Navigation core/configuration no depende de Users ni ADA Access.
-
-Navigation Configuration tampoco depende de Profiles.
-
-## Users CURRENT
-
-Contrato durable/effective:
+Persistente/efectivo:
 
 ```text
 UserRecord.profile_key
 EffectiveUser.profile_key
 ```
 
-Profiles posee el catálogo; Users decide qué profiles son asignables a usuarios administrados.
-
-### Profile states
-
-System profiles CURRENT:
+Profiles determina el catálogo; Users controla qué perfiles pueden asignarse a usuarios
+administrados. System profiles: `basic`, `root`, `guest`, `local`.
 
 ```text
-basic
-root
-guest
-local
+basic                      assignable managed profile
+root                       assignable managed profile
+configured custom profile  assignable managed profile
+guest                      transient/pending representation; NOT managed assignment
+local                      local runtime only; NOT managed assignment
 ```
 
-Semántica Users:
+`normalize_managed_profile_key('guest')` y la representación
+`UserRecord(profile_key='guest')` son válidos en estados transitorios. La operación
+`require_managed_profile('guest', ...)` lo rechaza y
+`available_managed_profiles` excluye `guest` y `local`.
+No trasladar esa prohibición al constructor de `UserRecord`.
 
-```text
-basic
-assignable managed profile
-
-root
-assignable managed profile
-
-configured custom profile
-assignable managed profile
-
-guest
-valid transient/pending profile
-NOT administratively assignable
-
-local
-runtime-local only
-NOT administratively assignable
-```
-
-La distinción es contractual:
-
-```text
-normalize_managed_profile_key('guest')
-VALID
-
-UserRecord(profile_key='guest')
-VALID
-
-require_managed_profile('guest', ...)
-REJECT
-
-available_managed_profiles(...)
-EXCLUDES guest + local
-```
-
-No mover la prohibición de `guest` al constructor de `UserRecord`: los registros pendientes pueden
-necesitar representar ese estado transitorio antes de promoción.
-
-Users Administration CURRENT:
+### Users Administration
 
 ```text
 UsersAdministrationService
@@ -199,238 +57,128 @@ UsersAdministrationService
 └── update
 ```
 
-Promoción V1:
+Promoción V1: un usuario por vez, acción explícita `Promover`, sin batch.
+Update V1: identidad informativa/no editable; perfil y enabled editables;
+`Guardar` persiste inmediatamente. No existe borrador global Users.
+
+Persistencia lógica implementada:
 
 ```text
-one user at a time
-explicit Promover action
-no batch contract
+promote → UsersRegistryStore.replace → UsersAdministrationStore.create
+update  → UsersRegistryStore.replace → UsersAdministrationStore.replace
 ```
 
-Update V1:
+La qualification real del wiring Blob/Cosmos de Users no se deduce de las pruebas
+in-process. Users integra Manager como `ManagerEntry`, sin Source/Projection sintéticos.
 
-```text
-identity
-informational / immutable from Users Administration
-
-profile + enabled
-editable
-
-Guardar
-explicit immediate commit
-```
-
-No existe borrador global de Users.
-
-### Persistence sequence
-
-Contrato implementado:
-
-```text
-promote
-UsersRegistryStore.replace(...)
-→ UsersAdministrationStore.create(...)
-
-update
-UsersRegistryStore.replace(...)
-→ UsersAdministrationStore.replace(...)
-```
-
-La secuencia lógica está implementada.
-
-El wiring productivo concreto de adapters Blob/Cosmos permanece:
-
-```text
-UNVERIFIED IN THIS CLOSURE
-```
-
-No confundir la prueba in-process usada para UI con una qualification Azure end-to-end.
-
-### Manager integration
-
-```text
-Users
-→ ManagerEntry
-→ no synthetic Source/Projection
-```
-
-## Users UI CURRENT
-
-La capability Users posee su UI.
-
-Composición CURRENT:
+### Users UI
 
 ```text
 Control de usuarios
-├── Usuarios
+├── Usuarios          (default)
 └── Por promover
 ```
 
-Vista default:
+Una sola vista activa. Paginación `atlanticus.web.pagination` con `10/20`, navegación
+numerada y viewport estable. Tabs según convención visual Atlanticus.
+Editor propio de capability con backdrop y acciones close/cancel/save; no trasladar
+ownership a `dbc.Modal` si abandona la frontera de la capability.
+Pulido visual residual: diferido/no bloqueante.
+
+## Profiles CURRENT — contrato conservado
+
+Profiles es capability genérica y posee su catálogo/UI.
+
+- System profiles: `basic`, `root`, `guest`, `local`.
+- Apariencia normal: inicial mayúscula; `local`: iniciales nombre/apellido según identidad.
+- Source/Projection labels inyectados por composition.
+- Editor capability-local; paginación `10/20` con `atlanticus.web.pagination`.
+
+El catálogo no obliga a todos los consumidores a ofrecer todos los perfiles como opciones.
+
+## ADA Access CURRENT — contrato conservado
 
 ```text
-Usuarios
+profile_key → access_keys
 ```
 
-Sólo una vista se muestra como activa a la vez.
+No crear persistencia global `user → access_keys` en Users.
+La autorización Manager sobre un módulo no se obtiene por tener acceso a una ruta
+operacional de Navigation.
 
-Paginación:
+## Navigation Configuration CURRENT
+
+Contratos públicos independientes:
 
 ```text
-atlanticus.web.pagination
-page sizes 10 / 20
-numbered navigation
-stable result viewport
+NavigationConfigurationCatalog
+NavigationProfileOption(key, label)
+NavigationProfileOptionsProvider (optional)
 ```
 
-Tabs:
+Una aplicación que conoce Profiles puede adaptar
+`ProfileCatalog → tuple[NavigationProfileOption, ...]` sin acoplar Navigation a Profiles.
+
+ADA Navigation Configuration ofrece `basic`, `guest` y perfiles configurados;
+no ofrece `root` ni `local` en la selección de perfiles de rutas. `guest` es
+válido como criterio de visibilidad Navigation pero no como asignación final Users.
+
+## Navigation access semantics — CURRENT / REFINED
+
+Para principal ordinario:
 
 ```text
-existing Atlanticus convention
-transparent inactive
-gold underline active / hover / focus
+enabled = False                      DENY
+enabled = True, allowed_profiles=()  PUBLIC WITHIN NAVIGATION AUTHORIZATION
+enabled = True, non-empty profiles  require principal.access_key membership
 ```
 
-Editor:
+`principal.unrestricted` elude la restricción de perfil de rutas habilitadas,
+**no** habilita rutas deshabilitadas ni concede acceso a rutas no registradas.
+
+Excepción contractual implementada en Navigation Core:
 
 ```text
-capability-local viewport modal
-backdrop
-close / cancel / save
+principal.administrative_override == True
+→ Navigation page-document authorization permits disabled and unregistered paths
 ```
 
-No usar `dbc.Modal` como owner del editor de Users si saca el contenido de la frontera visual de la
-capability.
-
-Los detalles visuales menores pendientes son no bloqueantes y quedan deferred; no alteran estos
-contratos.
-
-## Profiles CURRENT
-
-System profiles:
+Es una excepción de recuperación, no un modo normal. ADA Generic la obtiene sólo
+del contexto de principal administrativo verificado:
 
 ```text
-basic
-root
-guest
-local
+managed root + not local                    → override
+trusted local principal + local environment → override
+ordinary / unknown principal               → no override
 ```
 
-Profiles posee el catálogo.
+La excepción de Navigation no concede `navigation.manage`, otros permisos Manager ni
+acceso general a API/servicios. Menu sigue excluyendo rutas deshabilitadas. Las rutas
+externas no se convierten en documentos internos protegidos por el matcher.
+La autorización de documentos HTML excluye según el código `_dash`, assets, health,
+API y `.auth` del middleware específico Navigation; otros controles conservan ownership.
 
-Eso no obliga a cada consumer a exponer todos los profiles como opciones de UI.
+## ADA Generic integration CURRENT
 
-Profiles UI CURRENT:
+- Navigation base se monta sin Identity obligatoria.
+- Sin proyección, el menú es vacío; Home conserva acceso.
+- Al integrar Manager, Navigation consume `navigation_projection_store` compartida,
+  usando `NAVIGATION_SOURCE_KEY`, no un menú fijo duplicado.
+- Si Manager no puede resolver principal por dependencias realmente no disponibles,
+  el código usa principal público en el caso de errores clasificados. No ampliar
+  silenciosamente esa captura a errores lógicos o autorizaciones denegadas.
+- Local Identity sólo se instala cuando la composition lo necesita según sus reglas.
 
-```text
-normal profile visual
-one uppercase initial
+La UI ADA Navigation usa controller `dcc.Location` + último pathname fuera del
+Offcanvas. Los triggers no tienen `title` HTML nativo y conservan un texto oculto
+accesible. El callback detecta pulsación y cambios efectivos de ruta, sin tratar
+hidratación como navegación real.
 
-local visual
-local identities
-first + last initials
+## Manager vs Navigation
 
-source/projection labels
-composition-driven
-
-profile editor
-capability-local viewport modal
-
-pagination
-10 / 20 via atlanticus.web.pagination
-```
-
-`local` como excepción visual no crea un nuevo dominio de profile identities.
-
-## ADA Access CURRENT
-
-Ownership:
-
-```text
-profile_key -> access_keys
-```
-
-No existe durable:
-
-```text
-user -> access_keys
-```
-
-## Navigation CURRENT
-
-CURRENT:
-
-```text
-Navigation Configuration
-independent from Profiles / Users / ADA
-
-NavigationProfileOption
-key + label
-
-NavigationProfileOptionsProvider
-optional
-```
-
-Una application/composition que conoce Profiles puede adaptar:
-
-```text
-ProfileCatalog
-→ tuple[NavigationProfileOption, ...]
-```
-
-## Navigation access semantics CURRENT
-
-```text
-enabled = False
-→ deny
-
-enabled = True
-allowed_profiles = ()
-→ public within Navigation authorization
-
-enabled = True
-allowed_profiles = non-empty
-→ require profile/access key membership
-```
-
-`principal.unrestricted` evita restricciones por profile, pero no habilita un route disabled.
-
-## ADA Navigation profile options
-
-ADA Configuration Manager actualmente adapta Profiles para Navigation.
-
-Assignable en Navigation Configuration:
-
-```text
-basic
-guest
-custom configured profiles
-```
-
-No assignable en esa UI:
-
-```text
-root
-local
-```
-
-Esto no contradice la frontera Users:
-
-```text
-guest
-puede participar en semántica de visibilidad/navigation
-
-guest
-no puede convertirse en perfil final asignado por Users Administration
-```
-
-La exclusión/selección de Navigation pertenece a la composition ADA.
-
-Navigation generic no contiene lógica especial para `root`, `guest` ni `local`.
-
-## Manager / composition CURRENT
-
-Manager core sigue generic.
+`/manager` es Home real, gobernada por `ManagerModuleRegistry`.
+Manager conserva Home, sidebar, grupos, items, `access_keys` y workflows.
+Navigation operacional no administra ese registry.
 
 ADA Configuration Manager compone:
 
@@ -439,7 +187,7 @@ Administración:
 - Users
 
 Configuraciones:
-- Perfiles
+- Profiles
 - Accesos
 - Navigation
 - Tools
@@ -447,140 +195,85 @@ Configuraciones:
 - KPI Definition
 ```
 
-La UI específica permanece en cada capability.
+La UI específica permanece en cada capability; la metadata visible puede
+inyectarse por composition sin transferir ownership.
 
-Profiles composition puede recibir metadata visible de runtime sin transferir ownership a Manager.
+## Qualification de este delta
+
+**VERIFIED STATIC:** commit `a6061ffe` contiene Navigation Core authorization,
+consumidor ADA Generic, callback/controller corregido y tests correspondientes.
+
+**VERIFIED AUTOMATED PREVIOUS:** antes del commit final, se reportaron ADA Generic
+`169 passed` y, posteriormente, `172 passed` con Ruff verde. Shell informó
+`8 passed, 1 skipped` antes de la última corrección cliente. No clasificar como
+qualification completa automatizada de `a6061ffe`.
+
+**VERIFIED MANUAL (usuario):** Navigation local guardada, publicada, proyectada y
+visible desde Home; menú funcional tras corrección final.
+
+**UNVERIFIED:** Blob/Cosmos real con reinicio, navegadores/responsive, Entra y
+pruebas completas del commit final.
+
+## Estado refinado
+
+```text
+NAVIGATION-STANDALONE-CONFIGURATION-CUTOVER           CLOSED / CURRENT
+NAVIGATION-PUBLIC-ACCESS-CONTRACT                    CLOSED / CURRENT
+NAVIGATION-PROFILE-OPTIONS-DECOUPLING                CLOSED / CURRENT
+NAVIGATION-OPERATIONAL-AUTHORIZATION-INTEGRATION     CLOSED / CURRENT
+NAVIGATION-MANAGER-CONSUMER-ALIGNMENT                CLOSED / CURRENT
+NAVIGATION-LOCAL-PUBLISH-PROJECT-CONSUME             CLOSED / VERIFIED MANUAL
+NAVIGATION CLIENT CODE CORRECTION                     CURRENT / USER-REPORTED FUNCTIONAL
+MANAGER-REAL-PERSISTENCE-QUALIFICATION               PLANNED / UNVERIFIED
+PRODUCTION-IDENTITY-PROVIDER / ENTRA                 PLANNED / UNVERIFIED
+```
+
+La etiqueta histórica `NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT BLOCKED`
+queda **SUPERSEDED** para el código presente. La formulación universal
+`enabled=False → deny` se restringe al principal ordinario: `administrative_override`
+es una excepción formal de código. No inventar otras excepciones.
 
 ## Testing boundary
 
-KEEP:
+KEEP: comportamiento, invariantes de dominio, pruebas de imports/fronteras reales,
+callbacks funcionales, persistencia, recovery y errores importantes.
 
-```text
-behavior tests
-domain invariant tests
-boundary/import tests reales
-functional pagination tests
-promotion/update tests
-persistence/recovery tests where contractually relevant
-```
-
-REMOVE / DO NOT ADD:
-
-```text
-CSS visual tests
-responsive visual tests
-overflow visual tests
-markup-shape tests without behavior
-tests for internal class/function existence
-tests for JS internal structure
-```
-
-## Known consumer conflict
-
-```text
-NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT
-BLOCKED / VERIFIED CONFLICT
-```
-
-No añadir compatibility alias.
+DO NOT ADD: pruebas CSS visuales, snapshots de geometría/responsive, assertions
+únicamente sobre estructura visual, existencia/ausencia interna de funciones
+no contractuales o pruebas congelando implementación accidental.
 
 ## Reglas congeladas
 
 ```text
-Atlanticus generic
-REQUIRED
-
-Users -> profile_key
-CURRENT
-
-Users app-specific access state
-FORBIDDEN
-
-Users Manager integration
-ManagerEntry
-
-Users synthetic Manager Source/Projection
-FORBIDDEN
-
-Users global draft/publication workflow
-FORBIDDEN
-
-Users promotion V1
-ONE USER AT A TIME
-
-Users identity editing
-FORBIDDEN
-
-guest pending/transient representation
-ALLOWED
-
-guest managed assignment
-FORBIDDEN
-
-local managed assignment
-FORBIDDEN
-
-Profiles
-GENERIC ATLANTICUS FIRST-CLASS CAPABILITY
-
-Profiles UI ownership
-PROFILES CAPABILITY
-
-ADA Access
-APPLICATION-SPECIFIC
-
-Navigation Configuration -> Profiles core
-REMOVED
-
-Navigation neutral profile options provider
-CURRENT / OPTIONAL
-
-Navigation -> Users
-FORBIDDEN
-
-Navigation -> ADA Access
-FORBIDDEN
-
-empty allowed_profiles
-PUBLIC WITHIN NAVIGATION AUTHORIZATION
-
-ADAPTERS / SHIMS / ALIASES
-FORBIDDEN
-
-DOUBLE CONTRACT
-FORBIDDEN
-
-LEGACY SCHEMA READERS
-FORBIDDEN
+Atlanticus generic                                          REQUIRED
+Users → profile_key                                         CURRENT
+Users app-specific access                                   FORBIDDEN
+Users Manager integration                                   ManagerEntry
+Users synthetic Manager Source/Projection                   FORBIDDEN
+Users global draft                                          FORBIDDEN
+Users promotion V1                                          SINGLE USER
+Users identity edit                                         FORBIDDEN
+guest pending representation                                ALLOWED
+guest managed assignment                                    FORBIDDEN
+local managed assignment                                    FORBIDDEN
+Profiles UI ownership                                      PROFILES CAPABILITY
+ADA Access ownership                                       ADA-SPECIFIC
+Navigation Configuration → Profiles core                    FORBIDDEN
+Navigation optional profile options provider                CURRENT
+Navigation → Users / ADA Access                             FORBIDDEN
+empty allowed_profiles                                     PUBLIC WITHIN NAVIGATION
+principal.unrestricted                                      ENABLED PROFILE BYPASS ONLY
+principal.administrative_override                           AUTHORIZED RECOVERY EXCEPTION
+Navigation Manager access_keys                              INDEPENDENT
+LEGACY SHIMS / TEMPORARY ADAPTERS / DOUBLE CONTRACT          FORBIDDEN
+LEGACY SCHEMA READERS                                       FORBIDDEN
 ```
 
-## Pendientes explícitos
+## Abiertos explícitos y separados
 
-```text
-Users final targeted/full automated requalification
-UNVERIFIED
-
-Users residual visual polish
-PLANNED / DEFERRED / NON-BLOCKING
-
-MANAGER-RESPONSIVE-MEDIA-QUERY-AUDIT
-PLANNED / DEFERRED
-
-WEB-TEST-CONTRACT-CLEANUP
-PLANNED / DEFERRED
-
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / OPEN
-
-Navigation operational authorization alignment
-BLOCKED / SEPARATE
-
-concrete Entra/Graph provider
-UNVERIFIED
-
-Python metadata alignment
-PLANNED / SEPARATE
-
-CI remote / full global qualification
-UNVERIFIED
-```
+- Users tests finales transversales y algunos detalles visuales: UNVERIFIED/DEFERRED.
+- Manager responsive audit y Web test cleanup: DEFERRED.
+- Manager real durable persistence: PLANNED/UNVERIFIED.
+- Producción Entra/Graph concreta: UNVERIFIED.
+- Metadata Python `3.14.7` vs implementaciones `3.14.2`: CONFLICT.
+- CI remoto, Ruff workspace y monorepo qualification: UNVERIFIED.

@@ -1,60 +1,50 @@
 # Frontend Generation
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT DIRECTION / WEB ARTIFACT QUALIFICATION OPEN**
 
-## Objetivo
+Inspección del delta: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
 
-Aplicar al frontend el mismo principio que al backend:
+## Objetivo conservado
 
 ```text
 ADA Generic
-    ↓
-Tool Configuration / Composition
-    ↓
-Generated Web Application
-    ↓
-qualification
-    ↓
-Distributable Web Artifact
+→ Tool Configuration / Composition
+→ Generated / Packaged Web Application
+→ qualification
+→ Distributable Web Artifact
 ```
 
-## Output
+ADA Generic ya ejecuta su base y consumió Navigation publicada/proyectada en local.
+Este resultado no demuestra todavía que el artifact Web sea transportable fuera del
+checkout ni que una Tool real esté configurada.
 
-La aplicación generada debe quedar **lista para ser distribuida**, no sólo como código de ejemplo.
+## Output deseado por el contrato existente
 
-Debe materializar según contrato:
+Según necesidad y capacidades efectivamente utilizadas:
 
-- application package;
-- shell;
-- branding;
-- navigation;
-- configuration bindings;
-- runtime experience;
-- loaders;
-- assets;
-- Entra integration;
-- health/readiness/bootstrap surface;
-- env.detail;
-- dependency lock;
-- tests/gates;
-- distribution metadata.
+- application package + entrypoint;
+- shell, branding y Navigation;
+- configuration/Tool projection bindings;
+- runtime experience, assets y loaders;
+- host productivo de identidad (Entra/Graph, pendiente);
+- readiness/bootstrap/error surfaces;
+- `.env.detail` sin secretos y dependencia lock;
+- qualification/tests y metadatos de distribución.
 
-## Tool-specific behavior
+No afirmar que estos puntos ya están todos implementados o verificados por el smoke local.
+No crear generador nuevo antes de inspeccionar paquetes/scripts Web existentes.
 
-ADA Generic genera/compone la base.
+## Invariantes
 
-Comportamiento realmente específico puede agregarse después sin modificar el núcleo genérico.
+La app genérica termina en estado operacional por `dcc.Store`/ToolComponent; el render
+particular lo aporta cada Tool sin contaminar el núcleo. El Collector existente se
+reutiliza, no se clona.
 
-## DevOps
+## Próxima qualification — único foco
 
-Igual que backend:
+`ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION`:
+reconciliar tooling Web actual, elaborar matriz de archivos/dependencias de salida y
+probar instalación/ejecución transportable. Cambios de código sólo ante gap comprobado
+y nuevo consenso. El bundler de procesos backend tiene ownership propio.
 
-```text
-Atlanticus
-→ entrega artifact distribuible
-
-DevOps
-→ decide cómo su pipeline corporativo lo despliega
-```
-
-No acoplar el generador Web a una implementación particular de Azure DevOps.
+Atlanticus entrega artifact y contrato; DevOps ejecuta el pipeline externo.

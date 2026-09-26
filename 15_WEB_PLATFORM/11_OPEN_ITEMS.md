@@ -1,95 +1,59 @@
 # Web Platform — Open Items
 
-Estado: **PLANNED OPEN ITEMS**
+Estado: **CURRENT / NAVIGATION LOCAL CLOSED / REAL DISTRIBUTION AND PROVIDERS OPEN**
 
-Los items cerrados no deben reabrirse para restaurar simetría, legacy o contratos transitorios.
+Checkpoint del delta: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
 
-## Closed baseline relevant to next focus
+## CLOSED / CURRENT
 
 ```text
 ADA-STORAGE-NAMESPACE
-CLOSED / VERIFIED / CURRENT
-
 TOOL-PROJECTION-PERSISTENCE
-CLOSED / VERIFIED / CURRENT
-
 TOOL-PERSISTENCE-RESILIENT-COMPOSITION
-CLOSED / VERIFIED / CURRENT
-
 ADA-WEB-KPI-COLLECTOR-CAPABILITY
-CLOSED / VERIFIED / CURRENT
-```
-
-## Next authorized frontier
-
-Un único foco:
-
-```text
 ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
+ADA-GENERIC-MANAGER-LOCAL-INTEGRATION
+ADA-GENERIC-MANAGER-DURABLE-ADAPTER-COMPOSITION
+ADA-GENERIC-MANAGER-RESOURCE-CLI
+ADA-GENERIC-INTERNAL-COSMOS-CONTAINER-NAMES
+NAVIGATION-OPERATIONAL-AUTHORIZATION-INTEGRATION
+NAVIGATION-MANAGER-LOCAL-RECOVERY
+NAVIGATION-LOCAL-PUBLISH-PROJECT-CONSUME (VERIFIED MANUAL)
+NAVIGATION-CLIENT-CORRECTION (USER-REPORTED FUNCTIONAL)
 ```
 
-Debe inspeccionar y modificar la composición/runtime existente, no crear otra aplicación.
-
-Required chain:
+## Abiertos separados — ninguna implementación autorizada por este cierre
 
 ```text
-Web environment/settings
-→ provider/client settings
-→ AdaStorageNamespace
-→ ToolPersistenceComposition
-→ resolve_active_tool_projection
-→ existing ADA Generic runtime/composition
+ADA-GENERIC-DOCKER-REAL-PERSISTENCE-QUALIFICATION   PLANNED / UNVERIFIED
+ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION  PLANNED / NEXT
+FIRST REAL TOOL GOLDEN PATH                       PLANNED / OPEN
+BLOB-PROVISIONING-PARITY                         OPEN
+APPLICATION-RESOURCE-PLAN GLOBAL                 PLANNED / OPEN
+PRODUCTION-IDENTITY-PROVIDER / ENTRA             PLANNED / UNVERIFIED
+FULL WEB READINESS / RESOURCE ORCHESTRATION      PLANNED / OPEN
+PYTHON-METADATA-ALIGNMENT 3.14.7 / 3.14.2         CONFLICT / PLANNED
+CI REMOTE / FULL RUFF WORKSPACE / MONOREPO TESTS UNVERIFIED
 ```
 
-Acceptance direction:
+La antigua etiqueta `NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT BLOCKED` está
+**SUPERSEDED**: el consumidor actual se implementó y el usuario verificó el recorrido
+local. No inferir producción cualificada por esa corrección.
 
-```text
-READY        → Tool Projection usable
-UNCONFIGURED → base Web still runs
-UNAVAILABLE  → base Web still runs; capability degraded
-INVALID      → base Web remains diagnosable; no silent fallback
-```
+La antigua observación estática de dos `AccessRuntime` se mantiene como hallazgo
+histórico pendiente de revalidación, no como defecto runtime demostrado.
 
-## Collector after bootstrap
+## Siguiente foco único
 
-Only after the Tool bootstrap boundary is real:
+`ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION`.
+Revisar el generador realmente existente antes de decidir si se necesita código adicional;
+identificar la entrega mínima transportable, el cierre de dependencias, el `.env.detail`,
+el arranque fuera del checkout y los límites del host productivo.
 
-```text
-Tool Projection READY
-→ ToolStructure
-→ Collector
-→ Latest/Timeseries
-```
+No incorporar aquí refactor/backend, Tool real, Entra o nueva UI.
 
-Collector contract must not be redesigned.
+## Atajos prohibidos
 
-## Separate open items
-
-```text
-PYTHON-METADATA-ALIGNMENT
-PLANNED / SEPARATE
-
-CI remote
-UNVERIFIED
-
-full Ruff workspace
-UNVERIFIED
-
-full monorepo pytest
-UNVERIFIED
-```
-
-Do not mix these with the next chat.
-
-## Forbidden shortcuts
-
-```text
-no legacy
-no adapter/shim
-no double contract
-no hardcoded Tool configuration
-no in-process Projection as durable authority
-no Source-required runtime read
-no fallback to another provider when configured provider is unavailable
-```
+No legacy, aliases, shims, múltiples contratos equivalentes, hardcoded Tool configuration,
+nombres de contenedores Cosmos en `.env`, polling Cosmos inline desde browser, fallback a
+Source en runtime, o permisos Navigation como sustituto del control de Manager.

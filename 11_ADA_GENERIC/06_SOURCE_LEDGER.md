@@ -1,186 +1,84 @@
 # ADA Generic — Source Ledger
 
-Estado: **AUDIT LEDGER**
+Estado: **AUDIT LEDGER / NAVIGATION LOCAL CLOSURE 2026-09-25**
 
-## Autoridad vigente
+## Autoridades observadas para el delta
 
 ```text
-Implementation
-moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
+IMPLEMENTATION (READ ONLY)
+moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850
+parent: b36c7ee6ace89f18af25602f9e3a546a16e7d6f0
+tree: 2d81323806bbde09d1b71f052bf3000b3399ec0d
 
-Parent
-d6e405e6466b1bf8d29dadae442a03062da2f1b3
+CANONICAL BEFORE REPLACEMENT
+moragaga/atlanticus-cannonical@55c531b192fedcc6343b3c9e2ee1f9ec4ffa8fab
 
-Tree
-c26c0ee18161ca7fc49c439109bec99ecae77476
-
-Canonical inspected before replacement
-moragaga/atlanticus-cannonical@5c29631526939c52528e147b4a83e5557e610bf0
-
-Historical decisions
+HISTORICAL DECISIONS
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-## Checkpoints relevantes
+Git remoto no fue modificado durante el cierre.
+
+## Checkpoints previos conservados
 
 ```text
-21cfb2f11362c1606ad14ff8adc7551948eced6a
-Tool persistence resilient composition baseline
-
-01a4387d9f73aceb83441d2f26f94ad9025a661c
-ADA Generic operational bootstrap
-
-940336d5b704d10280cc2375e68c60b45f235eb0
-explicit direct pydantic / pydantic-settings dependency hygiene
-
-d6e405e6466b1bf8d29dadae442a03062da2f1b3
-ADA Generic Collector runtime wiring
-
-bc8eafc21a65e3f9aff044c232e2562cd490c49f
-Operational Render structural cutover
-Collector/render decoupling
-ADA Generic Stage 1 final checkpoint
+21cfb2f11362c1606ad14ff8adc7551948eced6a  Tool persistence composition
+01a4387d9f73aceb83441d2f26f94ad9025a661c  Operational bootstrap
+940336d5b704d10280cc2375e68c60b45f235eb0  Pydantic dependency hygiene
+d6e405e6466b1bf8d29dadae442a03062da2f1b3  Collector runtime wiring
+bc8eafc21a65e3f9aff044c232e2562cd490c49f  Render structural cutover
 ```
 
-La cadena de parents fue verificada en GitHub:
+Qualification histórica: bootstrap 83 tests; collector wiring 87; cutover de Render
+149 tests agregados en las capacidades implicadas. Ver detalles y límites en checkpoints
+anteriores: no equivalen a rerun final de este cierre.
+
+## Navigation de este hito
 
 ```text
-21cfb2f
-→ 01a4387
-→ 940336d
-→ d6e405e
-→ bc8eafc
+9c9cc19810e9ab72a95e1973886d91e9ea9182c0  Navigation Core recovery baseline
+9abf54a765137b1250476aa7b5b4737cf6f79a35  HEAD previo a integración
+3418872a615463970b8738d1ec25f16cb2fe1fff  Integración Navigation + reparaciones
+b36c7ee6ace89f18af25602f9e3a546a16e7d6f0  E2E test agregado
+ a6061ffed59c8b04e64b0a7fdc17050ef463c850  Correctivo actual callback/controller
 ```
 
-## Bootstrap qualification observada
+`9c9cc1`: Navigation Core informó `29 passed` y Ruff verde en un hito previo.
+`3418872`: antes del E2E, el usuario informó `169 passed`/Ruff verde en ADA Generic y
+`39 passed`/Ruff verde en archivos seleccionados de Configuration Manager.
+Durante el correctivo cliente (antes de `a6061ffe`), el usuario informó ADA Generic
+`172 passed`/Ruff verde, shell `8 passed, 1 skipped` y un error Ruff de import order en
+el test nuevo. No hay rerun aportado de todos los tests sobre `a6061ffe`.
 
-Antes de publicación del bootstrap:
+**VERIFIED MANUAL declarado:** usuario persistió/publicó/proyectó Navigation local,
+consumió menú desde Home y confirmó funcionamiento del menú tras la última corrección.
 
-```text
-pytest
-83 passed
+**VERIFIED STATIC:** `a6061ffe` contiene controller fuera del Offcanvas, Store de ruta,
+tratamiento explícito del callback clientside y eliminación del `title` nativo.
 
-ruff check
-PASS
+**UNVERIFIED:** qualification persistente Blob/Cosmos tras reinicio, browser matrix,
+Node y Ruff de todos los archivos en HEAD, Entra e imagen Web distribuidora.
 
-ruff format --check
-PASS
+## Contratos eliminados / no restaurar
 
-git diff --check
-PASS
-```
+`_StartupToolProjectionStore`, `resolve_current_tool_projection`, binding Collector→Render
+con KPI snapshot y menú operacional fijo como autoridad no son contratos vigentes.
+No reintroducir adaptadores legacy.
 
-## Collector runtime wiring qualification observada
+## Conflict ledger
 
-Antes de `d6e405e...`:
+- Canonical `15_WEB_PLATFORM/12...` declaraba `enabled=False → deny` sin excepción y
+  `NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT BLOCKED`. Código actual implementa
+  `administrative_override` excepcional; el documento se reemplaza en este paquete.
+- Canonical `17_DISTRIBUTION_AND_TOOLING/03...` cita `scripts/local-process.sh` como existente.
+  Ese path no aparece en el árbol del commit final inspeccionado. No sustituirlo por supuesto
+  tooling; auditar el flujo real de distribución.
+- Python objetivo Project `3.14.7`, mientras `deployment/processes/bundle.py`, Dockerfile
+  y metadata de paquetes inspeccionados aún exigen `3.14.2`.
+- `00_INDEX.md` y `01_CURRENT_STATE.md` globales tienen checkpoints previos. Su consolidación
+  es transversal y no se sobreescribe desde este delta limitado para evitar pisar otros frentes.
 
-```text
-ada-generic-application
-87 passed
+## Estado
 
-ruff check
-PASS
-
-ruff format --check
-PASS
-
-git diff --check
-PASS
-```
-
-## Operational Render structural cutover qualification observada
-
-Antes de `bc8eafc...`:
-
-```text
-operational-render-binding
-7 passed
-
-kpis/collector
-56 passed
-
-ada-generic-application
-86 passed
-
-TOTAL
-149 passed
-
-ruff check
-PASS
-
-ruff format --check
-PASS
-
-git diff --check
-PASS
-```
-
-`uv lock` observó además:
-
-```text
-operational-render-binding
-removed ada-web-components dependency
-
-kpis/collector
-removed ada-web-operational-render-binding dependency
-```
-
-## Cutover final
-
-Removido:
-
-```text
-OperationalComponentBinding.store
-bind_operational_render(structure, stores)
-collector.operational_render_binding
-collector -> operational-render-binding dependency
-```
-
-CURRENT:
-
-```text
-OperationalRenderBinding
-→ ToolStructure
-→ ToolComponent only
-```
-
-## Canonical conflict before replacement
-
-Canonical `5c296315...` todavía declaraba:
-
-```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
-```
-
-y describía:
-
-```text
-_StartupToolProjectionStore
-resolve_current_tool_projection
-```
-
-como realidad implementada.
-
-Búsqueda sobre `atlanticus:main` en el checkpoint de cierre no devolvió esos símbolos.
-
-Clasificación:
-
-```text
-IMPLEMENTATION CURRENT
-CANONICAL STALE
-REPLACEMENT REQUIRED
-```
-
-## Decisions
-
-No se verificó un conflicto específico aplicable en `atlanticus-decisions`.
-
-El repository permanece HISTORICAL.
-
-## Estado final
-
-```text
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
-```
+`ADA-GENERIC-NAVIGATION-LOCAL`: **CLOSED / VERIFIED MANUAL / CURRENT**.
+`ADA-GENERIC-REAL-DISTRIBUTION`: **PLANNED / UNVERIFIED**.
