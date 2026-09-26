@@ -1,207 +1,80 @@
 # Alarm Engine — Qualification Baseline
 
-Estado: **R3.5 CLOSED PASS/GREEN / B.2 PURE RESOLVER IMPLEMENTATION EVIDENCE ADDED**
+Estado: **R3.5 HISTORICAL CLOSED PASS/GREEN + B.2/ROUTING COMPONENT CHECKPOINT VERIFIED (2026-09-26)**
 
-## Campaña R3.5
+Este documento conserva la genealogía de qualification; **no convierte** tests unitarios recientes en una campaña E2E nueva.
 
-`alarm_test/` conserva una campaña acumulativa R3.5 con fases A, B, C, D, E y F, múltiples revisiones
-del planner y contratos/checkpoints.
+## Campaña histórica R3.5
 
-No usar solo el último XLSX para borrar la genealogía de findings.
+`alarm_test/` conserva fases A, B, C, D, E y F y múltiples revisiones de planner. No usar sólo el último XLSX para borrar la genealogía de findings o adjudicar errores del harness al producto.
 
-## Hallazgos de método
+- **E-008, Source Unavailable / CACHE_FALLBACK:** fallback controlado no autoriza adoptar estado inválido. CLOSED según planner v1.0.92.
+- **E-009, Invalid Source Candidate:** no sustituir estado válido/adoptado con candidato inválido. CLOSED según planner v1.0.95.
+- **E-010, Lease Lost After WAL Before Cache:** primer run `ABORTED / NOT ADJUDICATED`; antes de reintento harness GREEN 332/332, identidades sintéticas canónicas y exact-second clock. CLOSED según planner v1.0.103.
+- **E-011, Cache Promotion Failure:** aparente fallo procedía del adjudicador: snapshots vacíos tras reset omiten deliberadamente `state_basis`. Se corrigió adjudicación usando `last_commit_id` y ausencia de `state_basis`. **Finding del harness, no del producto**. CLOSED según planner v1.0.110.
+- **E-012, Drain Under Workload:** 1000 alarmas, 10 priority groups, 600 s, cadence 5 s, refresh 10 s, 480 management requests y 480 decisions, stop/drain ~+300 s. Se identificó y corrigió Drain Cancellation Product Finding. CLOSED según planner v1.0.117.
+- **F-001, Soak 500 Local 30m:** 500 alarmas, 1800 s, cadence 5 s, refresh 10 s, warmup 300 s, cinco ventanas estables de 300 s, objetivo 361 iteraciones. CPU como caracterización; boundedness/cadence/integrity sí adjudican. CLOSED planner v1.0.122.
+- **F-002, Soak 1000 Local 30m:** misma geometría temporal, 1000 alarmas; reutiliza adjudicador. CLOSED planner v1.0.126.
+- **F-007, Physical/Docker/dataset bank:** artefactos de saturación Docker, búsqueda física de capacidad, real volume v2, manifest de capture y templates representativeness/synthetic conformance. CLOSED / F010 proposed en planner v1.0.135.
 
-La campaña aisló presiones: source unavailable, invalid candidate, lease loss, cache promotion failure,
-drain y soak no se combinaron arbitrariamente. Esto evita adjudicar una falla a múltiples causas.
-
-## E-008
-
-Source Unavailable / CACHE_FALLBACK.
-
-Propiedad: fallback controlado bajo source no disponible; no confundir ausencia de source con
-autorización para adoptar estado inválido.
-
-Estado de campaña: CLOSED según planner v1.0.92.
-
-## E-009
-
-Invalid Source Candidate.
-
-Propiedad: candidate inválido no debe sustituir estado válido/adoptado.
-
-Estado: CLOSED según planner v1.0.95.
-
-## E-010
-
-Lease Lost After WAL Before Cache.
-
-Hubo run inicial `ABORTED / NOT ADJUDICATED`.
-
-Antes de reintento:
-- cumulative harness GREEN;
-- 332/332 tests;
-- identidades sintéticas canónicas;
-- exact-second logical clock.
-
-Estado: CLOSED según planner v1.0.103.
-
-La prueba conecta directamente con fencing/recovery.
-
-## E-011
-
-Cache Promotion Failure.
-
-Primer resultado aparente fue error de adjudicación del harness:
-- durable prefix era correcto;
-- snapshots reset vacíos omitían deliberadamente `state_basis`;
-- el adjudicador esperaba algo que el contrato no exigía.
-
-Corrección:
-- comprobar `last_commit_id`;
-- exigir ausencia de `state_basis` en empty reset snapshots.
-
-Resultado: **harness finding, no product finding**.
-
-Estado: CLOSED según planner v1.0.110.
-
-## E-012
-
-Drain Under Workload.
-
-Geometría recuperada:
-- 1000 alarmas;
-- 10 priority groups;
-- 600 s;
-- iteration 5 s;
-- refresh 10 s;
-- 480 management inputs;
-- 480 decisions;
-- stop/drain alrededor de +300 s.
-
-Hubo `Drain Cancellation Product Finding` y posterior `Product Fix Ready`.
-
-Estado: CLOSED según planner v1.0.117.
-
-## F-001
-
-Soak 500 Local 30m.
-
-- 500 alarmas;
-- 1800 s;
-- cadence 5 s;
-- refresh 10 s;
-- warmup 300 s;
-- cinco ventanas estables de 300 s;
-- esperado 361 iteraciones;
-- CPU como caracterización; boundedness/cadence/integrity sí adjudican.
-
-Estado: CLOSED planner v1.0.122.
-
-## F-002
-
-Soak 1000 Local 30m.
-
-Misma geometría temporal de F-001, 1000 alarmas.
-
-Reutiliza adjudicador temporal; no inventa nueva instrumentación.
-
-Estado: CLOSED planner v1.0.126.
-
-## F-007
-
-Capacidad física/Docker/dataset bank.
-
-Artefactos preservados:
-- Docker constrained saturation;
-- physical capacity search;
-- real volume v2;
-- dataset capture manifest;
-- controlled physical dataset bank;
-- templates de representativeness y synthetic conformance.
-
-Estado: CLOSED / F010 proposed en planner v1.0.135.
-
-## F-010 Final Docker Qualification
-
-Cierre final recuperado:
-
-- `CLOSED PASS/GREEN`;
-- run `09311e68`;
-- E2 = 1 CPU / 2 GiB;
-- 1000 alarmas;
-- 1800 s;
-- 361/361 iteraciones;
-- 0 overruns;
-- p50 3357.821 ms;
-- p95 3500.548 ms;
-- p99 4290.209 ms;
-- 2121 durable records;
-- journal aligned;
-- audit PASS;
-- management requests 480/480;
-- management decisions 480/480;
-- compatible adoption 1000;
-- threshold 0.50 -> 0.75;
-- sin product findings abiertos;
-- F011 profiling no requerido.
-
-## Pure B.2 Resolver — qualification observada
-
-Checkpoint implementado:
+## F-010 Final Docker Qualification — historical CLOSED PASS/GREEN
 
 ```text
-moragaga/atlanticus:main
-9398786ae9af7c00de1bcca9d7a311fe9ef2155f
+run             09311e68
+capacity        E2 = 1 CPU / 2 GiB
+alarms          1000
+duration        1800 s
+iterations      361/361
+overruns        0
+p50             3357.821 ms
+p95             3500.548 ms
+p99             4290.209 ms
+durable records 2121
+journal aligned / audit PASS
+management      480/480 requests, 480/480 decisions
+adoption        compatible 1000
+threshold       0.50 -> 0.75
 ```
 
-El incremento cubre:
-- READY Runtime + Delivery atómico;
-- disabled Rule y evaluator qualification;
-- Tool existence + GREEN;
-- C1/C2/C3;
-- C2 cumulative offsets y disabled-step exclusion;
-- Process/Integrated Operations/Strategic visual target behavior;
-- active/inactive Messages y deactivation override;
-- deterministic findings;
-- minutos -> segundos para reappearance.
+Sin product findings abiertos en esa campaña. F011 profiling no requerido. La campaña no prueba el nuevo job de Materialization que todavía no existe.
 
-Ejecución local reportada:
+## Pure B.2 — checkpoint histórico
 
 ```text
-uv run pytest
-31 passed in 0.07s
-
-uv run ruff check .
-All checks passed!
+moragaga/atlanticus@9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 ```
 
-El último `ruff format --check .` mostrado antes de la publicación del commit todavía indicaba:
+El hito demostró resolver puro: READY Runtime/Delivery atómico, qualification evaluator y Tool, C1/C2/C3, offsets acumulados C2 y exclusión de steps disabled de ejecución, visual Process/Integrated Operations/Strategic, Messages/deactivation, findings deterministas y reappearance minutos->segundos. En ese corte se comunicaron 31 tests y lint GREEN; el formatter de resolver estaba pendiente de un rerun explícito. Esa limitación histórica se conserva, **no** se extrapola al estado CURRENT.
+
+## Evidencia nueva acotada de este chat (2026-09-26)
+
+Repositorios inspeccionados:
 
 ```text
-commented/.../resolver.py
-src/.../resolver.py
+atlanticus:main @ 411aea44ac60c09d2b07ce41d34c3f378788b97b
 ```
 
-como archivos a reformatear.
-
-No existe en la evidencia de este cierre una salida posterior explícita del formatter.
-
-Por tanto:
+Tras los incrementos de strict routing backend y frontend, el usuario ejecutó localmente:
 
 ```text
-B.2 behavior/unit tests   VERIFIED / GREEN
-B.2 lint                  VERIFIED / GREEN
-B.2 implementation main  VERIFIED / CURRENT
-B.2 final format gate     UNVERIFIED
+domain/alarms:
+  pytest -q                       GREEN / 56 puntos visibles
+  ruff check .                    GREEN
+  ruff format --check .           GREEN
+
+backend/alarms/materialization:
+  pytest -q                       GREEN / 49 puntos visibles
+  ruff check .                    GREEN
+  ruff format --check .           GREEN
+
+web/alarms/configuration:
+  pytest -q                       GREEN / 114 puntos visibles
+  ruff check .                    GREEN
+  ruff format --check .           GREEN
 ```
 
-Confirmar una sola vez el formatter sobre el checkpoint CURRENT como gate de entrada del próximo
-incremento. No repetir la qualification funcional si no aparece nueva evidencia.
+Las ejecuciones del usuario se produjeron después de cada parche y antes de su commit de cierre `411aea...`. Git confirma que ese HEAD contiene la policy, el resolver, los tests direccionales y el frontend correspondiente. **UNVERIFIED:** repetir esas suites sobre un checkout limpio del SHA final y host/browser E2E posterior al routing; tampoco se verificó Blob/Cosmos real, productores de qualification ni job/materialized stores.
 
-## Regla posterior
+## Gates del siguiente foco
 
-El cierre R3.5 redirigió hacia productization/clean integration.
-
-El cierre B.2 pure resolver redirige hacia el **Materialization Process**.
-
-No repetir campañas largas ni reabrir resolver por rutina; hacerlo sólo ante nueva evidencia/riesgo.
+No repetir campañas R3.5 completas sin finding real. Para un nuevo job B.2, verificar inputs exactos Rn/Cn, proveniencia, casos READY/BLOCKED, persistencia sin publicar artefactos parciales, idempotencia/retry y lectura/descarga para Runtime, primero con contratos ya existentes. Los números y SLA futuros no están definidos en este hito.

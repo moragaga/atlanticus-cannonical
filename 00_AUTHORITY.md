@@ -1,291 +1,102 @@
 # Atlanticus — Authority
 
-Estado: **CURRENT**
+Estado: **CURRENT / AUDITED CHECKPOINT 2026-09-26**
 
 ## Autoridades activas
 
-### Implementación
+| Fuente | Referencia comprobada | Papel |
+|---|---|---|
+| `moragaga/atlanticus:main` | `411aea44ac60c09d2b07ce41d34c3f378788b97b` | Realidad implementada a este corte. |
+| `moragaga/atlanticus-cannonical:main` | `83cd871c8418e37d2c29dff30e2ea5ef54bda4a0` | Baseline documental inspeccionado **antes** del reemplazo local propuesto. |
+| `moragaga/atlanticus-decisions:main` | `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e` | Decisiones y genealogía histórica. |
 
-```text
-moragaga/atlanticus:main
-880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
-```
+Estos SHA describen el corte auditado; no afirman que los repositorios permanezcan inmutables después de este documento. Git es **SOLO LECTURA** sin autorización explícita de escritura.
 
-Ese SHA es la realidad implementada CURRENT observada al cierre.
+Jerarquía de trabajo:
+1. `atlanticus:main`: código y contratos efectivamente implementados.
+2. `atlanticus-cannonical:main`: estado y contratos documentados vigentes; contrastar con el código.
+3. Qualification y tests: evidencia verificable, asociada a su revisión.
+4. Decisiones explícitas del Project todavía sin formalizar: delta temporal.
+5. `atlanticus-decisions`: intención y evidencia histórica; no elevar un borrador a realidad.
+6. Historial conversacional: pista, nunca autoridad suficiente.
 
-El último commit semántico de este hito Alarm/Tool es:
+Ante contradicción, consignar **CONFLICT**; no reconciliar silenciosamente.
 
-```text
-d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
-```
+## Cierre de este hito: Alarm Configuration y routing
 
-Los dos commits posteriores hasta `880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6` modifican `operational-data` y tooling,
-sin cambiar los contratos de ADA Command Center Alarm Configuration cerrados aquí.
+**CURRENT / IMPLEMENTED EN `atlanticus@411aea44`:**
 
-### Canonical
+- Dominio transversal de alarmas y `ToolDependencyManifest` en `domain/tools`.
+- `AlarmConfiguration(rules, messages)` y `AlarmConfigurationSnapshot(configuration, tool_dependencies)`; Source schema `3`.
+- Captura exacta del subconjunto Tool referenciado, incluso Rules inactivas y pasos deshabilitados; cada referencia conserva display name, source release, kind y `ToolStructure` de la revisión confirmada correspondiente.
+- Alarm-specific workspace pin `_confirmed_tool_catalog_revision` y bloqueo ante drift entre validación y publicación. El Manager genérico no es dueño de esta correlación.
+- Source/base projection de `AlarmConfigurationSnapshot`, stores local y Cosmos, codec y composición de providers local/blob y local/cosmos.
+- Pure B.2 resolver sin I/O con `READY | BLOCKED`, hallazgos y producción **atómica** de Runtime y Delivery para la misma `AlarmResolutionKey`.
+- Política compartida `next_routing_tool_kind` y comprobación de dirección en Materialization; la Web utiliza la misma política para las opciones del editor. Las Tools Strategic están disponibles para **routing**, no como visual targets.
 
-```text
-moragaga/atlanticus-cannonical:main
-```
+**VERIFIED mediante ejecución aportada por el usuario antes del commit de cierre:** pruebas, Ruff y formatter de dominio Alarm, Materialization y Web Alarm Configuration tras sus respectivos incrementos. El diff entre `3413b5...` y `411aea...` contiene los cambios del último incremento; el commit de cierre fue comprobado por lectura en Git. No hay evidencia en este hito de una nueva ejecución de todas las suites *después* de `411aea...`, ni de una prueba host/browser integral posterior al routing.
 
-Checkpoint inspeccionado antes de este reemplazo:
-
-```text
-148b178df74ee3083681140f3bb7997a02435b80
-```
-
-### Historical decisions
-
-```text
-moragaga/atlanticus-decisions:main
-50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-`atlanticus-decisions` preserva genealogía e intención histórica.
-No prevalece sobre implementación CURRENT ni sobre canonical actualizado.
-
-## Jerarquía
-
-1. `atlanticus:main` — realidad implementada.
-2. `atlanticus-cannonical:main` — contratos, fronteras y estado vigente.
-3. qualification/tests vigentes — evidencia.
-4. decisiones explícitas del Project todavía no canonizadas — delta temporal.
-5. `atlanticus-decisions` — historia.
-6. memoria/conversaciones — pista.
-
-## Git
-
-Git permanece **SOLO LECTURA** por defecto.
-
-No crear commits, push, ramas, PR, issues ni otra mutación remota sin autorización explícita.
-
-## Cierre CURRENT — Alarm Tool Dependency Manifest v3
-
-```text
-COMMAND-CENTER-TOOLS-DOMAIN                    CLOSED / VERIFIED / CURRENT
-ALARM-TOOL-DEPENDENCY-MANIFEST                 CLOSED / VERIFIED / CURRENT
-ALARM-CONFIGURATION-SNAPSHOT-V3                CLOSED / VERIFIED / CURRENT
-ALARM-TOOLS-VALIDATE-PUBLISH-FREEZE            CLOSED / VERIFIED / CURRENT
-PURE-B.2-RESOLVER                              CLOSED / VERIFIED / CURRENT
-
-ALARM-CONFIGURATION-COSMOS-PROJECTION          PLANNED / NEXT
-B.2-MATERIALIZATION-PROCESS                    PLANNED / AFTER
-RUNTIME-ADOPTION-EFFECTIVE-HEAD                PLANNED
-ALARM-LIVE-DELIVERY                            PLANNED
-```
+**NO declarar CLOSED end-to-end:** las pruebas unitarias verdes no demuestran publicación real hacia Cosmos/Blob, carga operacional desde Cosmos, generación persistente de artefactos, descarga, Runtime Adoption ni consumo productivo.
 
 ## Tool authority CURRENT
 
 ```text
-multiple upstream Tool projections/Cosmos
-        +
-prior/current Storage state
-        |
-        v
-Tool reconciliation / controlled certification
-        |
-        v
-Confirmed Tool Catalog Cn
-        |
-        v
-Storage
-        |
-       END
+upstream Tool projections/Cosmos + prior Storage state
+ -> reconciliation/certification
+ -> Confirmed Tool Catalog Cn
+ -> Storage
+ -> END
 ```
 
-No existe como target:
+No añadir como requisito una nueva proyección `Confirmed Tool Catalog -> Command Center Cosmos`.
 
-```text
-Confirmed Tool Catalog -> Command Center Cosmos
-```
-
-La ausencia de esa proyección Cosmos es intencional.
-
-## Alarm Configuration persistence CURRENT
-
-Authored aggregate:
+## Alarm Configuration durable/source authority CURRENT
 
 ```text
 AlarmConfiguration
-    rules
-    messages
-```
+  rules
+  messages
 
-Snapshot durable:
-
-```text
 AlarmConfigurationSnapshot
-    configuration
-    tool_dependencies: ToolDependencyManifest
+  configuration
+  tool_dependencies: ToolDependencyManifest
+
+source document_type = ada_command_center_alarm_configuration_release
+source schema_version = 3
 ```
 
-La revisión Tool no se duplica:
+`confirmed_tool_catalog_revision` procede de `tool_dependencies.revision`; no duplicar ni recalcular. Source schema v2 está **SUPERSEDED**: no crear reader legacy.
 
 ```text
-AlarmConfigurationSnapshot.confirmed_tool_catalog_revision
-==
-AlarmConfigurationSnapshot.tool_dependencies.revision
+Save Draft -> pin Cn
+Validate -> intrinsic + exact revision/tool existence
+Publish -> recheck Cn + freeze referenced ToolDependencyManifest
+Alarm source release Rn -> frozen Tool evidence Cn
 ```
 
-Source contract:
+Una nueva revisión Tool por sí sola no reinterpreta la release Alarm previa. `VALID_AT_SAVE != READY != EFFECTIVE` y `INVALID != REMOVED`.
+
+## Routing CURRENT / FROZEN
 
 ```text
-document_type = ada_command_center_alarm_configuration_release
-schema_version = 3
+PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC
 ```
 
-Schema v2 queda **SUPERSEDED**.
-No existe decoder legacy v2.
+Sólo se permiten transiciones hacia el siguiente nivel inmediato. Prohibidos retrocesos, mismo nivel y saltos. Strategic es terminal. No se exige crear destinos: C1 y C2 pueden permanecer únicamente en origen; C3 siempre usa sólo origen. C1 escala inmediatamente; C2 usa esperas positivas entre pasos habilitados, acumuladas desde el inicio de la ocurrencia. Los pasos deshabilitados no ejecutan ni consumen tiempo, pero sus referencias definidas sí se incluyen en la evidencia Tool.
 
-## Tool Dependency Manifest CURRENT
+Separar estrictamente routing de presentación: Strategic no dispone de contrato visual Alarm. La sincronización automática de `visual_targets` a partir de routing en la Web debe contrastarse con el texto del canonical sobre independencia entre ambos (CONFLICT DOCUMENTAL/CONTRACTUAL; no corregirlo sin decisión expresa).
 
-Owner:
+## Proyección de configuración y siguiente frontera
 
-```text
-scopes/ada-command-center/domain/tools
-ada-command-center-tools-domain==1.0.0
-```
+**CURRENT:** existen `AlarmConfigurationProjectionBuilder`, codec, stores Local/Cosmos y `compose_alarm_configuration_persistence`. El host de prueba local usa provider local. **UNVERIFIED:** ejecución real integrada Blob/Cosmos y operación continua del productor de la proyección operacional.
 
-Entry:
+**PLANNED / SIGUIENTE FOCO ÚNICO:** proceso/job de Materialization en backend; primero verificar disponibilidad y contrato de la proyección operacional exacta, adquisición de qualification explícita y ownership de stores de salida. Implementar sólo tras fijar esos contratos. No mezclar con Runtime Adoption ni Live Delivery.
 
-```text
-ToolDependencyEntry
-    tool_key
-    display_name
-    source_release_id
-    kind
-    structure: ToolStructure
-```
+## Fronteras ajenas a este incremento
 
-Manifest:
-
-```text
-ToolDependencyManifest
-    confirmed_tool_catalog_revision
-    tools
-```
-
-El manifest conserva nombres y estructura histórica para no depender de contratos Tool futuros.
-
-## Freeze validate -> publish CURRENT
-
-El Manager genérico permanece intacto.
-
-Alarm Configuration usa un sidecar específico del workspace:
-
-```text
-_confirmed_tool_catalog_revision = Cn
-```
-
-Regla:
-
-```text
-Save Draft
--> fija Cn current
-
-Validate
--> exige Cn todavía current
--> exige que todas las Tool references definidas existan
-
-Publish
--> vuelve a exigir Cn todavía current
--> captura manifest desde esa misma revisión
--> persiste AlarmConfigurationSnapshot v3
-```
-
-Si Tools cambia `Cn -> Cn+1` entre validation y publication:
-
-```text
-publication -> BLOCKED
-```
-
-No se enlaza silenciosamente `Cn+1`.
-
-## B.2 exact evidence CURRENT
-
-B.2 no debe resolver una Alarm revision guardada contra `latest Tool Catalog`.
-
-Para una Alarm source release `Rn`:
-
-```text
-Rn
--> AlarmConfigurationSnapshot
--> ToolDependencyManifest(Cn)
-```
-
-Materialization usa esa evidencia exacta.
-
-La aparición de `C2` no invalida `R1/C1`.
-Una nueva publicación Alarm adopta la revisión Tool current sólo mediante el flujo explícito de
-workspace/validation/publication.
-
-## Decisions históricas refinadas
-
-Quedan **SUPERSEDED / REFINED** las formulaciones históricas que implicaban:
-
-```text
-same Alarm revision R1
-+ later Tool Catalog C2
--> re-resolve R1/C2 without a new Alarm publication
-```
-
-También queda superada la topología histórica:
-
-```text
-Confirmed Tool Catalog -> Command Center Cosmos
-```
-
-y SharePoint como autoridad física general en dominios ya migrados.
-
-`LATEST SAVED = LATEST VALID_AT_SAVE` permanece, pero:
-
-```text
-VALID_AT_SAVE != B.2 READY != EFFECTIVE
-```
-
-El save/publish gate CURRENT valida aggregate + Tool correlation/existence.
-Evaluator qualification y demás qualification B.2 siguen perteneciendo a Materialization.
-
-## Qualification observada del hito
-
-```text
-domain/tools
-8 passed
-ruff check GREEN
-ruff format GREEN
-
-domain/alarms
-50 passed
-ruff check GREEN
-ruff format GREEN
-
-web/alarms/configuration
-35 passed
-ruff check GREEN
-ruff format GREEN
-
-configuration-manager
-11 passed
-ruff check GREEN
-ruff format GREEN
-```
-
-## Conflictos abiertos
-
-```text
-Project baseline Python           3.14.7
-Command Center package metadata  3.14.2
-```
-
-OPEN / SEPARATE.
-
-También queda diferida la normalización de ownership entre `domain/tools` y `ada-web-tools`.
-
-## Siguiente foco único
-
-```text
-ALARM CONFIGURATION OPERATIONAL PROJECTION TO COSMOS
-```
-
-Primero diseñar contrato/store/composición de la proyección del snapshot v3 autocontenido.
-No mezclar todavía con Materialization Process, Runtime Adoption, Live Delivery o Management Capture.
+- Backend Core no contiene geometría UI ni scheduler visual.
+- Resolver B.2 no hace I/O, adquisición, scheduler, writes ni Runtime Adoption.
+- Runtime Adoption y Effective Head siguen posteriores; `READY` no concede automáticamente `EFFECTIVE`.
+- Blob es la autoridad durable objetivo en dominios migrados. La proyección Cosmos puede ser superficie operacional de consumo; no es licencia para sustituir la evidencia Tool exacta.
+- Proyecto Python `3.14.7`, mientras paquetes Command Center examinados exigen `3.14.2`: **OPEN / SEPARATE**. Las pruebas reportadas usan `uv --python 3.14.2`.
+- No introducir adapters de compatibilidad, procesos remotos adicionales, schemas físicos ni defaults sin evidencia/decisión.

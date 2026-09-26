@@ -1,146 +1,90 @@
 # ADA Command Center — Tool to Alarm Configuration
 
-Estado: **CURRENT / CONFIRMED TOOL STORAGE + EXACT ALARM DEPENDENCY FREEZE IMPLEMENTED**
+Estado: **CURRENT / EXACT TOOL SNAPSHOT + STRICT ROUTING IMPLEMENTED / STRATEGIC VISUAL NOT DEFINED**
+
+Checkpoint: `moragaga/atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b`.
 
 ## Ownership
 
-Tool configuration owns:
-- `tool_key`;
-- display name;
-- kind;
-- Components/Subcomponents;
-- topology and relationships.
+Tool Configuration posee `tool_key`, display name, kind, Components/Subcomponents, topology y relaciones. Alarm Configuration persiste referencias y evidencia congelada dentro de cada snapshot versionado; no redefine Tool Catalog ni duplica su reconciliación.
 
-Alarm Configuration stores references plus frozen evidence in its versioned snapshot.
-
-## Command Center Tools topology
+## Topología Tool CURRENT
 
 ```text
 Tool A projection/Cosmos ─┐
-Tool B projection/Cosmos ─┼─> reconciliation/certification
-Tool C projection/Cosmos ─┘          +
-                              prior Storage state
-                                     |
-                                     v
-                          Confirmed Tool Catalog Cn
-                                     |
-                                     v
-                                  Storage
-                                     |
-                                    END
+Tool B projection/Cosmos ─┼──> reconciliation/certification
+Tool C projection/Cosmos ─┘          + prior Storage state
+                                      |
+                                      v
+                              Confirmed Tool Catalog Cn
+                                      |
+                                      v
+                                   Storage
+                                      |
+                                     END
 ```
 
-Do not create:
+La antigua salida `Confirmed Tool Catalog -> Command Center Cosmos` está **SUPERSEDED**. No crearla por comodidad del nuevo job.
 
-```text
-Confirmed Tool Catalog -> Command Center Cosmos
-```
+## Tool Catalog y evidencia exacta
 
-## Tool Catalog CURRENT
+Owner `scopes/ada-command-center/backend/tools/catalog`.
 
-Backend:
-
-```text
-scopes/ada-command-center/backend/tools/catalog
-```
-
-Entry:
+Cada entry incluye:
 
 ```text
 tool_key
 display_name
 kind
 source_release_id
-structure
+structure: ToolStructure
 ```
 
-Snapshot:
-- deterministic revision;
-- unique/sorted keys;
-- one CURRENT Blob snapshot;
-- overwrite-on-success;
-- no Command Center Cosmos output.
-
-## One read, two consumers
-
-`AlarmToolReferenceReader.load()` reads one snapshot and derives:
+El catálogo es de revisión determinista, keys ordenadas/únicas y snapshot CURRENT en Storage. `AlarmToolReferenceReader.load()` consume una única revisión confirmada y produce:
 
 ```text
-UI reference catalog
+visual/UI reference catalog (PROCESS + INTEGRATED_OPERATIONS)
 +
-full ToolDependencyManifest
+full ToolDependencyManifest (incluye STRATEGIC)
 ```
 
-UI excludes STRATEGIC suggestions.
-Dependency evidence retains all snapshot entries.
+El editor tiene además `routing_tools` derivados del manifest completo: puede ofrecer Strategic como destino de routing aunque no tenga contrato visual. No usar esa lista para inventar componentes/presentación Strategic.
 
-## Alarm publication correlation
+## Publish exact Rn/Cn — CURRENT
 
 ```text
-current Tool Catalog = Cn
-        |
-        v
-Save Draft pins Cn
-        |
-        v
-Validate Cn
-        |
-        v
-Publish checks Cn again
-        |
-        v
-select referenced Tool entries
-        |
-        v
-AlarmConfigurationSnapshot(Rn, Cn)
+current Confirmed Tool Catalog = Cn
+ -> Save Draft fija Cn en sidecar `_confirmed_tool_catalog_revision`
+ -> Validate exige Cn y todas las Tool references definidas existentes
+ -> Publish vuelve a comprobar Cn (drift guard)
+ -> congela subset referenciado de ToolDependencyManifest(Cn)
+ -> AlarmConfigurationSnapshot(Rn, Cn)
 ```
 
-If current becomes `Cn+1` before publish, publish blocks.
+El subset incluye origins, **todos** los steps definidos (también deshabilitados) y todos los visual targets, aun en Rules inactivas. Cada entry conserva nombre y estructura históricos; `tool_dependencies.revision` determina la revisión Tool exacta. La revisión Tool Cn+1 posterior no reinterpreta Rn/Cn sin nueva publicación Alarm.
 
-## ToolDependencyManifest
-
-Each selected Tool freezes:
+## Policy de dirección de routing — CURRENT / FROZEN
 
 ```text
-tool_key
-display_name
-source_release_id
-kind
-ToolStructure
+next_routing_tool_kind(PROCESS)               = INTEGRATED_OPERATIONS
+next_routing_tool_kind(INTEGRATED_OPERATIONS) = STRATEGIC
+next_routing_tool_kind(STRATEGIC)             = None
 ```
 
-`ToolStructure` preserves Component/Subcomponent names and topology.
+En B.2, los pasos **habilitados** se recorren por `step_order`; el nivel anterior es el último escalón habilitado, comenzando por origin. Un paso deshabilitado no crea puente para saltarse niveles. Prohibidos rutas mismo nivel, retrocesos y saltos. C1/C2 pueden quedarse en origen sin alterar criticidad; C3 no admite pasos habilitados.
 
-## Superseded re-resolution model
+En la Web, las opciones de destinos utilizan exactamente esa policy compartida. Configuraciones preexistentes incompatibles permanecen visibles para su corrección; no eliminarlas silenciosamente.
 
-Do not do:
+## Frontera visual — CURRENT / LIMITADA
 
-```text
-Alarm R1/C1
-Tools advances C2
-B.2 resolves R1 against C2
-```
+- Visual `PROCESS`: `process_projection_mode` requerido por B.2.
+- Visual `INTEGRATED_OPERATIONS`: sin `process_projection_mode`.
+- Visual `STRATEGIC`: B.2 lo bloquea porque no existe contrato de proyección visual. Strategic sólo participa en routing.
 
-without a new Alarm publication.
+**CONFLICT A DOCUMENTAR:** canonical de UX dice que visual target y routing target no son equivalentes y no deben condicionarse sin acuerdo explícito. La implementación del editor sincroniza visual targets desde origin + routing habilitado no Strategic. Mantener ambos hechos visibles; no asumir que la sincronización automática congela un nuevo contrato.
 
-CURRENT:
+## B.2 y job siguiente
 
-```text
-R1 -> frozen C1 evidence
-R2 -> may adopt C2
-```
+B.2 consume la evidencia exacta del snapshot/proyección Rn/Cn, no Tool Cosmos ni latest Tool Catalog. Tool GREEN qualification continúa como input explícito cuyo productor operacional está OPEN. El siguiente job debe recuperar el snapshot íntegro y esa qualification sin reimplementar reconciliación.
 
-A new Tool revision alone does not invalidate existing Alarm revision.
-
-## B.2
-
-B.2 consumes the exact manifest carried by Alarm source/projection.
-
-It does not access Tool Cosmos and does not need historical Tool Catalog lookup.
-
-Tool GREEN qualification remains an explicit input; producer still OPEN.
-
-## History rationale
-
-`display_name` is intentionally frozen so historical alarm movement/routing can be explained with the
-names/topology valid at publication time.
+El manifest histórico conserva `display_name` y estructura para explicar posteriormente routing y presentación con los nombres/topología vigentes cuando se publicó la alarma.

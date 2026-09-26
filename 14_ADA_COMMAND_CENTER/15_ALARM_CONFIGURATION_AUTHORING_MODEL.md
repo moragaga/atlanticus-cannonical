@@ -1,135 +1,73 @@
 # ADA Command Center — Alarm Configuration Authoring Model
 
-Estado: **CURRENT / AUTHORED AGGREGATE + VERSIONED SNAPSHOT V3 IMPLEMENTED**
+Estado: **CURRENT / SNAPSHOT V3 + GUIDED EDITOR + STRICT ROUTING IMPLEMENTED; MATERIALIZATION JOB PLANNED**
 
-## Authored aggregate
+Checkpoint auditado: `moragaga/atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b`.
+
+## Authored aggregate, sin metadata de workspace
 
 ```text
 AlarmConfiguration
-    rules
-    messages
+  rules
+  messages
 ```
 
-This remains free of workspace metadata.
+La familia es una agrupación derivada de `AlarmIdentity.family_key` y de Messages `scope=FAMILY`; no es una entidad persistente separada. Mensajes `GLOBAL` se gestionan por separado. La familia nueva queda durable con su primera Rule o Message.
 
-## Durable versioned snapshot
+`alarm_key` identifica de forma estable una alarma; `rule_name` y `display_name` no reemplazan esa identidad.
+
+## Durable release y evidencia exacta
 
 ```text
 AlarmConfigurationSnapshot
-    configuration
-    tool_dependencies: ToolDependencyManifest
-```
+  configuration: AlarmConfiguration
+  tool_dependencies: ToolDependencyManifest
 
-Tool evidence is snapshot metadata, not part of `AlarmConfiguration`.
-
-## Source schema
-
-```text
 schema_version = 3
 ```
 
-v2 is SUPERSEDED.
-No compatibility decoder.
+`confirmed_tool_catalog_revision` se deriva del manifest. v2 **SUPERSEDED** y sin compat decoder.
 
-## Tool manifest
+Las referencias que se congelan incluyen Rules inactivas, origin Tool, steps habilitados/deshabilitados y visual targets. Cada entry congela `tool_key`, display name, source release id, kind y `ToolStructure` completo para reconstruir la evidencia sin nuevas lecturas al Tool Catalog.
 
-Every selected Tool stores:
+## Workspace/validate/publish CURRENT
 
-```text
-tool_key
-display_name
-source_release_id
-kind
-ToolStructure
-```
-
-Full ToolStructure retains Component/Subcomponent display names and relationships for history and B.2.
-
-## Referenced Tool set
-
-Capture includes:
-- inactive Rules;
-- origin Tool;
-- enabled and disabled escalation steps;
-- all visual targets.
-
-No defined reference disappears because it is non-executable now.
-
-## Workspace Tool pin
+El editor opera sobre `AlarmConfiguration`; el sidecar del workspace `_confirmed_tool_catalog_revision` no es parte del agregado.
 
 ```text
-_confirmed_tool_catalog_revision
+Save Draft pins Cn
+Validate: intrinsic Alarm + pinned Cn current + defined Tool references exist
+Publish: repeats same Cn check, freezes exact subset and persists Source v3
 ```
 
-UI editor displays only `AlarmConfiguration`.
-
-The sidecar participates in Manager workspace revision but is not persisted into the authored
-aggregate.
-
-## Validation layers
-
-### Intrinsic
-
-`AlarmConfiguration.from_document()` owns aggregate invariants.
-
-### Alarm Manager Tool correlation
-
-Before publication:
-- require current Confirmed Tool Catalog;
-- require pinned revision still current;
-- require all referenced Tool keys exist.
-
-### B.2
-
-Later:
-- evaluator qualification;
-- Tool GREEN qualification;
-- routing;
-- visual target semantics;
-- Runtime/Delivery resolution.
-
-Therefore:
+Un cambio `Cn -> Cn+1` obliga a nueva acción deliberada para adoptar la revisión actual; releases históricas Rold/Cold no cambian. El Manager genérico permanece independiente del contrato Alarm específico.
 
 ```text
-VALID_AT_SAVE != READY != EFFECTIVE
+VALID_AT_SAVE != B.2 READY != EFFECTIVE
 ```
 
-## Drift
+Los borradores transitoriamente incompletos, su persistencia, diagnóstico y recuperación no deben confundirse con candidatos publicables.
+
+## Guided editor CURRENT / VERIFIED A NIVEL COMPONENTE
+
+En este hito se implementaron y ejercitaron mediante suites del componente: familias derivadas, tarjetas consistentes, editor de reglas/mensajes, ranking/grupo visible de reglas, corrección del input Nueva familia y selección de routing guiada. La verificación real host/browser completa tras el routing sigue **UNVERIFIED**; no elevar las suites de componentes a aceptación visual/E2E.
+
+## Routing FROZEN
 
 ```text
-workspace C1
-current Tools C2
+PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END
 ```
 
-Validation fails until user saves the draft again against C2.
+No saltar nivel, permanecer en el mismo ni retroceder. C1/C2 pueden no tener destinos; C3 origen únicamente. C1 pasos inmediatos y C2 esperas positivas acumuladas en B.2. La Web comparte `next_routing_tool_kind` con Domain y B.2 valida contra la evidencia Tool exacta. La configuración anterior inválida se mantiene visible para corregirse; ninguna autoeliminación ni auto-cambio de criticidad.
 
-Existing durable `Rold/Cold` is unaffected.
+El documento de referencias Web distingue `routing_tools` (incluye Strategic) de `tools` con proyección visual (Process/Integrated Operations). Strategic no permite visual targets hasta que exista contrato explícito.
 
-## New publication
+## Visual targets y contrato futuro de UI
 
-If Rules/Messages are unchanged but a new Tool revision is intentionally adopted, Source bytes still
-change because manifest/revision changes.
+Cada Rule conserva `visual_targets` con Tool, `component_keys`, `subcomponents` identificados por `(owner_component_key, subcomponent_key)` y `process_projection_mode` exclusivo de Process. `QUEUE_IN_QUEUE` para Integrated Operations y `CAROUSEL` para Process son estrategias de presentación futuras derivadas de Tool kind, **no campos nuevos** del Source v3 ni scheduler implementado. El contrato detallado permanece en `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
 
-## Manager boundary
+**CONFLICT:** ese documento establece que visual targets no equivalen a destinos de routing; el editor CURRENT sincroniza visual targets desde origin y routing habilitado (excluyendo Strategic). No resolver implícitamente cambiando el schema ni el job.
 
-Do not add Alarm dependency metadata to generic Manager.
+## Frontera siguiente
 
-Alarm-specific semantics remain in:
-- workspace binding;
-- validation workflow;
-- source workflow.
-
-## Manager UX y presentación visual — decisión posterior
-
-El agregado `rules + messages` y el schema v3 se mantienen. Las familias son agrupaciones
-derivadas de `AlarmIdentity.family_key` y del scope de Messages; no se agrega `Family` durable.
-
-La configuración authored de cada Rule conserva `visual_targets` con Tool, Components,
-Subcomponents `(owner_component_key, subcomponent_key)` y `process_projection_mode` sólo para
-Process. El tipo de presentación futuro se deduce del Tool kind: Integrated Operations
-`QUEUE_IN_QUEUE`; Process `CAROUSEL`. **No introducir todavía estos nombres como campos nuevos**
-del snapshot. Las reglas de rotación futura y el plan de cierre del editor se registran en
-`18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
-
-El Manager UX y las mejoras de draft recuperable/diagnóstico siguen IN PROGRESS/OPEN; su
-aceptación no se deduce de la existencia del contrato v3.
+Source codec, builder, stores Local/Cosmos y provider composition de proyección ya existen. El siguiente chat debe auditar el input operacional exacto y diseñar/implementar **sólo** el job de Materialization que invoca el pure B.2 resolver y deja los artefactos disponibles para Runtime. Infraestructura real, qualifications operacionales, artifact stores y E2E permanecen OPEN.
