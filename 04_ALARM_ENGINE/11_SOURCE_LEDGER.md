@@ -1,71 +1,81 @@
 # Alarm Engine — Source Ledger
 
-Estado: **AUDIT LEDGER / UPDATED 2026-09-26**
+Estado: **AUDIT LEDGER / ALARM MATERIALIZATION CHECKPOINT 2026-09-27**
 
-## Fuentes HEAD inspeccionadas
+## Autoridad verificada por lectura, sin escrituras
 
 ```text
-Implementation: moragaga/atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b
-Canonical baseline: moragaga/atlanticus-cannonical@83cd871c8418e37d2c29dff30e2ea5ef54bda4a0
+Implementation HEAD : moragaga/atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6
+Canonical baseline  : moragaga/atlanticus-cannonical@772d15078c97802d58d8b658b0d5d5b928fa2ed5
 Historical decisions: moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-Confirmado por consulta a Git: `411aea...` es un commit por delante de `3413b5ff3bf56ba1c3c158fe874ad573602dedcc`; ese commit incluye los incrementos Domain/B.2 y Web del routing. No inferir que el estado dirty que existió durante la validación local del usuario sigue existiendo en el commit actual.
+Esta auditoría verifica la frontera tratada; no certifica todo Atlanticus ni todos los documentos históricos. El usuario había informado el mismo HEAD y se corroboró por Git en modo lectura.
 
-## Genealogía de implementación relevante
-
-```text
-Pure B.2 resolver                  9398786ae9af7c00de1bcca9d7a311fe9ef2155f
-Tools domain                       9b9600ae96c9153cf70d0fb401905963b8583c2f
-Alarm Source v3/Tool manifest      d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
-Routing baseline anterior          3413b5ff3bf56ba1c3c158fe874ad573602dedcc
-Routing completo en main           411aea44ac60c09d2b07ce41d34c3f378788b97b
-```
-
-Los checkpoints antiguos se conservan como genealogía, **no** describen automáticamente el HEAD actual.
-
-## Evidencia aportada por el usuario en este hito
+## Rutas CURRENT comprobadas
 
 ```text
-Alarm domain:
-uv run --python 3.14.2 --group dev pytest -q        GREEN (56 puntos reportados)
-ruff check .                                         GREEN
-ruff format --check .                               GREEN
+scopes/ada-command-center/backend/alarms/materialization/
+  src/.../resolver.py
+  src/.../qualification.py
+  src/.../runtime.py
+  src/.../delivery.py
 
-Alarm B.2 Materialization:
-uv run --python 3.14.2 --group dev pytest -q        GREEN (49 puntos reportados)
-ruff check .                                         GREEN
-ruff format --check .                               GREEN
+scopes/ada-command-center/backend/processes/alarms-materialization/
+  pyproject.toml                        # v0.2.1, requiere ==3.14.2
+  src/.../__init__.py
+  src/.../__main__.py
+  src/.../acquisition.py
+  src/.../bootstrap.py
+  src/.../candidate.py
+  src/.../codec.py
+  src/.../composition.py
+  src/.../job.py
+  src/.../publication.py              # CosmosResultStore de salida: será reemplazado
+  src/.../qualification.py            # proveedor manual JSON
+  src/.../settings.py
+  tests/test_acquisition.py
+  tests/test_executable_process.py
+  tests/test_commented_mirror.py
 
-Web Alarm Configuration, después de routing frontend:
-uv run --python 3.14.2 --group dev pytest -q        GREEN (114 puntos reportados)
-ruff check .                                         GREEN
-ruff format --check .                               GREEN
+scopes/ada-command-center/web/alarms/configuration/
+scopes/ada-command-center/web/alarms/projection-local/
+scopes/ada-command-center/web/alarms/projection-cosmos/
+scopes/ada-command-center/backend/processes/alarms-runtime/
 ```
 
-Los conteos anteriores se obtienen de la salida compartida, no equivalen a un reporte CI ni a un rerun completo posterior al commit `411aea...`.
+En main, `composition.py` construye `CosmosClient` y lo usa tanto para **input** como para `CosmosAlarmMaterializationResultStore` de **output**. `job.py` fija candidate/evidence, ejecuta pure B.2 y revalida antes de publicar. `publication.py` almacena en un documento Cosmos `runtime`, `delivery`, `manifest`, `findings`, más hashes. `__main__.py` habilita ejecución real del módulo pero el entorno Cosmos no se ha probado.
 
-Preflight de los generadores de backend y frontend, `git apply --check` y `git apply` fueron reportados PASS. Las suites del host Configuration Manager y las pruebas de navegador posteriores al routing **no** se observaron. Tampoco se verificó E2E contra Blob/Cosmos real.
+## Evidencia observada del usuario — ANTERIOR a la corrección
 
-## Paths CURRENT relevantes
+Salida proporcionada sobre v0.2.0, 2026-09-27:
 
 ```text
-scopes/ada-command-center/domain/alarms/src/.../routing_policy.py
-scopes/ada-command-center/backend/alarms/materialization/src/.../resolver.py
-scopes/ada-command-center/backend/alarms/materialization/tests/test_routing_direction.py
-scopes/ada-command-center/web/alarms/configuration/src/.../web/authoring.py
-scopes/ada-command-center/web/alarms/configuration/src/.../web/layout.py
-scopes/ada-command-center/web/alarms/configuration/tests/test_alarm_routing_frontend.py
-scopes/ada-command-center/web/alarms/configuration/src/.../source_projection.py
-scopes/ada-command-center/web/alarms/configuration/src/.../projection_record.py
-scopes/ada-command-center/web/alarms/projection-local/src/.../store.py
-scopes/ada-command-center/web/alarms/projection-cosmos/src/.../store.py
-scopes/ada-command-center/web/alarms/persistence/src/.../composition.py
-scopes/ada-command-center/web/application/ada-command-center-configuration-manager/src/.../local_runtime.py
+uv sync --python 3.14.2   PASS / 48 paquetes instalados
+uv run pytest -q          11 FAILED (test_acquisition por fixture tool-a inválida),
+                          19 PASSED visibles por el resumen de progreso
+uv run ruff check .       5 findings I001 de ordenación de imports
+uv run ruff format --check . 10 archivos a reformatear
+uv run python -m compileall -q src   sin salida de error visible
+uv build --wheel          PASS / wheel 0.2.0 generado
 ```
 
-## Límites de esta auditoría
+El contrato real `ada.web.tools.validation.require_key` usa patrón `^[a-z][a-z0-9_]*$`; `tool-a` es inválido. La versión corregida 0.2.1, ahora visible en HEAD, usa fixture `tool_a` y trae ajustes de formato/metadata. **UNVERIFIED:** no se aportó prueba reproducida del proceso 0.2.1 completo sobre dependencias reales tras publicarlo; no derivar GREEN de los tests antiguos o de la existencia del wheel 0.2.0.
 
-No hay manifest de ejecución del job B.2 porque todavía no existe dicho process en el árbol de código consultado. Que el paquete puro B.2 tenga un wheel en wheelhouse no demuestra que exista el proceso operacional.
+La generación previa en sandbox comunicó 30 pruebas con dobles y comprobaciones estáticas; esa evidencia es **limitada a harness**, no E2E ni validación del repo con dependencias reales.
 
-No se escribieron archivos ni decisiones en Git durante este cierre. Los documentos en el ZIP son **propuestas de reemplazo local** para integrar tras revisión.
+## Genealogía conservada
+
+```text
+Pure B.2 inicial                         9398786ae9af7c00de1bcca9d7a311fe9ef2155f
+Command Center Tools domain              9b9600ae96c9153cf70d0fb401905963b8583c2f
+Alarm Source v3                           d2a5e14822d3711e64668b8e70cfa15d7ddae2f
+Strict routing completo                   411aea44ac60c09d2b07ce41d34c3f378788b97b
+Materialization executable + fix en HEAD b600ca591b56d0924aed752dfae6e9fab2c6f1d6
+```
+
+Los resultados de las suites antiguas de Alarm Domain, pure Materialization y Web Alarm Configuration, al igual que las campañas R3.5, siguen siendo evidencia **histórica del corte donde se ejecutaron**, no del nuevo job ni de su arquitectura local aún no implementada.
+
+## Límites explícitos
+
+No se verificó infraestructura real Cosmos/Blob, productor GREEN/Evaluator, publicación atómica en volumen, lectura local por Engine/Delivery, Runtime Adoption global ni Live Delivery. Los documentos de reemplazo del ZIP son propuestas documentales preparadas localmente; no constituyen un commit ni reemplazan automáticamente canonical hasta su integración autorizada por el usuario.

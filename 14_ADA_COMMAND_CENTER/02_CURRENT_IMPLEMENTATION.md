@@ -1,105 +1,57 @@
 # ADA Command Center — Current Implementation
 
-Estado: **CURRENT / ALARM CONFIGURATION COMPONENT CHECKPOINT 2026-09-26 / OPERATIONAL INTEGRATION OPEN**
+Estado: **CURRENT COMPONENTS / MATERIALIZATION PROCESS v0.2.1 PRESENT / LOCAL OUTPUT CHANGE OPEN**
 
-Corte auditado:
+Corte: `atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`; canonical inspeccionado `772d15078c97802d58d8b658b0d5d5b928fa2ed5`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. La auditoría de este cierre se limita a Materialization y sus contratos directos, no revalida todos los módulos del Command Center.
 
-```text
-moragaga/atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b
-moragaga/atlanticus-cannonical@83cd871c8418e37d2c29dff30e2ea5ef54bda4a0 (input)
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-## Paquetes CURRENT observados en main
+## Componentes CURRENT relevantes
 
 ```text
 scopes/ada-command-center/
-├── domain/
-│   ├── alarms/                         # Incluye routing_policy.py
-│   └── tools/
-├── backend/
-│   ├── alarms/
-│   │   ├── core/
-│   │   ├── materialization/             # Pure B.2; NO job de proceso
-│   │   └── persistence/
-│   ├── processes/
-│   │   └── alarms-runtime/
-│   └── tools/
-│       └── catalog/
-└── web/
-    ├── alarms/
-    │   ├── configuration/
-    │   ├── persistence/
-    │   ├── projection-local/
-    │   └── projection-cosmos/
-    └── application/
-        └── ada-command-center-configuration-manager/
+  domain/alarms/                  # Alarm Configuration v3 + routing policy
+  domain/tools/                   # ToolDependencyManifest congelado
+  backend/alarms/core/            # Engine contracts
+  backend/alarms/materialization/ # Pure B.2 resolver
+  backend/alarms/persistence/     # WAL/snapshots del Engine
+  backend/processes/alarms-runtime/
+  backend/processes/alarms-materialization/  # nuevo proceso v0.2.1
+  web/alarms/configuration/
+  web/alarms/projection-local/
+  web/alarms/projection-cosmos/
+  web/alarms/persistence/
 ```
 
-En este checkpoint **no** aparece `backend/processes/alarms-materialization`.
+## Estado comprobable por código
 
-## Matriz de estado
-
-| Elemento | Estado comprobable |
+| Elemento | Estado |
 |---|---|
-| Alarm Domain / Core | CURRENT / IMPLEMENTED |
-| Command Center Tools Domain y Tool Catalog | CURRENT / IMPLEMENTED |
-| Alarm Tool Reference reader / exact dependency manifest | CURRENT / IMPLEMENTED |
-| Alarm Configuration Source schema v3 | CURRENT / IMPLEMENTED |
-| Workspace pin + Validate/Publish Tool freeze | CURRENT / IMPLEMENTED |
-| Alarm Source/Base Projection | CURRENT / IMPLEMENTED |
-| Alarm Projection local/Cosmos stores y provider composition | CURRENT / IMPLEMENTED; E2E Azure UNVERIFIED |
-| Strict routing policy + B.2 validator + Web guided selection | CURRENT / IMPLEMENTED; suites de componente VERIFIED |
-| B.2 pure resolver + Runtime/Delivery candidate contracts | CURRENT / IMPLEMENTED |
-| Host/browser completo posterior al routing | UNVERIFIED |
-| Operational producer/consumer Blob/Cosmos en ambiente real | UNVERIFIED |
-| B.2 Materialization process/job | PLANNED / NEXT |
-| Artifact stores/descarga operacional para Runtime | OPEN |
-| Runtime Effective Head/Adoption | PLANNED / AFTER |
-| Alarm Live Delivery / Management Projection | PLANNED / SEPARATE |
+| Domain, Core, Source schema v3 y ToolDependencyManifest | CURRENT / IMPLEMENTED. |
+| Workspace pin Cn + Validate/Publish drift guard | CURRENT / IMPLEMENTED. |
+| Alarm Configuration codec/builder y stores Local/Cosmos | CURRENT / IMPLEMENTED; Azure real UNVERIFIED. |
+| Strict routing Domain/B.2/Web | CURRENT / IMPLEMENTED. |
+| Pure B.2, Runtime/Delivery contracts, READY/BLOCKED | CURRENT / IMPLEMENTED. |
+| Proceso ejecutable Materialization 0.2.1 con `__main__`, bootstrap y `execute_job` | CURRENT / IMPLEMENTED; tests integrados 0.2.1 UNVERIFIED. |
+| Lectura de proyección Cosmos y JSON qualifications | CURRENT EN CÓDIGO; despliegue real UNVERIFIED. |
+| Publicación de resultado único en Cosmos | CURRENT EN CÓDIGO / SUPERSEDED EN DISEÑO. |
+| Artefactos versionados e íntegros en volumen para Engine/Delivery | DECIDED / PLANNED, aún no en código. |
+| Runtime session/adoption helpers | CURRENT / PARTIAL; no consumo local completo ni Effective Head global confirmado. |
+| Live Delivery y Management Projection | PLANNED / SEPARATE. |
 
-## Contratos CURRENT
+## Precisión sobre materialization y tests
 
-```text
-AlarmConfiguration(rules, messages)
-AlarmConfigurationSnapshot(configuration, tool_dependencies)
-Source schema_version = 3
-ToolDependencyManifest(Cn)
-AlarmResolutionKey(Rn, Cn)
-```
+El código `backend/processes/alarms-materialization/publication.py` implementa hoy `CosmosAlarmMaterializationResultStore`; `composition.py` construye esa publicación. Debe ser reemplazada, no mantenida como alternativa legacy. La read-side Cosmos del input **sí permanece**. El proceso usa proveedor manual JSON de qualification; no significa integración del productor GREEN o Evaluator.
 
-Schema v2 **SUPERSEDED** y sin decoder legacy. El aggregate Alarm no incorpora metadata workspace. El sidecar `_confirmed_tool_catalog_revision` fija Cn en Save Draft; Validate y Publish rechazan drift; publicación preserva evidencia histórica Tool exacta para B.2.
+Evidencia local v0.2.0 del usuario: sincronización de dependencias correcta, wheel generado, 11 fallos por fixture Tool `tool-a` inválida, cinco findings de imports y diez pendientes de formatter. El HEAD actual 0.2.1 contiene correcciones (`tool_a`), pero no existe evidencia aportada de rerun completo. No hay Cosmos disponible para E2E. La anterior qualification de pure B.2 no acredita automáticamente este job.
 
-## Projection CURRENT
-
-`AlarmConfigurationProjectionBuilder` consume Source y mantiene intacto el snapshot v3. `ProjectionRecord[AlarmConfigurationSnapshot]` dispone de codecs, stores local/Cosmos y composición de Source Local/Blob con Projection Local/Cosmos. El host temporal de pruebas usa providers locales. No confundir adapter de Cosmos existente con un job desplegado ni atribuir un productor operacional ya verificado.
-
-## Strict routing CURRENT
+## Contratos que el cambio no debe alterar
 
 ```text
-PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END
+AlarmConfigurationSnapshot v3 (configuration, tool_dependencies)
+ToolDependencyManifest exacto de Rn/Cn
+AlarmResolutionKey(alarm_configuration_revision, confirmed_tool_catalog_revision)
+READY -> Runtime y Delivery con key idéntica
+BLOCKED -> findings, sin artefactos ejecutables
+READY != EFFECTIVE
 ```
 
-No mismo nivel, retroceso ni saltos. Se permite cero destinos en C1/C2. C3 usa solo origen. C1 inmediato; C2 waits positivos acumulados en B.2 y deadlines absolutos respecto del inicio de ocurrencia en Core. Domain/B.2/Web comparten política. Strategic está en opciones de routing, no en visual targets.
-
-## Evidencia de qualification del hito
-
-El usuario ejecutó, después de los incrementos correspondientes, tests/lint/format de:
-
-```text
-domain/alarms                  GREEN (56 puntos visibles)
-backend/alarms/materialization GREEN (49 puntos visibles)
-web/alarms/configuration      GREEN (114 puntos visibles)
-```
-
-Es evidencia local proporcionada, no CI ni rerun demostrado del SHA final `411aea...`. Host/browser y Blob/Cosmos E2E siguen UNVERIFIED.
-
-## Siguiente frontera
-
-**Sólo** `backend/processes/alarms-materialization` como próximo foco, después de confirmar por código los contratos de adquisición de proyección exacta, qualification y salida. Debe producir Runtime/Delivery/findings de forma atómica usando el pure resolver existente, sin reutilizar latest Tool Catalog ni adelantar Adoption.
-
-## Conflictos/no mezclar
-
-- `Project 3.14.7` vs Command Center `==3.14.2` — OPEN / SEPARATE.
-- `synchronize_visual_targets` actual deriva targets del routing, pero el canonical de UX afirma que ambos no deben condicionarse sin decisión. Consignar CONFLICT antes de rediseñar.
-- No reintroducir adapters legacy ni crear esquemas, settings, contenedores o procesos nuevos distintos del foco autorizado.
+**Después de cerrar la salida local:** otro frente conectará Runtime Adoption y la lectura local exacta; Delivery continuará después. El Editor Web conserva su propio foco y no se modifica en este incremento.

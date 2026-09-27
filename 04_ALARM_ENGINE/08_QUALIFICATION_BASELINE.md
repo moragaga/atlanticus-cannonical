@@ -1,8 +1,8 @@
 # Alarm Engine — Qualification Baseline
 
-Estado: **R3.5 HISTORICAL CLOSED PASS/GREEN + B.2/ROUTING COMPONENT CHECKPOINT VERIFIED (2026-09-26)**
+Estado: **R3.5 HISTORICAL CLOSED PASS/GREEN + B.2/ROUTING COMPONENT CHECKPOINT VERIFIED (2026-09-26) / EXECUTABLE MATERIALIZATION v0.2.1 REAL RERUN UNVERIFIED (2026-09-27)**
 
-Este documento conserva la genealogía de qualification; **no convierte** tests unitarios recientes en una campaña E2E nueva.
+Este documento conserva la genealogía de qualification; **no convierte** tests unitarios recientes en una campaña E2E nueva. Las evidencias históricas y el nuevo proceso pertenecen a fronteras diferentes.
 
 ## Campaña histórica R3.5
 
@@ -36,7 +36,7 @@ adoption        compatible 1000
 threshold       0.50 -> 0.75
 ```
 
-Sin product findings abiertos en esa campaña. F011 profiling no requerido. La campaña no prueba el nuevo job de Materialization que todavía no existe.
+Sin product findings abiertos en esa campaña. F011 profiling no requerido. La campaña no prueba el nuevo job de Materialization que todavía no existía en ese corte.
 
 ## Pure B.2 — checkpoint histórico
 
@@ -46,9 +46,9 @@ moragaga/atlanticus@9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 
 El hito demostró resolver puro: READY Runtime/Delivery atómico, qualification evaluator y Tool, C1/C2/C3, offsets acumulados C2 y exclusión de steps disabled de ejecución, visual Process/Integrated Operations/Strategic, Messages/deactivation, findings deterministas y reappearance minutos->segundos. En ese corte se comunicaron 31 tests y lint GREEN; el formatter de resolver estaba pendiente de un rerun explícito. Esa limitación histórica se conserva, **no** se extrapola al estado CURRENT.
 
-## Evidencia nueva acotada de este chat (2026-09-26)
+## Evidencia nueva acotada al 2026-09-26
 
-Repositorios inspeccionados:
+Repositorio inspeccionado:
 
 ```text
 atlanticus:main @ 411aea44ac60c09d2b07ce41d34c3f378788b97b
@@ -75,6 +75,25 @@ web/alarms/configuration:
 
 Las ejecuciones del usuario se produjeron después de cada parche y antes de su commit de cierre `411aea...`. Git confirma que ese HEAD contiene la policy, el resolver, los tests direccionales y el frontend correspondiente. **UNVERIFIED:** repetir esas suites sobre un checkout limpio del SHA final y host/browser E2E posterior al routing; tampoco se verificó Blob/Cosmos real, productores de qualification ni job/materialized stores.
 
-## Gates del siguiente foco
+## Evidencia nueva del proceso ejecutable v0.2.1 — 2026-09-27
 
-No repetir campañas R3.5 completas sin finding real. Para un nuevo job B.2, verificar inputs exactos Rn/Cn, proveniencia, casos READY/BLOCKED, persistencia sin publicar artefactos parciales, idempotencia/retry y lectura/descarga para Runtime, primero con contratos ya existentes. Los números y SLA futuros no están definidos en este hito.
+HEAD inspeccionado por lectura Git: `moragaga/atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`. `backend/processes/alarms-materialization` existe como proceso ejecutable v0.2.1, pero aún escribe resultados en **Cosmos de salida**. El cambio arquitectónico acordado a volumen local todavía no fue implementado.
+
+Prueba local del usuario **sobre v0.2.0, antes de corrección**:
+
+```text
+uv sync --python 3.14.2        PASS (48 paquetes instalados)
+uv run pytest -q               11 FAILED por fixture 'tool-a' inválida; 19 PASS visibles
+uv run ruff check .            5 I001 de imports
+uv run ruff format --check .   10 archivos pendientes
+uv run python -m compileall -q src  sin errores visibles
+uv build --wheel               PASS / wheel v0.2.0
+```
+
+El valor `'tool-a'` no respeta el validador `^[a-z][a-z0-9_]*$` del paquete real Tools. En el HEAD v0.2.1 se observa fixture `tool_a` y ajustes de formato. **UNVERIFIED:** la suite real completa, Ruff y wheel **después** de esa corrección. Los 30 tests comunicados previamente usando un harness de dobles no son evidencia de integración sobre las dependencias reales.
+
+No hay infraestructura Cosmos disponible para el usuario en este corte. No confundir ese bloqueo de E2E con imposibilidad de ejecutar tests locales del proceso.
+
+## Gate del foco siguiente — limitado a Materialization local
+
+No repetir campañas R3.5 completas sin finding. Antes de cambiar código, releer main 0.2.1 y utilidades existentes de publicación local; rerun pruebas reales y formateo. Después de acordar el contrato de volumen, verificar inputs exactos Rn/Cn, proveniencia, READY/BLOCKED, publicación atómica observable de Runtime+Delivery, integridad, idempotencia/retry, fallos antes de hacer visible READY y lectura local. La prueba contra Cosmos/Blob real se difiere hasta disponer de infraestructura. Runtime Adoption y Live Delivery son otros hitos.

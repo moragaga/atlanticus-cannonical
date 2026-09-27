@@ -1,62 +1,39 @@
 # ADA Command Center — Golden Path
 
-Estado: **PARTIALLY IMPLEMENTED / ALARM SNAPSHOT V3 CLOSED / COSMOS PROJECTION NEXT**
+Estado: **PARTIALLY IMPLEMENTED / MATERIALIZATION LOCAL OUTPUT NEXT**
 
-## Current path
+Corte: `atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`; canonical `772d15078c97802d58d8b658b0d5d5b928fa2ed5`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
 
-```text
-1. Tool owners publish Tool projections
-2. Command Center reconciliation/certification
-3. Confirmed Tool Catalog Cn -> Storage
-4. Alarm authoring consumes one current Tool snapshot
-5. Save Draft pins Cn
-6. Validate aggregate + Tool correlation/existence
-7. Publish Alarm Source release Rn with ToolDependencyManifest(Cn)
-8. Base Projection preserves exact snapshot
-9. Operational Alarm Configuration Projection -> Cosmos       NEXT
-10. B.2 Materialization Process                               PLANNED
-11. Runtime + Delivery artifacts READY                        PLANNED
-12. Runtime Adoption -> EFFECTIVE                             PLANNED
-13. Live Delivery                                             PLANNED
-```
+## Flujo objetivo con estados reales
 
-## Existing Alarm revision
+| Paso | Responsable | Estado de este corte |
+|---|---|---|
+| Tool owners publican proyecciones; Command Center reconcilia y confirma Cn | Tool / Manager | CURRENT. |
+| Confirmed Tool Catalog Cn -> Storage, sin proyección consolidada de vuelta a Cosmos | Tool | CURRENT. |
+| Alarm authoring pin Cn, Validate/Publish con drift check | Alarm Manager | CURRENT. |
+| Source release Rn congela `ToolDependencyManifest(Cn)` schema v3 | Alarm Configuration | CURRENT. |
+| Builder/codec/adapters Local/Cosmos para `ProjectionRecord[AlarmConfigurationSnapshot]` | Web persistence | CURRENT; operacional real UNVERIFIED. |
+| Materialization adquiere proyección activa, fija release/evidencia y ejecuta B.2 | Backend process | CURRENT EN CÓDIGO v0.2.1; E2E UNVERIFIED. |
+| Materialization publica salida Cosmos monolítica | Backend process | CURRENT EN CÓDIGO / SUPERSEDED POR DECISIÓN. |
+| Materialization publica artefactos READY coherentes en volumen | Backend process | DECIDED / PLANNED. |
+| Runtime Adoption carga versión local EXACTA y confirma EFFECTIVE | Alarm Runtime | PLANNED / helpers parciales CURRENT. |
+| Delivery carga su par local de la misma key efectiva y combina Engine current state | Alarm Live Delivery | PLANNED / SEPARATE. |
+| Web consume Live Projection y Management en sus respectivos canales | Web | PLANNED / SEPARATE. |
 
-```text
-R1/C1
-Tools -> C2
-```
-
-does not silently become `R1/C2`.
-
-If the user does nothing, `R1/C1` remains published.
-
-A new Alarm publication may adopt C2 after Save Draft/Validate/Publish.
-
-## Manifest guarantees
-
-A published Alarm revision carries:
-- exact Tool catalog revision;
-- every referenced Tool;
-- Tool source release lineage;
-- Tool display name;
-- full ToolStructure.
-
-No historical Tool lookup is required for B.2.
-
-## Current Definition of Done
+## Separaciones obligatorias
 
 ```text
-Tool Catalog V1                         DONE
-Structured Alarm authoring             DONE
-domain/tools                            DONE
-ToolDependencyManifest                 DONE
-Source schema v3                       DONE
-validate/publish drift protection      DONE
-Pure B.2 resolver                      DONE
-
-Alarm Config Cosmos Projection         NEXT
-Materialization Process                AFTER
-Runtime Adoption                       LATER
-Live Delivery                          LATER
+Rn/Cn -> snapshot congelado
+VALID_AT_SAVE != READY != EFFECTIVE
+READY -> Runtime + Delivery misma AlarmResolutionKey
+BLOCKED -> findings, sin artefactos ejecutables
+INVALID != REMOVED; DISABLED != REMOVED; TRACE_ONLY != REMOVED
 ```
+
+Si aparece C2 después de publicar `R1/C1`, la release Alarm no pasa a `R1/C2` sin una nueva publicación. El proceso usa la evidencia congelada, no latest Tool Catalog.
+
+**Contrato de desempeño decidido:** Engine y Delivery **no vuelven a Cosmos para leer su configuración**; usan el volumen local por versión exacta durante su ciclo de vida. El medio físico para futura Live Projection Web no queda decidido aquí.
+
+## Único siguiente entregable
+
+Sustituir la salida Cosmos del proceso 0.2.1 por salida local versionada/coherente comprobable, con manifest/integridad, idempotencia y BLOCKED seguro. Corregir y ejecutar tests/revisión de formato en entorno real de desarrollo **sin Cosmos real**. Dejar integración de infraestructura, productores automáticos, Runtime y Delivery para hitos separados.

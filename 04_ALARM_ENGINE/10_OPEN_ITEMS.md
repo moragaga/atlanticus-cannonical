@@ -1,70 +1,44 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT / ALARM CONFIGURATION & STRICT ROUTING IMPLEMENTED / MATERIALIZATION JOB NEXT**
+Estado: **CURRENT / MATERIALIZATION LOCAL OUTPUT NEXT / NO LIVE COSMOS ENVIRONMENT**
 
-Checkpoint de código auditado: `moragaga/atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b`.
+Corte: `atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`; canonical `772d15078c97802d58d8b658b0d5d5b928fa2ed5`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
 
-## CLOSED / CURRENT en código
+## CLOSED en cuanto a contrato o existencia de código
 
-- Pure B.2 resolver y contratos `AlarmConfigurationResolution`, Runtime/Delivery y atomicidad READY/BLOCKED.
-- Qualification explícita de Tool/Evaluator como inputs del resolver.
-- `domain/tools`, `ToolDependencyManifest`, `AlarmConfigurationSnapshot` v3 y correlación exacta Rn/Cn.
-- Freeze de references incluyendo Rules inactivas y steps deshabilitados.
-- Alarm Source/base Projection, Local/Cosmos projection stores y composición de proveedores.
-- Política de escalamiento siguiente nivel en Domain y validación B.2.
-- Editor Web con opciones direccionales y separación Strategic routing / visual.
-- Suites de Domain, Materialization y Web Alarm Configuration **VERIFIED** en la ejecución aportada durante el hito, antes del commit `411aea...`.
+- Pure B.2 y atomicidad lógica READY/BLOCKED; `AlarmResolutionKey(Rn,Cn)` compartida.
+- Source v3 y manifest Tool exacto congelado con cada release Alarm.
+- Proyección de Alarm Configuration: codec y adaptadores Local/Cosmos existentes.
+- Strict routing Domain/B.2 y opciones de editor correspondientes, con conflicto visual señalado aparte.
+- Decisión de arquitectura del Project: Materialization obtiene el input Cosmos; Runtime/Delivery consumen B.2 local desde volumen; READY no es EFFECTIVE.
+- Proceso ejecutable Materialization v0.2.1 **existe en Git**. Esto **no** cierra su validación ni la salida local todavía no implementada.
 
-## 1. Materialization Process / job — PLANNED / NEXT
+## NEXT / ÚNICO FOCO — MATERIALIZATION LOCAL OUTPUT
 
-Objetivo solicitado: desde configuración ya authored/publicada, **adquirir la proyección operacional exacta**, obtener qualifications, ejecutar el resolver puro, persistir/poner a disposición los artefactos y preparar su descarga/lectura para Runtime. Primero contrastar el contrato existente; no inventar stores ni deployment.
+**PLANNED:** sustituir el publicador de resultados Cosmos en `backend/processes/alarms-materialization` por publicación local coherente, sin dual writes ni adaptador legacy. Contrastar mecanismos existentes de archivos/estado antes de fijar interfaces.
 
-OPEN de contrato y evidencia:
-- modo de acceso efectivo a la proyección operacional y referencia exacta `ProjectionRecord[AlarmConfigurationSnapshot]`;
-- prueba del productor/consumidor real de Cosmos/Blob: adapters presentes, end-to-end no observado;
-- productores e inputs de Tool GREEN y evaluator qualification;
-- storage, IDs, schema/codec, provenance y publicación de Runtime/Delivery/findings;
-- trigger manual/semi/automático, reintentos, errores, observabilidad y permisos, sin asumir automatización completa;
-- contrato concreto de descarga/lectura para el posterior Runtime, verificando ownership existente.
+Tareas de ese único incremento, en orden:
 
-No abrir simultáneamente Runtime Adoption ni Live Delivery.
+1. **VERIFIED BEFORE CHANGING:** comprobar HEAD y árbol del proceso 0.2.1, el resolver, `atlanticus.runtime`, opciones reales de persistencia/atomicidad local y pruebas. Verificar qué contrato de lectura local ya existe para evitar otro nuevo.
+2. **CONTRACT BEFORE CONSUMER:** especificar contrato de artefacto por versión exacta, manifest/procedencia/hashes, publicación coherente, BLOCKED/diagnósticos e idempotencia; decidir rutas/nombres sólo con evidencia del volumen actual. No introducir marcador EFFECTIVE propiedad de Materialization.
+3. **INCREMENTAL IMPLEMENTATION:** reemplazar la salida Cosmos y settings asociados; mantener acquisition Cosmos, resolver puro y proveedor JSON controlado mientras sus productores reales estén OPEN. Mantener espejo comentado equivalente. Entregar únicamente archivos modificados y tests.
+4. **LOCAL ACCEPTANCE:** re-ejecutar tests/ruff/format sobre dependencias reales; agregar pruebas de escritura/lectura coherente, deduplicación, contenido alterado, crash antes de publicar READY, retry sin efectos parciales, BLOCKED sin artefactos ejecutables, divergencia de revisions y cambio de proyección/evidencia. Usar mocks/stores locales ya existentes; no exigir Cosmos real para este gate.
+5. **EVIDENCE/STOP:** registrar resultados del usuario y detener el incremento tras salida local verificable. No abrir automáticamente integración de Runtime ni proveedores GREEN.
 
-## 2. Tool reconciliation qualification producer — OPEN
+## OPEN separados y motivo
 
-De dónde viene evidencia GREEN y cómo se entrega sin duplicar reconciliación Tool.
+| Frente | Estado | Por qué abierto | Cuándo tocarlo |
+|---|---|---|---|
+| Rerun proceso 0.2.1 | IN PROGRESS / UNVERIFIED | No hay resultado local posterior a corrección sobre dependencias reales. | Primera verificación del próximo foco. |
+| Tool GREEN producer | OPEN / UNVERIFIED | Proveedor operacional exacto no auditado; JSON actual es manual/controlado. | Otro incremento, si el flujo real lo requiere. |
+| Evaluator qualification producer | OPEN / UNVERIFIED | Registry/despliegue real no contrastado. | Otro incremento. |
+| Cosmos/Blob operacional E2E | BLOCKED / UNVERIFIED | Usuario no dispone aún de la infraestructura. | Cuando exista entorno; no bloquear tests locales. |
+| Layout atómico/multiinstancia del volumen | OPEN / PROPOSED | No se inspeccionó el host/FS/volumen concreto ni API local reutilizable definitiva. | Definir al comienzo del foco local; no suponer rename multi-FS. |
+| Runtime local reader / Adoption/Effective Head | PLANNED | Debe consumir la salida local congelada, no dictar su contrato prematuramente. | Después de cerrar Materialization local. |
+| Delivery local reader + Live publication | PLANNED / SEPARATE | No es un consumidor de prueba del incremento actual; necesita Engine current state y effective exacto. | Después de Runtime Adoption, en otro foco. |
+| UI-host end-to-end | UNVERIFIED | No hay evidencia del ciclo real Manager->Cosmos->Materialization. | Al disponer de infraestructura. |
+| Routing/visual synchronization | CONFLICT | Canonical separa decisiones visual/routing, editor sincroniza targets. | Otro debate explícito. |
+| Source v2 durable existente | UNVERIFIED | No se ha inventariado la base real; v2 no tiene lector legacy. | Antes de rollout a datos preexistentes, si aplica. |
+| Python target 3.14.7 vs metadata 3.14.2 | OPEN / SEPARATE | Cambio transversal fuera de Materialization. | Frente dedicado. |
 
-## 3. Evaluator qualification producer — OPEN
-
-Contrastar el deployed evaluator registry/catalog y su frontera. No inventar registry.
-
-## 4. Artifact stores / operator output — OPEN
-
-Quién persiste Runtime/Delivery/findings, con qué revision/exact key y cómo se recupera; no confundir resolución pura con persistencia.
-
-## 5. UI-host / operational E2E gate — UNVERIFIED
-
-Faltan prueba host/browser posterior al routing y ciclo real guardado -> publicación -> Cosmos -> materialización; los tests de componente no sustituyen esa evidencia.
-
-## 6. Routing versus visual-target derivation — CONFLICT A CLARIFICAR
-
-Canonical de UX indica que un destino visual **no equivale** a un destino de routing y no deben condicionarse sin decisión explícita. En main, `synchronize_visual_targets` deriva visual targets desde origen y pasos de routing habilitados, aunque excluye Strategic. No cambiar silenciosamente ninguno durante el job.
-
-## 7. Runtime provenance cleanup / Runtime Adoption / Effective Head — PLANNED AFTER
-
-`READY != EFFECTIVE`. No hay Effective Head ni Adoption Commit implementados en este corte. No mezclar con Materialization.
-
-## 8. Live Delivery, Management Capture y Analytics — PLANNED / SEPARATE
-
-Fuera del siguiente foco.
-
-## 9. V2 durable releases — UNVERIFIED
-
-Schema v2 SUPERSEDED sin legacy decoder. Si hay releases durables v2 en ambientes reales, evaluar reset/migración **antes** de ejecutar un job que requiera v3. No introducir decoder preventivo.
-
-## 10. Python baseline — OPEN / SEPARATE
-
-Project `3.14.7` frente a packages Command Center `==3.14.2`. No cambiar metadata incidentalmente.
-
-## Siguiente foco único
-
-**Contrato operacional e implementación incremental del job B.2 de Materialization**, comenzando por evidencia de la proyección y de las qualifications/outputs existentes. No escribir código ni configurar infraestructura sin el análisis del siguiente chat.
+No repetir campañas R3.5 ni modificar contratos del Engine por una falla que sólo afecte fixtures locales.

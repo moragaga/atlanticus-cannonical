@@ -1,16 +1,10 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **CURRENT / SOURCE V3 + PROJECTION STORES + PURE B.2 + STRICT ROUTING IMPLEMENTED / JOB PLANNED**
+Estado: **CURRENT / SOURCE V3 + PURE B.2 + EXECUTABLE JOB v0.2.1 / LOCAL PUBLICATION DECIDED, PLANNED**
 
-## Authority
+Fuentes del corte: `atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`, `atlanticus-cannonical@772d15078c97802d58d8b658b0d5d5b928fa2ed5`, `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Este documento separa estado publicado en Git de la decisión posterior aún no integrada.
 
-```text
-Implementation checkpoint: moragaga/atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b
-Canonical input: moragaga/atlanticus-cannonical@83cd871c8418e37d2c29dff30e2ea5ef54bda4a0
-Historical decisions: moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-## Invariantes
+## Invariantes anteriores congelados
 
 ```text
 LATEST SAVED = LATEST VALID_AT_SAVE
@@ -22,100 +16,79 @@ TRACE_ONLY != REMOVED
 READY != EFFECTIVE
 ```
 
-`VALID_AT_SAVE` no implica qualification B.2 completa. Core, Web, pure resolver, job, artifact stores y Runtime Adoption son fronteras diferentes.
+B.1 valida guardado/publicación; qualification externa completa corresponde a B.2. El resolver puro, el proceso I/O, los stores de artefactos y Runtime Adoption tienen propietarios diferentes.
 
-## Source y evidencia Tool exacta — CURRENT
+## Source y evidencia Tool exacta — VERIFIED / CURRENT
 
 ```text
 AlarmConfiguration(rules, messages)
 AlarmConfigurationSnapshot(configuration, tool_dependencies: ToolDependencyManifest)
-source document_type = ada_command_center_alarm_configuration_release
-source schema_version = 3
+source document_type: ada_command_center_alarm_configuration_release
+source schema_version: 3
 ```
 
-V2 es **SUPERSEDED**, sin decoder de compatibilidad. Cada publicación Rn congela sólo las referencias Tool definidas (origen, todos los escalones habilitados o no, visual targets, Rules activas o no), reteniendo `ToolDependencyManifest(Cn)` con `display_name`, `source_release_id`, `kind` y `ToolStructure`. No adquirir el latest Tool Catalog para reinterpretar `Rn/Cn`.
+V2 está **SUPERSEDED**, sin decoder de compatibilidad. Publicación Rn conserva `ToolDependencyManifest(Cn)` sólo para referencias Tool definidas: origen, todos los escalones habilitados o no, visual targets, reglas activas o inactivas. Cada entrada retiene `display_name`, `source_release_id`, `kind` y `ToolStructure`. `confirmed_tool_catalog_revision` se obtiene de `tool_dependencies.revision`; no consultar latest Tool Catalog para reinterpretar Rn/Cn.
 
-El Manager Alarm conserva `_confirmed_tool_catalog_revision` como sidecar de draft; Validate y Publish exigen que coincida con la revisión confirmada, y publicación comprueba de nuevo el drift. La cualificación GREEN y del Evaluator corresponde a B.2, no al guardado local.
+Manager Alarm mantiene la revisión Tool como sidecar del draft y vuelve a comprobar drift en Validate/Publish. Los productores reales de Tool GREEN y Evaluator qualification siguen pendientes de contrastar.
 
-## Base/operational projection — CURRENT ADAPTERS; LIVE INTEGRATION UNVERIFIED
+## Proyección operacional — CURRENT ADAPTERS / E2E UNVERIFIED
 
-Owners existentes:
+Existen `web/alarms/configuration/{source_release,source_projection,projection_record}.py`, `web/alarms/projection-local`, `web/alarms/projection-cosmos` y `web/alarms/persistence`. `ProjectionRecord[AlarmConfigurationSnapshot]` conserva release, procedencia y payload íntegro. `ProjectionStore.get_active(source_key)` devuelve la proyección activa, no una API histórica por release. Materialization captura/revalida la release exacta durante su iteración. No inferir que la proyección real se publica en Cosmos: no hay infraestructura ni prueba end-to-end presentada.
 
-```text
-web/alarms/configuration: source_release.py, source_projection.py, projection_record.py
-web/alarms/projection-local
-web/alarms/projection-cosmos
-web/alarms/persistence: compose_alarm_configuration_persistence
-```
-
-`ProjectionRecord[AlarmConfigurationSnapshot]` conserva la release y el payload v3 íntegro. La composición acepta Source Local/Blob y Projection Local/Cosmos mediante settings explícitos. Cosmos store implementa `get_active` y `replace_active`. El host de pruebas configurado en main utiliza proveedores locales. **No inferir de la existencia de los adapters** que exista un productor Cosmos operativo, credenciales válidas ni integración Azure verificada.
-
-## Pure B.2 resolver — CURRENT
+## Pure B.2 — VERIFIED / CURRENT
 
 Owner: `scopes/ada-command-center/backend/alarms/materialization`.
 
 ```text
-AlarmConfiguration
-+ alarm_configuration_revision
-+ exact frozen Tool evidence (`ToolDependencyManifest` structurally)
+AlarmConfiguration + alarm_configuration_revision
++ ToolDependencyManifest(Cn) exacto
 + ToolReconciliationQualification
 + EvaluatorQualificationCatalog
- -> resolve_alarm_configuration(...)
- -> AlarmConfigurationResolution(READY | BLOCKED)
+-> resolve_alarm_configuration(...)
+-> AlarmConfigurationResolution(READY | BLOCKED)
 ```
 
-Puro: sin I/O, stores, scheduler, acquisition, persistence ni Runtime Adoption.
-
-Qualification:
-- toda Rule definida necesita evaluator qualified por `(family_key, evaluator_key)`;
-- toda Tool reference definida debe existir en la evidencia exacta y ser GREEN, incluidas Rules inactivas y steps deshabilitados;
-- validar criticidad, dirección de routing y visual targets.
-
-Hallazgos actuales, entre otros:
+Toda Rule definida requiere evaluator cualificado por `(family_key,evaluator_key)` y todas las referencias Tool definidas deben existir y ser GREEN (también Rules inactivas y steps disabled). Valida routing y visual targets. Hallazgos como `evaluator_not_qualified`, `tool_reference_not_found`, `tool_reference_not_green`, `routing_invalid_for_criticality`, `routing_invalid_direction` y `visual_target_invalid` pertenecen al resultado B.2, no a fallas operacionales de I/O.
 
 ```text
-evaluator_not_qualified
-tool_reference_not_found
-tool_reference_not_green
-routing_invalid_for_criticality
-routing_invalid_direction
-visual_target_invalid
+READY   -> RuntimeAlarmConfiguration + DeliveryAlarmConfiguration con idéntica AlarmResolutionKey
+BLOCKED -> findings bloqueantes + Runtime None + Delivery None
 ```
 
-Atomicidad:
-
-```text
-READY   -> Runtime + Delivery (misma AlarmResolutionKey)
-BLOCKED -> blocking finding + Runtime None + Delivery None
-```
+El resolver no hace I/O, retry, persistencia, scheduler ni Adoption.
 
 ## Strict routing — FROZEN / IMPLEMENTED
 
-`domain/alarms/routing_policy.py` define `next_routing_tool_kind`:
+`PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END`. Cada step habilitado avanza exactamente un nivel respecto del anterior habilitado, en orden ascendente. Sin mismo nivel, retroceso ni saltos. Strategic es terminal. C1/C2 permiten cero destinos; C3 sólo origen. C1 habilitado inmediato; C2 espera positiva desde el step habilitado anterior y B.2 acumula offsets desde `occurrence.started_at` (20 + 20 => 20 y 40 minutos). Steps disabled no enrutan ni consumen tiempo, pero sus referencias sí se cualifican. La Web comparte la policy; Strategic sólo routing, no visual targets.
+
+## Process publicado en main — VERIFIED / CURRENT DE IMPLEMENTACIÓN
+
+Ruta: `scopes/ada-command-center/backend/processes/alarms-materialization/`; versión **0.2.1** en HEAD. Contiene `__init__.py`, `__main__.py`, `bootstrap.py`, settings, `AlarmCandidateAcquirer`, `AlarmMaterializationCandidate` con representación JSON congelada/fingerprint, proveedor `JsonFileAlarmQualificationProvider`, `AlarmMaterializationJob`, codecs de Runtime/Delivery y composición con `atlanticus.runtime.execute_job`.
+
+La iteración obtiene proyección activa, fija identidad, carga evidencia JSON exacta, invoca B.2, revalida proyección y digest de qualifications antes de publicación bajo fencing y distingue `READY`, `BLOCKED`, `UNCHANGED`. El código actual está acoplado a `CosmosAlarmMaterializationResultStore` **de salida**: documento con `runtime`, `delivery`, `manifest`, `findings`, hashes y codec de lectura. Es realidad implementada, **pero su destino de salida quedó SUPERSEDED** por la decisión del Project.
+
+El proveedor JSON es una modalidad manual/de prueba controlada existente, **no prueba** que existan productores de GREEN/Evaluator integrados. No incorporar datos sintéticos como evidencia operacional real.
+
+## Nueva decisión de arquitectura — DECIDED / PLANNED
 
 ```text
-PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END
+Cosmos: ProjectionRecord[AlarmConfigurationSnapshot]
+  -> Materialization [único lector Cosmos para esta adquisición]
+  -> pure B.2
+  -> publicación coherente, versionada y local en VOLUMEN_PATH
+  -> Runtime/Engine y Delivery consumen localmente el artefacto EXACTO adoptado
 ```
 
-- Cada escalón habilitado avanza **exactamente** un nivel respecto del último escalón habilitado, en `step_order` ascendente.
-- Nunca same-tier, retroceso ni salto directo `PROCESS -> STRATEGIC`.
-- Strategic es terminal.
-- Una Rule C1 o C2 puede tener **cero destinos**; no cambiar su criticidad automáticamente. C3 sólo admite origen y bloquea steps habilitados.
-- C1 habilitado: inmediato (`None` o `0` en el campo wait).
-- C2 habilitado: espera entera positiva **desde el paso anterior**; B.2 suma las esperas y entrega offsets absolutos desde `occurrence.started_at`. Dos waits de `20` dan due times a `20` y `40` minutos.
-- Los pasos deshabilitados no participan en la ruta ni añaden tiempo, pero sus referencias Tool definidas siguen en el manifest y en qualification.
-- Si falta una Tool de la evidencia exacta, emitir el finding de referencia; no inventar kind ni realizar lookup latest.
+Una versión READY contiene ambos contratos con una misma `AlarmResolutionKey` y un manifiesto capaz de comprobar identidad, procedencia e integridad. El mecanismo de publicación debe impedir que Engine o Delivery vean media versión; una falla debe preservar versiones anteriores. Un BLOCKED conserva diagnóstico pero no se publica como ejecutable. No publicar EFFECTIVE desde Materialization; Adoption pertenece a Runtime.
 
-El formulario Web comparte la política para ofrecer sólo el siguiente nivel. Conserva selecciones antiguas incompatibles visibles para corrección, sin borrarlas. Strategic participa en `routing_tools`, pero no en el catálogo de visual targets porque su representación Alarm no está contratada.
+No está congelado todavía: nombre de directorios/archivos, layout multi-instancia, codec reutilizable definitivo, marcadores READY/EFFECTIVE, primitivas atómicas, política de retención y permisos. `runtime.json`, `delivery.json`, `manifest.json` y punteros `ready.json`/`effective.json` fueron **propuestos como ilustración**, no son interfaces vigentes. Contrastar primero `atlanticus.state`, persistencia y capacidades locales existentes. No crear un store genérico o un proceso extra sin justificación.
 
-## B.2 Materialization Process — PLANNED, SIGUIENTE FRONTERA
+**No conservar** `CosmosAlarmMaterializationResultStore` como publicación alternativa tras el reemplazo. Sí conservar el adapter Cosmos **de lectura** de la proyección.
 
-Path objetivo **histórico/propuesto en canonical**, aún ausente en `411aea...`:
+## Validación del corte — ACOTADA
 
-```text
-scopes/ada-command-center/backend/processes/alarms-materialization
-```
+Evidencia aportada: `uv sync --python 3.14.2` exitoso; ejecución local sobre la anterior v0.2.0: 11 tests de adquisición fallaron por `tool-a` inválido, cinco findings Ruff de imports y diez archivos pendientes de formato; wheel v0.2.0 creado. El HEAD v0.2.1 contiene fixture corregida `tool_a` y código/formato actualizado. **UNVERIFIED:** rerun de pytest, Ruff, formatter y wheel en un entorno con dependencias reales sobre v0.2.1. **BLOCKED por infraestructura no disponible:** prueba Cosmos/Blob real. No declarar job cerrado E2E.
 
-No crear nuevo contrato hasta verificar los existentes. El siguiente chat debe contrastar: proveedor y lectura de `ProjectionRecord[AlarmConfigurationSnapshot]` operacional; exact revision/Source provenance; obtención real de Tool GREEN y evaluator qualification; fronteras de persistencia/publicación de Runtime, Delivery y findings; reintento/diagnóstico y ownership de settings. Sin esos datos, rutas físicas, intervalos, formatos de descarga, IDs y contenedores siguen **UNVERIFIED / OPEN**.
+## Único siguiente foco
 
-No reabrir Tool Catalog histórico ni recalcular snapshot v3. No añadir Runtime Adoption, Effective Head ni scheduler de Live Delivery al mismo incremento.
+Cerrar Materialization **sustituyendo exclusivamente publicación Cosmos por publicación local confiable**, manteniendo adquisición, resolver y modo qualification actual mientras no haya evidencia del productor real. Después ejecutar tests locales/contractuales sin Cosmos real; integración Cosmos se difiere. Runtime Adoption y Delivery NO se implementan en este incremento.
