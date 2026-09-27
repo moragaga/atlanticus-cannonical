@@ -1,23 +1,23 @@
 # Alarm Engine — Qualification Baseline
 
-Estado: **R3.5 HISTORICAL CLOSED PASS/GREEN + B.2/ROUTING COMPONENT CHECKPOINT VERIFIED (2026-09-26) / EXECUTABLE MATERIALIZATION v0.2.1 REAL RERUN UNVERIFIED (2026-09-27)**
+Estado: **R3.5 HISTORICAL CLOSED PASS/GREEN / A Y B1 LOCAL UNIT GATES CLOSED / E2E NUEVA FRONTERA UNVERIFIED (2026-09-27)**
 
-Este documento conserva la genealogía de qualification; **no convierte** tests unitarios recientes en una campaña E2E nueva. Las evidencias históricas y el nuevo proceso pertenecen a fronteras diferentes.
+El historial R3.5 se conserva como evidencia **de su propio producto y corte**. Los tests recientes de Materialization/Runtime son pruebas unitarias y de contratos locales: **no** se convierten en una campaña de qualification E2E ni prueban Cosmos/Blob productivos.
 
-## Campaña histórica R3.5
+## Campaña histórica R3.5 — sin reinterpretación
 
-`alarm_test/` conserva fases A, B, C, D, E y F y múltiples revisiones de planner. No usar sólo el último XLSX para borrar la genealogía de findings o adjudicar errores del harness al producto.
+`atlanticus-decisions:main/alarm_test/` conserva fases A/B/C/D/E/F y sucesivas versiones del planner. No borrar su genealogía usando sólo el XLSX final ni adjudicar automáticamente problemas del harness al producto.
 
-- **E-008, Source Unavailable / CACHE_FALLBACK:** fallback controlado no autoriza adoptar estado inválido. CLOSED según planner v1.0.92.
-- **E-009, Invalid Source Candidate:** no sustituir estado válido/adoptado con candidato inválido. CLOSED según planner v1.0.95.
-- **E-010, Lease Lost After WAL Before Cache:** primer run `ABORTED / NOT ADJUDICATED`; antes de reintento harness GREEN 332/332, identidades sintéticas canónicas y exact-second clock. CLOSED según planner v1.0.103.
-- **E-011, Cache Promotion Failure:** aparente fallo procedía del adjudicador: snapshots vacíos tras reset omiten deliberadamente `state_basis`. Se corrigió adjudicación usando `last_commit_id` y ausencia de `state_basis`. **Finding del harness, no del producto**. CLOSED según planner v1.0.110.
-- **E-012, Drain Under Workload:** 1000 alarmas, 10 priority groups, 600 s, cadence 5 s, refresh 10 s, 480 management requests y 480 decisions, stop/drain ~+300 s. Se identificó y corrigió Drain Cancellation Product Finding. CLOSED según planner v1.0.117.
-- **F-001, Soak 500 Local 30m:** 500 alarmas, 1800 s, cadence 5 s, refresh 10 s, warmup 300 s, cinco ventanas estables de 300 s, objetivo 361 iteraciones. CPU como caracterización; boundedness/cadence/integrity sí adjudican. CLOSED planner v1.0.122.
-- **F-002, Soak 1000 Local 30m:** misma geometría temporal, 1000 alarmas; reutiliza adjudicador. CLOSED planner v1.0.126.
-- **F-007, Physical/Docker/dataset bank:** artefactos de saturación Docker, búsqueda física de capacidad, real volume v2, manifest de capture y templates representativeness/synthetic conformance. CLOSED / F010 proposed en planner v1.0.135.
+- **E-008, Source Unavailable / CACHE_FALLBACK:** fallback controlado no autoriza adoptar estado inválido. CLOSED, planner v1.0.92.
+- **E-009, Invalid Source Candidate:** no sustituir estado válido/adoptado por candidato inválido. CLOSED, planner v1.0.95.
+- **E-010, Lease Lost After WAL Before Cache:** primer run `ABORTED / NOT ADJUDICATED`; antes de reintento harness GREEN 332/332, identidades sintéticas canónicas y reloj exact-second. CLOSED, planner v1.0.103.
+- **E-011, Cache Promotion Failure:** aparente fallo pertenecía al adjudicador; snapshots vacíos tras reset omiten deliberadamente `state_basis`. La adjudicación se corrigió usando `last_commit_id` y ausencia de `state_basis`. **Finding del harness, no del producto**. CLOSED, planner v1.0.110.
+- **E-012, Drain Under Workload:** 1000 alarmas, 10 priority groups, 600 s, cadence 5 s, refresh 10 s, 480 management requests y 480 decisions, stop/drain ~+300 s; Drain Cancellation Product Finding identificado y corregido. CLOSED, planner v1.0.117.
+- **F-001, Soak 500 Local 30m:** 500 alarmas, 1800 s, cadence 5 s, refresh 10 s, warmup 300 s, cinco ventanas estables de 300 s, objetivo 361 iteraciones; CPU como caracterización y boundedness/cadence/integrity como criterios. CLOSED, planner v1.0.122.
+- **F-002, Soak 1000 Local 30m:** misma geometría temporal, 1000 alarmas. CLOSED, planner v1.0.126.
+- **F-007, Physical/Docker/dataset bank:** saturación Docker, búsqueda de capacidad física, real volume v2, manifests de captura y templates de representativeness/synthetic conformance. CLOSED y F010 propuesto, planner v1.0.135.
 
-## F-010 Final Docker Qualification — historical CLOSED PASS/GREEN
+### F-010 Final Docker Qualification — histórico CLOSED PASS/GREEN
 
 ```text
 run             09311e68
@@ -36,64 +36,68 @@ adoption        compatible 1000
 threshold       0.50 -> 0.75
 ```
 
-Sin product findings abiertos en esa campaña. F011 profiling no requerido. La campaña no prueba el nuevo job de Materialization que todavía no existía en ese corte.
+Sin product findings abiertos en dicha campaña; F011 profiling no requerido. La campaña **no valida** el proceso nuevo de Materialization local, B1 ni un Effective Head global.
 
 ## Pure B.2 — checkpoint histórico
 
+`atlanticus@9398786ae9af7c00de1bcca9d7a311fe9ef2155f`: resolver puro, READY Runtime/Delivery lógico coherente, qualification evaluadores y Tool, C1/C2/C3, offsets acumulados C2, steps disabled, validación visual y Messages/deactivation, findings deterministas, reappearance minutos a segundos. Se comunicaron 31 tests y lint GREEN; formatter del resolver sin rerun explícito en ese corte. No extrapolar esa limitación al estado actual ni confundir el paquete con el resolver: el paquete hoy también contiene lector I/O.
+
+## Strict routing — checkpoint previo, 2026-09-26
+
+Git: `atlanticus@411aea44ac60c09d2b07ce41d34c3f378788b97b`. Tras incrementos de backend/frontend, el usuario informó localmente:
+
 ```text
-moragaga/atlanticus@9398786ae9af7c00de1bcca9d7a311fe9ef2155f
+domain/alarms:                  pytest 56 / ruff check PASS / format PASS
+backend/alarms/materialization: pytest 49 / ruff check PASS / format PASS
+web/alarms/configuration:      pytest 114 / ruff check PASS / format PASS
 ```
 
-El hito demostró resolver puro: READY Runtime/Delivery atómico, qualification evaluator y Tool, C1/C2/C3, offsets acumulados C2 y exclusión de steps disabled de ejecución, visual Process/Integrated Operations/Strategic, Messages/deactivation, findings deterministas y reappearance minutos->segundos. En ese corte se comunicaron 31 tests y lint GREEN; el formatter de resolver estaba pendiente de un rerun explícito. Esa limitación histórica se conserva, **no** se extrapola al estado CURRENT.
+El código correspondiente está presente en ese checkpoint; repetir toda esa cadena en un checkout limpio y host/browser E2E no formó parte del gate. No equiparar estos tests con infraestructura Blob/Cosmos real.
 
-## Evidencia nueva acotada al 2026-09-26
+## Materialization local + lector Runtime — Incremento A, 2026-09-27
 
-Repositorio inspeccionado:
+La evidencia intermedia sobre v0.2.0/0.2.1 documentó fixtures inválidas `tool-a` y fallos de imports/format que se corrigieron en incrementos posteriores. No se mantienen como findings **abiertos** del corte actual; se conserva su historial en Git y en los checkpoints anteriores.
+
+El usuario aplicó correcciones, ejecutó pruebas reales en su entorno y comunicó antes de integrar `atlanticus@9693e2b791b34624d551c52821274231ae05f2af`:
 
 ```text
-atlanticus:main @ 411aea44ac60c09d2b07ce41d34c3f378788b97b
+uv sync --python 3.14.2 --all-packages                  PASS
+backend/alarms/materialization:       pytest 49 PASS, Ruff PASS, format PASS, wheel PASS
+backend/processes/alarms-materialization: pytest 43 PASS, Ruff PASS, format PASS, wheel PASS
+backend/processes/alarms-runtime:      pytest 23 PASS, Ruff PASS, format PASS, wheel PASS
+runtime/tests/test_local_configuration_reader.py: 7 PASS incluidos en 23
 ```
 
-Tras los incrementos de strict routing backend y frontend, el usuario ejecutó localmente:
+**CLOSED:** gate local del incremento A. Verificada presencia de código integrado en `9693e2b...`; no se adjudica qualification física multi-host ni integración operacional E2E.
+
+## Artifact exacto y planificador Runtime — Incremento B1, 2026-09-27
+
+El usuario aplicó el ZIP de B1 y la corrección Ruff del planificador, y compartió estos resultados locales:
 
 ```text
-domain/alarms:
-  pytest -q                       GREEN / 56 puntos visibles
-  ruff check .                    GREEN
-  ruff format --check .           GREEN
-
+Workspace uv sync --python 3.14.2 --all-packages         PASS (56 paquetes resueltos)
 backend/alarms/materialization:
-  pytest -q                       GREEN / 49 puntos visibles
-  ruff check .                    GREEN
-  ruff format --check .           GREEN
-
-web/alarms/configuration:
-  pytest -q                       GREEN / 114 puntos visibles
-  ruff check .                    GREEN
-  ruff format --check .           GREEN
+    test_artifact_reference.py                          13 PASS
+    pytest completo                                     62 PASS
+    ruff check / ruff format --check                     PASS / PASS
+    wheel                                               PASS, versión 1.0.0
+backend/processes/alarms-runtime:
+    test_adoption_plan.py                               17 PASS
+    pytest completo                                     40 PASS
+    ruff check / ruff format --check                     PASS / PASS tras fix
+    wheel                                               PASS, versión 1.0.0
+backend/processes/alarms-materialization:
+    pytest completo                                     43 PASS
+    ruff check / ruff format --check                     PASS / PASS
 ```
 
-Las ejecuciones del usuario se produjeron después de cada parche y antes de su commit de cierre `411aea...`. Git confirma que ese HEAD contiene la policy, el resolver, los tests direccionales y el frontend correspondiente. **UNVERIFIED:** repetir esas suites sobre un checkout limpio del SHA final y host/browser E2E posterior al routing; tampoco se verificó Blob/Cosmos real, productores de qualification ni job/materialized stores.
+El commit `atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e` incluye B1 y su corrección de formato. **CLOSED — gate local**, no equivalencia con una ejecución CI reproducida en checkout limpio de ese SHA. No se adjuntó una repetición nueva del wheel de `alarms-materialization` posterior al parche B1, que no modificó ese paquete operativo; su wheel PASS corresponde al incremento A.
 
-## Evidencia nueva del proceso ejecutable v0.2.1 — 2026-09-27
+## OPEN / límites de evidencia
 
-HEAD inspeccionado por lectura Git: `moragaga/atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`. `backend/processes/alarms-materialization` existe como proceso ejecutable v0.2.1, pero aún escribe resultados en **Cosmos de salida**. El cambio arquitectónico acordado a volumen local todavía no fue implementado.
+- **UNVERIFIED:** ejecutables/evaluadores GREEN reales y qualification productiva, Manager -> Cosmos -> Materialization en infraestructura real, Blob/Cosmos E2E.
+- **UNVERIFIED:** semántica de publicación y acceso al volumen definitivo en varios hosts/FS, pruebas de takeover físico reales fuera de los dobles locales.
+- **PLANNED:** ejecución segura de `ADDED`/`ENABLED`, adopción durable y recovery de Effective Head; tests actuales validan **planificación**, no adopción global.
+- **SEPARATE:** Delivery local exacto, Live, Management Capture y validaciones Web del nuevo ciclo.
 
-Prueba local del usuario **sobre v0.2.0, antes de corrección**:
-
-```text
-uv sync --python 3.14.2        PASS (48 paquetes instalados)
-uv run pytest -q               11 FAILED por fixture 'tool-a' inválida; 19 PASS visibles
-uv run ruff check .            5 I001 de imports
-uv run ruff format --check .   10 archivos pendientes
-uv run python -m compileall -q src  sin errores visibles
-uv build --wheel               PASS / wheel v0.2.0
-```
-
-El valor `'tool-a'` no respeta el validador `^[a-z][a-z0-9_]*$` del paquete real Tools. En el HEAD v0.2.1 se observa fixture `tool_a` y ajustes de formato. **UNVERIFIED:** la suite real completa, Ruff y wheel **después** de esa corrección. Los 30 tests comunicados previamente usando un harness de dobles no son evidencia de integración sobre las dependencias reales.
-
-No hay infraestructura Cosmos disponible para el usuario en este corte. No confundir ese bloqueo de E2E con imposibilidad de ejecutar tests locales del proceso.
-
-## Gate del foco siguiente — limitado a Materialization local
-
-No repetir campañas R3.5 completas sin finding. Antes de cambiar código, releer main 0.2.1 y utilidades existentes de publicación local; rerun pruebas reales y formateo. Después de acordar el contrato de volumen, verificar inputs exactos Rn/Cn, proveniencia, READY/BLOCKED, publicación atómica observable de Runtime+Delivery, integridad, idempotencia/retry, fallos antes de hacer visible READY y lectura local. La prueba contra Cosmos/Blob real se difiere hasta disponer de infraestructura. Runtime Adoption y Live Delivery son otros hitos.
+Siguiente gate técnico: definir primero el contrato de Runtime Adoption durable sobre los componentes actuales, sin repetir campañas R3.5 por defecto ni usar fixtures sintéticas como evidencia de productores reales.

@@ -1,81 +1,101 @@
 # Alarm Engine — Source Ledger
 
-Estado: **AUDIT LEDGER / ALARM MATERIALIZATION CHECKPOINT 2026-09-27**
+Estado: **AUDIT LEDGER / MATERIALIZATION LOCAL + RUNTIME ADOPTION B1 CHECKPOINT / 2026-09-27**
 
-## Autoridad verificada por lectura, sin escrituras
+## Autoridad verificada en modo lectura
 
 ```text
-Implementation HEAD : moragaga/atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6
-Canonical baseline  : moragaga/atlanticus-cannonical@772d15078c97802d58d8b658b0d5d5b928fa2ed5
+Implementation HEAD : moragaga/atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e
+Canonical baseline  : moragaga/atlanticus-cannonical@58241ddb6db5adbd2e783c7ec9f456f1bda5a321
 Historical decisions: moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-Esta auditoría verifica la frontera tratada; no certifica todo Atlanticus ni todos los documentos históricos. El usuario había informado el mismo HEAD y se corroboró por Git en modo lectura.
+El HEAD comunicado por el usuario se corroboró mediante lectura remota de Git; canonical y decisions también. La comparación Git entre `atlanticus@9693e2b...` y `@c8f23d9...` confirmó **un commit adicional** con cambios B1. Los reemplazos de este paquete son archivos locales para integrar manualmente: no fueron escritos en Git por el asistente y no se debe asumir todavía nuevo HEAD canónico.
 
-## Rutas CURRENT comprobadas
-
-```text
-scopes/ada-command-center/backend/alarms/materialization/
-  src/.../resolver.py
-  src/.../qualification.py
-  src/.../runtime.py
-  src/.../delivery.py
-
-scopes/ada-command-center/backend/processes/alarms-materialization/
-  pyproject.toml                        # v0.2.1, requiere ==3.14.2
-  src/.../__init__.py
-  src/.../__main__.py
-  src/.../acquisition.py
-  src/.../bootstrap.py
-  src/.../candidate.py
-  src/.../codec.py
-  src/.../composition.py
-  src/.../job.py
-  src/.../publication.py              # CosmosResultStore de salida: será reemplazado
-  src/.../qualification.py            # proveedor manual JSON
-  src/.../settings.py
-  tests/test_acquisition.py
-  tests/test_executable_process.py
-  tests/test_commented_mirror.py
-
-scopes/ada-command-center/web/alarms/configuration/
-scopes/ada-command-center/web/alarms/projection-local/
-scopes/ada-command-center/web/alarms/projection-cosmos/
-scopes/ada-command-center/backend/processes/alarms-runtime/
-```
-
-En main, `composition.py` construye `CosmosClient` y lo usa tanto para **input** como para `CosmosAlarmMaterializationResultStore` de **output**. `job.py` fija candidate/evidence, ejecuta pure B.2 y revalida antes de publicar. `publication.py` almacena en un documento Cosmos `runtime`, `delivery`, `manifest`, `findings`, más hashes. `__main__.py` habilita ejecución real del módulo pero el entorno Cosmos no se ha probado.
-
-## Evidencia observada del usuario — ANTERIOR a la corrección
-
-Salida proporcionada sobre v0.2.0, 2026-09-27:
+## Genealogía de commits relevante
 
 ```text
-uv sync --python 3.14.2   PASS / 48 paquetes instalados
-uv run pytest -q          11 FAILED (test_acquisition por fixture tool-a inválida),
-                          19 PASSED visibles por el resumen de progreso
-uv run ruff check .       5 findings I001 de ordenación de imports
-uv run ruff format --check . 10 archivos a reformatear
-uv run python -m compileall -q src   sin salida de error visible
-uv build --wheel          PASS / wheel 0.2.0 generado
-```
-
-El contrato real `ada.web.tools.validation.require_key` usa patrón `^[a-z][a-z0-9_]*$`; `tool-a` es inválido. La versión corregida 0.2.1, ahora visible en HEAD, usa fixture `tool_a` y trae ajustes de formato/metadata. **UNVERIFIED:** no se aportó prueba reproducida del proceso 0.2.1 completo sobre dependencias reales tras publicarlo; no derivar GREEN de los tests antiguos o de la existencia del wheel 0.2.0.
-
-La generación previa en sandbox comunicó 30 pruebas con dobles y comprobaciones estáticas; esa evidencia es **limitada a harness**, no E2E ni validación del repo con dependencias reales.
-
-## Genealogía conservada
-
-```text
-Pure B.2 inicial                         9398786ae9af7c00de1bcca9d7a311fe9ef2155f
-Command Center Tools domain              9b9600ae96c9153cf70d0fb401905963b8583c2f
-Alarm Source v3                           d2a5e14822d3711e64668b8e70cfa15d7ddae2f
+Pure B.2 inicial                           9398786ae9af7c00de1bcca9d7a311fe9ef2155f
 Strict routing completo                   411aea44ac60c09d2b07ce41d34c3f378788b97b
-Materialization executable + fix en HEAD b600ca591b56d0924aed752dfae6e9fab2c6f1d6
+Executable materialization checkpoint      b600ca591b56d0924aed752dfae6e9fab2c6f1d6
+Materialization local previa a lector     1076dfaab2537f2ccd4d7b3cc9df8dac245f534d
+Local shared reader + Runtime adapter (A) 9693e2b791b34624d551c52821274231ae05f2af
+Artifact exacto + planning B1             c8f23d91ae1cb817be55b4b812b22ffca518880e
 ```
 
-Los resultados de las suites antiguas de Alarm Domain, pure Materialization y Web Alarm Configuration, al igual que las campañas R3.5, siguen siendo evidencia **histórica del corte donde se ejecutaron**, no del nuevo job ni de su arquitectura local aún no implementada.
+Entre `b600ca...` y `c8f23d...` Git reportó cinco commits; los títulos genéricos de commit no sustituyen la inspección de archivos. Las siguientes rutas se comprobaron en el HEAD final.
 
-## Límites explícitos
+## Rutas y contratos CURRENT contrastados
 
-No se verificó infraestructura real Cosmos/Blob, productor GREEN/Evaluator, publicación atómica en volumen, lectura local por Engine/Delivery, Runtime Adoption global ni Live Delivery. Los documentos de reemplazo del ZIP son propuestas documentales preparadas localmente; no constituyen un commit ni reemplazan automáticamente canonical hasta su integración autorizada por el usuario.
+```text
+scopes/ada-command-center/backend/
+  pyproject.toml                          # workspace, versión 1.0.0
+  uv.lock                                 # workspace presente
+  alarms/materialization/
+    pyproject.toml                        # 1.0.0, Python ==3.14.2
+    src/ada_command_center/alarms/materialization/
+      resolver.py                         # resolve_alarm_configuration puro
+      runtime.py / delivery.py
+      codec.py                            # codec compartido Runtime/Delivery
+      local_reader.py                     # lectura READY/exacta, validación/integridad
+      artifact_reference.py               # AlarmConfigurationArtifactRef B1
+    tests/test_artifact_reference.py
+  processes/alarms-materialization/
+    pyproject.toml                        # 1.0.0, Python ==3.14.2
+    src/ada_command_center/processes/alarms_materialization/
+      acquisition.py / candidate.py / qualification.py
+      job.py / composition.py / publication.py
+      settings.py / bootstrap.py / __main__.py
+    tests/test_executable_process.py
+  processes/alarms-runtime/
+    pyproject.toml                        # 1.0.0, Python ==3.14.2
+    src/ada_command_center/processes/alarms_runtime/
+      session.py / adoption.py / adoption_execution.py
+      local_configuration.py / job_composition.py
+      composition.py / durability.py
+    tests/test_local_configuration_reader.py
+    tests/test_adoption_plan.py
+```
+
+El árbol contiene también `alarms/materialization/uv.lock` y `processes/alarms-materialization/uv.lock`, además del `backend/uv.lock` del workspace. Su coexistencia está verificada, pero **no** se determinó si los locks individuales son obsoletos ni se autorizó su eliminación en B1; no calificarlos automáticamente como legacy.
+
+El proceso usa `CosmosAlarmConfigurationProjectionStore` sólo para adquirir proyección; salida `LocalAlarmMaterializationResultStore`. **No** existe el antiguo codec `processes/alarms-materialization/.../codec.py` ni `CosmosAlarmMaterializationResultStore` como salida en este árbol. Runtime puede leer READY actual o exacto, construir la revisión B1, planificar; todavía no adopta globalmente ni publica EFFECTIVE. B1 modifica `adoption.py` y `local_configuration.py`, **no** `adoption_execution.py` ni el WAL.
+
+`backend/alarms/materialization` conserva pureza de su *resolver* pero ahora también alberga `local_reader.py` con I/O. No ocultar esta diferencia con la descripción histórica del paquete puro.
+
+## Evidencia local comunicada por el usuario
+
+### Incremento A — validación anterior a `9693e2b...`
+
+```text
+uv sync --python 3.14.2 --all-packages           PASS
+materialization compartido                      49 unit PASS / Ruff PASS / format PASS / wheel PASS
+materialization process                        43 unit PASS / Ruff PASS / format PASS / wheel PASS
+runtime local reader                            7 unit PASS
+runtime completo                               23 unit PASS / Ruff PASS / format PASS / wheel PASS
+```
+
+### Incremento B1 — anterior a `c8f23d9...`, incluida corrección Ruff
+
+```text
+workspace: uv sync --python 3.14.2 --all-packages PASS (56 paquetes resueltos)
+materialization: tests/test_artifact_reference.py 13 PASS, suite 62 PASS
+materialization: Ruff PASS / format PASS / wheel 1.0.0 PASS
+runtime: tests/test_adoption_plan.py 17 PASS, suite 40 PASS
+runtime: Ruff PASS / format PASS tras SIM102 y formateo, wheel 1.0.0 PASS
+materialization process: suite 43 PASS, Ruff PASS, format PASS
+```
+
+Es evidencia **VERIFIED de logs proporcionados** y confirmación de presencia de código en Git, no un CI/re-run limpio en el HEAD exacto ni prueba E2E. No generar un SHA de árbol de trabajo a partir del log; el commit remoto actual contiene los cambios descritos.
+
+## Límites y conflictos constatados
+
+- Canonical previo `58241d...` aún marca salida local/lector/ADDED/ENABLED como PLANNED; estos reemplazos corrigen esas secciones, sin borrar historia de decisiones.
+- `atlanticus-decisions` documenta como objetivo compatibilidad para cambios de `evaluator_key`/`kind` y migración de priority group, mientras Runtime aún los rechaza.
+- `is_adoptable` vs `requires_execution_upgrade`: planner B1 admite nuevas disposiciones, executor anterior no las ejecuta con garantía; no confundir PASS de tests de planificador con éxito de adopción.
+- Futura adopción global, Effective Head, Delivery local exacto, qualification real, Cosmos/Blob E2E y propiedades del volumen físico multi-host siguen UNVERIFIED/PLANNED.
+- Baseline Python de Project `3.14.7` vs pin actual `==3.14.2` permanece en frente transversal independiente.
+
+## Condición de actualización
+
+Una vez que el usuario integre estos reemplazos en `atlanticus-cannonical`, corroborar HEAD/diff por Git solo lectura. Después abrir un chat técnico único para el **diseño** de Runtime Adoption durable; cualquier nueva implementación requiere consenso/autorización.

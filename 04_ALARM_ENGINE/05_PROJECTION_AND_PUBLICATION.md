@@ -1,42 +1,51 @@
 # Alarm Engine — Projection and Publication
 
-Estado: **CURRENT / SOURCE V3 AND PROJECTION ADAPTERS / MATERIALIZATION LOCAL OUTPUT DECIDED, NOT IMPLEMENTED**
+Estado: **CURRENT / SOURCE V3 + LOCAL MATERIALIZATION READY / GLOBAL EFFECTIVE PLANNED**
 
-## Capas que no deben fusionarse
+Fuentes: `atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e`; canonical previamente `58241ddb6db5adbd2e783c7ec9f456f1bda5a321`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
 
-```text
-Alarm Source/Release (Blob durable objetivo en dominios migrados)
-Alarm Configuration base/operational Projection (Cosmos puede servirla)
-B.2 Runtime Configuration (candidato READY)
-B.2 Delivery Configuration (mismo candidato READY)
-Runtime Effective Configuration (adopción posterior)
-Alarm Live Projection (estado operacional actual)
-Alarm Management Projection (historial de acciones)
-```
-
-## Source y proyección — CURRENT
-
-`AlarmConfigurationSnapshot(configuration, tool_dependencies: ToolDependencyManifest)`; `source document_type=ada_command_center_alarm_configuration_release`, `schema_version=3`. V2 **SUPERSEDED**, sin decoder legacy.
-
-`ProjectionRecord[AlarmConfigurationSnapshot]` conserva release, snapshot íntegro y evidencia Tool congelada. Existen codec, builder y stores Local/Cosmos de Alarm Configuration. La lectura operativa real contra Cosmos y la publicación del productor aún no se han probado E2E: **UNVERIFIED**. El hecho de existir un adapter no demuestra disponibilidad de infraestructura.
-
-No reinterpretar `Rn/Cn` mediante latest Tool Catalog. El Confirmed Tool Catalog consolidado termina en Storage y no necesita proyección adicional a Command Center Cosmos.
-
-## Materialization — decisión nueva
-
-Materialization es la frontera de lectura de la proyección operativa en Cosmos. Valida el candidato y qualifications exactos e invoca el resolver puro B.2. **Su salida de configuración pasa al volumen compartido**, no a otro documento Cosmos.
+## Capas separadas
 
 ```text
-READY   -> Runtime + Delivery [misma AlarmResolutionKey] + evidencia local
-BLOCKED -> findings/diagnóstico sin publicar Runtime ni Delivery ejecutables
+Alarm Source/Release (Blob: destino durable objetivo donde ya existe migración)
+Alarm Configuration Projection (Cosmos puede servir a Materialization)
+B.2 Runtime Configuration + B.2 Delivery Configuration (pareja READY)
+Runtime Effective Configuration (futura adopción global durable)
+Alarm Live Projection (estado actual y enriquecimiento exacto posterior)
+Alarm Management Projection (historial, frontera separada)
 ```
 
-La versión actual `backend/processes/alarms-materialization==0.2.1` implementa, en cambio, `CosmosAlarmMaterializationResultStore`, con resultado monolítico Cosmos. Es **CURRENT en código / SUPERSEDED como diseño**; deberá reemplazarse limpiamente. Los nombres `runtime.json`, `delivery.json`, `manifest.json`, `ready.json`, `effective.json` y su estructura de rutas fueron **propuestos**, no aprobados como contratos físicos definitivos. La próxima implementación debe estudiar utilidades de publicación local existentes antes de fijar rutas/codec/atomicidad.
+La existencia de adaptadores no equivale a prueba de infraestructura. Source document type `ada_command_center_alarm_configuration_release`, schema v3: `AlarmConfigurationSnapshot(configuration, tool_dependencies: ToolDependencyManifest)` congela Cn en Rn. V2 queda SUPERSEDED sin decoder legacy contratado. `ProjectionRecord[AlarmConfigurationSnapshot]` conserva contenido y procedencia. Materialization utiliza la proyección activa adquirida mediante el adaptador Cosmos y revalida su identidad antes de publicar. **UNVERIFIED:** el flujo real Manager/Blob/Cosmos en infraestructura operativa.
 
-La publicación READY no escribe ni adelanta EFFECTIVE. El puntero/registro EFFECTIVE pertenece a Runtime Adoption, en incremento posterior. No confundir un puntero a versión publicada con un commit de adopción.
+El Confirmed Tool Catalog consolidado termina en Storage en su dominio migrado; no crear otra proyección de catálogo para reinterpretar Rn. B.2 usa el manifest Tool exacto de Rn y evidencia de qualification correspondiente.
 
-## Consumidores y proyecciones posteriores
+## CURRENT: publicación local de Materialization
 
-Engine y Delivery consumen los artefactos locales de una materialización **exacta** por `AlarmResolutionKey`. No requieren conexión a Cosmos para cargar esos contratos. Que una publicación Web Live pueda necesitar una salida operacional adicional corresponde a otro incremento; no convertir la discusión sobre *consumo de configuración* en una prohibición no comprobada sobre todas las integraciones posteriores de Delivery.
+El proceso `scopes/ada-command-center/backend/processes/alarms-materialization` publica en:
 
-Live representa estado operacional actual y combina la configuración Delivery de la revisión efectiva con el estado producido por Engine. Management Projection representa historial de acciones, en otro job. Web no re-evalúa reglas ni re-resuelve B.2.
+```text
+VOLUMEN_PATH/ada-command-center/alarms/materialization/
+  ready.json
+  versions/<result_id>/
+    manifest.json
+    runtime.json             # sólo READY
+    delivery.json            # sólo READY
+```
+
+`result_id = "alarm-materialization-" + sha256(JSON canónico de source_key, projection_digest, qualification_digest)` según función compartida `materialization_result_id`. El manifest contiene: `document_type=ada_command_center_alarm_materialization_result`, `schema_version=1`, `source_key`, `result_id`, `status`, `resolution_key`, `provenance`, `findings`, `artifacts` y SHA256/tamaño por artefacto READY. La función compartida de lectura verifica identidad, esquema, procedencia, integridad de bytes y pareja Rn/Cn. `ready.json` incluye `source_key`, `result_id`, `resolution_key` y `manifest_sha256`; su formato es `ada_command_center_alarm_materialization_ready`, schema 1.
+
+Las versiones publicadas son inmutables. El writer prepara una carpeta staging, valida el contenido y promueve la carpeta de versión mediante rename; después publica el puntero READY con `AtomicJsonStore`. El lector puede recuperar el READY publicado o leer un resultado exacto con `source_key`, `result_id` y hash. Un puntero corrupto o artefacto incoherente falla cerrado, **sin fallback silencioso** a otra versión. Un BLOCKED conserva manifest/findings sin Runtime ni Delivery ejecutables; no desplaza el READY anterior. Materialization **nunca** escribe EFFECTIVE.
+
+El código de salida `CosmosAlarmMaterializationResultStore` está SUPERSEDED y fue eliminado del árbol actual; la **adquisición Cosmos de entrada se conserva**. El antiguo codec local duplicado del proceso fue sustituido por el codec compartido, sin adaptador legacy. El resolver B.2 sigue siendo una función pura, aunque su paquete también contiene el lector local compartido; no atribuir pureza I/O al paquete entero.
+
+**Límite físico UNVERIFIED:** el código usa rename/FSync y fencing del job, pero no hay ensayo demostrado de la semántica del sistema de archivos/volumen real bajo varios hosts. No inferir atomicidad universal multi-FS o multiinstancia a partir de tests unitarios.
+
+## CURRENT B1: identidad y planificación, no adopción
+
+`AlarmConfigurationArtifactRef(source_key, result_id, manifest_sha256, resolution_key)` hace explícita la **materialización exacta**. Dos artefactos con la misma Rn/Cn pueden requerir planificación distinta si difiere la evidencia de qualification. `AlarmConfigurationRevision` la incorpora y se construye desde un resultado READY leído y un registro de evaluadores explícito. La construcción no sustituye la validación física de hashes del lector compartido.
+
+## PLANNED: EFFECTIVE y publicación posterior
+
+La adopción del Runtime deberá convertir una versión exacta READY en EFFECTIVE sólo tras reconciliación y autoridad durable. El formato, owner de publicación y recuperación del Effective Head **no están implementados**. No confundir el `ready.json` presente con un `effective.json` existente ni considerar que un plan B1 adelanta EFFECTIVE.
+
+Engine y futuro Delivery deben usar exactamente la materialización adoptada; no elegir latest READY de forma independiente. Delivery/Live y Management son incrementos separados. No convertir esta regla de **lectura de configuración** en una afirmación general de que otras integraciones posteriores no pueden utilizar Cosmos.
