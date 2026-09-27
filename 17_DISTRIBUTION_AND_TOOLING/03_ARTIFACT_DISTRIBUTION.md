@@ -1,8 +1,8 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT / WEB PORTABLE QUALIFIED / DOCKER PARTIAL / PRODUCTION OPEN**
+Estado: **CURRENT / WEB PORTABLE HISTÓRICO CLOSED / DOCKER PARTIAL / PRODUCTIVE PIPELINE OPEN**
 
-Checkpoint Web inspeccionado: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`.
+Inspección de frontera actual para el traspaso: `moragaga/atlanticus@392ee281a32396516fb08c23c63514d8cbdb3489`. Qualification Web Starter histórica sobre checkpoint previo `c2bf25e...`; no atribuirle rebuild ni tests en HEAD actual.
 
 ## Frontera contractual
 
@@ -10,41 +10,44 @@ Checkpoint Web inspeccionado: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad3757
 SOURCE → ARTIFACT → DISTRIBUTION INPUT
 ```
 
-Atlanticus produce artifact y contrato de entrega. El pipeline corporativo y el despliegue concreto pertenecen a DevOps/consumidor; no crear un framework de distribución paralelo.
+Atlanticus produce artifact y contrato de entrega. El pipeline corporativo y el deployment específico pertenecen a DevOps/consumidor; no crear un framework paralelo. Los wheels internos y externos del wheelhouse son archivos separados, no librerías públicas embebidas dentro de nuestros wheels. La necesidad de cada rueda externa debe auditarse contra locks y dependencias antes de eliminarla.
 
-## Backend — contexto histórico no revalidado aquí
+## Backend — implementación existente, sin requalification en este cierre
 
-`deployment/processes/bundle.py` y scripts existentes proporcionan generación y controles backend. Los procesos KPI tienen su propio alcance. Este cierre Web **no** reejecutó builds de procesos backend ni comprueba que la referencia histórica `scripts/local-process.sh` exista hoy.
+Hay scripts de generación y validación de procesos y `deployment/local/generate_compose.py` para artifacts **de procesos**. El generador actual descubre artifacts, valida `.env` locales, contratos de proceso y genera un workspace Compose específico. No atribuirle perfiles `infra/app/full` ni una orquestación integrada ADA Web + Cosmos + Azurite sin evidencia. Revisar `deployment/processes`, scripts y contracts vigentes en el nuevo chat; no recuperar referencias históricas obsoletas como `scripts/local-process.sh` sin comprobar su existencia.
 
 ## Web — CURRENT
 
-`generate_starter.py` produce Starters editables Generic/ADA con manifest por archivo. `build_wheelhouse.py` construye la clausura de dependencias runtime y build a partir de locks, incorporando ruedas internas y externas con integridad SHA256 y compatibilidad de plataforma. `qualify_starter.py` prueba instalación aislada offline y comportamiento de endpoints/callback/assets.
+- `tooling/distribution/web/generate_starter.py` crea Starters editables Generic/ADA con manifest.
+- `build_wheelhouse.py` construye la clausura runtime+build offline a partir de locks, ruedas internas/externas, hashes SHA256 y tags compatibles.
+- `qualify_starter.py` prueba instalación aislada y endpoints, callbacks y assets.
+- `distribution/` es salida generada, no una nueva fuente de código.
 
-Evidencia manual compartida: `SOURCE_SMOKE / PASS` y `PORTABLE / PASS` para ambos perfiles con Python 3.14.2; wheelhouses observados de **36** y **108** archivos, respectivamente. Los wheels de bibliotecas externas son dependencias directas/transitivas o de build; no están embebidos dentro de nuestros wheels, ni todas las ruedas del wheelhouse necesariamente se instalan en runtime final.
+**VERIFIED MANUAL HISTÓRICO:** SOURCE_SMOKE y PORTABLE para Generic/ADA bajo Python 3.14.2; wheelhouses observados Generic 36 y ADA 108. No es una prueba de generación desde el HEAD actual ni una aprobación para eliminar ruedas externas indiscriminadamente.
 
-## Docker parcial
+## Docker actual y dirección posterior
 
-Template actual multistage: `python:3.14.2-slim-bookworm`, instalación offline, verificador de hashes, usuario no root, healthcheck, `python -m application`, puerto **8050**, entorno **local-only**. El usuario construyó ambas imágenes; ambas contestaron `/health/live`. Generic sirvió `/example`; ADA devolvió una página HTML de acceso denegado. No interpretar liveness como autorización de Navigation, Manager accesible o despliegue productivo.
+En el código inspeccionado, el template Web es multistage offline con `python:3.14.2-slim-bookworm`, verificación de wheelhouse, usuario no root, healthcheck, `python -m application`, puerto interno **8050** y restricción **local-only**. Las pruebas históricas verificaron build y `/health/live` de Generic/ADA, pero no readiness integral ni producción. ADA `/example` devolvió `Acceso denegado` con Manager `disabled`.
 
-## Estados de qualification independientes
+**PROPOSED / NOT IMPLEMENTED AS VERIFIED HERE:** un Dockerfile Web único reutilizable para local/producción, host Gunicorn y puerto interno `8000`, configuraciones/secretos inyectados y bootstrap real sin identidad local ficticia en producción. La baseline objetivo global es Python `3.14.7` e imagen `python:3.14.7-slim-trixie`; los paquetes Web/Starter observados aún conservan metadata y template `3.14.2`. La migración requiere inventario y decisión explícita, no un reemplazo ciego.
+
+## Variables, pipeline y servicios — fronteras OPEN
+
+`*.env.detail` son contratos documentales **sin secretos**. Las plantillas inactivas y mappings para DEV/UAT/PRD son intención anterior, no archivos efectivos verificados durante este cierre; auditar los templates que realmente existan antes de definir nombres o valores. Valores derivados deben identificarse a partir del código, nunca suponerse. DevOps/host resolverá secretos conforme al pipeline real.
+
+Cosmos/Azurite local y propuesta `infra`, `app`, `full`: **PLANNED / UNVERIFIED COMO COMPOSE INTEGRADO**. Existen herramientas locales separadas en `connectivity/docker/` y Compose de procesos; comprobar qué es reusable antes de acordar una única topología. En producción la infraestructura base se prepara externamente; la Web puede asegurar/validar sólo recursos de aplicación autorizados. Separar Tool Source, Tool Projection y KPI Delivery cuando el contrato lo exige.
+
+## Gates no equivalentes
 
 | Frontera | Estado |
 |---|---|
-| SOURCE_SMOKE Generic y ADA | CLOSED / VERIFIED MANUAL |
-| PORTABLE Generic y ADA | CLOSED / VERIFIED MANUAL |
-| Docker build/liveness de ambas imágenes | VERIFIED MANUAL / PARTIAL |
-| ADA `/example` permitido vía Navigation en navegador | OPEN / FINDING |
-| Manager Home/header/sidebar/Navigation visibles desde Starter | OPEN |
-| Host Gunicorn y puerto 8000 local+producción | PROPOSED / PLANNED |
-| Identidad productiva y despliegue Azure | PLANNED / UNVERIFIED |
-| Cosmos/Azurite local, restart y aprovisionamiento | PLANNED / UNVERIFIED |
+| SOURCE_SMOKE y PORTABLE Web históricos | CLOSED / VERIFIED MANUAL |
+| Docker Web build y liveness históricos | VERIFIED MANUAL / PARTIAL |
+| Header/colores en ADA Generic core local | CLOSED / VERIFIED MANUAL, alcance distinto |
+| Starter ADA Manager + Navigation HTML | OPEN / UNVERIFIED |
+| Rebuild de artifacts y wheelhouses desde HEAD nuevo | OPEN / UNVERIFIED |
+| Unificación Docker / Gunicorn / puerto 8000 | PLANNED / UNVERIFIED |
+| env/pipeline/secret mapping; Compose local integrado | PLANNED / UNVERIFIED |
+| Entra, Cosmos/Azurite restart real, CI y Azure | PLANNED / UNVERIFIED |
 
-## Decisión posterior, todavía no implementada
-
-La opción recomendada es **un solo Dockerfile** para local y producción, con Gunicorn, puerto interno **8000**, healthcheck y configuración/secretos inyectados. El punto de entrada productivo debe reutilizar la composición real y no inventar una identidad local en producción. Esta recomendación no sustituye al Dockerfile CURRENT hasta que se implemente y cualifique.
-
-## Configuración y servicios
-
-Los templates de secretos y mappings DEV/UAT/PRD viajarán inactivos y sin valores sensibles; su incorporación permanece PLANNED. Los servicios locales Cosmos/Azurite apoyarán qualification, pero el artifact no crea infraestructura Cloud productiva. Los contratos Tool Source, Tool Projection y KPI Delivery pueden requerir conexiones distintas.
-
-Las referencias canónicas previas que describían toda la Web portable como UNVERIFIED están **SUPERSEDED para la prueba PORTABLE observada**, no para producción, navegación real ni Azure. Python actual 3.14.2; 3.14.7 es migración futura.
+**NEXT único:** auditoría de artifacts/locks/generadores sobre HEAD vigente. La decisión de implementación se tomará después de esa auditoría; no abrir Docker y Compose en el mismo incremento.

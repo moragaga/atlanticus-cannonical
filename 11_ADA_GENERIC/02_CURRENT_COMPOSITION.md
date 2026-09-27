@@ -1,12 +1,12 @@
 # ADA Generic — Current Composition
 
-Estado: **CURRENT / CORE CLOSED HISTORICALLY / GENERATED STARTER MANAGER-NAVIGATION GAP OPEN**
+Estado: **CURRENT / CORE STAGE 1 CLOSED / LOCAL MANAGER VISUAL CLOSED / GENERATED STARTER INTEGRATION OPEN**
 
-Implementación inspeccionada: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`. El cierre Web no equivale a requalification integral de ADA Generic.
+Última inspección estática para el cierre local: `moragaga/atlanticus@392ee281a32396516fb08c23c63514d8cbdb3489` (2026-09-27). Las pruebas históricas de Starter y Docker se realizaron sobre checkpoints anteriores y no se atribuyen al HEAD de este cierre.
 
 ## Composición y bootstrap CURRENT
 
-ADA Generic integra branding, operational header y shell, Navigation, alarm surfaces, content state, render binding, operational state, runtime experience, global indicators, time status y consumos configurados. Capabilities conservan ownership independiente; Atlanticus core no depende de ADA.
+ADA Generic compone branding y shell operacional, Navigation, alarm surfaces, content state, render binding, operational state, runtime experience, global indicators, time status y los consumos configurados. Cada capability conserva su ownership independiente; Atlanticus core no depende de ADA.
 
 ```text
 AdaGenericSettings
@@ -17,31 +17,38 @@ AdaGenericSettings
 → READY | UNCONFIGURED | UNAVAILABLE | INVALID
 ```
 
-Un estado distinto de READY preserva la Web base y sus diagnósticos. Runtime lee Tool Projection durable, no Source ni fallback implícito. Una Projection Tool válida no requiere Source disponible. Cuando Tool READY y KPI Delivery Cosmos está configurado, se compone el Collector existente; el polling es lazy/worker-local y browser consume caché, no Cosmos inline.
+Un estado distinto de READY conserva Web base y diagnósticos. Runtime consume Tool Projection durable, no Source ni fallback implícito. Si Tool está READY y KPI Delivery Cosmos está configurado, se adjunta el Collector existente. Polling lazy/worker-local; navegador consume caché, no Cosmos inline. `OperationalRenderBinding` sólo comunica estructura y no posee estado ni render universal. `1 ToolComponent → 1 dcc.Store`; los subcomponents no generan stores adicionales.
 
-`OperationalRenderBinding` comunica sólo estructura. Collector y render mantienen dependencias separadas. `1 ToolComponent → 1 dcc.Store KPI`; Subcomponents no generan stores adicionales. El body concreto pertenece al consumidor de la Tool.
+## Manager + Navigation CURRENT en core
 
-## Manager y Navigation CURRENT en el core
+- Home pública no obliga a tener identidad; Navigation y su middleware siguen sus contratos de autorización.
+- Manager se integra sólo al disponer de stores/dependencies. `ADA_MANAGER_PERSISTENCE_PROVIDER` admite `auto|local|durable|disabled`; `auto + local → local`, `auto + production → disabled`; `durable` productivo requiere host con IdentityProvider real y no se simula mediante identidad local.
+- Con Manager activo, Navigation puede consumir la proyección compartida; Manager Home/sidebar/header son propios y no se fusionan con el shell operacional ADA.
+- Root autorizado/local confiable pueden recibir `administrative_override` sólo conforme al contrato. No conceder override a invitados por ausencia de datos.
 
-- La composición operacional monta Navigation y autorización sin exigir Identity para la Home pública.
-- Manager se integra sólo cuando hay dependencies/stores; el bootstrap puede incorporar identidad local explícita conforme al entorno. `ADA_MANAGER_PERSISTENCE_PROVIDER`: `auto|local|durable|disabled`.
-- En CLI, `auto+local → local`; `auto+production → disabled`; `local` sólo en local; `durable` requiere stores y en producción un IdentityProvider externo real (CLI durable actual sólo local). No simular la identidad productiva mediante LocalIdentityProvider.
-- Navigation lee la proyección compartida con Manager donde se integra, y no inventa un menú fijo; Home es accesible con Navigation vacía.
-- Manager Home `/manager`, header y sidebar son propios y obtienen módulos del `ManagerModuleRegistry`; Navigation operacional y Manager authorization son fronteras distintas.
-- Root autorizado/local confiable pueden recibir `administrative_override` conforme al contrato, no existe override automático para invitados o usuarios sin privilegios.
+## Local Identity + representación — cierre nuevo
 
-## Composition externa del Starter CURRENT
+Sin `ATLANTICUS_LOCAL_IDENTITY_SUBJECT_ID`, el CLI usa `select_local_user()` (Jane o John, selección aleatoria por arranque). Establecerlo explícitamente sólo sirve para arranques deterministas. `manager_navigation_principal` obtiene, por subject local verificado y perfil local, **avatar e insignia Local** desde `atlanticus.web.users.local`: Jane rosa `#C85D91`, John azul `#3778C2`. El fallback de desconocidos y públicos y las reglas para usuarios administrados permanecen. Esto fue **VERIFIED STATIC** en `main` y **VERIFIED MANUAL** visualmente por el usuario. La salida de la suite corregida no se aportó en este chat.
 
-`tooling/distribution/web/starter/ada/src/application/composition.py` implementa `create_composition(binding)`, deriva `create_local_operational_composition()` y añade un módulo Web de ejemplo. `application/runtime.py` llama al host existente `run_operational_application(composition_factory=...)`; no hay segundo bootstrap ni segundo Manager.
+En el Manager ADA local se aceptó visualmente el header con marcas ADA y Atlanticus, enlaces `Manager Home` y retorno cuando aplica, etiqueta `Usuarios` y **sin nombre de usuario en el header**. La supresión es exclusivamente visual.
 
-**Brecha explícita:** `qualify_starter.py` inyecta `ADA_MANAGER_PERSISTENCE_PROVIDER=disabled`. El Docker ADA probado también se lanzó con esa configuración. Aunque el Manager/Navigation original existe en el core, esas pruebas no verifican su acceso, Home/sidebar/header, configuración/publicación/proyección de Navigation ni visual real en el Starter.
+## Composition externa del Starter — brecha aún OPEN
 
-**Finding comprobado manualmente:** el contenedor ADA devolvió HTML `Acceso denegado` para `/example`, pese a que la probe sintética registró `PASS`. El middleware sólo autoriza solicitudes de documentos HTML a rutas permitidas por Navigation; registrar la página Dash no autoriza automáticamente su visita. El motivo exacto se verificará con requests HTML/status y una proyección controlada, no eliminando el middleware.
+`tooling/distribution/web/starter/ada/src/application/composition.py` añade el módulo externo a la composición operacional existente; `application/runtime.py` usa `run_operational_application(composition_factory=...)`, sin segundo bootstrap, Manager ni Collector. La qualification histórica de `qualify_starter.py` y Docker ADA utilizó `ADA_MANAGER_PERSISTENCE_PROVIDER=disabled`. Por tanto, **no demuestra** Manager/header/sidebar en ese Starter ni publicación/proyección de Navigation desde él.
 
-## Evidencia y límites
+En aquella prueba Docker, la solicitud HTML a `/example` mostró `Acceso denegado`, aunque la probe sintética registró PASS. El middleware de Navigation autoriza rutas según definición proyectada; registrar una página Dash no otorga acceso. Resolverlo en qualification distribuida mediante solicitudes HTML reales, sin menú hardcodeado ni bypass de identidad.
 
-`SOURCE_SMOKE / PASS` y `PORTABLE / PASS` de Generic/ADA bajo Python 3.14.2, y builds/liveness Docker de ambos, fueron reportados por el usuario. Ninguna de esas verificaciones demostró Manager administrativo visible ni navegación ADA de browser. La implementación vigente de `APPLICATION_PUBLICATIONS_ROOT` permite publicar assets fuera de la instalación.
+## Estado de calificación
 
-## Siguiente foco único propuesto
+```text
+ADA GENERIC CORE / COLLECTOR STAGE 1     CLOSED / CURRENT (hitos previos)
+LOCAL MANAGER HEADER + USERS LABEL        CLOSED / VERIFIED MANUAL
+LOCAL JANE/JOHN NAVIGATION COLORS         CLOSED / VERIFIED MANUAL
+STARTER ADA MANAGER + NAVIGATION HTML     OPEN / UNVERIFIED
+GENERIC+ADA STARTER SOURCE/PORTABLE       CLOSED / VERIFIED MANUAL HISTÓRICO
+DOCKER BUILD + LIVENESS ANTIGUO          VERIFIED MANUAL / PARTIAL
+COSMOS/AZURITE + RESTART                 PLANNED / UNVERIFIED
+ENTRA PRODUCTIVA + PIPELINE              PLANNED / UNVERIFIED
+```
 
-`WEB-STARTER-MANAGER-NAVIGATION-VISUAL-INTEGRATION-QUALIFICATION`: primero diseño y acuerdos sobre composición de Manager y principal local del perfil correspondiente; después pruebas de ruta `/manager`, publicación/proyección de `/example`, solicitudes browser HTML autorizadas/denegadas y comprobación visual de header Manager, navegación y CSS. No fusionar headers, no añadir Manager ADA al Starter Generic por defecto, no bypass de identidad. Docker Gunicorn/8000, plantillas y emuladores son trabajos posteriores separados.
+No reabrir Collector ni convertir este cierre local en una qualification de distribución.

@@ -1,33 +1,23 @@
 # Manager — Navigation and Home
 
-Estado: **CURRENT / NAVIGATION CONFIGURATION CLOSED / ADA LOCAL FLOW QUALIFIED**
+Estado: **CURRENT / LOCAL HEADER + NAVIGATION UI CLOSED / DISTRIBUTED STARTER UNVERIFIED**
 
-Última verificación de implementación para este delta: `moragaga/atlanticus@a6061ffed59c8b04e64b0a7fdc17050ef463c850`.
+Inspección de este hito: `moragaga/atlanticus@392ee281a32396516fb08c23c63514d8cbdb3489`. La cualificación previa de Navigation local permanece registrada como antecedente; no se reejecutó aquí.
 
 ## `/manager` y Registry
 
-`/manager` es una Home real. No corresponde al primer módulo ni redirige implícitamente.
-`ManagerModuleRegistry` posee `modules`, `entries` e `items = modules + entries`.
-Home, sidebar y routing derivan de ese mismo registry. Un ítem sólo se representa cuando
-`visible_items(principal, policy)` autoriza su visibilidad.
+`/manager` es Home real, no el primer módulo ni una redirección implícita. `ManagerModuleRegistry` contiene `modules`, `entries` e `items`; Home, sidebar y routing derivan del registry y sólo representan `visible_items(principal, policy)` autorizados. El Manager tiene botón flotante, Home, sidebar y rutas administrativas propios. Navigation Core/Configuration posee rutas operacionales y autorización distinta. ADA Generic integra ambos sin fusionarlos.
 
-## Fronteras de navegación
-
-- Manager posee su botón lateral, Home, grupos, módulos, rutas administrativas y sidebar.
-- Navigation Core/Configuration posee rutas operacionales configurables y su autorización.
-- ADA Generic integra ambos sin fusionar la navegación administrativa con el menú operacional.
-- Las capacidades administrativas conservan sus propias claves Manager, por ejemplo
-  `navigation.manage`. La excepción de recuperación Navigation **no concede** por sí misma
-  permisos de otros módulos Manager.
+Las cards de Home y el sidebar consumen el mismo registry; las cards no ejecutan workflow. Conservar la separación del documento aprobado `manager_decisions/ATLANTICUS_MANAGER_GLOBAL_RULES_2026-09-02.md`: paginación de Home de seis cards y sidebar con filtro sobre elementos ya autorizados, sin duplicar fuentes de navegación.
 
 ## Grupos CURRENT de ADA Configuration Manager
 
 ```text
 Administración
-└── Users
+└── Usuarios
 
 Configuraciones
-├── Profiles
+├── Perfiles
 ├── Accesos
 ├── Navegación
 ├── Herramienta
@@ -35,37 +25,18 @@ Configuraciones
 └── Definiciones KPI
 ```
 
+`Usuarios` se configura en la composición ADA con `title='Usuarios'`. El nombre genérico del paquete y la ruta `/manager/users` permanecen intactos. Perfiles es igualmente un label de composición ADA.
+
+## Header CURRENT
+
+El Manager genérico admite marcas opcionales, título y subtítulo de host y `application_home_href` opcional. No impone logos ADA. La composición ADA inyecta **ADA y Atlanticus**; eliminó del header Los Pelambres. Conserva `Manager Home`, `Volver a la aplicación` cuando aplica y el contexto de sección según ruta autorizada. **No representa el nombre del usuario en el header**; el `principal` continúa participando en autorización y resolución de rutas. No reinstalar el nombre mediante otro contenedor o CSS oculto.
+
+La navegación operacional y el header operacional ADA siguen siendo independientes del header/sidebar Manager; no fusionarlos.
+
 ## Navigation Configuration CURRENT
 
-La superficie administrativa pertenece a Navigation Configuration y no depende físicamente de
-Profiles. Los proveedores opcionales son `NavigationProfileOption` y
-`NavigationProfileOptionsProvider`; ADA adapta Profiles a esas opciones.
+Su UI pertenece a Navigation Configuration y no depende físicamente de Profiles. ADA adapta perfiles mediante `NavigationProfileOption` / provider neutral. Paginación top-level 10/20, secciones como ítems y expansión efímera. No cambiar geometría o callbacks por el cierre del header.
 
-Paginación top-level: default `10`, valores `10/20`; mezcla root links y sections en orden
-durable. Una section es un ítem; sus hijos no cuentan en el total. Estado expandido efímero.
-El empty state conserva su área; corregir geometría, no esconder overflow como solución.
+## Evidencia y límite
 
-## Qualification local adicional — 2026-09-25
-
-**VERIFIED MANUAL / CLOSED en el entorno local del usuario:** ADA Generic arranca,
-Navigation permite guardar/publicar/proyectar, y la página Home consume el menú configurado.
-Tras una regresión posterior del callback, el usuario confirmó que el menú funciona sobre
-`a6061ffe`.
-
-**VERIFIED STATIC:** `a6061ffe` contiene controller fuera del Offcanvas, ruta previa en Store,
-distinción entre clic y cambio efectivo de pathname, y triggers sin atributo `title` de tooltip,
-con texto oculto accesible. No deducir ejecución de tests finales a partir de esa inspección.
-
-**UNVERIFIED:** clic móvil/escritorio bajo matriz de navegadores; persistencia real en
-Blob/Cosmos después de reiniciar; identidad Entra en un host productivo.
-
-## Estado
-
-```text
-NAVIGATION CONFIGURATION ADMIN UI           CLOSED / CURRENT
-ADA GENERIC NAVIGATION LOCAL FLOW           CLOSED / VERIFIED MANUAL / CURRENT
-NAVIGATION CLIENT CODE CORRECTION           CURRENT / USER-REPORTED FUNCTIONAL
-MANAGER REAL DURABLE PERSISTENCE            PLANNED / UNVERIFIED
-```
-
-El Manager genérico no cambia de contrato por esta qualification local.
+**VERIFIED STATIC:** los módulos actuales reflejan branding ADA/Atlanticus, ausencia del nombre en header, labels ADA y enlaces opcionales. **VERIFIED MANUAL:** el usuario aceptó header de ADA Generic local, enlaces, traducción y navegación de esta pantalla. **UNVERIFIED:** ese mismo recorrido en Starter ADA distribuido y persistencia durable Blob/Cosmos. No confundir prueba visual con qualification de docker/productiva.

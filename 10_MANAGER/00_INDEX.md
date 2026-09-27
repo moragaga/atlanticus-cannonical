@@ -1,44 +1,32 @@
 # Manager — Canonical Index
 
-Estado: **CURRENT GENERIC CORE / ADA FINAL ADMIN COMPOSITION + DURABLE ADAPTER COMPOSITION IMPLEMENTED / REAL PERSISTENCE QUALIFICATION OPEN**
+Estado: **CURRENT / HEADER + ADA LOCAL UI CLOSED / REAL PERSISTENCE QUALIFICATION OPEN**
+
+Checkpoint de este cierre: `moragaga/atlanticus@392ee281a32396516fb08c23c63514d8cbdb3489` (inspección estática de `main`, 2026-09-27). Canonical previo: `moragaga/atlanticus-cannonical@a4c813bf6c833455ebe4f5f0a5968b0633c7b045`. Ver `07_SOURCE_LEDGER.md` para separar evidencia manual, pruebas reportadas e implementación observada.
 
 | Archivo | Contenido | Estado |
 |---|---|---|
 | `01_APPLICATION_BOUNDARY.md` | Manager como capability independiente. | CURRENT |
-| `02_NAVIGATION_AND_HOME.md` | Home, sidebar, navegación administrativa y UI de Navigation Configuration. | CURRENT |
-| `03_WORKFLOW_AND_SESSION.md` | WORKSPACE/SOURCE/PROJECTION para módulos y frontera de entries administrativos. | CURRENT |
+| `02_NAVIGATION_AND_HOME.md` | Home, sidebar, header, navegación administrativa y UI Navigation Configuration. | CURRENT |
+| `03_WORKFLOW_AND_SESSION.md` | WORKSPACE/SOURCE/PROJECTION y entries administrativos. | CURRENT |
 | `04_TOOL_CONFIGURATION.md` | Tool Configuration y contrato Source/Projection. | FROZEN / CURRENT |
-| `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager genérico. | CURRENT |
+| `05_SOURCE_BLOB_HANDOFF.md` | Source/Projection consumido por Manager. | CURRENT |
 | `06_TESTING_BOUNDARY.md` | Testing contractual y frontera visual. | CURRENT POLICY |
-| `07_SOURCE_LEDGER.md` | Fuente histórica y checkpoint ADA Generic/Manager durable. | AUDIT LEDGER / UPDATED |
-| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap, Manager Access y cierres previos de UI. | CURRENT |
+| `07_SOURCE_LEDGER.md` | Evidencia histórica y cierre local de header/identidades. | AUDIT LEDGER |
+| `08_BOOTSTRAP_AND_ACCESS.md` | Bootstrap, acceso y frontera de identidad. | CURRENT |
 | `09_ADA_COMPONENT_LINKS.md` | Links externos y warmup. | CONTRACT DESIGN |
 
-## Autoridad y corte actual
+## Contratos CURRENT
 
-```text
-Implementación inspeccionada:
-moragaga/atlanticus@ce1213ec14cdee0be905c042c1cf513d71fb5b2d
+`ManagerModule` conserva Source/Projection y workflow de su dominio; `ManagerEntry` representa una capability administrativa sin Source/Projection ficticios, por ejemplo Users. `ManagerAuthorizationPolicy.can_view(principal, item)` controla visibilidad; `is_local` no constituye un bypass de permisos. Home y sidebar consumen `ManagerModuleRegistry` con autorización previa. `/manager` es Home propia, no una redirección a un módulo.
 
-Canonical base del reemplazo:
-moragaga/atlanticus-cannonical@6bd7f1f2616f954b422f3ddc1549a53a9b479682
-```
+El header es genérico: marcas, título/subtítulo y enlace opcional de retorno se inyectan por el consumidor. El Manager core no incorpora identidad gráfica ADA obligatoria ni muestra `principal.display_name` en el header. El principal sigue siendo requerido por autorización y para resolver el contexto de navegación; retirar la etiqueta visual no elimina autenticación.
 
-El checkpoint anterior `df5b99502265758e873e0565abf2176cc617104b` corresponde a una qualification histórica de UI Profiles; no representa el código CURRENT de este frente. Conservar su evidencia en el ledger.
-
-## Contratos Manager CURRENT
-
-`ManagerModule`: capability administrativa con Source/Projection y workflow de publicación/proyección.
-
-`ManagerEntry`: capability administrativa visible en el mismo shell, con navegación, routing y autorización, **sin** Source/Projection ficticios. Users sigue siendo `ManagerEntry` y conserva promoción individual y actualización inmediata.
-
-`ManagerAuthorizationPolicy.can_view(principal, item)` es el contrato genérico vigente. No existe bypass de autorización sólo por `principal.is_local` ni por tener un profile administrador. La confianza local de ADA Generic se restringe al proveedor/identidades locales aprobados en el entorno local; no transfiere permisos implícitos a producción.
-
-## ADA Configuration Manager CURRENT
+## Composición ADA CURRENT
 
 ```text
 Administración
-└── Users
+└── Usuarios
 
 Configuraciones
 ├── Perfiles
@@ -49,32 +37,14 @@ Configuraciones
 └── Definiciones KPI
 ```
 
-Perfiles sigue siendo generic Atlanticus; sólo ADA utiliza la etiqueta visible `Perfiles`. Profiles conserva UI propia, modal de edición de capability, paginación 10/20 y etiquetas Source/Projection inyectables con defaults genéricos. ADA Access permanece application-specific: `root/local` sin restricciones de perfil dentro del modelo Access; `basic/guest/custom` mediante grants explícitos conforme al contrato de ese dominio. Navigation generic no depende de Profiles; la composition ADA le suministra opciones de perfiles mediante provider neutral.
+ADA inyecta las marcas ADA y Atlanticus. La marca de Los Pelambres fue retirada **únicamente de este header y sus assets propios**; no se eliminaron recursos de otras aplicaciones. Los enlaces visibles son `Manager Home` y, cuando la aplicación host lo define, `Volver a la aplicación`. El header no muestra nombre de usuario. `Usuarios` y `Perfiles` son labels inyectados por ADA; la capability genérica Users/Profiles no cambia de nombre.
 
-Los cierres UI anteriores para Navigation, Access, Profiles y Users se conservan; pulido responsive y limpieza de tests permanecen diferidos sin reabrirse por esta qualification.
+## Fronteras abiertas, no confundibles con este cierre
 
-## Nuevo estado de persistencia ADA Generic
+- `MANAGER-LOCAL-INTEGRATION`: **CLOSED / VERIFIED LOCAL**.
+- `MANAGER-DURABLE-ADAPTER-COMPOSITION` y CLI de preparación: **CURRENT / previamente verificados en tests locales**; **real Blob/Cosmos/restart: OPEN / UNVERIFIED**.
+- Header de Manager en ADA Generic **source local**: **CLOSED / VERIFIED MANUAL** por el usuario.
+- Header/Manager y navegación HTML autorizada **dentro del Starter ADA distribuido**: **OPEN / UNVERIFIED**. El Starter históricamente se cualificó con Manager `disabled`; la aceptación visual del core no sustituye esa prueba.
+- Hallazgo histórico `NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT`: **BLOCKED / SEPARATE**, pendiente de revalidación sobre `main` antes de cualquier cambio.
 
-```text
-MANAGER-LOCAL-INTEGRATION
-CLOSED / VERIFIED LOCAL / CURRENT
-
-MANAGER-DURABLE-ADAPTER-COMPOSITION
-CLOSED / VERIFIED LOCAL / CURRENT
-
-MANAGER-RESOURCE-PREPARATION-CLI
-CLOSED / VERIFIED LOCAL CONTRACT / CURRENT
-
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / NEXT / UNVERIFIED
-```
-
-Manager durable reutiliza el Source `blob` y Projection `cosmos` de Tool **en este incremento**, sin convertirlo en una dependencia del Manager core genérico. El plan parcial tiene seis contenedores Cosmos internos en una conexión/base ADA y un Blob físico configurable para Source global, Source por Tool y Users Registry; Navigation usa `navigation-projection`, Profiles/Access usan `users-support` y Users promovidos usan `users-runtime`.
-
-La elección `auto|local|durable|disabled` controla el modo de Manager, **no la retención de datos**. El CLI local usa Jane/John; el productivo exige proveedor externo real para habilitar Manager durable y no lo inventa.
-
-**VERIFIED LOCAL:** 157 tests de ADA Generic, Ruff, mirrors y wheel tras 1H.1. **UNVERIFIED:** infraestructura Docker/Azure real, publicación/proyección/recovery y autorización end-to-end. Ver `15_WEB_PLATFORM/09_CURRENT_GAPS.md` y `15_WEB_PLATFORM/11_OPEN_ITEMS.md`.
-
-## Finding separado
-
-`NAVIGATION-MANAGER-AUTHORIZATION-CONSUMER-ALIGNMENT` permanece **BLOCKED / VERIFIED CONFLICT / SEPARATE** (`can_view` frente a `can_access`). No añadir shim ni alias durante la qualification de infraestructura.
+La siguiente frontera de este chat es **auditar distribución existente**; no se abre diseño de Manager ni de alarmas en este cierre.
