@@ -1,40 +1,40 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **CURRENT — Source v3, B.2, publicación local exacta, B1, B2a/B2b y vínculo B2c; integración física real UNVERIFIED**. Corte 2026-09-28: `atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013`.
+Estado: **CURRENT — Source v3, B.2 READY/BLOCKED local, pin y adopción exacta; Runtime/Delivery consumen artefacto exacto; infraestructura física UNVERIFIED**. Corte 2026-09-28. **Código del hito verificado por lectura remota en** `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` está un commit posterior con cambios sólo de ADA Generic Master Projection, fuera de este alcance. Los gates locales son evidencia del usuario, no CI de este checkout.
 
-## Invariantes de entrada y publicación
+## Invariantes de entrada
 
-- `AlarmConfiguration` editable: `rules` y `messages`, identidad estable `AlarmIdentity(family_key,alarm_key)`; la familia se deriva y no tiene objeto persistido independiente.
-- `AlarmConfigurationSnapshot` Source schema **v3** congela configuración Rn y `ToolDependencyManifest(Cn)` exacto. Source v2 está SUPERSEDED; no crear decoder legacy.
-- Save Draft, Validate y Publish respetan pin Cn, drift deliberado y referencias Tool exactas. `VALID_AT_SAVE != READY != EFFECTIVE`; INVALID, DISABLED y REMOVED conservan semánticas distintas.
-- `resolve_alarm_configuration` de `backend/alarms/materialization/resolver.py` es **puro**. El paquete contiene además codec y lector con I/O; no describirlo globalmente como puro.
-- La proyección Cosmos es **entrada** de Materialization; el job publica en volumen local un resultado READY inmutable con pareja Runtime/Delivery exacta y manifest o un resultado BLOCKED diagnóstico. No hay salida dual Cosmos/local ni `effective.json` bajo Materialization.
+- `AlarmConfiguration` editable: `rules`/`messages`, `AlarmIdentity(family_key,alarm_key)` estable; family no se inventa como aggregate persistido adicional.
+- `AlarmConfigurationSnapshot` Source schema **v3** congela Rn y `ToolDependencyManifest(Cn)` exacto. Source v2 SUPERSEDED, sin decoder legacy.
+- Save/Validate/Publish respetan pin Cn, drift deliberado y referencias Tool; `VALID_AT_SAVE != READY != EFFECTIVE`; `INVALID != REMOVED`, `DISABLED != REMOVED`, `TRACE_ONLY != REMOVED`.
+- `resolve_alarm_configuration` es puro; **el paquete** materialization incluye además codecs, reader e I/O. Cosmos puede ser entrada ProjectionRecord; la salida B.2 ya es **local READY/BLOCKED**, no Cosmos dual.
 
 ## Cadena exacta CURRENT
 
 ```text
-Projection/Source Rn-Cn
-  -> acquirer + qualification + B.2 resolver
-  -> READY local (manifest, runtime.json, delivery.json) / BLOCKED diagnóstico
-  -> lector local READY o lector exacto por result_id + manifest_sha256
-  -> AlarmConfigurationArtifactRef + AlarmConfigurationRevision
-  -> AlarmConfigurationAdoptionExecutor (WAL V1/V2 y confirmación)
-  -> AlarmEffectiveConfigurationHead derivado del WAL
-  -> RuntimeLocalConfigurationReader exacto + sesión del job fijada
+Source/Projection Rn-Cn -> adquisición/qualification -> resolver B.2
+  -> READY inmutable (manifest + runtime.json + delivery.json) / BLOCKED findings
+  -> lector READY para candidato o lector exacto por result_id+manifest_sha256
+  -> B1 AlarmConfigurationArtifactRef/Revision -> B2a adoption global WAL V1/V2
+  -> B2b EFFECTIVE derivado del WAL -> Runtime job/sesión fijada
+  -> Engine CURRENT v1 + FACTS v2 encadenados
+  -> Delivery input receiver reabre la misma Delivery Configuration exacta
 ```
 
-El token Rn/Cn identifica una resolución lógica; no identifica por sí solo un resultado de qualification: la adopción usa `source_key`, `result_id`, hash exacto del manifest y `resolution_key`. Los cambios Delivery-only también pueden exigir adopción durable sin cambio de grupo. El job pinnea la configuración efectiva y no reinterpreta latest READY en cada ciclo. Revalidar código si se propone modificar adopción, recovery o lectura exacta.
+`AlarmResolutionKey(Rn,Cn)` identifica resolución lógica pero **no** resultado físico de qualification; el pin añade `source_key`, `result_id` y manifest SHA. Cambios sólo Delivery también pueden exigir adopción durable, incluso sin group commit. El job fijado no reinterpreta latest READY en cada ciclo. `effective-head.json` está bajo runtime/state, no Materialization.
 
-## B2c.5c — frontera de fuentes CURRENT
+## B2c.5c: fuentes/requisitos conservados
 
-`processes/alarms-runtime/session.py` acepta `AlarmEvaluatorContract` con requisitos estáticos `tuple[DataRequirement,...]` o `requirements_resolver`, excluyentes. `source_adapter.py` y `source_reader.py` conectan el plan consolidado con el registro existente de fuentes, rutas de aplicación y `DatasetRuntime`/Parquet. Se entregan contextos por consumidor y los errores de fuente/esquema no deben confundirse con alarma INACTIVE. Existencia y pruebas con backend de datos controlado **no** demuestran carga real de todos los datasets.
+`AlarmEvaluatorContract` acepta requisitos estáticos `tuple[DataRequirement,...]` o un `requirements_resolver` alternativo; el plan consolida vistas pero cada alarma recibe sólo lo declarado. `source_reader.py` y adapter integran aplicaciones/fuentes/particiones registradas con `DatasetRuntime`/Parquet, sin confundir error de lectura/schema con INACTIVE. El entorno controlado no demuestra todos los datasets físicos.
 
-## B2c.5d — catálogo CURRENT, ejecución de ejemplo CLOSED local
+## B2c.5d: catálogo productivo y ejemplo
 
-El contrato de ejecución se resuelve por `(family_key,evaluator_key)` y entrega `EvaluationContext` con parámetros de negocio opcionales. El desarrollador define manualmente los requisitos de sus nuevos evaluadores: **no** calcular fuentes/particiones/columnas desde parámetros de configuración Web en el ejemplo/convenio actual. Esto refina la primera propuesta B2c.5d y **no elimina** el puerto genérico existente `requirements_resolver`.
+La lógica por `(family_key,evaluator_key)` declara manualmente requisitos de datos; sus parámetros de negocio Web son opcionales y no dirigen automáticamente fuentes/columnas/particiones. El puerto genérico `requirements_resolver` no se elimina. `catalog/registry.py` permanece con registro productivo vacío; `catalog/examples/threshold` contiene el ejemplo explícito de test `mina.threshold`: PI_INTERPOLATED/DAILY, `temperature` FLOAT/4h, `limit` opcional 80.0, `EvidenceSnapshot` JSON-compatible o ERROR. No generar lógicas productivas desde un ejemplo.
 
-`catalog/registry.py` devuelve registro de producción vacío; el ejemplo está en `catalog/examples/threshold/`, separado de cualquier catálogo operacional real, con espejo comentado. El ejemplo define PI_INTERPOLATED/DAILY, temperatura FLOAT y ventana 4h; usa `limit` opcional con default demostrativo 80.0. No introducir parámetros sintéticos ni validador universal. Evalúa ACTIVE/INACTIVE o ERROR; EvidenceSnapshot es JSON-compatible y corresponde a la alarma/ocurrencia conforme a reglas de Core, no es un mensaje directo a Web.
+## B2c.7: vinculación con publicación y Delivery
 
-## Frontera siguiente única
+El Engine produce `current/latest.json` v1 y FACTS runtime v2 sólo bajo sesión EFFECTIVE confirmada. El receiver de `processes/alarms-delivery` valida el pin de la salida contra la **proyección** EFFECTIVE y abre `delivery.json` con `LocalAlarmMaterializationReader.read_exact_ready`. Una mismatch provoca espera/rechazo, nunca fallback a READY más reciente ni reinterpretación de Rn/Cn. `alarms/contracts/*.schema.json` son definiciones estáticas, no JSON emitidos/sobrescritos en ejecución.
 
-**PLANNED B2c.6:** comprobar y, sólo tras acuerdo, conectar la composición de proceso realmente existente con `AlarmEvaluatorRegistry` productivo vacío, `build_alarm_source_adapter`, rutas/PI provider/volumen y demás dependencias ya contratadas. No inventar bootstrap o cliente global; primero inspeccionar entrypoints, scripts, `process.py` y tests reales. Fuera de B2c.6: nueva política de desactivación hasta fin de turno, semana operacional PI, Live/Analytics, nuevas fuentes y despliegue físico.
+## Frontera siguiente única, exclusiones
+
+**PLANNED:** verificar empaquetado/distribución y ejecutar Engine y Delivery independientemente en Docker. No volver a diseñar Source/B.2, no registrar evaluadores de ejemplo, no cambiar Web/fin del turno, no crear otro journal ni interpretar la publicación de FACTS como History/Live ya implementado. Los volúmenes v1 preexistentes requieren inventario/decisión antes de intentar v2.

@@ -1,18 +1,19 @@
 # Alarm Engine — Source Ledger
 
-Estado: **CURRENT / ledger de cierre B2c.5c + B2c.5d; base histórica B.2/B2a/B2b preservada como referencias; tests físicos/CI UNVERIFIED**. Fecha: 2026-09-28. El Git del asistente permanece READ ONLY.
+Estado: **CURRENT — inventario de fuentes y evidencia hasta B2c.7d**. Corte 2026-09-28. Git del asistente: SOLO LECTURA. No atribuir verificaciones de una generación a otra ni tratar logs como CI remoto.
 
-## Autoridades contrastadas
+## 1. Referencias del corte
 
 ```text
-Implementación a cierre: moragaga/atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013
-Decisions al corte   : moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical de base    : moragaga/atlanticus-cannonical@46877f174513b2475f17b7dc739cd43951fa4ed0
+Implementation HEAD del hito verificado   c67fcb5b105cc561c16719a8bca4ea5aa74c3fae
+Implementation actual main leído          bc1d73742bcb04eb495bbbb1725a8ad23d4eff38 (commit posterior sólo ADA Generic)
+Decisions main leído                       50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical main anterior al reemplazo      5558cf9d92d9b21758500024b6099011416d78da
 ```
 
-La comprobación del último HEAD se hizo contra el branch `main` y el contenido concreto del catálogo/registro. Los recuentos de pruebas proceden de logs aportados por el usuario; **no** se ejecutaron CI ni `pytest` en el checkout Git remoto. El commit a799 contiene cambios relativos al traslado de ejemplos; no adjudicar a Alarm Engine commits de otras áreas entre checkpoints.
+**Verificación remota adicional de este cierre:** Git confirmó el objeto `c67fcb5b105cc561c16719a8bca4ea5aa74c3fae` y su diff de ocho archivos. Se leyó el contrato FACTS v2 (`schema_version=2`), productor `output_batches.py` (`previous_batch`) y receptor `receiver.py` (validación de cadena) directamente en ese commit; también se verificó la presencia del test de integración y del schema CURRENT v1. El HEAD actual `bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` está un commit más adelante sólo por ADA Generic. Los resultados 32/162 PASS y Ruff son logs del usuario **anteriores al commit**: no implican ejecución de CI sobre checkout limpio.
 
-## Genealogía de implementación relevante
+## 2. Genealogía histórica preservada
 
 | Hito | SHA / referencia |
 |---|---|
@@ -22,75 +23,74 @@ La comprobación del último HEAD se hizo contra el branch `main` y el contenido
 | Salida Materialization local | `1076dfaab2537f2ccd4d7b3cc9df8dac245f534d` |
 | Lector compartido/adaptador inicial A | `9693e2b791b34624d551c52821274231ae05f2af` |
 | Artefacto exacto/planning B1 | `c8f23d91ae1cb817be55b4b812b22ffca518880e` |
-| Persistence B2a.1 V1 | `3c616dab38a80467359c48c05144389db0211b80` |
-| Persistence B2a.2 V2 | `e0578d3338138693430249803b6397e32f422227` |
+| Persistence B2a.1 adopción V1 | `3c616dab38a80467359c48c05144389db0211b80` |
+| Persistence B2a.2 adopción V2 | `e0578d3338138693430249803b6397e32f422227` |
 | B2b.1 Effective Head | `3ce75d87f7158f2cd70b53e6a99864b4c42bede9` |
 | B2b.2 lector Runtime exacto | `ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5` |
-| B2c.5c fuentes/requisitos + validación local | `672ed047f59459034d2fde23d05427e234bd01d5` |
-| B2c.5d catálogo/ejemplo inicial | `f5aeea997cf3672cd96fef104be83ab6b4f440b7` |
-| B2c.5d traslado final a examples | `a799dc15105d3e037f36ab77129ef0cfa8999013` |
+| B2c.5c fuentes/requisitos | `672ed047f59459034d2fde23d05427e234bd01d5` |
+| B2c.5d catálogo/example final | `a799dc15105d3e037f36ab77129ef0cfa8999013` |
+| B2c.7a CURRENT/FACTS inicial | `efe231d61c9d5a6f4eca1e3f22a201a9b3c1861b` (usuario, commit local) |
+| B2c.7b input receiver | `94f26213ca28b550baf53d8ee34e34da7538ad17` (usuario y Git remoto leído) |
+| B2c.7c prueba integración | `199fc0f4ff543fef6ff204a892370a53bf905423` (usuario, Git verificado) |
+| B2c.7d cadena FACTS v2 | `c67fcb5b105cc561c16719a8bca4ea5aa74c3fae` (usuario, Git verificado) |
 
-La genealogía original R3.5/F-010 no se sustituye con B2c y reside en `atlanticus-decisions:main/alarm_test/` y `08_QUALIFICATION_BASELINE.md`.
+Para R3.5/F-010 consultar los documentos originales de `atlanticus-decisions:main/alarm_test/`; los benchmarks de esa campaña son históricos, no qualification de B2c.7.
 
-## Archivos CURRENT comprobados
+## 3. Archivos implementados relevantes
 
 ```text
 scopes/ada-command-center/
   domain/alarms/src/ada_command_center/domain/alarms/
     definition.py, configuration.py, models.py
   backend/alarms/core/src/ada_command_center/alarms/core/
-    evaluation.py, models.py, lifecycle.py, priority.py, evidence.py, commit.py, deactivation.py
-  backend/alarms/persistence/src/ada_command_center/alarms/persistence/
-    configuration_adoption.py, effective_head.py, journal.py, store.py
+    evaluation.py, models.py, lifecycle.py, priority.py, evidence.py,
+    commit.py, deactivation.py
   backend/alarms/materialization/src/ada_command_center/alarms/materialization/
     resolver.py, artifact_reference.py, local_reader.py, runtime.py, delivery.py
+  backend/alarms/persistence/src/ada_command_center/alarms/persistence/
+    configuration_adoption.py, effective_head.py, journal.py, store.py
+  backend/alarms/contracts/
+    engine_resolved_current_state.v1.schema.json
+    engine_committed_facts_batch.v1.schema.json    # historical artifact; not v2 runtime adapter
+    engine_committed_facts_batch.v2.schema.json    # CURRENT runtime
   backend/processes/alarms-materialization/src/ada_command_center/processes/alarms_materialization/
     acquisition.py, qualification.py, publication.py, job.py, composition.py
   backend/processes/alarms-runtime/src/ada_command_center/processes/alarms_runtime/
-    adoption.py, adoption_execution.py, configured_iteration.py, local_configuration.py,
-    job_composition.py, process.py, operational_runner.py, cycle.py, session.py,
-    iteration.py, source_adapter.py, source_reader.py
-    catalog/__init__.py, catalog/registry.py
-    catalog/examples/__init__.py
-    catalog/examples/threshold/__init__.py, evaluator.py, requirements.py
-  backend/processes/alarms-runtime/commented/ada_command_center/processes/alarms_runtime/
-    catalog/registry.py, catalog/examples/threshold/*.py
+    process.py, application.py, bootstrap.py, configured_iteration.py,
+    operational_runner.py, cycle.py, session.py, source_adapter.py, source_reader.py,
+    catalog/registry.py, catalog/examples/threshold/*,
+    publication/output_current.py, publication/output_batches.py
+  backend/processes/alarms-delivery/src/ada_command_center/processes/alarms_delivery/
+    receiver.py, job.py, settings.py, bootstrap.py
+  backend/processes/alarms-runtime/commented/.../publication/
+  backend/processes/alarms-delivery/commented/.../
   backend/processes/alarms-runtime/tests/
-    test_parameterized_sources.py, test_alarm_source_reader.py,
-    test_example_threshold_catalog.py, test_example_threshold_cycle.py,
-    test_architecture.py, test_commented_mirror.py
-  web/alarms/configuration/src/ada_command_center/web/alarms/configuration/web/
-    layout.py, callbacks.py
+    test_output_batches.py, test_output_current.py,
+    test_example_threshold_cycle.py, test_configured_iteration.py
+  backend/processes/alarms-delivery/tests/
+    test_receiver.py, test_job.py, test_engine_delivery_integration.py
+  backend/pyproject.toml, backend/uv.lock
 ```
 
-En `a799dc1`, `catalog/registry.py` devuelve `AlarmEvaluatorRegistry(contracts=())`, no registra el ejemplo. Ejemplo real identificado por `(family_key='mina',evaluator_key='threshold')` sólo bajo imports explícitos de tests. `process.py` requiere los puertos `evaluator_registry` y `source_loader`, por lo que la futura composición debe inspeccionar/reutilizar interfaces ya presentes. `source_reader.py` soporta datasets parquet por aplicación; sin ambiente de datos reales este hecho no constituye prueba física.
+El registro de evaluadores productivo continúa vacío; el ejemplo se importa expresamente. La dependencia `atlanticus-state==1.0.0` requerida por publicación se añadió a Engine y corrigió el test explícito de dependencias. Ambos jobs están en el workspace uv; todavía hay que inspeccionar su empaquetado/distribución real del HEAD final.
 
-Web: `layout.py` presenta `default_deactivation.max_duration_hours` mediante `_number_field`; `domain/alarms/definition.py` acepta máximo habilitado entero 1..12. No existe evidencia de un contrato CURRENT para opción `fin del turno`; es un OPEN identificado por el usuario.
+## 4. Evidencia de B2c.7 delimitada
 
-## Evidencia local del usuario, delimitada
+```text
+B2c.7a  137 PASS / 1 SKIPPED; Ruff + format + diff PASS
+B2c.7b  151 PASS / 1 SKIPPED; Ruff + format + diff PASS
+B2c.7c    1 PASS integración; 152 PASS / 1 SKIPPED; Ruff + format PASS
+B2c.7d   32 PASS específicas; 162 PASS / 1 SKIPPED; Ruff + 61 format PASS
+```
 
-| Hito | Evidencia comunicada |
-|---|---|
-| A | Materialization 49, proceso 43, Runtime 23 PASS y gates Ruff/format/build delimitados. |
-| B1 | Materialization 62, Runtime 40, proceso 43 PASS, gates de los paquetes afectados. |
-| B2a.1 | Persistence 57 PASS, Ruff/format/diff PASS. |
-| B2a.2 | 18 específicas PASS, suite Persistence y Ruff/format/diff PASS tras corregir fixture de test. |
-| B2b.1 | 19 específicas y Persistence 94 PASS, Ruff/format/wheel/sdist PASS. |
-| B2b.2 | 15 específicas y Runtime 55 PASS, Ruff/format/wheel/sdist PASS. |
-| B2c.5c | Runtime+integration **119 PASS**; Core+Persistence+Materialization+Runtime+integration **436 PASS**; Ruff lint PASS, 33 archivos formateados, diff PASS. |
-| B2c.5d antes de traslado | 6 específicas, regresión **442 PASS**, lint PASS; formateo de un test seguía pendiente y no era gate completo. |
-| B2c.5d tras traslado | **7 específicas + 443 de regresión PASS**, Ruff lint PASS, **40 archivos format PASS**, diff PASS, antes del commit final. |
+B2c.7c usa Engine real y muestra controlada sobre `tmp_path`; B2c.7d aporta tests de `previous_batch`, missing first/intermediate, tampering, replay/recovery de cadena y rechazo de estado v1. El reporte del usuario no adjunta resultado de CI, wheel final o Docker independiente. No identificar el test SKIPPED sin ejecutar `pytest -rs`.
 
-**UNVERIFIED:** test rerun sobre checkout limpio de `a799dc1`, CI, wheel específico tras mover examples, todos los datasets físicos, Cosmos/Blob/Azure reales y volumen multi-host.
+## 5. Contratos y discrepancias
 
-## Discrepancias y límites
+- FACTS v2 strict del productor y receptor reemplaza semánticamente el runtime v1; **WAL adoption V1/V2 siguen ambos CURRENT**.
+- `current/latest.json` reemplazable y completo, FACTS archivos inmutables; schemas productivos en Git.
+- Cursor Engine y cursor Delivery tienen ownership distinto; ausencia de salida no se convierte en snapshot vacío o hecho ficticio.
+- READ ONLY: Git `atlanticus` ahora contiene el commit del hito; este ledger no implica que se efectuó push a decisions/canonical ni que se ejecutó CI de este commit.
+- B.1 (evaluator/kind/group, Special Cascade), inactive Messages, target/routing, fin de turno y Python 3.14.7/3.14.2 permanecen conflictos/OPEN documentados en `09_DECISION_INDEX.md` y `10_OPEN_ITEMS.md`.
 
-- **CURRENT vs decisions B.1:** `adoption.py` sigue rechazando `evaluator_key`, `kind` o `priority_group` que en decisiones históricas se quieren compatibles o migrables; pendiente separado, no corregido.
-- **CURRENT vs canonical de partida:** el corte documental `46877f...` termina con B2c PLANNED o sólo B2b; actualizar a través de estos reemplazos no implica que ya estén integrados remotamente.
-- **Python baseline:** Project 3.14.7 objetivo vs metadata Command Center `==3.14.2`; no editar como efecto lateral.
-- **OperationalScope PI:** el contrato actual carece de semana operacional genérica; `ShiftScope.CURRENT_WEEK` no equivale y FABRICA_PLANES WEEKLY es fuente distinta. KPI Runtime pendiente separado.
-- **OPEN Web:** deactivation fin de turno requiere contrato funcional, no sólo cambiar número por selector.
-
-## Próximo corte
-
-**B2c.6 — sólo auditar y acordar wiring del proceso** con los puertos existentes, catálogo productivo vacío y sources actuales; no mezclar qualification productiva, Web, Live, History ni migraciones ajenas.
+**Próxima lectura obligatoria:** confirmar que el árbol remoto disponible sigue incluyendo c67fcb5 y distinguir avances ajenos al foco; auditar `pyproject.toml`, `uv.lock`, scripts, assets y volumen real antes de cualquier modificación del job.

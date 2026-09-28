@@ -1,678 +1,262 @@
 # ADA Command Center — Alarm Live Delivery Contract
 
-Estado: **PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED**
+Estado: **PROJECT CONTRACT AGREED para Live; CURRENT/IMPLEMENTED únicamente para Engine outputs e input receiver; Live Projection aún NOT IMPLEMENTED**. Corte documental: 2026-09-28. Este reemplazo preserva los contratos conceptuales ya acordados y actualiza el estado de B2c.7 sin adelantarlos como servicios productivos completos.
 
-## 1. Authority checkpoint
-
-Implementación CURRENT auditada:
+## 1. Authority checkpoint y alcance de verificación
 
 ```text
-moragaga/atlanticus:main
-ebf736a1cf5193a297fbafc55c5c11ca9993f24c
+Implementación commit del hito leído directamente en Git:
+    moragaga/atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae
+Implementación último HEAD remoto leído (cambio posterior sólo ADA Generic):
+    moragaga/atlanticus@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38
+Decisions leído:
+    moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical base de estos reemplazos:
+    moragaga/atlanticus-cannonical@5558cf9d92d9b21758500024b6099011416d78da
 ```
 
-Canonical base de este delta:
-
-```text
-moragaga/atlanticus-cannonical:main
-3ffa87c0e4249d749af4e669a977dfd744a666bb
-```
-
-Decisions consultado:
-
-```text
-moragaga/atlanticus-decisions:main
-50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-Este documento distingue:
-
-```text
-VERIFIED / CURRENT
-DECISION RECORDED
-PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED
-OPEN
-```
+El HEAD local final es evidencia aportada por el usuario, no un commit remoto descargado durante este cierre. B2c.7d obtuvo 32 PASS específicas, 162 PASS/1 SKIPPED de regresión conjunta y Ruff PASS en Python 3.14.2 según logs locales; no es CI ni qualification Docker. Distinciones obligatorias: `VERIFIED / CURRENT`, `PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED`, `OPEN`, `CONFLICT`.
 
 ## 2. Propósito y ownership
 
-Este contrato consolida la frontera:
+El contrato separa:
 
 ```text
-B.2 Delivery Configuration
+B.2 Delivery Configuration (READY exacto)
 +
-Runtime resolved current state
+EngineResolvedCurrentState CURRENT v1 publicado
         |
         v
-Live Delivery
+Delivery input receiver CURRENT
         |
         v
-Alarm Live Projection
+[PLANNED] Live Delivery (materialización/enriquecimiento)
         |
         v
-Operational Web / Management Capture
+[PLANNED] AlarmLiveProjection
+        |
+        v
+Operational Web / Management Capture (separados)
 ```
 
-Live Delivery enriquece estado operacional ya resuelto. No es un segundo Engine.
-
-No debe:
-- descubrir Tools;
-- volver a SharePoint;
-- resolver Message precedence;
-- evaluar Rules;
-- recalcular lifecycle;
-- recalcular priority;
-- recalcular routing;
-- leer WAL como API operacional.
+Live Delivery **no** es otro Engine: no descubre Tools, consulta SharePoint, resuelve Message precedence, evalúa Rules, recalcula lifecycle/priority/routing ni lee el WAL como API de operación. El input receiver de B2c.7b/d almacena datos validados y un cursor: no tiene todavía responsabilidad de crear el `AlarmLiveProjection` ni registrar despachos operativos.
 
 ## 3. Alignment con EFFECTIVE
 
-Toda unión operacional exige:
+Se exige la misma `AlarmResolutionKey` y además el **artefacto exacto**:
 
 ```text
 EngineResolvedCurrentState.resolution_key
-== DeliveryAlarmConfiguration.resolution_key
-== AlarmEffectiveConfigurationHead.resolution_key
+  == DeliveryAlarmConfiguration.resolution_key
+  == EFFECTIVE.target_artifact_ref.resolution_key
+
+Exact pin = source_key + result_id + manifest_sha256 + resolution_key
 ```
 
-No se usa:
-- latest READY;
-- highest revision;
-- fallback a otra revisión.
+No usar latest READY, highest revision, fallback ni reinterpretar datos con otra qualification. El lector de entrada Delivery verifica la proyección `runtime/state/effective-head.json` y `LocalAlarmMaterializationReader.read_exact_ready`; no consulta directamente el WAL. La validación duradera completa de EFFECTIVE corresponde a Persistence/Engine; no atribuirla automáticamente al lector físico de la proyección.
 
-Si falta el artifact exacto, no se reinterpretan datos bajo otra configuración.
-
-## 4. DeliveryAlarmConfiguration
-
-PROJECT CONTRACT AGREED:
+## 4. DeliveryAlarmConfiguration — CURRENT preexistente
 
 ```text
-DeliveryAlarmConfiguration
+DeliveryAlarmConfiguration:
     resolution_key: AlarmResolutionKey
     alarms: tuple[ResolvedDeliveryAlarm, ...]
 ```
 
-`alarms` contiene todas las Rules definidas de la revisión válida:
+Conserva todas las Rules **definidas**: activas presentes; disabled presentes con `is_active=false`; TRACE_ONLY presentes; removed ausentes. `DISABLED != REMOVED` y `TRACE_ONLY != REMOVED`. Orden de serialización determinista preferido: `AlarmIdentity`.
+
+## 5. ResolvedDeliveryAlarm — contrato estático
 
 ```text
-active      -> present
-disabled    -> present with is_active=false
-TRACE_ONLY  -> present
-removed     -> absent
+ResolvedDeliveryAlarm:
+    identity, is_active, visibility_mode
+    display_name, title, cause_template
+    kind, criticality, business_category, operational_areas, color
+    default_deactivation_policy, messages, visual_targets
 ```
 
-Esto preserva:
+**No** copiar `rule_name`, `is_special_condition`, `evaluator_key`, parámetros, `priority_group`, `priority_order`, reappearance, escalation, `AlarmRouting`, callables/DataRequirements/DataLoadPlan ni hot state. En particular, nunca entregar `priority_order` a Web para recomputar prioridad.
+
+## 6. Messages y deactivation capability
+
+`ResolvedDeactivationPolicy(enabled,max_duration_hours,approval_required)` es política estática ya resuelta en B.2. `ResolvedDeliveryMessage(message_key,display_text,deactivation_policy)` contiene opciones para nuevas acciones: override ausente hereda Rule default; override presente reemplaza completamente. Delivery **no** vuelve a calcular precedencia. Un Message `is_active=false` sigue siendo definición válida, pero no seleccionable para una gestión nueva; `message_keys=()` es válido. La política `hasta fin del turno` no está definida por este contrato y sigue OPEN.
+
+## 7. Visual targets y Tool ownership
+
+Contrato conceptual:
 
 ```text
-DISABLED != REMOVED
-TRACE_ONLY != REMOVED
-```
-
-Orden serializable recomendado: `AlarmIdentity`.
-
-## 5. ResolvedDeliveryAlarm
-
-Shape conceptual acordado:
-
-```text
-ResolvedDeliveryAlarm
-    identity
-    is_active
-    visibility_mode
-
-    display_name
-    title
-    cause_template
-
-    kind
-    criticality
-    business_category
-    operational_areas
-    color
-
-    default_deactivation_policy
-    messages
-    visual_targets
-```
-
-No se proyectan por conveniencia:
-
-```text
-rule_name
-is_special_condition
-evaluator_key
-parameters
-priority_group
-priority_order
-reappearance
-escalation
-AlarmRouting
-callables / DataRequirements / DataLoadPlan
-hot lifecycle state
-```
-
-En particular, Delivery no recibe `priority_order`: no debe poder reconstruir predominancia.
-
-## 6. Resolved Messages y deactivation capability
-
-Policy estática ya acordada:
-
-```text
-ResolvedDeactivationPolicy
-    enabled
-    max_duration_hours
-    approval_required
-```
-
-Messages operacionalmente seleccionables:
-
-```text
-ResolvedDeliveryMessage
-    message_key
-    display_text
-    deactivation_policy: ResolvedDeactivationPolicy
-```
-
-B.2 ya aplicó:
-
-```text
-override absent  -> Rule default
-override present -> full replacement
-```
-
-El consumer nunca repite esa precedencia.
-
-Un Message `is_active=false` sigue siendo validado, pero no aparece como opción para nuevas gestiones.
-
-`message_keys=()` continúa siendo válido.
-
-## 7. Visual targets resueltos
-
-Tool Configuration conserva ownership de estructura/topología. `DeliveryAlarmConfiguration` no copia `ToolStructure`.
-
-Target conceptual:
-
-```text
-ResolvedAlarmVisualTarget
-    tool_key
-    tool_kind
+ResolvedVisualTarget:
+    tool_key, tool_kind
     component_keys
-    subcomponents
-        owner_component_key
-        subcomponent_key
+    subcomponents: (owner_component_key, subcomponent_key)
     process_projection_mode?
 ```
 
-`tool_kind` materializa la clasificación que B.2 ya tuvo que resolver. El universo actual elegible es:
+Tool Configuration conserva estructura/topología y nombres; Delivery no copia `ToolStructure`, Tool display name, source release por Tool, display names de Component/Subcomponent, linked topology ni layout role. Elegibles actuales: PROCESS e INTEGRATED_OPERATIONS; STRATEGIC sin Alarm Projection sigue fuera. La identidad linked es la pareja orientada owner/subcomponent.
+
+## 8. Routing y visual projection separados
+
+`visual_targets` y Runtime `assignments/pending_assignments` son hechos diferentes. No existe decisión que autorice «visual target visible sólo si Tool assigned». Una superficie que necesite esa intersección requiere decisión separada, no una regla implícita en Delivery o Web.
+
+## 9. EngineResolvedCurrentState — CURRENT como salida serializada v1
+
+B2c.7a implementó `alarms/contracts/engine_resolved_current_state.v1.schema.json` y `AlarmCurrentStatePublisher`; la salida física es `runtime/output/current/latest.json`, con `document_type`, `schema_version=1`, `artifact_ref`, `state` y SHA256. `state` contiene `resolution_key`, `as_of` y todas las occurrences abiertas al terminar el ciclo. Por occurrence:
 
 ```text
-PROCESS
-INTEGRATED_OPERATIONS
+identity, occurrence_id, episode_id, started_at
+current evaluation (evidence OR error), priority disposition/blockers
+technical_hold?, management_cycle, management_effect?, deactivation_effect?
+pending_deactivation_request?, assignments, pending_assignments
 ```
 
-`STRATEGIC` permanece fuera mientras Tool Configuration no defina Alarm Projection para ese kind.
+Es un snapshot **completo y reemplazable**, no un `GroupRuntimeSnapshot` durable, ni una muestra de prueba, ni un conjunto de deltas por prioridad. La ausencia física se distingue de un snapshot válido con `alarms=[]`. La implementación conservó hashes, timestamp UTC y protección frente a retroceso/conflictos de `as_of`.
 
-No se duplican:
-- Tool display name;
-- SourceReleaseId por Tool;
-- ToolStructure;
-- component/subcomponent display names;
-- linked-component topology;
-- layout role.
+## 10. Evaluación actual y Evidence
 
-Para linked subcomponents se conserva la dirección inequívoca `(owner_component_key, subcomponent_key)`.
+`AlarmOperationalCycleResult` entrega evaluaciones completas y `GroupLifecycleDecision` ya resuelto. `AlarmEvaluation` aporta `EvidenceSnapshot(contract_key,contract_version,payload)` si corresponde, o `EvaluationError` para ERROR. `RuntimeEvaluationState` caliente no contiene por sí solo evidence físico suficiente para Live. Un ACTIVE→ACTIVE sin nuevo commit puede cambiar evidence y actualizar CURRENT; no reconstruirlo desde muestreo de History.
 
-## 8. Routing y visual projection siguen separados
-
-`visual_targets` y Runtime `assignments/pending_assignments` son hechos distintos.
-
-No existe decisión vigente que autorice:
+## 11. Orden de publicación
 
 ```text
-visual target visible IFF Tool assigned
+evaluate -> lifecycle -> management/deactivation -> routing -> priority
+-> persist required changes -> durable confirmed
+-> build/publish CURRENT v1
+-> export FACTS v2 desde commits durables
+-> Delivery input receiver
+-> [PLANNED] Live materialization
 ```
 
-Por tanto este contrato no inventa esa intersección. Si una superficie futura la necesita, deberá decidirse explícitamente.
+La publicación CURRENT no debe preceder el commit que necesita. Si no existe mutación durable, aún se permite CURRENT nuevo. El cursor exportador FACTS sólo avanza tras haber escrito cada lote. Una interrupción entre ambos es recuperable por verificación/idempotencia.
 
-## 9. EngineResolvedCurrentState
+## 12. Cause materialization — CONTRACT AGREED / NOT IMPLEMENTED
 
-PROJECT CONTRACT AGREED:
+`cause_template + current EvidenceSnapshot.payload -> cause_text` se resolverá **backend-side** en el futuro Live Delivery. Web no interpola placeholders. `LiveCause.status` será `RESOLVED`, `TECHNICAL_UNAVAILABLE` o `MATERIALIZATION_ERROR`, con `text: str|None`.
 
-```text
-EngineResolvedCurrentState
-    resolution_key: AlarmResolutionKey
-    as_of: datetime
-    alarms: tuple[ResolvedCurrentAlarmState, ...]
-```
-
-Contiene sólo occurrences abiertas al terminar el ciclo.
-
-Por occurrence:
-
-```text
-ResolvedCurrentAlarmState
-    identity
-    occurrence_id
-    episode_id
-    started_at
-
-    evaluation
-    priority
-
-    technical_hold?
-    management_cycle
-    management_effect?
-    deactivation_effect?
-    pending_deactivation_request?
-
-    assignments
-    pending_assignments
-```
-
-No es un reemplazo durable de `GroupRuntimeSnapshot`; es una salida operacional resuelta.
-
-## 10. Evaluación actual y evidence
-
-VERIFIED CURRENT:
-
-`AlarmOperationalCycleResult` ya conserva las `AlarmEvaluation` completas del ciclo junto con los `GroupLifecycleDecision` resueltos.
-
-Una evaluación física contiene:
-
-```text
-EvidenceSnapshot
-    contract_key
-    contract_version
-    payload
-```
-
-El hot `RuntimeEvaluationState` CURRENT conserva sólo status/timestamp/error key y no es suficiente para Live content.
-
-Por tanto, `EngineResolvedCurrentState` usa la evaluación completa del ciclo, no reconstruye evidence desde history sampling ni convierte el WAL en read API.
-
-Una evaluación `ACTIVE -> ACTIVE` puede cambiar valores sin producir lifecycle mutation. Aun así el nuevo Current State debe reflejar los valores actuales.
-
-## 11. Momento de producción del Current State
-
-Orden lógico target:
-
-```text
-evaluate
--> reduce lifecycle
--> finalize management/deactivation
--> resolve routing
--> resolve priority
--> persist required Engine changes
--> commit confirmed
--> build EngineResolvedCurrentState
--> Live Delivery
-```
-
-Si el ciclo no requiere commit durable, puede igualmente producir un nuevo Current State.
-
-No se publica una salida derivada de un commit requerido que todavía no fue confirmado.
-
-## 12. Cause materialization
-
-`cause_template` es configuración estática y no representa por sí solo el contenido visible.
-
-Live Delivery resuelve:
-
-```text
-cause_template
-+ current EvidenceSnapshot.payload
--> cause_text
-```
-
-El Web consume `cause_text`; no interpreta placeholders.
-
-Shape conceptual:
-
-```text
-LiveCause
-    status: RESOLVED | TECHNICAL_UNAVAILABLE | MATERIALIZATION_ERROR
-    text: str | None
-```
-
-### RESOLVED
-
-Current physical evidence contiene los valores requeridos y el backend materializa el texto.
-
-### TECHNICAL_UNAVAILABLE
-
-Durante `AlarmEvaluation.status=ERROR` / technical hold no existe current `EvidenceSnapshot`. No se presenta silenciosamente un valor físico anterior como actual.
-
-### MATERIALIZATION_ERROR
-
-La occurrence es operacionalmente real pero el template no puede materializarse con el payload actual.
-
-Regla acordada:
-
-```text
-content materialization failure != hide operational alarm
-```
-
-La occurrence permanece publicable según visibility/priority y se emite diagnóstico.
-
-OPEN: CURRENT no dispone de un schema evaluator-evidence suficientemente explícito para validar estáticamente todos los placeholders de `cause_template`.
+Un ERROR/technical hold no reutiliza un valor físico anterior como current. Un fallo sólo de cause **no** oculta una occurrence operacional real: conserva la occurrence si es publicable y emite diagnóstico. Sigue OPEN el schema evaluator-evidence necesario para validar estáticamente todos los placeholders.
 
 ## 13. Technical hold
 
-CURRENT permite una occurrence abierta mientras la evaluación está `ERROR` durante el grace period.
+Una occurrence abierta puede estar bajo technical hold durante la gracia prevista por Core. Si es publicable, Live debe incluir `evaluation_status=ERROR`, `technical_hold.started_at/due_at` y `cause.status=TECHNICAL_UNAVAILABLE`. Technical hold no convierte ERROR en INACTIVE ni habilita evidencia falsa.
 
-Si su disposición sigue siendo publicable, permanece en Live con:
-
-```text
-evaluation_status = ERROR
-technical_hold.started_at
-technical_hold.due_at
-cause.status = TECHNICAL_UNAVAILABLE
-```
-
-Technical hold no equivale a normalización física.
-
-## 14. Priority publication rule
-
-DECISION RECORDED + PROJECT CONTRACT AGREED:
+## 14. Regla de publicación Live por prioridad — CONTRACT AGREED
 
 ```text
-PUBLISH occurrence
-IFF
-    occurrence is open
-    AND matching Delivery Rule exists
-    AND visibility_mode == VISIBLE
-    AND priority_disposition IN {PREDOMINANT, DEACTIVATED}
+Publicar IFF occurrence abierta + Rule existe en Delivery exacto
+            + visibility_mode == VISIBLE
+            + disposition IN {PREDOMINANT, DEACTIVATED}
 ```
 
-Matriz:
-
-| Engine disposition | VISIBLE | TRACE_ONLY |
+| Disposición del Engine | VISIBLE | TRACE_ONLY |
 |---|---|---|
-| `PREDOMINANT` | publish | omit |
-| `DEACTIVATED` | publish | omit |
-| `ECLIPSED` | omit | omit |
-| `CASCADE_SUPPRESSED` | omit | omit |
+| PREDOMINANT | publicar | omitir |
+| DEACTIVATED | publicar | omitir |
+| ECLIPSED | omitir | omitir |
+| CASCADE_SUPPRESSED | omitir | omitir |
 
-Target elimina `PriorityDisposition.SHADOW` junto con `PlannedAlarm.delivery_enabled`.
-
-Una TRACE_ONLY predominante no causa promoción de una visible eclipsada.
+Priority se determina en Engine; TRACE_ONLY predominante **no** promueve otras Rules para Web. Este contrato no implementa la proyección por el solo hecho de que CURRENT ya incluya disposition de todas las abiertas.
 
 ## 15. Managed y deactivated en Live
 
-Management no redefine la condición física.
+`ManagementEffect` no altera verdad física. Una Rule ACTIVE/PREDOMINANT gestionada y otra ACTIVE/DEACTIVATED pueden ser ambas visibles si cumplen el criterio. `ECLIPSED` y `CASCADE_SUPPRESSED` se excluyen de Live, no de la trazabilidad de Engine. El Web no recalcula predominancia.
 
-Una occurrence `PREDOMINANT` puede publicarse aunque tenga `ManagementEffect`; Management es un atributo actual.
+## 16. Campos actuales de management/deactivation
 
-Una occurrence físicamente activa con `DEACTIVATED` también permanece en Live. Esto permite representar simultáneamente, por ejemplo:
-
-```text
-A ACTIVE / DEACTIVATED
-B ACTIVE / PREDOMINANT
-```
-
-Ambas pueden existir en la misma Live Projection si son `VISIBLE`. Web no recalcula cuál es predominante.
-
-`ECLIPSED` y `CASCADE_SUPPRESSED` no se entregan como alarmas operacionales actuales.
-
-## 16. Current management/deactivation fields
-
-Current State expone, cuando existen:
-
-```text
-CurrentManagementState
-    effect_id
-    effective_at
-    reappearance_due_at?
-
-CurrentDeactivationState
-    effect_id
-    effective_from
-    effective_until
-```
-
-`management_cycle` pertenece al current occurrence.
-
-La configuración estática de max duration/approval no se duplica en estos objetos; vive en Delivery Configuration para futuras acciones.
+Si existen: `CurrentManagementState(effect_id,effective_at,reappearance_due_at?)` y `CurrentDeactivationState(effect_id,effective_from,effective_until)`; `management_cycle` pertenece a occurrence. Políticas estáticas max duration/approval permanecen en Delivery Configuration, no duplicadas como verdad operacional.
 
 ## 17. Pending deactivation request
 
-CURRENT Runtime recibe pending durable requests fuera de `AlarmRuntimeState`. Son estado operacional relevante para Web.
+Sólo asociar pending request si `request.alarm_identity == current identity` y `request.source_occurrence_id == current occurrence_id`; payload mínimo `request_id`, `requested_at`, `effective_until`. No adjuntar una request vieja a una occurrence nueva. **OPEN:** cleanup/invalidation autónoma de pending requests stale sin decisión recibida.
 
-El Current State debe asociar una request sólo cuando:
-
-```text
-request.alarm_identity == current identity
-AND request.source_occurrence_id == current occurrence_id
-```
-
-Shape mínimo:
+## 18. AlarmLiveProjection — PROJECT CONTRACT AGREED / NOT YET IMPLEMENTED
 
 ```text
-CurrentPendingDeactivationRequest
-    request_id
-    requested_at
-    effective_until
-```
-
-Esto permite expresar `PENDING_APPROVAL` y evitar una segunda solicitud innecesaria.
-
-Una request de una occurrence anterior no se adjunta a la nueva occurrence.
-
-OPEN: cleanup/invalidation autónoma de pending requests que quedan stale sin recibir decisión.
-
-## 18. AlarmLiveProjection
-
-Target conceptual:
-
-```text
-AlarmLiveProjection
-    resolution_key
-    as_of
+AlarmLiveProjection:
+    resolution_key, as_of
     occurrences: tuple[AlarmLiveOccurrence, ...]
 ```
 
-`AlarmLiveOccurrence` contiene información ya resuelta para Web:
+`AlarmLiveOccurrence` reúne pin/identidad/occurrence/episode, fechas, evaluation status, priority disposition, display_name/title/cause, kind/criticality/business category/areas/color, hold, management, deactivation, pending request, assignments y pending assignments, Messages/policy y visual targets. El Web no recibe `cause_template`, `priority_order`, overrides de Message, Tool Catalog ni AlarmDefinition.
+
+Ni el `LocalAlarmDeliveryReceiver` ni sus snapshots de inbox son este modelo. No nombrar el proceso B2c.7b como «Live Delivery completado».
+
+## 19. Semántica de snapshot y errores
+
+Una imagen Live representa exactamente `resolution_key + as_of`, es completa y permite `occurrences=[]` válido. Si una occurrence publicable no tiene Rule correspondiente en el Delivery Configuration exacto, fallar con diagnóstico y no descartarla silenciosamente. Un error únicamente de cause se representa como `MATERIALIZATION_ERROR` conservando la occurrence.
+
+## 20. Responsabilidades de Web
+
+Web puede filtrar por active/deactivated/managed y dibujar targets resueltos; **no** ordena priority, promueve ECLIPSED, calcula cascade, resuelve routing o Message overrides ni recalcula capacidad de deactivation.
+
+## 21. Management round-trip — CONTRACT AGREED
 
 ```text
-resolution_key
-identity
-occurrence_id
-episode_id
-started_at
-evaluated_at
-
-evaluation_status
-priority_disposition
-
-display_name
-title
-cause: LiveCause
-
-kind
-criticality
-business_category
-operational_areas
-color
-
-technical_hold?
-management state
-deactivation state
-pending deactivation request?
-
-assignments
-pending_assignments
-
-messages
-default_deactivation_policy
-visual_targets
+ManagementSubmission:
+    input_id, resolution_key, alarm_identity
+    source_occurrence_id, source_evaluated_at
+    tool_key, message_key?, requested_deactivation_until?
 ```
 
-El Web no necesita `cause_template`, `priority_order`, Message overrides, Tool catalogs ni AlarmDefinition.
+El browser devuelve **intención**, no evidence/política como autoridad. `source_occurrence_id` es el objetivo operacional; `source_evaluated_at` es provenance auditora, **no** optimistic lock. Management Capture valida pin EFFECTIVE exacto, Message/capability y agrega actor/timestamp confiables. Este servicio queda fuera de B2c.7.
 
-## 19. Snapshot semantics
+## 22. Engine mantiene autoridad de Management
 
-Un Live snapshot representa un único:
+Target Engine input ya acordado:
 
 ```text
-resolution_key + as_of
+ManagementAction:
+    input_id, alarm_identity, source_occurrence_id
+    tool_key, actor_key, source_created_at
+    deactivation_intent? (effective_until, approval_required)
 ```
 
-La materialización lógica es completa, no parcial por group.
+El Engine decide `EFFECTIVE`/`ADDITIONAL`/`LATE` incluso si Capture validó una intención que ya envejeció. CURRENT/Core contienen modelos de effect, pending request, Journey e InputReceipt. Eso no acredita que Management Capture/Web estén implementados.
 
-Un snapshot vacío es válido cuando no hay occurrences publicables.
+## 23. CURRENT disponible y pendiente real
 
-Si existe una occurrence que debería materializarse pero falta su Rule en la `DeliveryAlarmConfiguration` exacta, no se elimina silenciosamente la occurrence para continuar. La nueva materialización falla con diagnóstico.
+**VERIFIED en código/gates locales de B2c.7:** `AlarmOperationalCycleResult` conserva evaluaciones; Engine publica CURRENT serializado v1 de las occurrences abiertas; exporta FACTS v2 confirmados e inmutables; Delivery input receiver valida/copía ambas salidas y conserva cursor independiente; test de integración controlada cubrió datos NOTPII y recreación de instancias.
 
-Un error sólo de cause es diferente: puede expresarse como `MATERIALIZATION_ERROR` sin perder la occurrence.
+**NOT YET IMPLEMENTED:** enriquecimiento Live definitivo, `AlarmLiveProjection`, materialización de cause, registro de despachos/escalamientos propios de Delivery, History/Analytics, Web y Management Capture E2E.
 
-## 20. Web filtering vs business decisions
+## 24. OPEN de diseño/qualification
 
-Web puede filtrar la proyección ya resuelta, por ejemplo:
+- Owner/package concreto de la fase **Live materializer**, aunque el package actual `processes/alarms-delivery` ya es owner del **input receiver**. No crear otro proceso remoto por inferencia.
+- Schema evaluator-evidence para validación de `cause_template`.
+- Proveedor concreto y semántica de `shift_end`, no inventada.
+- Ciclo de vida de pending requests stale.
+- Store/schema/version/codec finales del **snapshot Live** (distintos de CURRENT input v1 ya implementado).
+- Cadencia de publicación Live y retención histórica/datos externos.
+- Eventual intersección visual-target/routing, sólo si producto la decide.
+- Qualification distribuida, Docker independiente y uso físico/multi-host de Engine/Delivery.
+- Migración controlada si existen cursores/lotes FACTS v1; no añadir runtime adapter legacy.
 
-```text
-Active Alarm surface
-Deactivated filter
-Managed filter
-layout by visual targets
-```
+## 25. Conflictos con decisions que no resuelve este cierre
 
-Eso no autoriza a Web a:
-- ordenar `priority_order`;
-- promover eclipsed Rules;
-- calcular cascade suppression;
-- resolver routing;
-- resolver Message precedence;
-- recalcular deactivation capability.
-
-## 21. Management round-trip
-
-La proyección Live entrega la identidad y provenance necesarias para una gestión, pero el browser devuelve intención, no una copia autoritativa de la evaluación.
-
-Submission conceptual acordada:
-
-```text
-ManagementSubmission
-    input_id
-    resolution_key
-    alarm_identity
-    source_occurrence_id
-    source_evaluated_at
-    tool_key
-    message_key?
-    requested_deactivation_until?
-```
-
-`source_occurrence_id` es el target operacional.
-
-`source_evaluated_at` es provenance de auditoría de lo que vio el operador; no es optimistic lock. Una evaluación posterior dentro de la misma occurrence no invalida por sí sola la acción.
-
-El browser no devuelve como autoridad:
-
-```text
-evidence payload
-cause_text
-approval_required
-max_duration_hours
-resolved Message policy
-```
-
-Management Capture valida el exact Effective key, resuelve Message/capability, agrega actor/timestamp confiables y produce el input operacional.
-
-## 22. Engine authority sobre Management result
-
-Target Engine input acordado:
-
-```text
-ManagementAction
-    input_id
-    alarm_identity
-    source_occurrence_id
-    tool_key
-    actor_key
-    source_created_at
-    deactivation_intent?
-        effective_until
-        approval_required
-```
-
-Aunque Capture haya validado la submission, la occurrence puede cambiar antes del ciclo que aplica la acción. El Engine mantiene autoridad final y produce:
-
-```text
-EFFECTIVE
-ADDITIONAL
-LATE
-```
-
-CURRENT ya materializa `ManagementEffect`, `DeactivationRequest`, `DeactivationEffect`, Journey e `InputReceipt`; `input_id` correlaciona el round-trip.
-
-## 23. VERIFIED CURRENT que habilita este diseño
-
-- `AlarmOperationalCycleResult` conserva evaluaciones completas del ciclo;
-- `AlarmEvaluation` aporta `EvidenceSnapshot` para ACTIVE/INACTIVE y `EvaluationError` para ERROR;
-- `GroupLifecycleDecision` conserva priority, management, deactivation y assignments resueltos;
-- open occurrences están en `GroupLifecycleState`;
-- pending deactivation requests entran al ciclo como inputs durables;
-- Engine decide `EFFECTIVE / ADDITIONAL / LATE`;
-- Input receipts correlacionan inputs aplicados con commits.
-
-No existe todavía `EngineResolvedCurrentState`, Live Delivery ni `AlarmLiveProjection` como packages/contratos implementados.
-
-## 24. OPEN
-
-Permanece OPEN:
-- owner/package concreto de Live Delivery;
-- schema evaluator-evidence para validar `cause_template`;
-- proveedor concreto de `shift_end`;
-- stale pending-request lifecycle sin decisión;
-- physical store/schema/version/codec del Live snapshot;
-- publication cadence;
-- retention;
-- eventual relación visual-target/routing si producto decide una en el futuro.
-
-No inventar estos detalles para implementar los contratos ya cerrados.
-
-## 25. Conflictos con decisions
-
-B.1 frozen Special Cascade sigue en conflicto con la suppression uniforme CURRENT por ranking.
-
-Además, B.1 contiene una formulación donde B.2 exige Message activo, mientras el Project acordó que un Message inactive permanece válido pero no seleccionable para nuevas acciones. Esta reconciliación debe registrarse explícitamente en `atlanticus-decisions`; canonical no la oculta.
+B.1 frozen Special Cascade y suppression uniforme por ranking CURRENT requieren reconciliación formal. La regla de Message inactivo válido/no seleccionable para nuevas acciones también debe reconciliar ciertas formulaciones históricas de B.1/B.2. `adoption.py` conserva rechazos frente a compatibilidad/migración esperada de cambios evaluator/kind/group. Documentar diferencias sin editar código en este cierre.
 
 ## 26. Invariantes congelados
 
 ```text
-Delivery Configuration y Runtime Configuration comparten AlarmResolutionKey.
-Delivery/Live usan sólo el exact Effective key.
-Delivery Configuration contiene todas las Rules definidas, incluidas disabled/TRACE_ONLY.
-Removed significa ausencia.
+Runtime/Delivery config comparten AlarmResolutionKey y exact artifact pin.
+READY != EFFECTIVE; sin fallback a latest READY.
+Delivery Configuration incluye defined Rules disabled y TRACE_ONLY; removed ausente.
 Delivery no contiene priority source data ni evaluator code.
-Message override se resuelve completamente en B.2.
-Inactive Message no es seleccionable para nuevas gestiones.
-ToolStructure no se copia al Delivery artifact.
-Visual targets y routing assignments siguen siendo contratos distintos.
-EngineResolvedCurrentState usa current cycle evaluation, no Evidence History.
-Current evidence se usa para materializar cause_text backend-side.
-Web no interpreta cause_template.
-Technical ERROR no reutiliza un valor físico viejo como current.
-Cause materialization failure no oculta una alarma operacional real.
-Priority se resuelve antes de Live Delivery.
-VISIBLE + PREDOMINANT se publica.
-VISIBLE + DEACTIVATED se publica.
-ECLIPSED/CASCADE_SUPPRESSED no se publican.
-TRACE_ONLY no se publica y no promueve otra Rule.
-Management y technical hold son atributos, no motores de priority en Web.
-Live snapshot es completo para un resolution_key + as_of; vacío es válido.
-Management devuelve identity/intention, no evidence como autoridad.
-source_occurrence_id es target operacional.
-source_evaluated_at es provenance, no lock.
-Engine mantiene autoridad final EFFECTIVE/ADDITIONAL/LATE.
-No aliases legacy.
-No adapters temporales.
+Message precedence se resuelve una sola vez en B.2.
+Inactive Message válido pero no elegible para nuevas gestiones.
+ToolStructure no se copia en Delivery; visual targets != routing assignments.
+Engine CURRENT usa current-cycle evaluation, no Evidence History.
+Web no interpreta cause_template ni recalcula priority/routing/capability.
+ERROR técnico no convierte muestras viejas en current evidence.
+Cause error no oculta la alarma; fallo por Rule exacta faltante bloquea materialización.
+VISIBLE+PREDOMINANT y VISIBLE+DEACTIVATED se publican en Live futuro;
+ECLIPSED/CASCADE_SUPPRESSED y TRACE_ONLY no se publican.
+Live snapshot es completo para resolution_key+as_of y admite vacío válido.
+Management devuelve identidad/intención; Engine conserva autoridad del resultado.
+source_occurrence_id es target; source_evaluated_at es provenance, no lock.
+B2c.7 FACTS runtime v2 encadena previous_batch; no v1 adapters.
+Input receiver no constituye Live Projection ni Analytics implementado.
 ```
 
-## 27. Foco único siguiente
+## 27. Siguiente frontera acordada
 
-```text
-B.2 — Materialization Owner/Package + Implementation Boundary
-```
-
-Primero cerrar ownership físico/lógico mínimo; después implementar backend-first en incrementos pequeños y verificables.
+**PLANNED / foco único siguiente:** qualification de **artefactos distribuidos y ejecución Engine + Delivery en Docker como procesos independientes**. Auditar primero el empaquetado/entrypoints, las dependencias, los schemas existentes, el montaje compartido y el entorno; no inventar nuevos contratos ni implementar Live/History durante este gate. La migración de histórico FACTS v1 requiere decisión explícita si se encuentra un volumen real afectado.

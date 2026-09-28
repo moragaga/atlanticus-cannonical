@@ -1,64 +1,46 @@
 # Alarm Engine — Persistence and Recovery
 
-Estado: **CURRENT / IMPLEMENTED / GATES LOCALES CLOSED; INFRAESTRUCTURA FÍSICA UNVERIFIED**.
+Estado: **CURRENT — WAL, adopción V1/V2, EFFECTIVE derivado y FACTS v2; despliegue físico UNVERIFIED**. Corte 2026-09-28. El exportador no crea otro WAL: consume commits confirmados del existente. **Código del hito verificado por lectura remota en** `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` está un commit posterior con cambios sólo de ADA Generic Master Projection, fuera de este alcance. Los gates locales son evidencia del usuario, no CI de este checkout.
 
-Implementación: `scopes/ada-command-center/backend/alarms/persistence`, verificada en `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`.
-
-## Frontera durable existente
+## Frontera durable única
 
 ```text
-Authority check -> validar/alinear JournalHead y previous state
--> fenced append + flush/fsync WAL -> JournalHead.durable
+Authority check -> validar/alinear JournalHead + previous state
+-> fenced WAL append + fsync -> JournalHead.durable
 -> materializar snapshots -> JournalHead.materialized
--> (si hay adopción) proyectar runtime/state/effective-head.json
+-> proyectar EFFECTIVE si hubo adopción confirmada
+-> generar CURRENT y exportar FACTS DESPUÉS de confirmación cuando corresponde
 ```
 
-El WAL es **la única autoridad**; `JournalHead.durable` confirma exactamente hasta qué byte y registro existe autoridad durable. `materialized` indica cuánto replay/snapshot está materializado. El Effective Head es una **proyección reconstruible**, no journal adicional ni sustituto del WAL. Ni el READY de Materialization ni los snapshots de grupo confieren autoridad global.
+El WAL es **única autoridad** sobre commits y adopción; Durable Head identifica la región autoritativa y Materialized Head limita replay agrupado. `runtime/state/effective-head.json` es proyección reconstruible, no WAL alternativo. READY y los snapshots por grupo no confieren autoridad global.
 
-## Contratos de adopción CURRENT
+## Adopción CURRENT: WAL V1 y V2, ambos válidos
 
-**B2a.1 — `ConfigurationAdoptionRecord` v1:** registro de adopción global durable de un artefacto exacto sin group commits. Incluye `adoption_id`, `previous_artifact_ref` opcional, `target_artifact_ref`, `effective_at`, `committed_at` y hash canónico. Permite primer bootstrap sin inventar grupo ni snapshot; se conserva V1 como formato persistido legítimo.
+**V1** `ConfigurationAdoptionRecord` admite adopción global sin group commits: incluye ID, referencias source/target, effective/committed timestamps y hash canónico; permite bootstrap sin inventar grupos/snapshots. **V2** `ConfigurationAdoptionRecordV2` liga 1..N group commits ordenados por referencias exactas `(priority_group,commit_id,record_hash)` y un adoption final dentro del mismo batch WAL. Las versiones V1/V2 del **WAL** se conservan: no son equivalentes a los formatos FACTS v1/v2.
 
-**B2a.2 — `ConfigurationAdoptionRecordV2` v2:** liga 1..N `EngineCommitRecord` mediante referencias exactas ordenadas `(priority_group, commit_id, record_hash)` y un registro final de adopción dentro de un único batch WAL. Exige referencias, revisiones Rn/Cn de los grupos y hora UTC compatibles con su target. Los commits de grupo convencionales conservan comportamiento independiente. V2 no reemplaza V1 ni crea un decodificador legacy transitorio.
+El journal y validador comprueban cadenas de adopción y de grupos, hashes, autoridad y previous state. Histórico group-only incompatible sin adopción inicial no se absorbe como autoridad silenciosamente. Materialized Head es barrera agrupada, no atomicidad MVCC universal de múltiples archivos vistos por lectores externos.
 
-El validador de durable distingue V1/V2, comprueba cadena de adopciones global y cadenas por grupo, detecta referencias/hashes incorrectos e impide absorber silenciosamente histórico legado de grupos sin primera migración explícita. No se implementó esa migración. Los registros ordinarios de grupo pueden coexistir con adoptions legítimas.
+## Effective Head y lectura verificada
 
-## B2b.1 — Effective Head CURRENT
+Ubicación bajo `VOLUMEN_PATH/ada-command-center/alarms/runtime/state/`: `journal-head.json`, `effective-head.json` y `groups/<priority_group>.json`. `AlarmEffectiveConfigurationHead` incorpora `adoption_id`, `adoption_record_hash`, `adoption_position`, `target_artifact_ref` y `effective_at`. `read_effective_head()` exige journal alineado y valida región durable, snapshots y coherencia con última adopción. Sin adopción legítima puede devolver None; cabeza ausente/corrupta/desfasada con WAL durable exige recovery/fail-closed, no latest READY como sustituto.
 
-Ubicación:
+Runtime reabre artefacto exacto mediante el lector de Materialization y selección EFFECTIVE; su job pinnea sesión. Delivery input receiver B2c.7 lee el documento **proyectado** EFFECTIVE y materialización exacta; no consulta WAL y su `_effective()` no equivale por sí solo al validador profundo `AlarmPersistence.read_effective_head()`.
 
-```text
-VOLUMEN_PATH/ada-command-center/alarms/runtime/state/
-  journal-head.json
-  effective-head.json
-  groups/<priority_group>.json
-```
+## Recovery y fencing CURRENT
 
-Contrato `alarm-effective-head.v1`, `AlarmEffectiveConfigurationHead`:
+- Antes de Durable Head: descartar tail no confirmado, sin inventar adoption.
+- Después de Durable Head: replay exacto sin reevaluación; V2 agrupa materializaciones antes de avanzar Materialized Head.
+- Después de materialized y antes de EFFECTIVE: recomponer la proyección desde WAL; discrepancia de snapshots bloquea.
+- En takeover: validar autoridad, comparaciones de heads y `fenced_mutation` en cada frontera irreversible. Nunca asumir single-worker como sustituto de fencing.
 
-```text
-adoption_id
-adoption_record_hash
-adoption_position: JournalPosition
-target_artifact_ref: AlarmArtifactRefSnapshot
-effective_at
-```
+## B2c.7 publicación — copias derivadas, no otra autoridad
 
-`target_artifact_ref` identifica `source_key`, `result_id`, `manifest_sha256`, `alarm_configuration_revision` y `confirmed_tool_catalog_revision`. El documento se obtiene de la **última adopción durable** después de completar la materialización; nunca se toma de `ready.json` ni de la última Rn/Cn por aproximación.
+Engine `runtime/output/current/latest.json` es snapshot v1 reemplazable con SHA256; `runtime/output/facts/facts-*.json` son copias inmutables de eventos de commits durables en formato runtime **v2**, con `previous_batch` ID/hash; `runtime/output/state/facts-export-cursor.json` representa progreso **del exportador**, nunca reemplaza JournalHead ni el WAL. La publicación CURRENT ocurre tras el commit requerido y puede actualizarse si sólo cambia la evidence actual.
 
-`AlarmPersistence.read_effective_head()` exige `durable == materialized`, valida la región durable, compara el Effective Head con el esperado desde el WAL y verifica los snapshots durables de grupos. Sin adopción durable legítima puede devolver `None` cuando no existe proyección EFFECTIVE. Una proyección faltante, dañada, obsoleta o una desalineación exige recovery, sin reparación silenciosa en el lector. Una proyección huérfana sin autoridad durable falla cerrada; tampoco se promueve a autoridad por existir en disco.
+Delivery tiene inbox independiente en `alarms/delivery/input` y `state/facts-consumption-cursor.json`. Recibe en orden, verifica continuidad hasta la punta del productor, comprueba la cadena histórica recibida durante recovery y conserva su progreso. Si falta lote inicial/intermedio, la cadena es inconsistente o existen archivos sin cursor de exportación, bloquea: no inventa hechos, no reconstruye un lote perdido y no consume directamente el WAL.
 
-## Recovery CURRENT
+**FACTS v1 runtime → v2 runtime: BLOCKED condicional en volúmenes históricos.** Las versiones del schema v1 pueden permanecer como documento de la genealogía, pero no existe lector/adaptador runtime v1. La generación v2 exige baseline y rechaza archivos/cursor preexistentes incompatibles. Antes de desplegar sobre histórico real, inventariar y acordar procedimiento específico; no borrar data ni crear legacy.
 
-- **Antes de durable:** eliminar tail WAL no confirmado, sin inventar adopción.
-- **Después de durable:** replay exacto desde WAL, sin volver a evaluar Rules.
-- **V2:** materializar todo su batch asociado sin avanzar el cursor materialized entre grupos; retry idempotente de snapshots ya escritos.
-- **Tras materialized y antes de EFFECTIVE:** recovery recompone la proyección desde el WAL, incluso cuando el journal ya está alineado.
-- **Al reparar EFFECTIVE:** contrastar snapshots reales con últimas imágenes de grupo confirmadas; corrupción o discordancia impide publicación.
-- **Takeover/fencing:** exigir autoridad y `fenced_mutation` por etapa irreversible, como el resto de Persistence.
+## Evidencia / límites
 
-**Límite relevante para consumidores:** el archivo físico de cada snapshot se reemplaza individualmente. El batch V2 ofrece **confirmación durable y cursor materialized agrupados**, pero un lector externo que lea archivos de grupo directamente durante una materialización puede observar snapshots parciales. Los consumidores futuros deben respetar la frontera validada; B2b no declara atomicidad MVCC universal de archivos sin gate.
-
-## Evidencia y límites
-
-B2a.1, B2a.2 y B2b.1 tienen tests de contrato, regresión/recovery y lint/format/build locales informados por el usuario. El HEAD final contiene esos archivos. No se verificó un CI sobre checkout limpio del HEAD final ni la semántica multi-host/FS real del volumen compartido. La integración del ejecutor operacional con `commit_adoption()` sigue **PLANNED — B2c**, no es una capacidad demostrada por estos tests.
+B2c.7c probó Engine real más Delivery en entorno controlado y recreación de instancias; B2c.7d tuvo 32 tests específicos y 162 PASS/1 SKIPPED conjuntos con Ruff PASS según logs locales. No es prueba multi-host, backup/restore físico, dos contenedores concurrentes, CI limpia ni garantía de autenticidad firmada. La qualification histórica R3.5/F-010 sigue siendo evidencia de su generación anterior, no del contrato runtime FACTS v2.

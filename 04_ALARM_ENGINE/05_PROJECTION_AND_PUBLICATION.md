@@ -1,57 +1,104 @@
 # Alarm Engine — Projection and Publication
 
-Estado: **CURRENT / SOURCE V3, MATERIALIZATION LOCAL READY, WAL GLOBAL Y EFFECTIVE HEAD IMPLEMENTADOS / LIVE Y DELIVERY OPERACIONAL PLANNED**.
+Estado: **CURRENT — Engine CURRENT v1 y FACTS v2, recepción independiente Delivery; Live/History PLANNED**. Corte 2026-09-28. **Código del hito verificado por lectura remota en** `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` está un commit posterior con cambios sólo de ADA Generic Master Projection, fuera de este alcance. Los gates locales son evidencia del usuario, no CI de este checkout.
 
-Fuente de implementación verificada: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. Decisions: `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Reemplazo documental local, no publicación remota.
-
-## Capas y owners separados
+## 1. Fronteras y responsabilidades
 
 ```text
-Alarm Source/Release: Blob, destino durable objetivo en dominios migrados
-Alarm Configuration Projection: adquisición Cosmos de entrada por Materialization
-B.2 Materialization: pareja Runtime/Delivery READY, local e inmutable
-Alarm Persistence: WAL global de adopción y proyección EFFECTIVE
-Runtime: lectura exacta de artefacto EFFECTIVE y creación de sesión
-Alarm Live Projection: estado actual, frontera posterior
-Alarm Management Projection: historial de acciones, frontera posterior
-History/Analytics: consumo posterior de hechos durables, no lógica del Engine
+Source v3 / ToolDependencyManifest -> B.2 Materialization READY/BLOCKED
+                                          |
+                                          v
+                   Runtime adopta artefacto EXACTO -> EFFECTIVE
+                                          |
+                     evaluaciones + commits Engine (WAL autoritativo)
+                                          |
+                           después de la confirmación durable
+                          /                               \
+               CURRENT v1                              FACTS v2
+             snapshot completo                    lotes inmutables encadenados
+                          \                               /
+                           \-> Delivery input receiver <-/
+                                      |
+                              inbox + cursor propio
+                                      |
+                       [PLANNED] AlarmLiveProjection
+                       [SEPARATE] History / Analytics
 ```
 
-La presencia de adaptadores/protocolos no prueba un despliegue E2E real. La proyección de entrada `ProjectionRecord[AlarmConfigurationSnapshot]` conserva contenido y procedencia. Source `ada_command_center_alarm_configuration_release` schema 3 congela `ToolDependencyManifest(Cn)` junto con Rn; Source v2 está **SUPERSEDED**, sin decoder legacy aprobado. El Confirmed Tool Catalog consolidado termina en Storage en su dominio migrado; B.2 usa el manifest exacto de Rn y qualification pertinente, no consulta latest para reinterpretar releases.
+B.2 mantiene pareja Runtime/Delivery inmutable READY en `VOLUMEN_PATH/ada-command-center/alarms/materialization/versions/<result_id>/`; `ready.json` sólo señala candidato. BLOCKED no reemplaza READY. B1 selecciona referencia exacta; el WAL del Engine confirma adopción y `runtime/state/effective-head.json` es proyección recuperable. El Engine no debe importar Web/Analytics ni utilizar Cosmos como salida de Materialization obsoleta.
 
-## Materialization local READY — CURRENT
-
-Proceso: `scopes/ada-command-center/backend/processes/alarms-materialization`. Publica:
+## 2. Identidad exacta congelada
 
 ```text
-VOLUMEN_PATH/ada-command-center/alarms/materialization/
-  ready.json
-  versions/<result_id>/
-    manifest.json
-    runtime.json       (sólo READY)
-    delivery.json      (sólo READY)
+AlarmResolutionKey = (alarm_configuration_revision, confirmed_tool_catalog_revision)
+Artifact pin = (source_key, result_id, manifest_sha256, resolution_key)
+READY != EFFECTIVE
 ```
 
-`result_id = "alarm-materialization-" + sha256(JSON canónico(source_key,projection_digest,qualification_digest))`. Manifest `ada_command_center_alarm_materialization_result`, schema 1: `source_key`, `result_id`, `status`, `resolution_key`, `provenance`, `findings`, `artifacts` y SHA256/tamaño por artefacto READY. `ready.json` tiene `ada_command_center_alarm_materialization_ready`, schema 1, source/result/key y SHA256 de manifest. La pareja READY Runtime/Delivery comparte Rn/Cn exactos.
+CURRENT, FACTS y Delivery Configuration deben corresponder al artefacto **exacto**, no sólo a las revisiones Rn/Cn. Delivery no toma `ready.json` ni una versión mayor como sustituto. El consumidor de entrada valida el documento EFFECTIVE proyectado y lee READY exacto con `LocalAlarmMaterializationReader.read_exact_ready`; **no** abre el WAL para volver a resolver EFFECTIVE. La verificación estructural de la proyección en Delivery no debe confundirse con `AlarmPersistence.read_effective_head()` y su validación durable completa.
 
-El writer prepara carpeta staging, valida y promueve versión inmutable antes de reemplazar READY. BLOCKED mantiene manifest/findings, carece de Runtime/Delivery ejecutables y no desplaza READY previo. El lector compartido valida identidad, provenance, hashes/tamaño y pareja Rn/Cn; falla cerrado sin fallback a otras versiones. `LocalAlarmMaterializationReader` y codec compartido viven en `backend/alarms/materialization`. Sólo el **resolver** B.2 es puro; el paquete también contiene I/O.
+## 3. Publicación Engine: rutas productivas
 
-La antigua salida de Materialization a Cosmos y su codec privado duplicado están **SUPERSEDED/retirados**; Cosmos continúa como entrada de proyección. **UNVERIFIED:** operación de infraestructura Manager/Blob/Cosmos real y semántica de rename/fencing en el volumen definitivo multi-host.
+Archivos del repositorio:
 
-## Identidad y planificación B1 — CURRENT
+```text
+alarms/contracts/engine_resolved_current_state.v1.schema.json
+alarms/contracts/engine_committed_facts_batch.v1.schema.json  (histórico, NO runtime compatible)
+alarms/contracts/engine_committed_facts_batch.v2.schema.json  (CURRENT runtime)
+processes/alarms-runtime/src/.../publication/output_current.py
+processes/alarms-runtime/src/.../publication/output_batches.py
+processes/alarms-runtime/commented/.../publication/    (espejo español)
+```
 
-`AlarmConfigurationArtifactRef(source_key,result_id,manifest_sha256,resolution_key)` identifica el resultado exacto aun con Rn/Cn iguales. `RuntimeLocalConfigurationReader.load_ready_candidate()` lee READY para planificar nuevas adopciones; `.load_exact_candidate()` lee una versión exacta. `build_alarm_configuration_revision()` construye `AlarmConfigurationRevision` y la sesión con `AlarmEvaluatorRegistry` explícito. La lectura no adopta por sí misma.
+Salida física con raíz `VOLUMEN_PATH/ada-command-center/alarms/runtime/output/`:
 
-El planificador B1 cubre la unión de identidades definidas de origen y destino. Sus disposiciones `ADDED`, `ENABLED` y `REMOVED` de origen deshabilitado **no** prueban que el ejecutor anterior las soporte; ver `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`.
+```text
+current/latest.json                 # reemplazable
+facts/facts-<hash SHA256>.json     # inmutables
+state/facts-export-cursor.json     # avance de exportación del Engine
+```
 
-## Adopción y EFFECTIVE — CURRENT B2a/B2b
+Estos JSON se generan en ejecución; los `.schema.json` son contratos fuente, no muestras sobrescritas por el proceso. Los cambios aplicados en B2c.7d hicieron que el productor estricto de FACTS use `schema_version=2`; la presencia del schema v1 en el repositorio no demuestra compatibilidad operativa con un volumen v1.
 
-La adopción es global, no por Rule ni priority group. Persistence contiene V1 para cero grupos y V2 para 1..N grupos relacionados por hash dentro del WAL existente, incluyendo cambios de identidad/materialización que no alteran hot state. `effective-head.json` está bajo `alarms/runtime/state/`; registra adopción, hash/posición del WAL, artefacto exacto y `effective_at`. Se publica después de materialización y se reconstruye únicamente desde el WAL validado.
+## 4. CURRENT v1 — implementación observada
 
-`AlarmPersistence.read_effective_head()` verifica consistencia durable y snapshots; `RuntimeLocalConfigurationReader.load_effective_revision(persistence,evaluator_registry)` carga el artefacto exacto mediante el lector local y comprueba `source_key`, `result_id`, manifest SHA256 y Rn/Cn. `assert_current_effective()` permite revalidar la selección frente a una adopción posterior; `RuntimeEffectiveConfiguration` preserva cabeza y revisión seleccionada.
+`AlarmCurrentStatePublisher` construye `ada_command_center_engine_resolved_current_state`, `schema_version=1`, con `artifact_ref`, `state` y `sha256` del documento canónico. `state` incluye `resolution_key`, `as_of` y `alarms` completas y ordenadas por identidad. Un array vacío es una salida válida. Cada occurrence abierta incluye identidad, IDs de occurrence/episode, inicio, `evaluation` actual (evidence o error), prioridad resuelta, hold, management/deactivation, pending request y assignments.
 
-No existe `materialization/effective.json`: el nombre físico contratado es `runtime/state/effective-head.json`. La publicación READY nunca confiere EFFECTIVE. Un consumidor no puede elegir autónomamente latest READY. **La integración automática del job/executor con esta lectura continúa PLANNED B2c.**
+**No** reconstruye evidencia actual desde History ni vuelve a calcular prioridad. Puede publicar en un ciclo sin mutación durable; si hubo commit requerido, publica tras la confirmación. Conserva una única imagen vigente, no delta por group. Rechaza retrocesos temporales, conflictos para el mismo `as_of` y corrupción de la imagen previa. El consumidor reconoce explícitamente estado ausente como `WAITING_CURRENT` (distinto de CURRENT vacío).
 
-## Consumidores posteriores, separados
+## 5. FACTS v2 — eventos durables y continuidad
 
-Delivery/Live deben usar el mismo artefacto exacto que Runtime adoptó; no adelantar Rn/Cn ni reinterpretar Tool Catalog. Management Projection e History/Analytics consumirán hechos durables en sus propias fronteras. El Engine no debe importar lógica de dashboard y Web no debe leer WAL directamente.
+`AlarmCommittedFactsExporter` extrae commits confirmados del WAL mediante `AlarmPersistence.read_durable_records()`, sin repetir evaluaciones INACTIVE que no generaron hechos. Lotes posibles: occurrence/episode, Journey, evidencia, gestión/desactivación, routing/assignment e input receipts cuando existen en los registros confirmados. El payload conserva `commit`, `commit_record_hash` canónico `sha256:<64 hex>`, `journal_position`, `artifact_ref`, `records`, `sha256` y, en v2, `previous_batch`:
+
+```text
+previous_batch = null
+# o
+previous_batch = { batch_id: "facts-<hash>", sha256: "<hash del lote anterior>" }
+```
+
+El primer lote de una cadena inicializada lleva `previous_batch=null`; los siguientes enlazan ID + digest del anterior, incluso al cruzar publicaciones/revisiones compatibles con el historial. El archivo es `facts/facts-<digest de commit>.json`, no mutable tras publicación. `state/facts-export-cursor.json` pertenece al **productor**, contiene última posición y batch hash; sólo avanza después de escribir el lote. Si falla la actualización del cursor, se reintenta el lote existente comprobando identidad y contenido.
+
+El checksum/cadena detecta borrado, reordenación, alteración y huecos dentro de la secuencia exportada validada. **No** constituye firma criptográfica/autenticación frente a un atacante capaz de reescribir todos los archivos, ni reconstrucción ilimitada de hechos anteriores al baseline. No afirmar esto como garantía global de retención externa.
+
+`initialize_if_needed` falla cerrado ante histórico confirmado sin baseline o archivos FACTS preexistentes no inicializados. Un cursor/volumen v1 requiere intervención/migración explícita: el productor v2 y el receptor v2 no incluyen lector legacy.
+
+## 6. Delivery input receiver — CURRENT
+
+Proceso independiente `processes/alarms-delivery` con entrypoint, configuración, job/recovery y lector de archivos. Mantiene:
+
+```text
+VOLUMEN_PATH/ada-command-center/alarms/delivery/input/
+  current/latest.json                 # copia validada del último CURRENT
+  facts/facts-<hash>.json             # lotes recibidos
+  state/facts-consumption-cursor.json # avance independiente de Delivery
+```
+
+Validaciones: identidad exacta, checksum, correspondencia de commit/hash/posición, orden temporal, continuidad `previous_batch`, coincidencia con el cursor del exportador y existencia de predecesores, incluido recovery de la cadena histórica recibida. Un lote copiado antes de avanzar el cursor se puede reintentar sin duplicación; Delivery no escribe el cursor del Engine. Con `max_facts_per_iteration`, el receptor verifica la cadena completa pendiente antes de aceptar el tramo correspondiente; un lote intermedio ausente bloquea el avance. CURRENT puede llegar o faltar independientemente de FACTS, sin inventar un snapshot vacío.
+
+El receptor lee la **proyección** física EFFECTIVE; la prueba de integración la alimenta desde el Engine real. Su consumo no crea aún proyecciones Live/History ni hechos de publicación/escalamiento propios de un futuro Delivery operacional.
+
+## 7. Evidencia, límites y siguiente frontera
+
+B2c.7c: integración local controlada Engine real con una alarma, CURRENT/FACTS y recreación independiente de instancias (1 PASS específica; regresión 152 PASS/1 SKIPPED). B2c.7d: 32 pruebas específicas PASS; regresión Engine + Delivery 162 PASS/1 SKIPPED; Ruff lint PASS y 61 archivos formateados. Estos resultados pertenecen al entorno local del usuario Python 3.14.2.
+
+**UNVERIFIED / PLANNED:** build y distribución reales, prueba de procesos Docker separados, reinicios físicos bajo lease, volumen multi-host, CI limpia, volumen histórico v1 y autenticidad/retención de almacenamiento externo. Antes de Live, el siguiente foco acordado es **qualification de distribución + Docker Engine/Delivery**. Management Capture, visualización y Analytics son fronteras separadas.

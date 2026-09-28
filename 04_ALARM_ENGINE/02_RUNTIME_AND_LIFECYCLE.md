@@ -1,172 +1,46 @@
 # Alarm Engine — Runtime and Lifecycle
 
-Estado: **CURRENT / CORE IMPLEMENTED + TESTED; B2a/B2b INTEGRADOS; ADOPTION EXECUTION COMPLETA PLANNED**.
-
-Corte de implementación para la nueva frontera: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. La caracterización histórica del Core corresponde al checkpoint `cd08bd8d2c25bd89eb39fa15cbda209c8e9be617`; B2a/B2b no cambiaron las reglas físicas descritas a continuación.
+Estado: **CURRENT — Core, WAL/adopción B2a/B2b, ejecución/composición B2c, publicación Engine B2c.7a/d; qualification física separada**. Corte 2026-09-28. Reglas físicas caracterizadas históricamente; B2c.7 no las rediseñó. **Código del hito verificado por lectura remota en** `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` está un commit posterior con cambios sólo de ADA Generic Master Projection, fuera de este alcance. Los gates locales son evidencia del usuario, no CI de este checkout.
 
 ## Cycle boundary
 
-`reduce_group_cycle` recibe:
-- estado durable del grupo;
-- `cycle_at`;
-- `PlannedAlarm`;
-- evaluaciones del ciclo;
-- closures de configuración;
-- acciones de Management;
-- decisiones/intentos de deactivation;
-- factories/resolvers explícitos.
+`reduce_group_cycle` recibe estado durable de grupo, `cycle_at`, `PlannedAlarm`, evaluaciones de ciclo, closures de configuración, acciones Management, deactivation y factories/resolvers explícitos. No depende de estado global. La sesión efectiva permanece fijada durante la ejecución del job y el reducer no controla configuración ni visualización Web.
 
-No usa estado global.
-
-## Orden lógico CURRENT
-
-El ciclo realiza conceptualmente:
+## Orden lógico de Core CURRENT
 
 ```text
 1. validar cycle/configuration inputs
-2. indexar PlannedAlarm y evaluations
+2. indexar PlannedAlarm y evaluaciones
 3. preparar Management/deactivation inputs
 4. resolver lifecycle físico/técnico y occurrences
-5. construir next GroupLifecycleState
-6. finalizar Management/deactivation
-   - timers
-   - Special Condition reappearance
-   - deactivation expiry
-   - scope cleanup
-   - CascadeSuppression
+5. construir siguiente GroupLifecycleState
+6. finalizar Management/deactivation (timers, reappearance Special Condition,
+   expiración, scope cleanup y CascadeSuppression)
 7. resolver routing
 8. resolver priority
 9. emitir GroupLifecycleDecision
 ```
 
-La Special Condition reappearance se evalúa antes de routing/priority final.
+La reappearance por Special Condition se considera antes de routing y priority finales. Management/deactivation no redefinen la condición física: una occurrence puede estar físicamente ACTIVE, gestionada y/o deactivated. `CascadeSuppression` sólo afecta disposición operacional.
 
-## Estado físico vs Management/deactivation
+## Cascade suppression y deactivation barrier CURRENT
 
-Management y deactivation no redefinen la condición física.
+Dos fuentes causales: `ManagementEffect` activo o `DeactivationEffect` activo, con `management_effect_id XOR deactivation_effect_id` (exactamente uno). En concurrencia, deactivation domina atribución. Menor `priority_order` equivale a prioridad mayor; sólo targets activos del mismo `priority_group` con `priority_order` superior al de la source son elegibles. `kind` y visibility no deciden elegibilidad. Esto permanece en tensión documental con ciertas formulaciones B.1 Special Cascade; **CONFLICT** sin reconciliación formal en decisions.
 
-Una occurrence puede seguir abierta y evaluada `ACTIVE` mientras está gestionada o deactivated.
+Mientras una deactivation esté vigente: la source queda `DEACTIVATED` y los targets elegibles `CASCADE_SUPPRESSED`. Pending approval no crea efecto; la expiración elimina la barrera y recalcula priority. El efecto puede persistir ante cambio de occurrence mientras siga vigente conforme al contrato preexistente.
 
-`CascadeSuppression` modifica disposición operacional, no lifecycle físico.
+## Reappearance y routing
 
-## Cascade suppression CURRENT
-
-Existen dos fuentes causales independientes:
-
-```text
-active ManagementEffect
-OR
-active DeactivationEffect
-```
-
-Scope por ranking:
-
-```text
-lower priority_order = higher priority
-
-source rank P
-target rank < P -> no suppression
-target rank > P -> eligible para suppression
-```
-
-Sólo targets activos del mismo `priority_group` son elegibles.
-
-`kind` y visibility no deciden source/target eligibility.
-
-Si source posee simultáneamente ManagementEffect y DeactivationEffect vigentes,
-deactivation domina la atribución causal de `CascadeSuppression`.
-
-Contrato de provenance:
-
-```text
-CascadeSuppression
-    management_effect_id XOR deactivation_effect_id
-```
-
-exactamente uno debe existir.
-
-## Deactivation barrier CURRENT
-
-Mientras un `DeactivationEffect` está vigente:
-
-```text
-source -> DEACTIVATED
-lower-priority active targets -> CASCADE_SUPPRESSED
-```
-
-La barrera dura hasta `effective_until`, independientemente de que el ManagementEffect haya sido
-liberado por timer o Special Condition.
-
-Pending approval no crea suppression; la suppression comienza al existir un DeactivationEffect efectivo.
-
-Cuando la deactivation expira:
-- se limpia el effect;
-- la condición física vigente se conserva;
-- priority se recalcula desde el estado actual.
-
-El effect puede sobrevivir al cierre de la occurrence/episode y gobernar una occurrence posterior
-mientras siga vigente.
-
-## Reappearance temporal y Special Condition durante deactivation
-
-Management puede finalizar por:
-- vencimiento temporal;
-- Special Condition configurada.
-
-Si esto ocurre mientras la source Rule sigue bajo deactivation:
-- el `ManagementEffect` puede limpiarse;
-- la deactivation permanece;
-- no se atraviesa la barrera operacional;
-- no se emite `ReappearanceChange` en el camino caracterizado;
-- la source continúa `DEACTIVATED`;
-- los targets elegibles continúan `CASCADE_SUPPRESSED`.
-
-Frase congelada:
-
-```text
-Una deactivation aplicada a una Rule mantiene suprimidas todas las Rules activas
-de menor prioridad dentro del mismo scope de cascada durante toda la vigencia
-de la deactivation. Una Special Condition puede disparar reappearance respecto
-del management state, pero nunca atraviesa una deactivation vigente.
-```
-
-## Routing
-
-Routing continúa mientras una Rule está managed, eclipsed, cascade-suppressed o deactivated
-según el contrato de routing aplicable.
-
-Deactivation no pausa por sí misma el progreso C2.
+Management puede terminar por timer o Special Condition. Si continúa deactivation, no se atraviesa la barrera: el ManagementEffect puede limpiarse, la deactivation permanece, no se emite `ReappearanceChange` en el camino caracterizado y los targets elegibles continúan suprimidos. Reappearance temporal+SC en el mismo ciclo no debe duplicar cambios. Una Rule cerrada no revive automáticamente. Routing sigue progresando según su contrato aun con gestión, eclipse, suppression o deactivation; esta última no pausa C2 por defecto.
 
 ## Priority CURRENT
 
-El candidato predominante se elige por menor `priority_order` entre candidatos operacionales.
+`PREDOMINANT`, `ECLIPSED`, `CASCADE_SUPPRESSED`, `DEACTIVATED`. No reintroducir `SHADOW` ni `delivery_enabled` a Runtime Core. Live futuro aplicará el filtro ya acordado: VISIBLE + {PREDOMINANT,DEACTIVATED}, sin permitir Web recalcular prioridad.
 
-Disposiciones CURRENT:
+## Reconfiguration/adoption — estado refinado
 
-```text
-PREDOMINANT
-ECLIPSED
-CASCADE_SUPPRESSED
-DEACTIVATED
-```
+B2a/B2b mantienen WAL global adoption V1 (cero grupos) y V2 (1..N grupos), EFFECTIVE derivado y exact read; ambos formatos del WAL son CURRENT. La descripción anterior según la cual `adoption_execution.py` nunca llama `commit_adoption` ha quedado **SUPERSEDED** por la implementación inspeccionada: ejecutor y `configured_iteration.py` integran bootstrap/adopción y sesión fijada. `application.py`/`bootstrap.py` aportan composición operativa con puertos existentes; la existencia de wiring no demuestra distribución/Docker/productivo físico.
 
-No existen:
+B2c.7 añade un **read-side de publicación**, no altera Core: tras confirmar commits requeridos, `operational_runner.py` publica CURRENT v1 y FACTS runtime v2 encadenados. El receptor Delivery está en otro job; consume archivos de salida, sin compartir estado mutable ni importar internals ejecutables del Engine.
 
-```text
-SHADOW
-delivery_enabled
-```
-
-en Runtime Core.
-
-## Reconfiguration/adoption — refinamiento B2a/B2b
-
-El Engine mantiene primitives de reconciliation/reset. **CURRENT B2a/B2b:** Persistence registra adopciones globales durables V1 (cero grupos) o V2 (1..N grupos), reconstruye un Effective Head exacto desde WAL/snapshots y Runtime proporciona lectura exacta de EFFECTIVE. Esos incrementos **no** cambian la semántica física y operacional descrita arriba.
-
-**OPEN B2c:** `adoption_execution.py` todavía sólo prepara un subconjunto de cambios B1; exige source plan ejecutable para cambios no `UNCHANGED` y registra commits por grupos con `composition.commit_batch`, no la adopción global `commit_adoption` V1/V2. La existencia de `RuntimeLocalConfigurationReader.load_effective_revision` no implica que el job actual ya lo utilice como flujo de adopción integrado.
-
-La reconciliación de cambios en:
-- `reappearance_after_seconds`;
-- `reappearance_special_conditions`;
-
-sobre un ManagementEffect/hot state vigente pertenece a Runtime Adoption y sigue **OPEN**. No resolver esas diferencias dentro de B2c incidentalmente, sin contrato y pruebas específicas.
+**OPEN / separado:** reconciliación de `reappearance_after_seconds` y `reappearance_special_conditions` respecto de `ManagementEffect` todavía vigente, así como cambios de prioridad/grupo/kind/evaluator divergentes entre B.1 y `adoption.py`. No resolverlos como efecto lateral de distribución.

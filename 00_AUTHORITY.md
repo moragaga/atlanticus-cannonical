@@ -1,56 +1,57 @@
 # Atlanticus — Authority
 
-Estado: **CURRENT — corte documental acotado a ADA Command Center / Alarm Engine B2c.5d, 2026-09-28**. Este reemplazo actualiza la frontera de alarmas; no revalida por implicación otras áreas de Atlanticus.
+Estado: **CURRENT — actualización documental acotada a ADA Command Center / Alarm Engine B2c.7, 2026-09-28**. Este corte **no recalifica** otros dominios de Atlanticus ni sustituye sus documentos canónicos especializados.
 
-## Fuentes contrastadas en modo READ ONLY
+## Fuentes y límites del corte
 
-| Repositorio | HEAD leído | Uso |
+| Repositorio | Referencia | Qué respalda |
 |---|---|---|
-| `moragaga/atlanticus:main` | `a799dc15105d3e037f36ab77129ef0cfa8999013` | Realidad implementada al cierre B2c.5d. |
-| `moragaga/atlanticus-decisions:main` | `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e` | Decisiones, intención contractual y genealogía. |
-| `moragaga/atlanticus-cannonical:main` | `46877f174513b2475f17b7dc739cd43951fa4ed0` | Base documental examinada **antes** de incorporar estos reemplazos. |
+| `moragaga/atlanticus` | `c67fcb5b105cc561c16719a8bca4ea5aa74c3fae` | Commit B2c.7d confirmado por el usuario **y verificado independientemente en Git**: ocho archivos del incremento; contratos FACTS v2, productor, receptor y pruebas inspeccionados. |
+| `moragaga/atlanticus:main` | `bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` | HEAD remoto leído al cierre, un commit después de c67fcb5. El único commit posterior modifica ADA Generic Master Projection, no Alarm Engine ni Delivery. |
+| `moragaga/atlanticus-decisions:main` | `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e` | Decisiones documentadas, intención contractual e historia; no implica implementación automática. |
+| `moragaga/atlanticus-cannonical:main` | `5558cf9d92d9b21758500024b6099011416d78da` | Documentación real leída antes de preparar los reemplazos de este cierre. |
 
-Los HEAD deben releerse en cada chat o incremento. El SHA canonical aquí es **base de comparación**, no un commit futuro de integración. El trabajo de este cierre es documental: no ejecuta tests, no monta infraestructura y no escribe Git.
+**No confundir** un commit local notificado con un commit remoto independientemente verificado. Antes de integrar los reemplazos, comprobar que las ramas y archivos de destino no hayan cambiado.
 
-## Jerarquía y conflictos
+## Jerarquía de autoridad y resolución de conflictos
 
-1. `atlanticus:main`: evidencia primaria de implementación efectiva.
-2. `atlanticus-cannonical:main`: estado/documentos actuales que deben contrastarse con el código y reemplazarse explícitamente cuando quedan desfasados.
-3. Qualification, tests y logs identificados con commit/árbol y entorno: sólo respaldan lo que realmente comprobaron.
-4. Decisiones vigentes del Project y `atlanticus-decisions:main`: intención contractual, distinguiendo IMPLEMENTED de DECIDED/NOT YET IMPLEMENTED; el historial no convierte un deseo en comportamiento actual.
-5. Historial conversacional: pista, nunca autoridad por sí misma.
+1. `atlanticus:main`: realidad implementada actual, con SHA inspeccionable.
+2. Decisiones explícitamente vigentes y congeladas en `atlanticus-decisions:main` y contratos del Project: intención contractual; si contradicen el código, registrar `CONFLICT`, no escoger o modificar en silencio.
+3. Archivos canónicos vigentes del Project y `atlanticus-cannonical:main`: descripción documental del estado, que debe contrastarse con código y decisiones; los reemplazos locales candidatos no son versiones ya incorporadas.
+4. Qualification, tests y logs ligados al commit/árbol y entorno: evidencia limitada a escenarios realmente ejecutados.
+5. Historial conversacional: pista de búsqueda, nunca autoridad suficiente.
 
-No reconciliar en silencio conflictos entre código, decisions y cannonical. Etiquetas aplicables: `VERIFIED`, `INFERRED`, `ASSUMED`, `PROPOSED`, `UNVERIFIED` y estados `CURRENT`, `IN PROGRESS`, `PLANNED`, `SUPERSEDED`, `BLOCKED`, `CLOSED`.
+Cuando código, decisions y canonical difieran, documentar `CONFLICT` y mantener por separado `VERIFIED`, `INFERRED`, `ASSUMED`, `PROPOSED`, `UNVERIFIED` y `CURRENT`, `IN PROGRESS`, `PLANNED`, `SUPERSEDED`, `BLOCKED`, `CLOSED`.
 
-**Git es SOLO LECTURA por defecto**. Sin autorización explícita, no hacer commits, push, ramas, PR, issues ni otra mutación. Referencias a otros repositorios o implementaciones no transfieren automáticamente contratos ni decisiones.
+Git es **SOLO LECTURA** por defecto: no efectuar commits, push, nuevas ramas, PR, issues ni otras mutaciones sin autorización explícita. Repositorios ajenos son referencias sólo cuando el usuario los identifique.
 
-## Alarm Engine — frontera del corte
+## Frontera de Alarm Engine al corte B2c.7
 
-**VERIFIED / CURRENT:** Source v3 con `AlarmConfigurationSnapshot` y `ToolDependencyManifest` exactos; resolver B.2 puro; proceso Materialization que publica READY/BLOCKED local, pareja inmutable Runtime/Delivery y lector exacto. B1 planifica revisión de artefacto exacto. B2a mantiene adopción global durable WAL V1 para cero grupos y V2 para 1..N grupos; V1 **no es legacy**. B2b mantiene Effective Head recuperable y lectura exacta. Los incrementos B2c anteriores enlazan ejecución/adopción y ciclos con sesiones fijadas; B2c.5c añade fuentes operacionales actualmente registradas y la posibilidad de requisitos estáticos/dinámicos por contrato; B2c.5d añade catálogo de evaluación y un ejemplo controlado sin registro productivo automático.
+**CURRENT según inspección remota B2c.7a/b, artefactos B2c.7c/d y logs locales:** Source v3; resolver B.2; READY/BLOCKED y pareja Runtime/Delivery exacta local; WAL con adopción V1/V2 y EFFECTIVE derivado; ejecución con sesión fijada y composición operacional; Engine publica CURRENT completo v1 y lotes FACTS inmutables con cursor de exportación. Delivery es un job independiente que recibe CURRENT y FACTS mediante archivos del volumen compartido, con cursor propio. B2c.7c verificó el recorrido Engine → Delivery con datos controlados y reinicio de componentes; B2c.7d introdujo FACTS v2 con referencia criptográfica al lote anterior y rechazo fail-closed de cadenas incompletas.
 
-**VERIFIED / CURRENT en `a799dc1`:** `processes/alarms-runtime/.../catalog/registry.py` devuelve `AlarmEvaluatorRegistry(contracts=())`; `catalog/examples/threshold/` contiene el ejemplo y sus espejos en `commented/`. `build_alarm_runtime_process(...)` exige `evaluator_registry` y `source_loader` inyectados y `build_alarm_source_adapter(...)` existe. **NO está acreditado aquí** un bootstrap operacional que combine esas dependencias con datasets reales.
+**VERIFIED por logs locales de usuario, no por CI remoto:** gate final B2c.7d, 32 pruebas específicas PASS; regresión conjunta Engine + Delivery, 162 PASS y 1 SKIPPED; Ruff lint PASS; Ruff format PASS para 61 archivos. El commit final `c67fcb5b105cc561c16719a8bca4ea5aa74c3fae` fue corroborado en Git junto con sus ocho archivos; **no** se reejecutó CI ni checkout limpio en este cierre.
 
-**VERIFIED de logs locales aportados por el usuario:** B2c.5c 436 pruebas de regresión; B2c.5d final 7 específicas, 443 de regresión, Ruff PASS y 40 archivos formateados antes de commit. Se comprobó el HEAD final con los cambios. **UNVERIFIED:** repetición sobre checkout limpio del HEAD final, CI, Cosmos/Blob reales, volumen multi-host y fuentes físicas representativas.
+**UNVERIFIED:** build/distribución del commit final, repetición de gates en checkout limpio, Docker de ambos procesos independientes, almacenamiento físico/multi-host, migración de cursores/volúmenes FACTS v1 existentes, destino real de publicación y CI.
 
-## Invariantes que no deben degradarse
+## Invariantes conservados
 
 ```text
+READY != EFFECTIVE
 LATEST SAVED = LATEST VALID_AT_SAVE
 VALID_AT_SAVE != READY != EFFECTIVE
 INVALID != REMOVED
 DISABLED != INVALID
 DISABLED != REMOVED
 TRACE_ONLY != REMOVED
-READY != EFFECTIVE
 AlarmResolutionKey = (alarm_configuration_revision, confirmed_tool_catalog_revision)
-Pin de artefacto = (source_key, result_id, manifest_sha256, resolution_key)
-WAL -> DURABLE HEAD -> SNAPSHOTS -> MATERIALIZED HEAD
+Exact artifact pin = (source_key, result_id, manifest_sha256, resolution_key)
+WAL -> DURABLE HEAD -> SNAPSHOTS -> MATERIALIZED HEAD -> EFFECTIVE projection
+Engine CURRENT = snapshot completo reemplazable v1, no WAL
+Engine FACTS = batches confirmados e inmutables v2 con previous_batch
+Delivery receipt cursor != Engine export cursor
+Delivery no lee el WAL para consumo operacional; Web tampoco
 ```
 
-El manifest Tool Cn de una release Rn no se reconstruye desde latest Tool Catalog. El WAL es la autoridad de EFFECTIVE; `effective-head.json` es proyección recuperable. Materialization puede usar Cosmos de entrada, pero publica la salida B.2 local inmutable. Strict routing actual: `PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END`, sin saltos ni mismo nivel. El resolver B.2 es puro; no afirmar que todo el paquete Materialization carece de I/O. No introducir decoders/source v2 o stores de salida Cosmos antiguos.
+El resolver B.2 puro no convierte al paquete Materialization completo en una dependencia sin I/O. Mantener Source v3 y manifest Tool exacto y strict routing PROCESS → INTEGRATED_OPERATIONS → STRATEGIC → END. No añadir compatibilidad legacy de FACTS v1 por conveniencia ni borrar volúmenes históricos: la transición v1→v2 es **BLOCKED** para un despliegue sobre datos existentes hasta inventario y decisión explícita. Paquetes Command Center inspeccionados exigen Python `==3.14.2`; objetivo transversal del Project: `3.14.7`. No alinear incidentalmente.
 
-**Versionado:** paquetes Command Center pertinentes siguen en `1.0.0` y exigen Python `==3.14.2`; el objetivo global de Project `3.14.7` es una discrepancia transversal pendiente, no corregida aquí.
-
-## Frontera siguiente
-
-**PROPOSED / PLANNED:** B2c.6, auditar y diseñar exclusivamente el cableado operativo del proceso Alarm Runtime, reutilizando puertos/entrypoints actuales, registro productivo vacío y lector de fuentes existente. No incorporar por esta vía nuevas alarmas reales, Live Delivery, cambios de reglas de desactivación, nuevas fuentes ni abstracciones no solicitadas. Consultar `04_ALARM_ENGINE/13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`, `10_OPEN_ITEMS.md` y el traspaso de B2c.5d. La Web sólo admite límite numérico de desactivación y carece de opción `fin del turno`; mantener como OPEN separado.
+**Siguiente foco recomendado:** qualification de distribución y ejecución independiente Engine/Delivery en Docker, comenzando por validar artefactos y contrato de volumen en un entorno limpio. No mezclar Live Projection, Web, Capture ni Analytics.

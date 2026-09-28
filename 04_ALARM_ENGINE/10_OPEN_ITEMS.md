@@ -1,37 +1,46 @@
 # Alarm Engine — Open Items
 
-Estado: **B2c.5c y B2c.5d CLOSED en evidencia local e integrados en `atlanticus:main`; B2c.6 PLANNED; infraestructura física UNVERIFIED**. Corte 2026-09-28: código `a799dc15105d3e037f36ab77129ef0cfa8999013`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, canonical previo `46877f174513b2475f17b7dc739cd43951fa4ed0`.
+Estado: **B2c.7a/b/c/d CLOSED en implementación y gates locales reportados; distribución/Docker PLANNED; histórico v1 condicionado**. Corte 2026-09-28. Commit del hito verificado en remoto `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`, `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` avanzó únicamente en ADA Generic; decisions `50c2bb3...`, canonical base `5558cf9...`. Las pruebas compartidas NO son CI de checkout limpio.
 
-## CURRENT / CLOSED en el alcance demostrado
+## CURRENT / CLOSED según evidencia delimitada
 
-- Source v3 Rn/Cn y Tool manifest exacto; B.2, qualification controlada, READY/BLOCKED local; lector compartido READY/exacto, sin salida Cosmos dual.
-- B1 referencia exacta y planificación sobre identidades definidas; B2a WAL V1 sin grupos y V2 con 1..N grupos, ambos formatos CURRENT; B2b Effective Head reconstruible y selección de revisión exacta; B2c ejecutor/iteración/recuperación/sesión fijada presentes en main y probados localmente por los incrementos previos.
-- B2c.5c: lector de fuentes/particiones registradas, carga consolidada y proyección de datos por alarma. Gate local reportado: 436 pruebas de regresión PASS y Ruff/format/diff sin hallazgos.
-- B2c.5d: ejemplo controlado en `catalog/examples/threshold`; catálogo productivo deliberadamente **vacío**; requisitos del desarrollador estáticos e independientes de parámetros Web opcionales. Gate local reportado después del traslado: 7 específicas y 443 de regresión PASS, Ruff PASS, 40 archivos formateados. Confirmación remota de presencia del código en `a799dc1`.
+- Source v3; READY/BLOCKED local exacto; B1 exact pin; B2a WAL adopción global V1/V2; B2b EFFECTIVE recuperable; B2c runtime y sesión fijada. Estos contratos preexistentes permanecen congelados.
+- B2c.7a Engine publica `current/latest.json` v1 completo y FACTS durables, con cursor del productor; los schemas fuente son estáticos, no datos runtime.
+- B2c.7b job Delivery independiente consume publicación Engine y materialización exacta, persiste copia de CURRENT/FACTS y su cursor independiente; no usa el WAL como feed.
+- B2c.7c integración local controlada real Engine→Delivery y reinicios simulados por recreación de componentes (1 específica PASS y 152 PASS/1 SKIPPED conjuntos en su gate).
+- B2c.7d reemplaza FACTS runtime v1 por v2 encadenado; tests locales de huecos, manipulación/reordenación, interrupciones y recovery (32 específicas, 162 PASS/1 SKIPPED conjuntos y Ruff PASS).
 
-## OPEN — razones y frontera de salida
+## OPEN y razón, sin crear nuevos frentes durante este cierre
 
-| Elemento | Estado | Motivo / acción posterior |
+| Elemento | Estado | Razón / tratamiento autorizado después |
 |---|---|---|
-| Composición ejecutable real `alarms-runtime` | **PLANNED — siguiente foco único B2c.6** | Existen `build_alarm_runtime_process` y `build_alarm_source_adapter`; no está validado el wiring operacional real con registry productivo, rutas de datasets, PI provider y dependencias de lanzamiento. Inspeccionar puertos y entrypoints existentes antes de diseñar pieza nueva. |
-| Catálogo productivo real | **CURRENT vacío / PLANNED** | Cero evaluadores reales registrados. El ejemplo no debe incorporarse productivamente. Registrar futuras lógicas sólo cuando el usuario autorice contratos efectivos. |
-| Pruebas físicas de todas las fuentes/particiones | **UNVERIFIED / condicionado por entorno** | El usuario aún no dispone de dataset preparado ni ambiente montado. Tests usan datos controlados; validar sólo cuando exista entorno. |
-| Pipeline real Tool GREEN/evaluator qualification | **UNVERIFIED / OPEN** | Registro de evaluadores y qualification JSON controlada no implican productor/servicio real. |
-| Deactivation Web hasta fin del turno | **OPEN / SEPARATE** | `default_deactivation.max_duration_hours` es numérico en Web; Domain exige int 1..12 para deactivation habilitada. La intención/efecto de Core llevan `effective_until` UTC, pero no hay política confirmada para fin de turno. Requiere debate Web/Domain/Core/calendario y tests de horario/cap sin introducir solución aquí. |
-| Semana operacional genérica para PI/KPI Runtime | **OPEN / SEPARATE** | `OperationalScope` actual no ofrece semana genérica; `ShiftScope.CURRENT_WEEK`, `TimeWindow` y `DataPartition.WEEKLY` de FABRICA_PLANES no son sustitutos semánticos. Registrar para el frente KPI correspondiente, no implementar en Alarm Engine. |
-| Política de cambio `evaluator_key`, `kind` y `priority_group` | **OPEN / CONFLICT Decisions vs main** | B.1 documenta compatibilidad/migración deseada, pero `adoption.py` sigue rechazando. Exige decisión/validación separadas. |
-| Migración de prioridad con Rule disabled y estado residual | **OPEN / riesgo previo no resuelto** | No inferir búsqueda global o migración automática. La restricción operativa previa se conserva hasta verificación específica. |
-| Reappearance de `ManagementEffect` vivo con cambios de timer/SC | **OPEN / SEPARATE** | Necesita reconciliación explícita y pruebas cuando se decida su alcance. |
-| `resolution_key_at_start` de occurrence | **PLANNED / opcional pendiente de contrato** | No añadir dato persistente sin decisión de provenance. |
-| Live Delivery / Management Capture / History-Analytics | **PLANNED / SEPARATE** | No leer WAL desde Web; proyectar hechos durables según contratos futuros. |
-| Lecturas externas de snapshots durante adopción V2 | **OPEN para lectores futuros** | Materialized Head es barrera agrupada; raw reads multiarquivo no son MVCC. Diseñar al abordar Live/History. |
-| Migración condicional desde histórico group-only | **OPEN / condicionado por despliegue** | Primer adoption sobre historial incompatible falla cerrado; no introducir migración ni legacy sin inventario real. |
-| Visual targets vs routing del editor | **OPEN / CONFLICT UX** | Independencia deseada vs sincronización actual; no corregir incidentalmente. |
-| Python 3.14.7 objetivo vs `==3.14.2` de paquetes | **OPEN / SEPARATE** | No forzar cambio transversal durante composición de alarmas. |
-| CI limpia, builds después del traslado, Azure/Blob/Cosmos y volumen multi-host | **UNVERIFIED** | Logs locales anteriores al commit no son CI/E2E ni certifican wheels nuevos; requiere gate dedicado al tener condiciones. |
+| **Distribución/artefactos Engine + Delivery** | **PLANNED — siguiente foco único** | No hay gate final de wheel/distribución del commit B2c.7d ni inspección de contenido de contratos y dependencias del paquete distribuido. Auditar artefactos actuales antes de implementar algo. |
+| **Docker Engine + Delivery independiente** | **PLANNED — mismo foco único** | B2c.7c usó volumen compartido en prueba controlada e instancias reiniciadas, no contenedores/procesos físicamente separados. Verificar montaje y recovery reales. |
+| **Volúmenes/cursores FACTS v1 preexistentes** | **BLOCKED si se intenta desplegar v2 sobre histórico** | Productor/receptor v2 rechazan estado v1 sin decisión controlada. Inventariar ambiente; no borrar historia ni agregar adaptador temporal o migración presunta. Puede diferirse si el objetivo documentado es entorno nuevo sin histórico. |
+| `1 skipped` en suite combinada | **UNVERIFIED** | El log no identifica su nombre/motivo. Determinarlo durante próximo gate, sin presumir prueba distribuida aprobada. |
+| CI limpio del HEAD `c67fcb5...` | **UNVERIFIED** | El commit y su diff ya son verificables en Git, pero los logs se ejecutaron sobre árbol local antes del commit: no hubo CI ni checkout limpio de ese SHA. |
+| Volumen multi-host/semántica real y lease/fencing entre procesos | **UNVERIFIED** | Tests usan `tmp_path` y controlled fencing; faltan ensayos físicos. |
+| Prueba con fuentes reales / Tool GREEN / evaluator qualification | **UNVERIFIED / SEPARATE** | Ejemplo NOTPII no prueba datasets, sistemas Azure ni catálogo productivo real. |
+| Full Live Delivery/`AlarmLiveProjection` | **PLANNED / SEPARATE** | Input receiver es staging, no aplica regla visual de publicación, causa ni consume Delivery Configuration para construir Live result. |
+| Management Capture, publicaciones/escalamientos reales de Delivery | **PLANNED / SEPARATE** | No existen hechos propios de dispatch/escalation ni round-trip Web en este hito. |
+| History/Analytics read model | **PLANNED / SEPARATE** | FACTS durable transporta hechos; no hay read model consultable ni política aprobada de retención. |
+| Cambios/remociones de keys y migración amplia de alarmas | **OPEN / diferido expresamente** | El usuario excluyó esta frontera de B2c.7; no introducir efectos implícitos. |
+| Semántica y UI de desactivación «fin del turno» | **OPEN / SEPARATE** | Requiere contrato Web/Domain/calendario; no inventar enum o cálculo. |
+| Adoption B.1 contra implementación (`evaluator_key`/`kind`/`priority_group`) | **OPEN / CONFLICT** | Intención de decisiones y rechazo observado del ejecutor no están reconciliados. |
+| B.1 Special Cascade, Messages inactivos y visual target/routing | **OPEN / CONFLICT documental/semántico** | Ver `09_DECISION_INDEX.md`; no resolver cambios fuera del incremento. |
+| Python 3.14.7 global vs Command Center 3.14.2 | **OPEN / SEPARATE** | No alterar metadata incidentalmente durante gate de distribución sin decisión explícita. |
+| Cosmo/Blob/Azure reales, topologías productivas, costo/performance | **UNVERIFIED / SEPARATE** | No acreditado por gate unitario/integración local de este chat. |
 
-## Una frontera siguiente y exclusiones
+## Contratos que no se reabren al entrar al siguiente foco
 
-**PROPOSED B2c.6:** debate sobre la composición ejecutable existente de `alarms-runtime`, sin alterar contratos de Domain/Core/Persistence/Materialization ni registrar ejemplos productivamente. Revisar `process.py`, entrypoints/scripts actuales, `catalog/registry.py`, `source_reader.py` y pruebas antes de escribir código. Solo después de consenso realizar wiring mínimo comprobable sin datasets reales. Deactivation al fin de turno, semana PI, Analytics, Live, qualification real y versiones/distribución se mantienen OPEN **pero fuera de este incremento**.
+```text
+B.2 READY != EFFECTIVE; pin source/result/hash/Rn-Cn exacto
+Engine WAL único + durable/materialized + EFFECTIVE derivado
+Engine CURRENT v1, snapshot completo y vacío válido
+Engine FACTS runtime v2 estricto, batches inmutables y previous_batch
+Engine export cursor independiente de Delivery consumption cursor
+Delivery sólo consume output Engine y artifact exacto, no WAL
+No v1 runtime adapters, no data reset, no API Web/Analytics nueva
+```
 
-Los reemplazos MD son locales; comparar contra canonical HEAD antes de sobreescribir. No hay mutación Git autorizada en esta entrega.
+**Siguiente frontera única recomendada:** verificar primero distribución de artefactos existentes y ejecutar Engine/Delivery en Docker independiente. Si se detecta histórico v1, documentar BLOCKED y solicitar decisión; no realizar migración incidental. No abrir Live/History mientras se ejecuta este gate.

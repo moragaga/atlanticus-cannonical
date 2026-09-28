@@ -1,39 +1,44 @@
 # ADA Command Center — Golden Path
 
-Estado: **PARTIALLY IMPLEMENTED / MATERIALIZATION LOCAL OUTPUT NEXT**
+Estado: **PARTIALLY IMPLEMENTED — Materialization/Engine/Delivery input B2c.7 validados localmente; Live/Web/History y Docker de distribución PLANNED**. Corte 2026-09-28. Commit del hito `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae` verificado en Git; main `bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` tiene cambio posterior ajeno al alcance. No revalidar otros frentes por inferencia.
 
-Corte: `atlanticus@b600ca591b56d0924aed752dfae6e9fab2c6f1d6`; canonical `772d15078c97802d58d8b658b0d5d5b928fa2ed5`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
+## Recorrido objetivo con estados delimitados
 
-## Flujo objetivo con estados reales
-
-| Paso | Responsable | Estado de este corte |
+| Paso | Owner | Estado de este corte |
 |---|---|---|
-| Tool owners publican proyecciones; Command Center reconcilia y confirma Cn | Tool / Manager | CURRENT. |
-| Confirmed Tool Catalog Cn -> Storage, sin proyección consolidada de vuelta a Cosmos | Tool | CURRENT. |
-| Alarm authoring pin Cn, Validate/Publish con drift check | Alarm Manager | CURRENT. |
+| Tool owners publican proyecciones; Manager reconcilia Cn | Tool/Manager | CURRENT preexistente; no revalidado en B2c.7. |
+| Confirmed Tool Catalog Cn → Storage durable objetivo | Tool | CURRENT preexistente; Azure físico UNVERIFIED. |
+| Alarm authoring pin Cn, Validate/Publish y drift guard | Alarm Manager | CURRENT preexistente. |
 | Source release Rn congela `ToolDependencyManifest(Cn)` schema v3 | Alarm Configuration | CURRENT. |
-| Builder/codec/adapters Local/Cosmos para `ProjectionRecord[AlarmConfigurationSnapshot]` | Web persistence | CURRENT; operacional real UNVERIFIED. |
-| Materialization adquiere proyección activa, fija release/evidencia y ejecuta B.2 | Backend process | CURRENT EN CÓDIGO v0.2.1; E2E UNVERIFIED. |
-| Materialization publica salida Cosmos monolítica | Backend process | CURRENT EN CÓDIGO / SUPERSEDED POR DECISIÓN. |
-| Materialization publica artefactos READY coherentes en volumen | Backend process | DECIDED / PLANNED. |
-| Runtime Adoption carga versión local EXACTA y confirma EFFECTIVE | Alarm Runtime | PLANNED / helpers parciales CURRENT. |
-| Delivery carga su par local de la misma key efectiva y combina Engine current state | Alarm Live Delivery | PLANNED / SEPARATE. |
-| Web consume Live Projection y Management en sus respectivos canales | Web | PLANNED / SEPARATE. |
+| Persistencia/proyección operativa de entrada | Web/Materialization | CURRENT en código; infraestructura Cosmos física UNVERIFIED. |
+| B.2 adquiere proyección, aplica qualification y resuelve | Materialization | CURRENT; qualification real Green UNVERIFIED. |
+| Materialization READY local con manifest+Runtime/Delivery o BLOCKED | Materialization | CURRENT; salida Cosmos monolítica antigua SUPERSEDED. |
+| B1 exact pin; B2a WAL adoption V1/V2; B2b EFFECTIVE derivado | Engine/Persistence | CURRENT; recovery local validado en generaciones anteriores. |
+| Runtime ejecuta sesión efectiva y publica CURRENT completo v1 | Engine | CURRENT, B2c.7a tests locales PASS. |
+| Runtime exporta sólo commits durables como FACTS v2 encadenados | Engine | CURRENT, B2c.7d tests locales PASS. |
+| Job separado recibe CURRENT/FACTS con pin exacto y cursor propio | Delivery input | CURRENT, B2c.7b y d tests locales PASS. |
+| Integración Engine→Delivery en volumen controlado/recreación de instancias | Test integrado | CLOSED local B2c.7c; no equivale Docker independiente. |
+| Build distribuido + Engine/Delivery como procesos Docker separados | Qualification | PLANNED, foco único siguiente. |
+| Enriquecimiento, causa, filtro visibility/priority, AlarmLiveProjection | Live Delivery | CONTRACT AGREED / NOT IMPLEMENTED. |
+| Management Capture/Projection y Web operacional | Servicios/Web | PLANNED / SEPARATE. |
+| History/Analytics durable consultable | Analytics | CANDIDATE / PLANNED. |
 
 ## Separaciones obligatorias
 
 ```text
-Rn/Cn -> snapshot congelado
-VALID_AT_SAVE != READY != EFFECTIVE
-READY -> Runtime + Delivery misma AlarmResolutionKey
-BLOCKED -> findings, sin artefactos ejecutables
-INVALID != REMOVED; DISABLED != REMOVED; TRACE_ONLY != REMOVED
+Rn/Cn y manifest Tool son exactos al publicar release Source v3.
+VALID_AT_SAVE != READY != EFFECTIVE.
+READY -> Runtime y Delivery del mismo AlarmResolutionKey y exact artifact pin.
+BLOCKED conserva diagnóstico sin artefactos ejecutables.
+INVALID != REMOVED; DISABLED != REMOVED; TRACE_ONLY != REMOVED.
+WAL -> DURABLE -> MATERIALIZED -> EFFECTIVE projection.
+Engine CURRENT v1 (snapshot) != FACTS v2 (hechos encadenados).
+Engine export cursor != Delivery consumption cursor.
+Delivery input receiver != AlarmLiveProjection.
 ```
 
-Si aparece C2 después de publicar `R1/C1`, la release Alarm no pasa a `R1/C2` sin una nueva publicación. El proceso usa la evidencia congelada, no latest Tool Catalog.
+Una confirmación Tool C2 posterior no cambia retroactivamente `R1/C1`. Engine y Delivery no necesitan releer su configuración desde Cosmos: usan versión exacta local tras EFFECTIVE; el mecanismo físico final para Live Web sigue abierto.
 
-**Contrato de desempeño decidido:** Engine y Delivery **no vuelven a Cosmos para leer su configuración**; usan el volumen local por versión exacta durante su ciclo de vida. El medio físico para futura Live Projection Web no queda decidido aquí.
+## Próximo entregable único y límites
 
-## Único siguiente entregable
-
-Sustituir la salida Cosmos del proceso 0.2.1 por salida local versionada/coherente comprobable, con manifest/integridad, idempotencia y BLOCKED seguro. Corregir y ejecutar tests/revisión de formato en entorno real de desarrollo **sin Cosmos real**. Dejar integración de infraestructura, productores automáticos, Runtime y Delivery para hitos separados.
+Validar distribución existente de ambos jobs (dependencias, entrypoints, schemas y empaquetado) y ejecutarlos separadamente en Docker con volumen compartido y reinicios. La prueba omitida sigue sin identificar; el estado v1 real preexistente puede bloquear despliegue v2 y requiere inventario/decisión sin legacy ni borrado. No abrir en paralelo Live Projection, Web, Management, History ni nuevos productores de qualification.
