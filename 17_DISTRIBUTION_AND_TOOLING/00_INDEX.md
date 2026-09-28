@@ -1,27 +1,26 @@
 # Distribution and Tooling — Index
 
-Estado: **CURRENT / WEB STARTER PORTABLE HISTÓRICAMENTE CLOSED / NEW AUDIT NEXT**
+Estado: **CURRENT / WEB ADA COMPOSE FULL LOCAL VERIFIED / NEXT OUTSIDE TOOLING**
 
-Implementación inspeccionada para el traspaso: `moragaga/atlanticus@392ee281a32396516fb08c23c63514d8cbdb3489`. El cierre visual local de Manager/Navigation del 2026-09-27 no constituye requalification de artifacts, wheelhouses o Docker. Mantener separada la evidencia histórica del Starter publicada para `c2bf25e...`.
+Checkpoint estático de referencia: `moragaga/atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. Las qualification anteriores de wheelhouse/PORTABLE y las pruebas recientes de Compose tienen fuentes/commits diferentes. No reunirlos en un único gate de HEAD.
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_BACKEND_GENERATION.md` | Contract/Test → proceso → artifact. | CURRENT DIRECTION / NO REVALIDATION HERE |
-| `02_FRONTEND_GENERATION.md` | Starter Generic/ADA editable, wheelhouse, qualification, brecha Starter Manager. | PORTABLE HISTÓRICO CLOSED / INTEGRATION OPEN |
-| `03_ARTIFACT_DISTRIBUTION.md` | Artifact/distribution, Docker actual y fronteras siguientes. | CURRENT / DOCKER PARTIAL |
-| `04_SCRIPTS_VALIDATION.md` | Gates por componente y master integrity. | CURRENT DIRECTION |
-| `05_SUPPORT_SERVICES.md` | Cosmos/Storage como servicios de apoyo. | CURRENT DIRECTION / LOCAL COMPOSE INTEGRADO OPEN |
-| `06_ENV_DETAIL.md` | Variables documentales, sin secretos; completitud por auditar. | CURRENT DIRECTION / TEMPLATES OPEN |
-| `07_READMES.md` | README sólo al cierre del entregable. | CURRENT DIRECTION |
-| `08_LOADERS.md` | Loaders por aplicación. | PRODUCT REQUIREMENT |
-| `09_SOURCE_LEDGER.md` | Checkpoints y límites de evidencia. | AUDIT LEDGER |
+| `01_BACKEND_GENERATION.md` | Process artifact generation y sus contratos. | CURRENT / SEPARATE |
+| `02_FRONTEND_GENERATION.md` | Web Generic/ADA editable, wheelhouse, qualification. | CURRENT; algunos datos de evidencia históricos |
+| `03_ARTIFACT_DISTRIBUTION.md` | Estado actualizado Starter ADA, Gunicorn/Compose, límites productivos y futura página aislada. | CURRENT / UPDATED |
+| `04_SCRIPTS_VALIDATION.md` | Gates y validaciones de tooling. | CURRENT DIRECTION |
+| `05_SUPPORT_SERVICES.md` | Requisitos locales/productivos Cosmos/Storage. | CURRENT DIRECTION; Compose ADA ya materializado |
+| `06_ENV_DETAIL.md` | Variables documentales sin secretos. | CURRENT DIRECTION / COMPLETENESS UNVERIFIED |
+| `07_READMES.md` | Política README sólo al cierre de entregable. | CURRENT DIRECTION |
+| `08_LOADERS.md` | Contratos de loaders de aplicación. | PRODUCT REQUIREMENT |
+| `09_SOURCE_LEDGER.md` | Evidencia histórica de Starter/Manager previa. | HISTORICAL; delta reciente en `03_ARTIFACT_DISTRIBUTION.md` |
 
-## Cierre previo que no debe reabrirse
+## Nuevo checkpoint acotado
 
-El header de Manager y los colores de Jane/John **en ADA Generic core local** fueron aceptados visualmente. Persisten en el código inspeccionado. Eso no cierra Manager, Navigation ni el recorrido HTML del **Starter ADA distribuido**, históricamente probado con Manager `disabled`.
+- **CLOSED / VERIFIED REPORTADO:** pruebas Compose ADA `33 passed`, Starter generado, artifact construido, imagen `full` generada e infraestructura local Cosmos/Azurite inicializada; Web levantó tres workers Gunicorn y el usuario confirmó funcionamiento.
+- **CURRENT / TESTS VERIFIED REPORTADOS:** patch de labels visuales del Manager (Source/Projection → Local/Blob/Cosmos). Validación visual desde artifact nuevo aún UNVERIFIED.
+- **OPEN / SEPARATE:** persistencia después de `down/up` y consumo completo sin reproyección, host productivo Entra, pipeline Azure, tests globales y migración Python objetivo 3.14.7.
+- **PLANNED:** herramienta/material protegido y página aislada de proyección. No crear aquí una nueva implementación antes de que Users special recovery tenga contrato.
 
-## Próximo foco único en un nuevo chat
-
-`DISTRIBUTION-ARTIFACTS-CURRENT-AUDIT` — **PLANNED / NEXT**: inspeccionar `atlanticus:main`, `atlanticus-cannonical:main`, reglas vigentes y scripts reales de generación; comprobar artifacts generables, closure de dependencias, lock y separación de ruedas propias/externas antes de acordar cualquier corrección. Backend/Web se revisarán como inventario del mismo contrato de distribución, sin implementar Docker ni `.env` en este primer incremento.
-
-Después, en incrementos **separados**, revisar Docker multistage/host Gunicorn, archivos de entorno/pipeline y objetivo Compose local `infra/app/full`. Los nombres de estos modos son intención conversada, no una implementación acreditada. No sustituir el generador Compose **de procesos** ya existente ni inventar uno de Web sin auditar ambos y sus ownership.
+`deployment/local/generate_compose.py` **no** es el generador de Compose del Starter Web. Conservar separación de ownership y no introducir adapters legacy. La nueva prioridad del Project es backend Users recovery, no otra ronda de tooling.

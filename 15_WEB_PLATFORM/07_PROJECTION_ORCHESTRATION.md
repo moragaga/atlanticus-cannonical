@@ -1,132 +1,42 @@
 # Web Platform — Projection Orchestration
 
-Estado: **CURRENT / BASELINE 1.0 REFINED BY IMPLEMENTATION**
+Estado: **CURRENT CONTRACT / ISOLATED BOOTSTRAP EXTENSION PLANNED**
 
-## Regla principal
+## Regla principal CURRENT
 
-No existe un orden global rígido entre todas las proyecciones.
+No existe un orden global artificial entre todas las proyecciones. Las dependencias semánticas reales que forman parte de la identidad exacta de una Projection se declaran mediante `ProjectionTarget.dependencies`. Las dependencias que son sólo composición de lectura permanecen en resoluciones derivadas. No generar ciclos `Projection A -> modifica Source B -> Projection B -> modifica Source A`.
 
-Una projection no debe depender de otra sólo para imponer un orden de bootstrap.
-
-Cuando existe una dependencia semántica real que forma parte de la identidad exacta de la projection, se declara mediante:
+Ejemplos conceptuales de base independientes, cuando su contrato lo permita:
 
 ```text
-ProjectionTarget.dependencies
+Navigation Source -> Navigation Projection
+Tool Source       -> Tool Projection
 ```
 
-## Base projections sin dependencia
+Ejemplo de dependencia real implementada: el target de KPI Configuration conserva el `Tool ProjectionTarget` exacto. No releer un Tool CURRENT cambiante durante la proyección. KPI Definition y otras relaciones deben respetar sus contratos implementados al momento de ejecutar; no sustituir targets exactos por revision strings privadas.
 
-Pueden materializarse de forma independiente cuando su contrato no requiere otra projection.
+`ProjectionTarget.dependencies` mantiene `ProjectionTarget` completos, prohíbe referencia al mismo `source_key` y duplicaciones, y normaliza determinísticamente las dependencias. La orquestación decide cuándo lanzar una proyección, **no inventa** su identidad contractual.
 
-Ejemplos:
+Proyectar nuevamente el mismo target exacto debe conservar identidad efectiva o resultar en un no-op equivalente conforme al contrato del dominio; no fabricar revisiones funcionales nuevas sólo por reintentar.
 
-```text
-Users Source      → Users Projection
-Navigation Source → Navigation Projection
-Tools Source      → Tool Projection
-```
+## Nuevas fronteras acordadas (PLANNED, no implementadas)
 
-## Projections con dependencia semántica real
+### Users es excepción administrativa explícita
 
-KPI Configuration es el caso CURRENT implementado:
+Users CURRENT es `ManagerEntry` con operaciones `discover/promote/update`, Blob `UsersRegistryStore` y Cosmos `UsersAdministrationStore/UsersRuntimeStore`. **No** tiene `ManagerModule` Source/Projection ni una operación integral ya implementada para reconciliar usuarios. No fingir que el ejemplo histórico `Users Source -> Users Projection` es un workflow del Coordinator hoy disponible.
 
-```text
-Tool ProjectionTarget
-        ↓ exact dependency
-KPI Configuration ProjectionTarget
-```
+El nuevo proceso especial deberá identificar el conjunto **efectivamente aprobado** de usuarios desde Storage; validar diferencias contra Cosmos y reconstruir la proyección con confirmación explícita. No promover candidatos por la sola presencia en el registro. No usar cambios directos en Cosmos como autoridad del Source. Diseño próximo: `13_USERS_PROJECTION_RECOVERY.md`.
 
-La KPI Configuration Projection no relee simplemente el Tool CURRENT durante la ejecución.
+### Página de proyección independiente
 
-El target seleccionado conserva el Tool ProjectionTarget exacto. Si el snapshot Tool disponible cambia antes de construir KPI Configuration, la ejecución falla en vez de proyectar contra una dependencia diferente.
+La página aislada utilizará los proyectores existentes y el nuevo proceso especial de Users. No será Manager, no dará sus permisos y no volverá a implementar reglas de dominio. Se proyectarán los Sources disponibles en Storage para el ambiente, verificando dependencias reales. Registro de resultados parciales y reintentos: contrato pendiente de revisión sobre APIs existentes, no promesa de transacción entre Blob/Cosmos.
 
-Dirección congelada para el siguiente dominio:
+### Identificación operacional ADA
 
-```text
-KPI Configuration ProjectionTarget
-        ↓ exact dependency
-KPI Definition ProjectionTarget
-```
+El módulo nuevo de ADA tendrá Source/Projection propios por definir y consumirá identidades existentes ya promovidas. Sus proyecciones se incorporarán posteriormente a la página aislada cuando su contrato esté implementado. `area` (Mina/Planta/null), cargo de catálogo manual y grupo (1-4/null) no intervienen en autorización y no se agregan a Atlanticus Users.
 
-La implementación concreta de KPI Definition permanece PLANNED / NEXT y debe inspeccionarse antes de editar.
+## Refinamiento respecto de Baseline 1.0
 
-## Derived resolutions
+La dirección general `no artificial bootstrap dependencies + exact dependencies when real + derived resolutions only when genuinely derived` se conserva. Queda refinado el ejemplo de Users: **el workflow especial no está implementado**, y debe diseñarse a partir del registro y stores existentes, no mediante adaptación legacy para aparentar simetría con otros Managers.
 
-Las resoluciones derivadas siguen siendo válidas cuando consumen projections ya materializadas para construir una vista o materialización que no forma parte de la identidad de una de esas projections.
-
-Ejemplos existentes de dirección arquitectónica:
-
-```text
-Users Projection
-      +
-Navigation Projection
-      ↓
-optional Profile/Navigation Resolution
-```
-
-```text
-Tool Projection
-      +
-Alarm Configuration Projection
-      ↓
-Resolved Alarm Configuration
-```
-
-No mover una dependencia semántica real a una derived resolution sólo para mantener artificialmente independientes las base projections.
-
-## Identidad y ordering
-
-`ProjectionTarget.dependencies`:
-
-- contiene `ProjectionTarget` completos;
-- prohíbe dependencia sobre el mismo `source_key`;
-- prohíbe source keys duplicadas;
-- se normaliza de forma determinista por `source_key`.
-
-La dependencia no se representa con revision strings privadas.
-
-## Evitar ciclos
-
-Nunca:
-
-```text
-Projection A
-→ modifica Source B
-→ Projection B
-→ modifica Source A
-```
-
-Si aparece ese ciclo, la frontera está mal definida.
-
-## Bootstrap / Manager
-
-La UI o el coordinator pueden decidir cuándo ofrecer/ejecutar acciones, pero no inventan la identidad de dependencia.
-
-La dependencia pertenece al `ProjectionTarget` del dominio correspondiente.
-
-## Idempotencia
-
-Reproyectar el mismo exact target debe conservar la misma identidad efectiva o producir un no-op equivalente según el contrato Projection CURRENT.
-
-No crear revisiones funcionales artificiales sólo por ejecutar Project nuevamente.
-
-## Refinamiento de Baseline 1.0
-
-La formulación histórica:
-
-```text
-all base projections are independent
-real dependencies only exist in derived resolutions
-```
-
-queda SUPERSEDED como regla universal.
-
-La regla CURRENT es:
-
-```text
-no artificial bootstrap dependencies
-+
-exact ProjectionTarget.dependencies for real semantic projection dependencies
-+
-derived resolutions only for genuinely derived composition
-```
+No implementar ninguna de estas extensiones durante el cierre documental.

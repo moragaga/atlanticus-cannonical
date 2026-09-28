@@ -1,34 +1,29 @@
 # Atlanticus Web Platform — Canonical Index
 
-Estado: **CURRENT / CORE HISTORICAL CHECKPOINTS + WEB STARTER PORTABLE CLOSED / MANAGER STARTER OPEN**
+Estado: **CURRENT / USERS RECOVERY NEXT / EXTERNAL PROJECTION + ADA USER DOMAIN PLANNED**
 
-Este delta documenta exclusivamente el frente Web Starter inspeccionado en `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`; no sustituye los checkpoints de otras capacidades ni declara una requalification global.
+Inspección estática para el cierre: `moragaga/atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. No sustituye las evidencias históricas específicas de cada capability.
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_CAPABILITY_INDEPENDENCE.md` | Ownership de capacidades Web independientes. | CURRENT |
-| `02_USER_ACTIVITY_HISTORY.md` | Historial de usuario por página/TTL. | CURRENT DIRECTION |
-| `03_RESOURCE_PROVISIONING.md` | Cosmos/Storage, plan Manager parcial, plan global pendiente. | CURRENT / GLOBAL OPEN |
-| `04_WEB_READINESS_AND_DECOUPLING.md` | Arranque resiliente y disponibilidad separada de capabilities. | CURRENT |
-| `05_DEPLOYMENT_ORDER.md` | Web → preparación/proyección → Backend. | CURRENT DIRECTION / E2E OPEN |
-| `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md` | Login real y consola de bootstrap previa a Manager. | CURRENT DIRECTION |
-| `07_PROJECTION_ORCHESTRATION.md` | Plan determinístico por dependencias. | CONTRACT DESIGN |
-| `08_EXTERNAL_RESOURCE_REQUIREMENTS.md` | Declaración de recursos externos. | CONTRACT DESIGN |
-| `09_CURRENT_GAPS.md` | Gaps después de SOURCE_SMOKE/PORTABLE y Docker local parcial. | CURRENT CHECKPOINT |
-| `10_SOURCE_LEDGER.md` | Evidencia histórica previa; nuevo delta en `17_DISTRIBUTION_AND_TOOLING/09_SOURCE_LEDGER.md`. | HISTORICAL |
-| `11_OPEN_ITEMS.md` | Próximo foco Web Starter Manager/Navigation/visual y otros pendientes. | CURRENT / NEXT |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Contratos de Users/Profiles/Access/Navigation/Manager. | CURRENT / REFINED |
+| `01_CAPABILITY_INDEPENDENCE.md` | Ownership de capabilities genéricas Web. | CURRENT |
+| `02_USER_ACTIVITY_HISTORY.md` | Dirección histórica de activity/session. | CURRENT DIRECTION |
+| `03_RESOURCE_PROVISIONING.md` | Recursos físicos y plan de Manager parcial. | CURRENT / PLAN GLOBAL SEPARATE |
+| `04_WEB_READINESS_AND_DECOUPLING.md` | Arranque resiliente y degradación independiente. | CURRENT |
+| `05_DEPLOYMENT_ORDER.md` | Orden de despliegue por requisitos. | DIRECTION; revalidar al construir página aislada |
+| `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md` | Página de proyección aislada (fuera de Manager), acceso protegido y refinamiento de baseline anterior. | PLANNED / UPDATED |
+| `07_PROJECTION_ORCHESTRATION.md` | Targets exactos y futura excepción administrativa Users. | CURRENT + PLANNED |
+| `08_EXTERNAL_RESOURCE_REQUIREMENTS.md` | Requisitos de recursos externos. | CONTRACT DESIGN |
+| `09_CURRENT_GAPS.md` | Gap ledger previo de Starter; su clasificación Compose anterior queda SUPERSEDED por nuevo delta. | HISTORICAL CHECKPOINT |
+| `10_SOURCE_LEDGER.md` | Evidencia histórica anterior. | HISTORICAL |
+| `11_OPEN_ITEMS.md` | Abiertos vigentes y único siguiente foco. | CURRENT / UPDATED |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Contracts CURRENT de Users/Profiles/Access/Navigation. | CURRENT |
+| `13_USERS_PROJECTION_RECOVERY.md` | Contrato a debatir: aprobados en Storage, validar y reconciliar Cosmos. | PLANNED / NEW DOCUMENT |
 
-Estados relevantes de este delta:
+## Fronteras de este cierre
 
-```text
-Generic / ADA Starter SOURCE_SMOKE      CLOSED / VERIFIED MANUAL
-Generic / ADA Starter PORTABLE          CLOSED / VERIFIED MANUAL
-Docker images build + health/live       VERIFIED MANUAL / PARTIAL
-Starter Manager/header/sidebar          OPEN
-ADA /example browser HTML access        OPEN / FINDING
-Docker production Gunicorn/8000         PROPOSED / PLANNED
-Cosmos/Azurite and Entra E2E            PLANNED / UNVERIFIED
-```
+La implementación durable de Users conserva Blob Registry y Cosmos Users Runtime; no hay reconciliación integral. La nueva página independiente debe poder operar sin Users/Profiles/Access previamente proyectados, pero no concede Manager access. La información de área/cargo/grupo es ADA-specific y no concede permisos. `extra` sólo en Cosmos es una idea futura y no se implementa ahora.
 
-El próximo foco coherente es el recorrido de Manager + Navigation y su qualification visual en el Starter, sin reabrir el core por defecto ni abrir todavía Docker productivo, secretos o emuladores.
+En Starter ADA se verificó manualmente el arranque local Compose `full` (Cosmos vNext/Azurite/recursos/Gunicorn), más **33 tests específicos** reportados. No equiparar ese resultado con reinicio E2E acreditado, Entra productiva, auditoría completa de autorización ni CI general. El patch visual de etiquetas tiene pruebas reportadas, sin validación visual final del artifact regenerado.
+
+**NEXT único:** `USERS-PROJECTION-RECOVERY-001` sobre contratos actuales; después página aislada y finalmente datos operacionales ADA como incrementos separados.

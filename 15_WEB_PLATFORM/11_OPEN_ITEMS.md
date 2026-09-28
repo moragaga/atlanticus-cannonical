@@ -1,33 +1,38 @@
 # Web Platform — Open Items
 
-Estado: **CURRENT / NEXT: STARTER MANAGER–NAVIGATION–VISUAL QUALIFICATION**
+Estado: **CURRENT / FOCUS NEXT: USERS-PROJECTION-RECOVERY-001**
 
-Checkpoint Web: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`.
+Corte estático: `moragaga/atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. Evidencia de ejecución en checkpoints de este hito proporcionada por usuario; no es qualification global del HEAD. No mezclar el trabajo paralelo de Alarm Engine o Command Center.
 
-## CLOSED en el alcance demostrado
+## CLOSED / CURRENT acotado
 
-- Núcleo ADA Generic y Collector, Manager local/durable y Navigation previa, según sus propios checkpoints históricos.
-- Starter Generic y ADA `SOURCE_SMOKE / PASS`, construcción wheelhouse (36 / 108) y `PORTABLE / PASS` offline con Python 3.14.2, reportados por el usuario.
-- Docker local Generic/ADA: construcción de ambas imágenes y liveness verificada manualmente; qualification integrada sólo parcial.
+- ADA Generic Core Stage 1, Collector y Manager local, según checkpoints anteriores.
+- SOURCE_SMOKE/PORTABLE Web históricos bajo Python 3.14.2.
+- Starter ADA Compose `full`: tests de tooling/Compose **33 passed** reportados; generación/build/arranque local con Cosmos vNext, Azurite, recursos y Gunicorn comprobados por consola y usuario.
+- Patch de etiquetas del Manager aplicado con checks Git limpios y regresiones reportadas (once puntos pytest más seis aprobados). Visual desde artifact nuevo no demostrado.
 
 ## OPEN explícitos
 
-| Item | Estado | Por qué sigue abierto |
+| Elemento | Estado | Por qué |
 |---|---|---|
-| Starter Manager Home/header/sidebar | OPEN / NEXT | Pruebas ADA usan `ADA_MANAGER_PERSISTENCE_PROVIDER=disabled`; no hay recorrido de Manager visible desde distribución. |
-| Configuración/proyección Navigation y `/example` HTML | OPEN / NEXT | El contenedor ADA mostró Acceso denegado; el probe HTTP no imitó el browser. |
-| Estilo completo Atlanticus desde Starter | OPEN / NEXT | Falta qualification visual de Manager/shell/nav/assets integrados. |
-| Un Dockerfile local/productivo, Gunicorn, 8000 | PROPOSED / PLANNED | Dockerfile CURRENT es local-only/8050/dev server. |
-| Host de identidad productivo / Entra | PLANNED / UNVERIFIED | Identidad local no representa producción. |
-| Plantillas `secrets.json`, `dev/uat/prd.mapping-env.csv` | PLANNED | Deben ser inactivas, sin valores sensibles y selección explícita. |
-| Cosmos/Azurite Docker + provisioning/restart | PLANNED / UNVERIFIED | No hay prueba de los proveedores durables en este frente. |
-| Global resource plan, primer Tool real | OPEN / OTHER SCOPE | No pertenece al cierre de Starter. |
-| Doble AccessRuntime Identity/Manager histórico | UNVERIFIED | Revalidar con integración si la evidencia lo exige, no inventar defecto. |
-| Python 3.14.7 | PLANNED / DEFERRED | 3.14.2 permanece CURRENT por decisión del usuario. |
-| Azure, CI remoto, full Ruff/pytest | UNVERIFIED | Sin evidencia sobre esos entornos. |
+| Conjunto aprobado de Users en Source | PLANNED / NEXT | `UsersRegistrySnapshot` también puede contener candidatos; la sola presencia en Blob no acredita promoción. |
+| Users validar/reproyectar Cosmos | PLANNED / NEXT | `discover` muestra conflictos; no existe recuperación integral invasiva ni política de registros inesperados. |
+| Source y Cosmos difieren tras fallo parcial | OPEN / NEXT | Blob `replace` antecede create/replace Cosmos; no hay transacción distribuida. |
+| Sesiones con permisos previos tras recovery | OPEN / SECURITY GATE | Reconstruir Cosmos no invalida automáticamente sesiones existentes. |
+| Comparación/migración interambientes | OPEN | ETag local no es versión portable; directorio Entra puede variar y requiere correspondencia autorizada. |
+| Página aislada de proyección y tooling de credenciales | PLANNED / AFTER USERS | Debe operar sin perfiles locales de destino y no dar Manager access. Flujo aceptado; implementación y contrato criptográfico OPEN. |
+| Módulo ADA de cargo/área/grupo | PLANNED / AFTER PAGE | Nuevos datos de dominio opcionales; Source/Projection y topología `users-support` aún no implementados. |
+| `extra` futuro en Cosmos / Access ampliado | DEFERRED IDEA | No crear contrato ni modificar Users ahora. |
+| Provider labels visual tras nueva imagen | UNVERIFIED / NONBLOCKING | Checks y tests realizados, sin captura/validación final del nuevo artifact. |
+| Durable data restart E2E | UNVERIFIED / SEPARATE | Se verificó arranque; falta evidencia específica de lecturas después de `down/up`. |
+| Entra productiva y claves/secrets/infrastructure ownership | PLANNED / UNVERIFIED | Host productivo real no integrado en Starter; credenciales de servicio no especificadas. |
+| Python Project 3.14.7 vs Web 3.14.2 | OPEN / SEPARATE | Desfase objetivo/metadata/imagen observado; no corregir fuera de alcance. |
+| CI global/full test suite y servicios Azure | UNVERIFIED | Sólo pruebas puntuales y entorno local reportados. |
 
-## Próximo foco único
+## Prioridad única
 
-`WEB-STARTER-MANAGER-NAVIGATION-VISUAL-INTEGRATION-QUALIFICATION`. Debatir primero la composición explícita de Manager en el perfil correspondiente y la autorización local legítima; diseñar el recorrido de publicación/proyección Navigation para `/example`, requests reales `Accept: text/html` (permitido y 403), Manager Home/sidebar/header y revisión visual del estilo. Solo después de consenso implementar un incremento pequeño verificable, con espejo comentado. Sin nuevo framework, sin bypass, sin mezclar shells ni acoplar Atlanticus Generic a ADA.
+`USERS-PROJECTION-RECOVERY-001`: auditar `UsersRegistrySnapshot`, operaciones `discover/promote/update`, Blob/Cosmos stores y namespace en HEAD vigente; definir primero criterio de usuario explícitamente aprobado, validación sin mutación y recuperación invasiva controlada de Cosmos. Definir fallos parciales, concurrencia, desconocidos y seguridad de sesiones. **Sólo después de consenso** autorizar incremento backend/tests + espejo comentado.
 
-La antigua etiqueta de Navigation core BLOCKED no se reabre: el finding pertenece al **consumidor Starter distribuido**, no demuestra ausencia del capability core.
+No abrir en el mismo incremento página de despliegue, generación ZIP, frontend de cargos ni cambios de layout de Manager.
+
+Contrato detallado de handoff: `13_USERS_PROJECTION_RECOVERY.md`.
