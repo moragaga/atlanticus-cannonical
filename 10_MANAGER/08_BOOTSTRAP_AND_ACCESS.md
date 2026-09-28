@@ -1,58 +1,50 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT / USERS RECOVERY + MANAGER USERS PROJECTION IMPLEMENTED / EXTERNAL MASTER PREVIEW IMPLEMENTED / MASTER APPLY PLANNED**  
-Users/Manager: evidencias históricas delimitadas en los documentos vigentes. Master: inspección estática `atlanticus@94f26213ca28b550baf53d8ee34e34da7538ad17`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e` consultadas parcialmente. No extender ensayos de laboratorio a producción.
+Estado: **CURRENT — MANAGER USERS RECOVERY EN SU ALCANCE; MASTER EXTERNO PREVIEW+APPLY INDIVIDUAL IMPLEMENTADOS; USERS REPLACE DESDE MASTER BLOCKED**.  
+Master contrastado en `atlanticus@9c6daffd04b9c249f75a55b6cdb9b44e6d92a795`; histories de Users conservadas según sus propios cortes anteriores. Decisions Markdown consultadas en `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`; DOCX de identidad no revalidados exhaustivamente en este cierre.
 
 ## Manager e Identity CURRENT
 
-`BOOTSTRAP ACCESS != MANAGER ACCESS`. Autenticarse en Identity no otorga permisos Manager: autorización `ManagerModule`/`ManagerEntry` depende de principal y `access_keys`; operaciones sensibles se autorizan nuevamente en servidor. `is_local` no es permiso general. Atlanticus Manager es genérico; ADA compone `profile_key -> access_keys` y sus módulos.
+`BOOTSTRAP ACCESS != MANAGER ACCESS`: autenticación Identity no otorga permisos de configuración. Los módulos/entries y acciones de Manager dependen de `ManagerPrincipal`, `access_keys` y autorización servidor. ADA incluye `users.manage`, `profiles.manage`, `access.manage`, `navigation.manage`, `tools.manage`, `kpis.manage`. La identidad local está prevista solo para local; producción necesita provider de identidad aportado por el host.
 
-Las claves del Manager ADA incluyen `users.manage`, `profiles.manage`, `access.manage`, `navigation.manage`, `tools.manage` y `kpis.manage`. `/manager` continúa como Home real; Home/sidebar derivan del registro autorizado común; páginas de dominio no deben replicar interfaz global. Existe `LocalIdentityProvider` en local; la identidad productiva exige un `IdentityProvider` apropiado aportado por el host y no queda validada por esta prueba de Master.
+Atlanticus Manager sigue siendo genérico y no se acopla a ADA. `/manager` es Home real; cards/sidebar proceden del registro común tras comprobar visibilidad y el workflow administrativo se mantiene separado del formulario de cada dominio, según las reglas aprobadas del Manager del 2026-09-02. El código Master no reemplaza ni autoriza ese workflow.
 
-## Users y recuperación CURRENT
+## Users CURRENT — contrato conservado
 
 ```text
-<application_namespace>/users/users.json.gz   Blob registro durable; incluye posibles candidatos
-approved snapshots                            Blob capturas inmutables de promovidos
-replace before-image + audit                  Blob evidencias de sustitución
-users-runtime                                 Cosmos documentos de promovidos
-users-support                                 Cosmos Profiles + ADA Access, NO promovidos
+<application_namespace>/users/users.json.gz   Blob registry durable; admite candidatos
+approved snapshots                            Blob capturas inmutables autorizadas
+replace before-image + audit                  Blob evidencia de sustitución
+users-runtime                                 Cosmos promovidos
+users-support                                 Cosmos Profiles + ADA Access; no promovidos
 ```
 
-`promote/update` escriben Blob antes que Cosmos y no tienen transacción distribuida. `discover` no constituye reconstrucción de seguridad. `UsersApprovedRecoveryService` integra captura, validación, RESTORE estricto y REPLACE desde snapshot expresamente aprobado con ETags, before-image y auditoría de started/completed/failed.
+`UsersAdministrationService` mantiene `discover/promote/update`; `UsersApprovedRecoveryService` mantiene `preview_capture/capture/validate/restore/validate_replace/replace_approved`. `discover` no equivale a aprobación; la restauración/sustitución parte únicamente de snapshots **expresamente aprobados**. No se promete transacción distribuida ni rollback. Las operaciones REPLACE usan before-image y auditoría existentes y exigen precondiciones actualizadas.
 
-La página interna **Proyección de usuarios** es una `ManagerEntry` con `users.manage`, pestañas **Crear respaldo** y **Proyectar usuarios**, historial, comparación/selección y modal. No registrar Sources/Projections sintéticos para esta Entry. El registro utiliza `application_namespace` (no `tool_namespace`); compartir una cuenta Storage no equivale automáticamente a usuarios compartidos. Variables redundantes históricas de Users Recovery quedaron SUPERSEDED y no deben resucitar.
+La página ordinaria del Manager **Proyección de usuarios** requiere `users.manage` y presenta dos pestañas **Crear respaldo** / **Proyectar usuarios**. Es una `ManagerEntry`, no un Source/Projection séptimo ni la superficie Master. El registro de Users está bajo `application_namespace`, no `tool_namespace`. El provider durable actual deduce `identity_realm` del único issuer entre promovidos; un destino sin promovidos **no** queda resuelto por ese mecanismo.
 
-El provider durable del Manager deriva `identity_realm` de un `issuer` único entre promovidos; no utilizarlo para justificar un destino sin promovidos. **VERIFIED USER-REPORTED en su hito previo:** ejecución de REPLACE en laboratorio con modificación/eliminación/descarte y estado final `match`, before-image, auditoría, captura posterior y UI aceptada. **UNVERIFIED:** operación destructiva en browser, interrupción real/reintento, revocación efectiva y operación productiva.
+**VERIFIED USER-REPORTED HISTÓRICO:** flujo local de REPLACE con before-image, auditoría y estado final `match`; aceptación visual de Manager Users. No atribuir esas pruebas al HEAD Master de este cierre. **UNVERIFIED:** fallo parcial real/revocación efectiva y operación invasiva desde navegador/productivo.
 
-## Master Projection externo — CURRENT PREVIEW, NO MANAGER
+## Master externo — separación y controles CURRENT
 
-Master se aloja en la Web existente, pero no es una pestaña ni una autorización del Manager. El usuario de servicio almacenado en el material protegido **no se convierte** en `ManagerPrincipal`, no recibe `users.manage` y no habilita automáticamente ninguna página `/manager`.
-
-Implementaciones de referencia:
+Master vive en la composición Web existente; el usuario del ZIP protegido no pasa a ser `ManagerPrincipal`, no hereda `users.manage` ni permite ingresar automáticamente a `/manager`. Código:
 
 ```text
 tooling/distribution/web/starter/ada/tooling/master_projection.py
 tooling/distribution/web/starter/ada/src/application/master_projection/{material,reader}.py
-scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/master_projection/{plan,composition,web}.py
-web/capabilities/identity/core/src/atlanticus/web/identity/module.py
+scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/master_projection/{plan,composition,apply,web}.py
 ```
 
-**CURRENT:** la URL `/master-projection` maneja `ABSENT/PRESENT/INVALID` y habilita login independiente solo con material íntegro y credenciales correctas. Solo `/master-projection` y `POST /master-projection/logout` están exceptuadas por **match exacto** del middleware Identity; el middleware Master se registra antes de Navigation para impedir el `AccessContextError` que reveló la primera prueba de distribución. Ruta desconocida bajo el prefijo sigue autenticación ordinaria. Sesión Master: 900 s fijos, CSRF para POST, fingerprint para revocar sesiones al sustituir material y lectura del planner tras autorización.
+El lector usa `ADA_MASTER_PROJECTION_MATERIAL_PATH` opcional/external y estados `ABSENT/PRESENT/INVALID`. El ZIP AES-256/scrypt vincula usuario de servicio, aplicación, ambiente y acciones. Las sesiones Master duran 900 segundos desde emisión y se invalidan al sustituir/desaparecer el material; login y POST requieren CSRF. Logout es **POST** `/master-projection/logout` con CSRF. `GET/POST /master-projection` y dicha ruta de logout son las **únicas excepciones exactas** al middleware ordinario; el registro Master precede a Identity/Navigation. No crear bypass de prefijo.
 
-**CURRENT:** se observan seis proyecciones ordinarias y estado Users separado desde un planner solo lectura; no se presentan acciones de Apply/REPLACE. El formato ZIP declara `projection.preview`, `projection.apply`, `users.replace`, pero hoy **solo** hay controller read-only de la primera. Declaración de permisos ≠ controlador implementado.
+Con `projection.preview` se ve el planner read-only de seis dominios y el estado Users separado. Con **`projection.apply` y executor presente**, la página ofrece preparar/confirmar la proyección de un dominio `NEVER_PROJECTED` u `OUTDATED` con selección de target exacto + nonce en sesión firmada, CSRF, confirmación humana y reinspección al confirmar. El backend valida otra vez el target y verifica el resultado persistido. Si el target ya está alineado devuelve `ALREADY_CURRENT`. La operación de escritura Master nunca edita/publica Source.
 
-**VERIFIED USER-REPORTED LOCAL:** `BUILT_UNQUALIFIED` de 67 wheels, `SYNCED`, HTTP 200 en estados sin/con ZIP y login real exitoso. **OPEN:** full test rerun posterior al último commit, visualización expresa del plan y logout/relogin manual, qualification desde checkout limpio, warmup/cloud productivo. Consultar `../15_WEB_PLATFORM/06_PRE_MANAGER_BOOTSTRAP_SURFACE.md`.
+**Users Master REPLACE sigue no ejecutable:** `users.replace` figura como acción declarada en material, pero el planner marca `executable: false` y no existe un controller de sustitución desde Master. No equiparar esto a la función REPLACE ya existente del Manager.
 
-## Restricciones de seguridad y conflicto de decisión
+## Qualification y tensiones
 
-1. No convertir la exención Master en bypass general de Identity o Navigation ni en elevación de Manager.
-2. El material ZIP es externo a repo/Starter y la contraseña no se guarda en claro; ruta actual opcional `ADA_MASTER_PROJECTION_MATERIAL_PATH`. La custodia/warmup productiva no está certificada.
-3. El acceso independiente Master es una **excepción técnica implementada**; la baseline histórica que exigía Entra para toda superficie pre-Manager permanece **OPEN / CONTRACT CONFLICT** hasta revisar formalmente decisiones pertinentes y delimitar controles productivos. Las reglas globales Markdown del Manager no bastan para declarar resuelto el conflicto de identidad.
-4. Registry de Users puede contener candidatos; solo snapshots aprobados gobiernan recuperación. Cosmos no es authority durable del registro y ETag físico no es identidad portable.
-5. Confirmaciones de mantenimiento/revocación en UI no son aislamiento/revocación operacional ejecutados. Cada futura escritura requiere validación servidor y precondiciones actuales.
-6. No introducir cargo/área/grupo ADA en Core Users genérico ni una nueva superficie Manager para encubrir Master.
+**VERIFIED USER-REPORTED 001D.2:** 50 pruebas seleccionadas PASS, Ruff/diff check PASS. **VERIFIED USER-REPORTED Docker 001D.3 (`ca3ee508`):** en navegador el usuario ingresó a Master, observó inicialmente seis Source missing, publicó una modificación de Navigation, preparó/confirmó Apply y Manager mostró Navigation proyectado/sincronizado al recargar. Solo Navigation se ensayó end-to-end de este modo. El correctivo local de Starter 001D.4 fue publicado en `9c6daffd` y verificado después en distribución separada, sin volver a desplegar esta versión nueva en Docker.
 
-## Siguiente frontera acotada
+**TENSIÓN DOCUMENTADA / DECISIÓN A CONTRASTAR:** la canonical histórica recoge una baseline Entra para superficies pre-Manager y Master usa credencial independiente de servicio. Los DOCX pertinentes de decisiones no se auditaron exhaustivamente en este cierre; no afirmar que la tensión esté formalmente resuelta ni que haya un conflicto documental confirmado sin leerlos. La validación local no autoriza producción.
 
-`MASTER-PROJECTION-001D`: inspección/debate de `projection.apply` para los seis pares ordinarios utilizando servicios actuales, sin código antes de consenso y sin incluir Users REPLACE. Los pendientes productivos de Users, Entra y warmup siguen diferenciados. Para detalle de Users consultar `../15_WEB_PLATFORM/13_USERS_PROJECTION_RECOVERY.md`.
+**OPEN:** custodia/warmup productivo del ZIP, rotación/revocación real, Azure/Entra, multiworker, cinco dominios restantes de Master y gates de Users destino vacío, issuer, revocación y fallo parcial. No introducir variables redundantes históricas de Users, código legacy ni una superficie Manager duplicada.
