@@ -1,42 +1,55 @@
 # Web Platform — Projection Orchestration
 
-Estado: **CURRENT CONTRACT / ISOLATED BOOTSTRAP EXTENSION PLANNED**
+Estado: **CURRENT CONTRACT / USERS SPECIAL RECOVERY IMPLEMENTED / MASTER PROJECTION PLANNED**  
+Inspección: `atlanticus@208c8d6244795ba92cbe6f8e6b11e9743191367d`; canonical base `e49901fb3ceef5431edbde1d0dcbb29fc3502855`.
 
-## Regla principal CURRENT
+## Contrato ordinario CURRENT
 
-No existe un orden global artificial entre todas las proyecciones. Las dependencias semánticas reales que forman parte de la identidad exacta de una Projection se declaran mediante `ProjectionTarget.dependencies`. Las dependencias que son sólo composición de lectura permanecen en resoluciones derivadas. No generar ciclos `Projection A -> modifica Source B -> Projection B -> modifica Source A`.
+No introducir un orden global artificial entre todas las proyecciones. Las dependencias semánticas que forman parte de la identidad exacta se declaran mediante `ProjectionTarget.dependencies`, conservando `ProjectionTarget` completos y normalizados. Las dependencias de mera lectura son resoluciones derivadas; no inventar ciclos entre Sources.
 
-Ejemplos conceptuales de base independientes, cuando su contrato lo permita:
+Ejemplos de Sources independientes cuando sus contratos lo permiten:
 
 ```text
 Navigation Source -> Navigation Projection
 Tool Source       -> Tool Projection
 ```
 
-Ejemplo de dependencia real implementada: el target de KPI Configuration conserva el `Tool ProjectionTarget` exacto. No releer un Tool CURRENT cambiante durante la proyección. KPI Definition y otras relaciones deben respetar sus contratos implementados al momento de ejecutar; no sustituir targets exactos por revision strings privadas.
+KPI Configuration conserva el `Tool ProjectionTarget` exacto de su dependencia. KPI Definition y cualquier otro dominio deben usar sus contratos implementados al ejecutarse; una revision string privada no sustituye un target dependiente. Reintentar un mismo target exacto no debe crear artificialmente una nueva identidad funcional.
 
-`ProjectionTarget.dependencies` mantiene `ProjectionTarget` completos, prohíbe referencia al mismo `source_key` y duplicaciones, y normaliza determinísticamente las dependencias. La orquestación decide cuándo lanzar una proyección, **no inventa** su identidad contractual.
+## Users es una excepción administrativa CURRENT
 
-Proyectar nuevamente el mismo target exacto debe conservar identidad efectiva o resultar en un no-op equivalente conforme al contrato del dominio; no fabricar revisiones funcionales nuevas sólo por reintentar.
+La capability de Users dispone de:
 
-## Nuevas fronteras acordadas (PLANNED, no implementadas)
+```text
+UsersAdministrationService: discover / promote / update
+UsersApprovedRecoveryService: preview_capture / capture / validate / restore
+                              validate_replace / replace_approved
+```
 
-### Users es excepción administrativa explícita
+`UsersApprovedRecoveryService` reconstruye desde **snapshots expresamente aprobados**; el registro durable puede contener candidatos. `validate_replace` ofrece un plan y `replace_approved` reconcilia Blob/Cosmos con auditoría y respaldo previo. Esta operación no es un `ManagerModule` Source/Projection sintético ni un target ordinario del Coordinator.
 
-Users CURRENT es `ManagerEntry` con operaciones `discover/promote/update`, Blob `UsersRegistryStore` y Cosmos `UsersAdministrationStore/UsersRuntimeStore`. **No** tiene `ManagerModule` Source/Projection ni una operación integral ya implementada para reconciliar usuarios. No fingir que el ejemplo histórico `Users Source -> Users Projection` es un workflow del Coordinator hoy disponible.
+La página interna **Proyección de usuarios** es `ManagerEntry` autorizada con `users.manage`. Contiene **Crear respaldo** y **Proyectar usuarios**; el operador compara antes de escoger restauración estricta o sustitución completa. No hace bootstrap del Manager ni garantiza por sí misma aislamiento/revocación productivos.
 
-El nuevo proceso especial deberá identificar el conjunto **efectivamente aprobado** de usuarios desde Storage; validar diferencias contra Cosmos y reconstruir la proyección con confirmación explícita. No promover candidatos por la sola presencia en el registro. No usar cambios directos en Cosmos como autoridad del Source. Diseño próximo: `13_USERS_PROJECTION_RECOVERY.md`.
+## Master Projection — próxima extensión, no implementada
 
-### Página de proyección independiente
+La página externa usará los proyectores actuales y el proceso especial de Users donde aplique. No editará Sources ni inventará otro sistema de publicación. Ante ausencia de material protegido de acceso, mostrará página controlada sin permitir interacción privilegiada; con material válido y autenticación, expondrá estado, plan y acciones autorizadas para las proyecciones necesarias del ambiente.
 
-La página aislada utilizará los proyectores existentes y el nuevo proceso especial de Users. No será Manager, no dará sus permisos y no volverá a implementar reglas de dominio. Se proyectarán los Sources disponibles en Storage para el ambiente, verificando dependencias reales. Registro de resultados parciales y reintentos: contrato pendiente de revisión sobre APIs existentes, no promesa de transacción entre Blob/Cosmos.
+- Derivar orden sólo de dependencias reales y precondiciones actuales; no fijar una lista rígida por comodidad de UI.
+- Verificar Sources disponibles y distinguir proyecciones ya alineadas de faltantes/desactualizadas cuando el contrato de cada dominio lo permita.
+- Exponer resultados por componente y reintentos controlados; sin fingir transacción global Blob/Cosmos.
+- Resolver explícitamente la fuente aprobada y `identity_realm` de Users en destinos **sin promovidos**, porque el provider durable actual del Manager no opera allí.
+- Definir antes de implementar contrato de credenciales, archivo y límites de autorización independientes del Manager.
 
-### Identificación operacional ADA
+## Identificación operacional ADA — otro foco
 
-El módulo nuevo de ADA tendrá Source/Projection propios por definir y consumirá identidades existentes ya promovidas. Sus proyecciones se incorporarán posteriormente a la página aislada cuando su contrato esté implementado. `area` (Mina/Planta/null), cargo de catálogo manual y grupo (1-4/null) no intervienen en autorización y no se agregan a Atlanticus Users.
+Cargo, área y grupo de ADA no son campos de Atlanticus Users y no otorgan permisos. Su Source/Projection propio no forma parte de Master hasta que el contrato correspondiente exista y su integración se autorice. No mezclar ese desarrollo con Master.
 
-## Refinamiento respecto de Baseline 1.0
+## Estado
 
-La dirección general `no artificial bootstrap dependencies + exact dependencies when real + derived resolutions only when genuinely derived` se conserva. Queda refinado el ejemplo de Users: **el workflow especial no está implementado**, y debe diseñarse a partir del registro y stores existentes, no mediante adaptación legacy para aparentar simetría con otros Managers.
-
-No implementar ninguna de estas extensiones durante el cierre documental.
+```text
+EXACT PROJECTION TARGET DEPENDENCIES           CURRENT
+USERS SPECIAL VALIDATE / RESTORE / REPLACE     CURRENT / LAB VALIDATED
+MANAGER USERS PROJECTION ENTRY                CURRENT / USER-REPORTED UI VALIDATED
+ISOLATED MASTER PROJECTION                    PLANNED / UNVERIFIED
+MASTER FILE / WARMUP TOOLING                  PLANNED / CONTRACT OPEN
+```

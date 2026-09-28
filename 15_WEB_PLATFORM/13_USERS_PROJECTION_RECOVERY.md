@@ -1,73 +1,76 @@
 # Users — Approved Registry, Consistency and Special Recovery
 
-Estado: **DESIGN HANDOFF / NEXT INCREMENT / NOT IMPLEMENTED**
+Estado: **CURRENT / IMPLEMENTED / CLOSED PARA EL FLUJO VALIDADO; SECURITY Y RECOVERY OPERACIONAL OPEN**  
+Corte de implementación (VERIFIED STATIC): `moragaga/atlanticus:main@208c8d6244795ba92cbe6f8e6b11e9743191367d`.  
+Decisiones consultadas: `moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, reglas globales aprobadas del Manager.  
+Base documental anterior: `moragaga/atlanticus-cannonical:main@e49901fb3ceef5431edbde1d0dcbb29fc3502855`.  
+Ejecuciones Docker/UI: **VERIFIED USER-REPORTED** en este hito; no equiparar con CI del commit ni con producción.
 
-Inspección estática: `moragaga/atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`; decisiones de Manager consultadas en `moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`; base documental leída `moragaga/atlanticus-cannonical@7d0de8d9fa27f28170171588bc219c2bae99f34e`. Los acuerdos de producto de este hito aún no son código ni decisions formales.
+## Alcance cerrado en este hito
 
-## Objetivo — único siguiente foco
+`USERS-PROJECTION-RECOVERY-001/003` incorpora captura, validación, RESTORE estricto y REPLACE desde snapshots aprobados. `USERS-PROJECTION-WEB-004/005/006/007` integra y refina **Proyección de usuarios** dentro del Manager normal, con dos pestañas: **Crear respaldo** y **Proyectar usuarios**. El último correctivo ajusta las referencias de aprobación, limpia el formulario después de capturar, presenta fechas/metadatos de respaldos y alinea el selector con estilos Atlanticus. `USERS-PROJECTION-WEB-007` corresponde al corte de código arriba indicado.
 
-`USERS-PROJECTION-RECOVERY-001`: permitir distinguir usuarios aprobados de candidatos, validar el registro autorizado de Storage frente a usuarios promovidos en Cosmos y **reconstruir de forma explícita e invasiva** la proyección cuando un ambiente está vacío, desactualizado o se detectan cambios directos no autorizados en Cosmos. Esta capability será consumida por una futura página independiente de proyección; **NO** implementar la página ni cargos/área/grupo en este primer incremento.
+La pantalla del Manager **no** es la futura página externa Master Projection. No fusionar ambas funciones ni sus autorizaciones.
 
-## Evidencia CURRENT
+## Contrato CURRENT de dominio y persistencia
+
+- `UserRecord` conserva `user_id`, `issuer`, `subject_id`, `profile_key`, `enabled` y sus atributos generales; no contiene cargo/área/grupo ADA.
+- `UsersRegistryStore` en Blob es el registro durable de usuarios bajo `<application_namespace>/users/users.json.gz`. Puede contener candidatos: presencia en registro **no** equivale a aprobación.
+- `CosmosUsersStore` en `users-runtime` conserva promovidos por documento, separado de `users-support` (Profiles/Access). No reconstruir `users-runtime` entero.
+- El snapshot aprobado es inmutable e incluye `application_key`, `identity_realm`, `origin_environment`, identificación y referencia del operador, fecha UTC, conjunto exacto de promovidos y digest de contenido/integridad. El digest de contenido no depende de un ETag físico interambientes.
+- `BlobApprovedUsersSnapshotStore` conserva snapshots; el catálogo usa propiedades/listado de Blob para fechas y la selección descarga el artefacto elegido. Los respaldos de REPLACE (`before-image`) y la auditoría son artefactos distintos, también durables.
+- El ámbito de usuarios es de **aplicación**, no de `tool_namespace`. Herramientas distintas pueden compartir usuarios si consumen de forma consistente el **mismo registro lógico y proyección**; compartir sólo una cuenta Storage no crea por sí mismo usuarios globales.
+- La UI de Users es `ManagerEntry`, no `ManagerModule` sintético con Source/Projection. Las acciones se autorizan en servidor y usan el principal existente y `users.manage`.
+
+## Contratos CURRENT del servicio
+
+Código de referencia:
 
 ```text
-web/capabilities/users/core/src/atlanticus/web/users/models.py
-  UserRecord(user_id, issuer, subject_id, profile_key, enabled, ...)
-  UsersRegistrySnapshot(users, version)
-
-web/capabilities/users/core/src/atlanticus/web/users/administration.py
-  discover() -> candidatos/registrados/promovidos/conflictos
-  promote() -> UsersRegistryStore.replace -> UsersAdministrationStore.create
-  update()  -> UsersRegistryStore.replace -> UsersAdministrationStore.replace
-
-web/capabilities/users/blob/src/atlanticus/web/users/blob/store.py
-  <application_namespace>/users/users.json.gz
-  registry version = Blob ETag
-
+web/capabilities/users/core/src/atlanticus/web/users/recovery.py
+web/capabilities/users/core/src/atlanticus/web/users/web/projection_workflow.py
+web/capabilities/users/core/src/atlanticus/web/users/web/projection.py
+web/capabilities/users/blob/src/atlanticus/web/users/blob/recovery.py
 web/capabilities/users/cosmos/src/atlanticus/web/users/cosmos/store.py
-  promoted users, identity-bound get/resolve; replace uses ETag
-
-scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/manager_persistence.py
-  users_registry = BlobUsersRegistryStore
-  users_promoted = CosmosUsersStore (users-runtime)
-  users-support = Profiles/Access projections, NO promovidos
+web/compositions/users-manager/src/atlanticus/web/compositions/users_manager/composition.py
+scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/manager_deployment.py
 ```
 
-La escritura actual entre Blob y Cosmos no es atómica. `discover` detecta diferencias pero no es un reconstructor de seguridad. El registry puede contener usuarios no promovidos; **la inclusión en `users.json.gz` no constituye por sí sola aprobación**.
+- `preview_capture` compara el registro con **todos los promovidos** y excluye candidatos. `capture` vuelve a comprobar la vista previa y persiste un snapshot inmutable únicamente tras confirmación.
+- `validate` es de lectura, compara snapshot/registro/proyección e informa `MISSING`, `DIFFERENT`, `IDENTITY_CONFLICT`, `UNEXPECTED` y `PROFILE_UNAVAILABLE` según corresponda. No interpreta cambios directos de Cosmos como aprobación.
+- RESTORE estricto aplica sólo cuando las precondiciones permiten completar usuarios faltantes sin sobrescribir conflictos; requiere confirmación y mantenimiento declarados. No es sinónimo de REPLACE.
+- `validate_replace` produce plan: crear, modificar, eliminar, conservar, descartar candidatos y reemplazar registro; bloquea conflictos de identidad o Profiles.
+- `replace_approved` requiere digest vigente, confirmación, afirmaciones de mantenimiento y revisión de sesiones/revocaciones, ETags por usuario, `before-image` inmutable y auditoría `started/completed/failed` (modo REPLACE, esquema 2). Reconcilia el registro con el conjunto exacto del snapshot, elimina promovidos inesperados y actualiza/crea según plan. No hay transacción distribuida Blob/Cosmos ni rollback automático.
+- El workflow de la pantalla vuelve a validar snapshot y estado antes de escribir; las confirmaciones visuales **no** prueban que haya aislamiento real ni revocación efectiva de sesiones.
+- En la composición durable actual, el `identity_realm` se deriva del único `issuer` entre promovidos; **si no hay promovidos o hay varios emisores, esta composición no resuelve el ámbito**. Master Projection deberá tratar su propio bootstrap inicial sin asumir que este provider del Manager funciona en un destino vacío.
 
-## Invariantes acordadas (no inventar schema aún)
+## Qualification delimitada
 
-1. Atlanticus Users sigue genérico; conservar `user_id/issuer/subject_id`, `profile_key` y `enabled` como contratos de identidad/perfil. No introducir datos operacionales ADA ni un `extra` nuevo en esta etapa.
-2. Source durable de usuarios autorizados vive en Storage; la proyección consumible vive en Cosmos. No ascender un registro alterado en Cosmos a autoridad.
-3. Solo reconstruir el conjunto **explícitamente aprobado**. Nunca promover automáticamente Guest, identidades sólo descubiertas ni usuarios ajenos detectados en Cosmos.
-4. No tomar un ETag entre ambientes como versión lógica portable: representa un objeto físico concreto. Si se necesita comparación portable, diseñar identidad/revisión desde contenido autorizado y contratos existentes, sin inventar un algoritmo obligatorio aquí.
-5. La recuperación exige `validate` sin mutación, vista de discrepancias, confirmación explícita, ejecución auditada y política explícita para registros inesperados. Antes de borrar, revisar capacidades reales de `CosmosUsersStore` y pruebas de fallo; el store CURRENT no expone una operación pública de reconciliación/borrado integral.
-6. Validar referencias a Profiles/Access y alcance de la configuración antes de reconstruir. No asumir que copiar usuarios entre directorios Entra distintos conserva `issuer + subject_id`.
-7. Los reintentos no deben convertir modificaciones parciales en aprobaciones accidentales. Definir comportamiento ante Source que cambia durante la validación o ejecución, y ante fallos parciales de Cosmos.
-8. No confundir recuperación de Cosmos con revocación inmediata de sesiones privilegiadas. Esa frontera debe auditarse y resolverse antes de exponer el proceso productivamente; cambios ordinarios pueden adoptar nueva información al refrescar la página, según la decisión del usuario.
+| Evidencia | Estado | Alcance |
+|---|---|---|
+| Pruebas unitarias del incremento REPLACE | VERIFIED USER-REPORTED | Selección inicial de 50 tests aprobados. |
+| Ejecución Docker real REPLACE | VERIFIED USER-REPORTED | Un promovido modificado, un inesperado eliminado y un candidato descartado; resultado final `match`. |
+| `before-image` y auditoría | VERIFIED USER-REPORTED | Registro previo 2 entradas, Cosmos previo 2 promovidos, eventos `started` y `completed`, 1 update, 1 delete, sin creates. |
+| Captura posterior a REPLACE | VERIFIED USER-REPORTED | Nuevo snapshot de 1 promovido, digest igual al original, `validate` posterior `match`. |
+| Manager Users Projection y captura visual | VERIFIED USER-REPORTED | Captura desde modal y refinamientos visuales validados por el usuario; último resultado «quedó ok». |
+| Tests seleccionados tras correctivo 007 | VERIFIED USER-REPORTED | Selección de tests Core/Blob/composición/ADA Manager/ADA Generic al 100% antes de consolidar el commit 208c8d6. |
+| Inspección estática del commit 208c8d6 | VERIFIED STATIC | Archivos de servicio, composición y UI presentes. |
+| Ruff final, CI monorepo, operación invasiva desde navegador | UNVERIFIED | No se aportó evidencia final de estas calificaciones. |
+| Interrupción real a mitad de REPLACE, recuperación y revocación de sesiones | UNVERIFIED | Fuera del flujo feliz del laboratorio; gate productivo pendiente. |
 
-## Preguntas OPEN — investigar en el siguiente chat, no rellenar
+## Refinamientos y reemplazos
 
-- ¿Cuál es la representación mínima del conjunto **aprobado** dado el `UsersRegistrySnapshot` actual, sin reinterpretar como aprobados los candidatos en Storage?
-- ¿Cuándo queda consolidada una promoción si la escritura en Blob triunfa y Cosmos falla? ¿Cómo reparar sin introducir autorizaciones indebidas?
-- ¿Qué validaciones y operaciones necesitan los stores existentes para comparar y reconstruir Cosmos sin borrar usuarios legítimos, incluidos cambios externos y concurrencia?
-- ¿Qué significado tendrán diferencia de versión física, diferencia de datos e inconsistencia de identidad? ¿Qué resultado produce cada uno?
-- ¿Cómo se define el ámbito compartido por aplicación/herramienta? CURRENT: registry usa `application_namespace`; no crear registro por herramienta sin una decisión explícita.
-- ¿Qué condición verificable revoca privilegios a sesiones anteriores a recuperación? No afirmar protección absoluta frente a acceso total a infraestructura.
-- ¿Qué comparación es viable al migrar DEV/UAT/PRD con mismo o distinto directorio Entra?
+- **SUPERSEDED:** descripción previa de `USERS-PROJECTION-RECOVERY` como `NOT IMPLEMENTED` y de su UI como inexistente.
+- **SUPERSEDED:** variables adicionales `ADA_USERS_RECOVERY_IDENTITY_REALM` / `ADA_USERS_RECOVERY_ENVIRONMENT` para la página del Manager; se retiraron del wiring. La aplicación/tooling no debe añadir configuración redundante por herramienta.
+- **SUPERSEDED:** la UI de dos columnas simultáneas, terminología mixta `RESTORE/REPLACE`, confirmación mecanografiada, selector sin contexto y referencias con espacios rechazadas por el workflow de captura.
+- **CURRENT:** pestañas separadas, nombres comprensibles en español, previsualización/comparación, modal explícito, metadatos del respaldo y CSS propio alineado a Users Administration.
 
-## Secuencia de trabajo para el siguiente chat
+## OPEN / condiciones antes de habilitar uso productivo
 
-1. Auditar el HEAD nuevo de implementación, decisions y canonical; localizar código/tests reales, sin cambiar Git.
-2. Debatir y congelar la representación del conjunto autorizado; decidir explícitamente reconciliación de `promote/update` con fallo parcial, más lectura/versión.
-3. Definir el contrato de `validate` y recuperación (diferencias, precondiciones, concurrencia, auditabilidad, tratamiento de desconocidos y revocación).
-4. Solo tras acuerdo, implementar un incremento mínimo backend + tests de comportamiento + espejos pedagógicos españoles. No modificar frontend ni página aislada en este primer incremento.
+1. `OPEN / SECURITY`: mantenimiento efectivo, control de concurrencia operacional y reevaluación/revocación de sesiones; los booleanos operacionales no sustituyen controles reales.
+2. `OPEN / RECOVERY`: probar interrupción real tras escrituras parciales, auditoría de fallo, revalidación y reintento; no afirmar atomicidad ni rollback.
+3. `OPEN / QUALIFICATION`: Ruff final, CI/monorepo, producción Entra y ejecución de RESTORE/REPLACE invasivo **desde la UI**.
+4. `OPEN / INTERAMBIENTES`: transporte autorizado de snapshots y bootstrap en destino sin promovidos; no asumir equivalencia entre distintos emisores Entra ni promover automáticamente candidatos.
+5. `OPEN / MASTER-PROJECTION`: página externa y material de acceso independiente. Consultar `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md`.
 
-## Fuera de alcance explícito
-
-- Implementación de la página aislada y tooling de paquetes/credenciales.
-- Nueva capability ADA de cargos y asignación área/grupo; posible `users-support` debe verificarse antes.
-- `UserRecord.extra` o `extra` en Cosmos, y potencial integración futura con Access. Sólo una idea futura, NO un contrato aprobado ni necesario para recovery.
-- Refactorizaciones generales, procesos KPI/Alarm, multi-cloud, remigración Python, backend unrelated y legacy adapters.
-
-Estado del entregable en este cierre: **PLANNED / UNVERIFIED / NEXT**. No hay tests de recovery nuevos ni esquema nuevo aprobado.
+Este incremento se considera **CLOSED** para el flujo respaldar/comparar y REPLACE validado en laboratorio, con pendientes productivos explícitos. No reabrir Users por estilo ni introducir adaptadores legacy sin finding real.
