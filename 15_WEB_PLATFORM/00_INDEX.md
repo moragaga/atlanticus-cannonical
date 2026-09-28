@@ -1,36 +1,40 @@
 # Atlanticus Web Platform — Canonical Index
 
-Estado: **CURRENT / USERS RECOVERY VALIDATED SCOPE CLOSED / ADA RESOURCE PREPARATION 001 LOCAL CLOSED / MASTER PROJECTION NEXT**  
-Corte de código: `moragaga/atlanticus@da75752e87036b8318f38f8d405c55e8cb18717d`; decisiones consultadas `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Base documental contrastada: `atlanticus-cannonical@e713c1485f63aeb644b32ddd14ce62b28ede0411` **antes** de integrar estos reemplazos. Qualification Docker de recursos corresponde al artifact generado del incremento; no es CI sobre un checkout limpio del HEAD.
+Estado: **CURRENT / USERS RECOVERY CLOSED EN ALCANCE HISTÓRICO / RESOURCE PREPARATION 001 LOCAL CLOSED / MASTER 001A+001B CLOSED / MASTER 001C IMPLEMENTED, QUALIFICATION IN PROGRESS / 001D PLANNED (SOLO DISEÑO)**  
+Corte específico Master contrastado: `moragaga/atlanticus@94f26213ca28b550baf53d8ee34e34da7538ad17`; canonical anterior `moragaga/atlanticus-cannonical@ed1edd7a04533cf32a2b32844cb79b9edbe7bcc8`; decisiones históricas `moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Este corte **no** revalida otros frentes del Project ni los DOCX históricos completos de identidad.
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_CAPABILITY_INDEPENDENCE.md` | Ownership genérico de capabilities Web. | CURRENT |
-| `02_USER_ACTIVITY_HISTORY.md` | Dirección histórica de actividad/sesión. | CURRENT DIRECTION |
-| `03_RESOURCE_PROVISIONING.md` | ADA Resource Preparation 001: implementación y calificación local parcial; inventario global separado. | CURRENT / LOCAL SCOPE CLOSED |
-| `04_WEB_READINESS_AND_DECOUPLING.md` | Estados Tool, collector, evidencia de recuperación y límites de Home degradado. | CURRENT + OPEN DEFERRED |
-| `05_DEPLOYMENT_ORDER.md` | Despliegue Web/recursos/proyección/Backend; Compose local ya ensayado; Cloud E2E pendiente. | CURRENT + DIRECTION |
-| `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md` | Próxima página **Master Projection externa**; dos estados del material de acceso generado por tooling. | PLANNED / NEXT |
-| `07_PROJECTION_ORCHESTRATION.md` | Dependencias exactas; Users especial CURRENT y uso posterior de servicios actuales en Master. | CURRENT + PLANNED |
-| `08_EXTERNAL_RESOURCE_REQUIREMENTS.md` | Conexiones nombradas y ownership de recursos externos. | CONTRACT DESIGN |
-| `09_CURRENT_GAPS.md` | Checkpoint histórico de Starter anterior. | HISTORICAL / NO CURRENT LEDGER |
-| `10_SOURCE_LEDGER.md` | Referencias y pruebas históricas previas. | HISTORICAL |
-| `11_OPEN_ITEMS.md` | Pendientes, seguridad y siguiente foco único. | CURRENT |
-| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Baseline de ownership Users/Profiles/Access/Navigation; delta Users Projection en 13. | CURRENT BASELINE |
-| `13_USERS_PROJECTION_RECOVERY.md` | Snapshots aprobados, RESTORE/REPLACE y UI del Manager con evidencia/limitaciones. | CURRENT / VALIDATED SCOPE CLOSED |
+| `01_CAPABILITY_INDEPENDENCE.md` | Ownership genérico de capabilities Web. | CURRENT / NO MODIFICADO |
+| `02_USER_ACTIVITY_HISTORY.md` | Dirección histórica de actividad/sesión. | CURRENT DIRECTION / NO MODIFICADO |
+| `03_RESOURCE_PROVISIONING.md` | Resource Preparation 001 y qualification local parcial. | CURRENT / LOCAL SCOPE CLOSED / NO REABIERTO |
+| `04_WEB_READINESS_AND_DECOUPLING.md` | Estado Tool, collector y Home degradado. | CURRENT + OPEN DEFERRED |
+| `05_DEPLOYMENT_ORDER.md` | Web/recursos/proyección/backend; Cloud E2E pendiente. | CURRENT DIRECTION |
+| `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md` | Master 001A material, 001B planner y 001C página protegida read-only. | CURRENT IMPLEMENTED + QUALIFICATION GAPS |
+| `07_PROJECTION_ORCHESTRATION.md` | Targets exactos y seis entradas del planner; Users especial; Apply no implementado. | CURRENT PREVIEW + 001D PLANNED |
+| `08_EXTERNAL_RESOURCE_REQUIREMENTS.md` | Conexiones nombradas y ownership de recursos externos. | CONTRACT DESIGN / NO MODIFICADO |
+| `09_CURRENT_GAPS.md` | Checkpoint histórico de Starter de un SHA anterior. | HISTORICAL / NO USAR COMO ESTADO MASTER |
+| `10_SOURCE_LEDGER.md` | Historial y referencias de otros hitos Web. | HISTORICAL / NO REVALIDADO GLOBALMENTE |
+| `11_OPEN_ITEMS.md` | Qualification pendiente 001C, conflicto contractual e inicio acotado 001D. | CURRENT |
+| `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Ownership genérico de Users/Profiles/Access/Navigation. | CURRENT BASELINE |
+| `13_USERS_PROJECTION_RECOVERY.md` | Snapshots aprobados y recuperación especial dentro del Manager. | CURRENT / SCOPE CLOSED + GATES PRODUCTIVOS OPEN |
 
-## Estado CURRENT / VERIFIED
+## Evidencia Master CURRENT
 
-- Blob Registry y snapshots aprobados de Users son authority durable; Cosmos contiene promovidos/runtime. La UI interna del Manager de Users Projection ya existe. Es diferente de la próxima página Master, externa al Manager.
-- El commit `da75752` añade `resource_preparation.py`, adapta `manager_deployment.py`, el job Compose `local_resources.py`, Compose `full.yaml` y pruebas. El nuevo comando es `prepare|validate`; producción omite Blob totalmente. En Docker aislado el usuario obtuvo ocho `CREATED` iniciales, luego ocho `READY`; verificó reinicios, idempotencia, error parcial y recuperación de recursos.
-- `full.yaml` inicia Web sin dependencia del éxito del job `resources`. Esa decisión de despliegue no demuestra que el Home sea inmediatamente usable cuando Cosmos ya está detenido al arrancar.
+- **001A / VERIFIED STATIC:** commit `73603eead9fddf855d375710425387db0883d78e`: tooling ADA distribuido genera material ZIP AES-256 con verificador scrypt; el lector distingue `ABSENT/PRESENT/INVALID` y valida usuario de servicio, namespace y ambiente.
+- **001B / VERIFIED STATIC:** commit `74f910737604beb38f3d604571e39055504106dd`: planner read-only para Navigation, Profiles, Tools, ADA Access, KPI Registry y KPI Definitions; Users consulta catálogo de snapshots aprobados y no es ejecutable.
+- **001C / VERIFIED STATIC:** commit `e2177544754213f7ddcdee3045212a0971c8e8dd`: página separada `/master-projection`, rutas exactas independientes de Identity/Navigation, sesión Master de 900 s, CSRF, binding a fingerprint, planner inyectado; sin Apply ni Users REPLACE. Commit `94f26213ca28b550baf53d8ee34e34da7538ad17` corrige solo el test de herencia de entorno.
+- **VERIFIED USER-REPORTED:** suite seleccionada 38/38 y regresiones anteriores 39/39; nuevas pruebas HTTP 3/3, Reader/Runtime 6/6, settings corregido 2/2. Son ejecuciones de distintos momentos, **no** una suite acumulable.
+- **VERIFIED USER-REPORTED LOCAL:** distribución `BUILT_UNQUALIFIED`, 67 wheels, init `SYNCED`, GET 200 tanto sin material como con material; el usuario confirmó login con material real generado. No equivale a calificación final desde HEAD limpio ni a producción.
 
-## Límites demostrados / OPEN
+## Límites y conflictos todavía OPEN
 
-- En un arranque Web nuevo con Cosmos detenido, `/health/live` agotó diez segundos. Después de recuperar Cosmos, la Web respondió `/health/live` y `/health/ready` HTTP 200, pero readiness reportó `checks: {}`. No usar esto como prueba de Home o dependencias funcionales.
-- El collector conserva último dato válido y continúa intentando tras errores por contrato de código y unit tests, pero su recuperación y entrega a un Home real tras corte Cosmos quedan **UNVERIFIED E2E**.
-- Crear contenedores en emuladores no prueba Azure real, documentos de negocio persistidos, proyecciones/publicaciones ni creación automática de componentes desde Tool.
+- 001C **no está completamente calificado**: falta rerun conjunto posterior a `94f2621` y comprobación manual expresa de plan visible y logout/relogin. El último runner combinado falló 1 test de settings por variable exportada; el correctivo aislado pasó 2/2.
+- `projection.apply` y `users.replace` están **declarados** como operaciones posibles del formato de 001A, pero no implementados en la UI/HTTP de 001C.
+- La excepción Master con usuario/contraseña de servicio frente a baseline histórica pre-Manager/Entra requiere conciliación contractual formal antes de habilitar producción; no reinterpreta los permisos del Manager.
+- El material se consume desde una ruta externa opcional. La subida/warmup automático, rotación operacional productiva, Entra/Azure, CI general y prueba Docker sobre checkout limpio son **UNVERIFIED**.
+- Conservar los límites previos de Users Recovery, Resource Preparation y Home; Master no acredita esos otros frentes.
 
 ## Único foco siguiente
 
-**`MASTER-PROJECTION-001`: debate/contrato, no generación de código inmediata.** Revisar tooling/distribución/warmup, loaders, identidad excepcional y servicios de proyección implementados. Dos flujos obligatorios: material ausente → página controlada, sin acceso; material íntegro presente + credenciales verificadas → inspección y despliegue autorizado de proyecciones pertinentes, con Users especial desde snapshot aprobado. La tensión con baseline Entra y el destino Users vacío permanecen OPEN y deben resolverse antes de implementar. No mezclar cargo/área/grupo ADA, Home, componentes dinámicos, alarmas ni productización general.
+`MASTER-PROJECTION-001D`: **inspección y diseño del contrato para aplicar exclusivamente las seis proyecciones ordinarias reutilizando servicios reales**. Sin código ni Git en la etapa inicial. Antes de cualquier nueva implementación, registrar los tres gates pendientes de 001C y contrastar decisiones pre-Manager. Users REPLACE, integración warmup, vínculo organizacional ADA, Home, KPI y alarmas pertenecen a incrementos separados.

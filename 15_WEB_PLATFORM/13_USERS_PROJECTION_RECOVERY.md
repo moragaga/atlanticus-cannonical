@@ -1,30 +1,25 @@
 # Users — Approved Registry, Consistency and Special Recovery
 
-Estado: **CURRENT / IMPLEMENTED / CLOSED PARA EL FLUJO VALIDADO; SECURITY Y RECOVERY OPERACIONAL OPEN**  
-Corte de implementación (VERIFIED STATIC): `moragaga/atlanticus:main@208c8d6244795ba92cbe6f8e6b11e9743191367d`.  
-Decisiones consultadas: `moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, reglas globales aprobadas del Manager.  
-Base documental anterior: `moragaga/atlanticus-cannonical:main@e49901fb3ceef5431edbde1d0dcbb29fc3502855`.  
-Ejecuciones Docker/UI: **VERIFIED USER-REPORTED** en este hito; no equiparar con CI del commit ni con producción.
+Estado: **CURRENT / USERS RECOVERY IMPLEMENTED / CLOSED PARA FLUJO PREVIAMENTE VALIDADO; MASTER PREVIEW IMPLEMENTED, USERS REPLACE FROM MASTER NOT IMPLEMENTED; SECURITY/RECOVERY OPERACIONAL OPEN**  
+Users código y pruebas históricas: corte documentado `atlanticus@208c8d6244795ba92cbe6f8e6b11e9743191367d`, decisiones `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Delta exclusivo Master verificado estáticamente en `atlanticus@94f26213ca28b550baf53d8ee34e34da7538ad17`; no se reejecutaron las pruebas destructivas Users en este cierre.
 
-## Alcance cerrado en este hito
+## Alcance Users ya cerrado anteriormente
 
-`USERS-PROJECTION-RECOVERY-001/003` incorpora captura, validación, RESTORE estricto y REPLACE desde snapshots aprobados. `USERS-PROJECTION-WEB-004/005/006/007` integra y refina **Proyección de usuarios** dentro del Manager normal, con dos pestañas: **Crear respaldo** y **Proyectar usuarios**. El último correctivo ajusta las referencias de aprobación, limpia el formulario después de capturar, presenta fechas/metadatos de respaldos y alinea el selector con estilos Atlanticus. `USERS-PROJECTION-WEB-007` corresponde al corte de código arriba indicado.
+`USERS-PROJECTION-RECOVERY-001/003` incorporó captura, validación, RESTORE estricto y REPLACE desde snapshots aprobados. `USERS-PROJECTION-WEB-004/005/006/007` integró y refinó **Proyección de usuarios** dentro del Manager normal, con dos pestañas: **Crear respaldo** y **Proyectar usuarios**. El último correctivo de ese frente ajustó referencias de aprobación, limpieza de formulario tras captura, metadatos/fechas de respaldos y selector con estilos Atlanticus. Es una pantalla del Manager, no la página externa Master ni una autorización de servicio equivalente.
 
-La pantalla del Manager **no** es la futura página externa Master Projection. No fusionar ambas funciones ni sus autorizaciones.
+## Contrato CURRENT de dominio y persistencia — no modificado por Master
 
-## Contrato CURRENT de dominio y persistencia
-
-- `UserRecord` conserva `user_id`, `issuer`, `subject_id`, `profile_key`, `enabled` y sus atributos generales; no contiene cargo/área/grupo ADA.
-- `UsersRegistryStore` en Blob es el registro durable de usuarios bajo `<application_namespace>/users/users.json.gz`. Puede contener candidatos: presencia en registro **no** equivale a aprobación.
-- `CosmosUsersStore` en `users-runtime` conserva promovidos por documento, separado de `users-support` (Profiles/Access). No reconstruir `users-runtime` entero.
-- El snapshot aprobado es inmutable e incluye `application_key`, `identity_realm`, `origin_environment`, identificación y referencia del operador, fecha UTC, conjunto exacto de promovidos y digest de contenido/integridad. El digest de contenido no depende de un ETag físico interambientes.
-- `BlobApprovedUsersSnapshotStore` conserva snapshots; el catálogo usa propiedades/listado de Blob para fechas y la selección descarga el artefacto elegido. Los respaldos de REPLACE (`before-image`) y la auditoría son artefactos distintos, también durables.
-- El ámbito de usuarios es de **aplicación**, no de `tool_namespace`. Herramientas distintas pueden compartir usuarios si consumen de forma consistente el **mismo registro lógico y proyección**; compartir sólo una cuenta Storage no crea por sí mismo usuarios globales.
-- La UI de Users es `ManagerEntry`, no `ManagerModule` sintético con Source/Projection. Las acciones se autorizan en servidor y usan el principal existente y `users.manage`.
+- `UserRecord` conserva `user_id`, `issuer`, `subject_id`, `profile_key`, `enabled` y atributos generales; no contiene cargo/área/grupo ADA.
+- `UsersRegistryStore` en Blob es registro durable bajo `<application_namespace>/users/users.json.gz`. Puede contener candidatos: registro **no** significa aprobación.
+- `CosmosUsersStore` mantiene promovidos en `users-runtime`, separado de `users-support` (Profiles/Access). No reconstruir un contenedor `users-runtime` entero por conveniencia.
+- El snapshot aprobado es inmutable y contiene `application_key`, `identity_realm`, `origin_environment`, referencia del operador, UTC, conjunto exacto de promovidos y digest de contenido. El digest no depende del ETag físico interambientes.
+- `BlobApprovedUsersSnapshotStore` almacena snapshots y catálogo; los before-images de REPLACE y eventos de auditoría son artefactos distintos y durables.
+- El ámbito es de **aplicación**, no `tool_namespace`. Distintas herramientas solo comparten usuarios si consumen exactamente el mismo registro lógico y proyección; compartir cuenta Storage no basta.
+- Users UI es una `ManagerEntry` con permiso `users.manage`, no `ManagerModule` Source/Projection sintético. Las acciones sensibles se autorizan en servidor con el principal normal.
 
 ## Contratos CURRENT del servicio
 
-Código de referencia:
+Código vigente de referencia:
 
 ```text
 web/capabilities/users/core/src/atlanticus/web/users/recovery.py
@@ -36,41 +31,54 @@ web/compositions/users-manager/src/atlanticus/web/compositions/users_manager/com
 scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/manager_deployment.py
 ```
 
-- `preview_capture` compara el registro con **todos los promovidos** y excluye candidatos. `capture` vuelve a comprobar la vista previa y persiste un snapshot inmutable únicamente tras confirmación.
-- `validate` es de lectura, compara snapshot/registro/proyección e informa `MISSING`, `DIFFERENT`, `IDENTITY_CONFLICT`, `UNEXPECTED` y `PROFILE_UNAVAILABLE` según corresponda. No interpreta cambios directos de Cosmos como aprobación.
-- RESTORE estricto aplica sólo cuando las precondiciones permiten completar usuarios faltantes sin sobrescribir conflictos; requiere confirmación y mantenimiento declarados. No es sinónimo de REPLACE.
-- `validate_replace` produce plan: crear, modificar, eliminar, conservar, descartar candidatos y reemplazar registro; bloquea conflictos de identidad o Profiles.
-- `replace_approved` requiere digest vigente, confirmación, afirmaciones de mantenimiento y revisión de sesiones/revocaciones, ETags por usuario, `before-image` inmutable y auditoría `started/completed/failed` (modo REPLACE, esquema 2). Reconcilia el registro con el conjunto exacto del snapshot, elimina promovidos inesperados y actualiza/crea según plan. No hay transacción distribuida Blob/Cosmos ni rollback automático.
-- El workflow de la pantalla vuelve a validar snapshot y estado antes de escribir; las confirmaciones visuales **no** prueban que haya aislamiento real ni revocación efectiva de sesiones.
-- En la composición durable actual, el `identity_realm` se deriva del único `issuer` entre promovidos; **si no hay promovidos o hay varios emisores, esta composición no resuelve el ámbito**. Master Projection deberá tratar su propio bootstrap inicial sin asumir que este provider del Manager funciona en un destino vacío.
+- `UsersAdministrationService`: `discover`, `promote`, `update`.
+- `UsersApprovedRecoveryService`: `preview_capture`, `capture`, `validate`, `restore`, `validate_replace`, `replace_approved`.
+- `preview_capture` compara Registry contra **todos** los promovidos y excluye candidatos. `capture` comprueba otra vez y persiste snapshot inmutable solo tras confirmación.
+- `validate` es lectura: compara snapshot, registro y proyección e informa estados como `MISSING`, `DIFFERENT`, `IDENTITY_CONFLICT`, `UNEXPECTED` y `PROFILE_UNAVAILABLE`; cambios manuales en Cosmos no son aprobación.
+- RESTORE estricto solo completa faltantes cuando lo permiten las precondiciones, con confirmación y mantenimiento declarados. No es REPLACE.
+- `validate_replace` determina crear, modificar, eliminar, conservar, descartar candidatos y reemplazar registro; bloquea conflictos identidad/Profiles.
+- `replace_approved` exige digest actual, confirmación, afirmaciones de mantenimiento y revisión de sesiones/revocaciones, ETags por usuario, before-image inmutable y auditoría `started/completed/failed` (modo REPLACE, esquema 2). No hay transacción distribuida Blob/Cosmos ni rollback automático.
+- El workflow Web vuelve a validar snapshots/estado antes de escribir. Confirmación visual no prueba aislamiento real ni revocación efectiva.
+- La composición durable del Manager deriva `identity_realm` del único `issuer` entre promovidos; **si no existen promovidos o hay varios emisores, ese provider no resuelve el ámbito**. Master no debe reutilizarlo automáticamente en destino vacío.
 
-## Qualification delimitada
+## Evidencia histórica Users, estrictamente delimitada
 
-| Evidencia | Estado | Alcance |
+| Evidencia del hito Users anterior | Estado | Alcance |
 |---|---|---|
-| Pruebas unitarias del incremento REPLACE | VERIFIED USER-REPORTED | Selección inicial de 50 tests aprobados. |
-| Ejecución Docker real REPLACE | VERIFIED USER-REPORTED | Un promovido modificado, un inesperado eliminado y un candidato descartado; resultado final `match`. |
-| `before-image` y auditoría | VERIFIED USER-REPORTED | Registro previo 2 entradas, Cosmos previo 2 promovidos, eventos `started` y `completed`, 1 update, 1 delete, sin creates. |
-| Captura posterior a REPLACE | VERIFIED USER-REPORTED | Nuevo snapshot de 1 promovido, digest igual al original, `validate` posterior `match`. |
-| Manager Users Projection y captura visual | VERIFIED USER-REPORTED | Captura desde modal y refinamientos visuales validados por el usuario; último resultado «quedó ok». |
-| Tests seleccionados tras correctivo 007 | VERIFIED USER-REPORTED | Selección de tests Core/Blob/composición/ADA Manager/ADA Generic al 100% antes de consolidar el commit 208c8d6. |
-| Inspección estática del commit 208c8d6 | VERIFIED STATIC | Archivos de servicio, composición y UI presentes. |
-| Ruff final, CI monorepo, operación invasiva desde navegador | UNVERIFIED | No se aportó evidencia final de estas calificaciones. |
-| Interrupción real a mitad de REPLACE, recuperación y revocación de sesiones | UNVERIFIED | Fuera del flujo feliz del laboratorio; gate productivo pendiente. |
+| Pruebas unitarias REPLACE iniciales | VERIFIED USER-REPORTED HISTÓRICO | Selección de 50 tests aprobados. |
+| Docker real REPLACE | VERIFIED USER-REPORTED HISTÓRICO | Un promovido modificado, uno inesperado eliminado y un candidato descartado; final `match`. |
+| Before-image y auditoría | VERIFIED USER-REPORTED HISTÓRICO | Registry anterior de dos entradas, Cosmos previo de dos promovidos; eventos `started/completed`, una actualización y una eliminación. |
+| Captura después de REPLACE | VERIFIED USER-REPORTED HISTÓRICO | Nuevo snapshot de un promovido con digest igual al original; `validate` posterior `match`. |
+| Manager Users Projection visual | VERIFIED USER-REPORTED HISTÓRICO | Captura modal, fecha/metadatos y refinamientos visuales aceptados. |
+| Tests seleccionados tras correctivo 007 | VERIFIED USER-REPORTED HISTÓRICO | Core/Blob/composición/Manager/ADA Generic antes del commit `208c8d6`. |
+| Inspección estática histórica `208c8d6` | VERIFIED STATIC | Servicio, composición y UI publicados. |
+| Ruff final/CI global/REPLACE invasivo desde navegador | UNVERIFIED | No certificado para el incremento actual. |
+| Interrupción a mitad de REPLACE/revocación de sesiones | UNVERIFIED | Sigue siendo gate productivo. |
 
-## Refinamientos y reemplazos
+No reetiquetar estas pruebas como suite ejecutada en `94f2621` por actualizar este documento.
 
-- **SUPERSEDED:** descripción previa de `USERS-PROJECTION-RECOVERY` como `NOT IMPLEMENTED` y de su UI como inexistente.
-- **SUPERSEDED:** variables adicionales `ADA_USERS_RECOVERY_IDENTITY_REALM` / `ADA_USERS_RECOVERY_ENVIRONMENT` para la página del Manager; se retiraron del wiring. La aplicación/tooling no debe añadir configuración redundante por herramienta.
-- **SUPERSEDED:** la UI de dos columnas simultáneas, terminología mixta `RESTORE/REPLACE`, confirmación mecanografiada, selector sin contexto y referencias con espacios rechazadas por el workflow de captura.
-- **CURRENT:** pestañas separadas, nombres comprensibles en español, previsualización/comparación, modal explícito, metadatos del respaldo y CSS propio alineado a Users Administration.
+## Delta Master Projection actual — no sustituye Users Recovery
 
-## OPEN / condiciones antes de habilitar uso productivo
+El planner Master implementado en `74f9107` consulta el catálogo de snapshots desde `ConfigurationManagerStores.users_snapshot_ids`, **fuera** de los seis pares ordinarios, y expone los estados `CATALOG_UNAVAILABLE`, `SNAPSHOT_MISSING`, `PROFILES_PENDING`, `SNAPSHOT_SELECTION_REQUIRED`. `MasterProjectionPlan.to_dict()` indica `operation: users.replace` pero fija **`executable: false`**.
 
-1. `OPEN / SECURITY`: mantenimiento efectivo, control de concurrencia operacional y reevaluación/revocación de sesiones; los booleanos operacionales no sustituyen controles reales.
-2. `OPEN / RECOVERY`: probar interrupción real tras escrituras parciales, auditoría de fallo, revalidación y reintento; no afirmar atomicidad ni rollback.
-3. `OPEN / QUALIFICATION`: Ruff final, CI/monorepo, producción Entra y ejecución de RESTORE/REPLACE invasivo **desde la UI**.
-4. `OPEN / INTERAMBIENTES`: transporte autorizado de snapshots y bootstrap en destino sin promovidos; no asumir equivalencia entre distintos emisores Entra ni promover automáticamente candidatos.
-5. `OPEN / MASTER-PROJECTION`: página externa y material de acceso independiente. Consultar `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md`.
+La página independiente `/master-projection` está implementada por `e217754`, con material y autenticación de servicio externa, y **muestra** el plan en modo de solo lectura. Su material ZIP declara también `users.replace`, pero **no** existe ejecución Users REPLACE desde Master 001C. El usuario informó acceso real local en una distribución de prueba; esto **no** acredita transporte interambientes, selección/aplicación de snapshot ni seguridad de recuperación productiva.
 
-Este incremento se considera **CLOSED** para el flujo respaldar/comparar y REPLACE validado en laboratorio, con pendientes productivos explícitos. No reabrir Users por estilo ni introducir adaptadores legacy sin finding real.
+La excepción de credenciales Master frente a baseline pre-Manager/Entra es un **CONFLICT contractual OPEN**, y la resolución de `identity_realm` para destino vacío permanece pendiente. No habilitar Users REPLACE como efecto implícito de implementar `projection.apply` para los seis módulos ordinarios de 001D.
+
+## Refinamientos y reemplazos conservados
+
+- **SUPERSEDED:** descripciones históricas de Users Recovery como no implementado y de su UI Manager como inexistente.
+- **SUPERSEDED:** variables adicionales `ADA_USERS_RECOVERY_IDENTITY_REALM` / `ADA_USERS_RECOVERY_ENVIRONMENT` retiradas del wiring del Manager; no reintroducirlas por Master.
+- **SUPERSEDED:** UI antigua de dos columnas simultáneas, terminología mixta RESTORE/REPLACE, confirmación mecanografiada, selector sin contexto y referencias espaciadas rechazadas.
+- **CURRENT:** pestañas separadas, términos en español, comparación/previsualización, modal explícito, metadatos y estilos Atlanticus.
+- **SUPERSEDED respecto a Master únicamente:** afirmación «página externa Master no implementada». 001C ya tiene página/login/preview; **Users REPLACE externo sigue no implementado**.
+
+## OPEN / condiciones para producción y continuidad
+
+1. `SECURITY`: mantenimiento efectivo, control de concurrencia operacional, reevaluación/revocación real de sesiones. Booleanos/UI no sustituyen controles.
+2. `RECOVERY`: interrupción real tras escrituras parciales, auditoría de fallos, revalidación y reintento. No prometer atomicidad ni rollback.
+3. `QUALIFICATION`: Ruff final/CI/Entra y operación invasiva desde navegador.
+4. `INTERAMBIENTES`: transporte autorizado de snapshot y bootstrap destino sin promovidos, compatibilidad issuer/subject; nunca promocionar candidatos automáticamente.
+5. `MASTER-USERS-REPLACE`: requiere un incremento/gate específico después de resolver seguridad e identidad de destino; **no** forma parte de MASTER-001D inicial para seis proyecciones ordinarias.
+
+Users Recovery continúa **CLOSED** solo para su flujo anterior validado en laboratorio, con gates productivos explícitos. No reabrir ese cierre para estética ni introducir adapters legacy sin finding.

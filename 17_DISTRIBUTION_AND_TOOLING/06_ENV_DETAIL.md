@@ -1,54 +1,43 @@
 # env.detail Contract
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT DIRECTION / MASTER VARIABLE IMPLEMENTADA; OTROS ARCHIVOS env.detail NO AUDITADOS GLOBALMENTE**  
+Master contrastado en `moragaga/atlanticus@94f26213ca28b550baf53d8ee34e34da7538ad17`. La política documental general de `env.detail` no se convierte en certificación de todos los proyectos.
 
 ## Problema actual
 
-`env.detail` existe, pero muchos archivos contienen sólo:
+`env.detail` existe, pero muchos archivos contienen únicamente:
 
 ```text
 KEY=value
 ```
 
-sin explicar:
-
-- qué significa;
-- por qué existe;
-- qué valores acepta;
-- si es sensible;
-- quién lo consume.
+sin explicar qué significa, por qué existe, valores permitidos, si es sensible o quién lo consume. Esto continúa como deuda documental de productización fuera de Master.
 
 ## Objetivo
 
-Cada proceso/aplicación estable debe tener un `env.detail` verdaderamente documental.
-
-Debe permitir entender cada variable sin leer el código.
+Cada proceso/aplicación estable debe tener un `env.detail` verdaderamente documental. Debe permitir entender cada variable sin leer el código.
 
 ## Información mínima por variable
 
 Para cada entrada documentar:
 
-- key;
-- purpose;
-- required/optional;
-- accepted values/format;
-- example no sensible;
-- sensitive yes/no;
-- source esperado;
+- `key`;
+- `purpose`;
+- `required` / `optional`;
+- `accepted values` / formato;
+- ejemplo no sensible;
+- `sensitive` yes/no;
+- fuente esperada;
 - razón arquitectónica;
-- owner/consumer.
+- `owner/consumer`.
 
-El formato final puede seguir siendo simple y humano; no convertirlo en un schema innecesariamente complejo.
+El formato final puede seguir siendo sencillo y humano; no convertirlo en un schema innecesariamente complejo.
 
 ## Producción
 
-`env.detail` **NO contiene secretos**.
+`env.detail` **NO** contiene secretos. Es referencia/contrato. El runtime productivo continúa usando mecanismos acordados de configuración y resolución de secretos. No incluir un ZIP protegido real, contraseña, token o credencial en el repositorio, Starter ni archivo de ejemplo.
 
-Es referencia/contrato.
-
-El runtime productivo continúa usando los mecanismos acordados de configuración/secret resolution.
-
-## Ejemplo conceptual
+## Ejemplo conceptual histórico
 
 ```text
 PI_SOURCE=NOTPII
@@ -59,8 +48,27 @@ PI_SOURCE=NOTPII
 # reason: runtime must select exactly one PI adapter
 ```
 
-## Current evidence
+El ejemplo expresa la política documental, **no** una nueva configuración aprobada de Master ni una auditoría de PI actual.
 
-El `kpi-runtime/.env.detail` actual contiene variables reales pero todavía sin estas explicaciones.
+## Variable Master realmente implementada
 
-Eso queda como deuda documental a cerrar durante productización.
+```text
+ADA_MASTER_PROJECTION_MATERIAL_PATH
+```
+
+| Propiedad | Contrato actual |
+|---|---|
+| Owner | ADA Generic/Starter; lector `StarterMasterMaterialReader` |
+| Propósito | Ruta de archivo al material Master protegido externo |
+| Requerida | **No**: ausencia produce página informativa sin login |
+| Formato | Ruta absoluta a un ZIP Master; externa al proyecto distribuido |
+| Sensible | La **ruta** no es contraseña, pero debe administrarse cuidadosamente; el archivo apuntado es material de acceso sensible |
+| Valor por defecto conceptual | Vacío/ausente, no crear cuenta Master local implícita |
+| Validación runtime | `ABSENT`, `PRESENT` e `INVALID`; binding de identidad al namespace/ambiente al autenticar |
+| Consumers | `AdaGenericSettings` y Starter `application.runtime` |
+
+No agregar variables distintas para Master por conveniencia, ni utilizar esta ruta como prueba de warmup/upload/Key Vault productivo ya implementado. El archivo real se genera mediante el tooling ADA y permanece fuera de la distribución.
+
+## Evidencia y límites
+
+En 001C se observó distribución smoke `BUILT_UNQUALIFIED` de 67 wheels y HTTP 200 con la variable ausente y presente. El usuario informó login real tras generar material nuevo. La validación de toda la matriz `.env.detail` (incluido `kpi-runtime`) y el mapping DEV/UAT/PRD siguen **OPEN / OTHER FOCUS**; no certificar variables de otros procesos a partir de Master.
