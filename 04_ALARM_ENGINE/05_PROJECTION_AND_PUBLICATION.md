@@ -1,51 +1,57 @@
 # Alarm Engine — Projection and Publication
 
-Estado: **CURRENT / SOURCE V3 + LOCAL MATERIALIZATION READY / GLOBAL EFFECTIVE PLANNED**
+Estado: **CURRENT / SOURCE V3, MATERIALIZATION LOCAL READY, WAL GLOBAL Y EFFECTIVE HEAD IMPLEMENTADOS / LIVE Y DELIVERY OPERACIONAL PLANNED**.
 
-Fuentes: `atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e`; canonical previamente `58241ddb6db5adbd2e783c7ec9f456f1bda5a321`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
+Fuente de implementación verificada: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. Decisions: `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Reemplazo documental local, no publicación remota.
 
-## Capas separadas
+## Capas y owners separados
 
 ```text
-Alarm Source/Release (Blob: destino durable objetivo donde ya existe migración)
-Alarm Configuration Projection (Cosmos puede servir a Materialization)
-B.2 Runtime Configuration + B.2 Delivery Configuration (pareja READY)
-Runtime Effective Configuration (futura adopción global durable)
-Alarm Live Projection (estado actual y enriquecimiento exacto posterior)
-Alarm Management Projection (historial, frontera separada)
+Alarm Source/Release: Blob, destino durable objetivo en dominios migrados
+Alarm Configuration Projection: adquisición Cosmos de entrada por Materialization
+B.2 Materialization: pareja Runtime/Delivery READY, local e inmutable
+Alarm Persistence: WAL global de adopción y proyección EFFECTIVE
+Runtime: lectura exacta de artefacto EFFECTIVE y creación de sesión
+Alarm Live Projection: estado actual, frontera posterior
+Alarm Management Projection: historial de acciones, frontera posterior
+History/Analytics: consumo posterior de hechos durables, no lógica del Engine
 ```
 
-La existencia de adaptadores no equivale a prueba de infraestructura. Source document type `ada_command_center_alarm_configuration_release`, schema v3: `AlarmConfigurationSnapshot(configuration, tool_dependencies: ToolDependencyManifest)` congela Cn en Rn. V2 queda SUPERSEDED sin decoder legacy contratado. `ProjectionRecord[AlarmConfigurationSnapshot]` conserva contenido y procedencia. Materialization utiliza la proyección activa adquirida mediante el adaptador Cosmos y revalida su identidad antes de publicar. **UNVERIFIED:** el flujo real Manager/Blob/Cosmos en infraestructura operativa.
+La presencia de adaptadores/protocolos no prueba un despliegue E2E real. La proyección de entrada `ProjectionRecord[AlarmConfigurationSnapshot]` conserva contenido y procedencia. Source `ada_command_center_alarm_configuration_release` schema 3 congela `ToolDependencyManifest(Cn)` junto con Rn; Source v2 está **SUPERSEDED**, sin decoder legacy aprobado. El Confirmed Tool Catalog consolidado termina en Storage en su dominio migrado; B.2 usa el manifest exacto de Rn y qualification pertinente, no consulta latest para reinterpretar releases.
 
-El Confirmed Tool Catalog consolidado termina en Storage en su dominio migrado; no crear otra proyección de catálogo para reinterpretar Rn. B.2 usa el manifest Tool exacto de Rn y evidencia de qualification correspondiente.
+## Materialization local READY — CURRENT
 
-## CURRENT: publicación local de Materialization
-
-El proceso `scopes/ada-command-center/backend/processes/alarms-materialization` publica en:
+Proceso: `scopes/ada-command-center/backend/processes/alarms-materialization`. Publica:
 
 ```text
 VOLUMEN_PATH/ada-command-center/alarms/materialization/
   ready.json
   versions/<result_id>/
     manifest.json
-    runtime.json             # sólo READY
-    delivery.json            # sólo READY
+    runtime.json       (sólo READY)
+    delivery.json      (sólo READY)
 ```
 
-`result_id = "alarm-materialization-" + sha256(JSON canónico de source_key, projection_digest, qualification_digest)` según función compartida `materialization_result_id`. El manifest contiene: `document_type=ada_command_center_alarm_materialization_result`, `schema_version=1`, `source_key`, `result_id`, `status`, `resolution_key`, `provenance`, `findings`, `artifacts` y SHA256/tamaño por artefacto READY. La función compartida de lectura verifica identidad, esquema, procedencia, integridad de bytes y pareja Rn/Cn. `ready.json` incluye `source_key`, `result_id`, `resolution_key` y `manifest_sha256`; su formato es `ada_command_center_alarm_materialization_ready`, schema 1.
+`result_id = "alarm-materialization-" + sha256(JSON canónico(source_key,projection_digest,qualification_digest))`. Manifest `ada_command_center_alarm_materialization_result`, schema 1: `source_key`, `result_id`, `status`, `resolution_key`, `provenance`, `findings`, `artifacts` y SHA256/tamaño por artefacto READY. `ready.json` tiene `ada_command_center_alarm_materialization_ready`, schema 1, source/result/key y SHA256 de manifest. La pareja READY Runtime/Delivery comparte Rn/Cn exactos.
 
-Las versiones publicadas son inmutables. El writer prepara una carpeta staging, valida el contenido y promueve la carpeta de versión mediante rename; después publica el puntero READY con `AtomicJsonStore`. El lector puede recuperar el READY publicado o leer un resultado exacto con `source_key`, `result_id` y hash. Un puntero corrupto o artefacto incoherente falla cerrado, **sin fallback silencioso** a otra versión. Un BLOCKED conserva manifest/findings sin Runtime ni Delivery ejecutables; no desplaza el READY anterior. Materialization **nunca** escribe EFFECTIVE.
+El writer prepara carpeta staging, valida y promueve versión inmutable antes de reemplazar READY. BLOCKED mantiene manifest/findings, carece de Runtime/Delivery ejecutables y no desplaza READY previo. El lector compartido valida identidad, provenance, hashes/tamaño y pareja Rn/Cn; falla cerrado sin fallback a otras versiones. `LocalAlarmMaterializationReader` y codec compartido viven en `backend/alarms/materialization`. Sólo el **resolver** B.2 es puro; el paquete también contiene I/O.
 
-El código de salida `CosmosAlarmMaterializationResultStore` está SUPERSEDED y fue eliminado del árbol actual; la **adquisición Cosmos de entrada se conserva**. El antiguo codec local duplicado del proceso fue sustituido por el codec compartido, sin adaptador legacy. El resolver B.2 sigue siendo una función pura, aunque su paquete también contiene el lector local compartido; no atribuir pureza I/O al paquete entero.
+La antigua salida de Materialization a Cosmos y su codec privado duplicado están **SUPERSEDED/retirados**; Cosmos continúa como entrada de proyección. **UNVERIFIED:** operación de infraestructura Manager/Blob/Cosmos real y semántica de rename/fencing en el volumen definitivo multi-host.
 
-**Límite físico UNVERIFIED:** el código usa rename/FSync y fencing del job, pero no hay ensayo demostrado de la semántica del sistema de archivos/volumen real bajo varios hosts. No inferir atomicidad universal multi-FS o multiinstancia a partir de tests unitarios.
+## Identidad y planificación B1 — CURRENT
 
-## CURRENT B1: identidad y planificación, no adopción
+`AlarmConfigurationArtifactRef(source_key,result_id,manifest_sha256,resolution_key)` identifica el resultado exacto aun con Rn/Cn iguales. `RuntimeLocalConfigurationReader.load_ready_candidate()` lee READY para planificar nuevas adopciones; `.load_exact_candidate()` lee una versión exacta. `build_alarm_configuration_revision()` construye `AlarmConfigurationRevision` y la sesión con `AlarmEvaluatorRegistry` explícito. La lectura no adopta por sí misma.
 
-`AlarmConfigurationArtifactRef(source_key, result_id, manifest_sha256, resolution_key)` hace explícita la **materialización exacta**. Dos artefactos con la misma Rn/Cn pueden requerir planificación distinta si difiere la evidencia de qualification. `AlarmConfigurationRevision` la incorpora y se construye desde un resultado READY leído y un registro de evaluadores explícito. La construcción no sustituye la validación física de hashes del lector compartido.
+El planificador B1 cubre la unión de identidades definidas de origen y destino. Sus disposiciones `ADDED`, `ENABLED` y `REMOVED` de origen deshabilitado **no** prueban que el ejecutor anterior las soporte; ver `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`.
 
-## PLANNED: EFFECTIVE y publicación posterior
+## Adopción y EFFECTIVE — CURRENT B2a/B2b
 
-La adopción del Runtime deberá convertir una versión exacta READY en EFFECTIVE sólo tras reconciliación y autoridad durable. El formato, owner de publicación y recuperación del Effective Head **no están implementados**. No confundir el `ready.json` presente con un `effective.json` existente ni considerar que un plan B1 adelanta EFFECTIVE.
+La adopción es global, no por Rule ni priority group. Persistence contiene V1 para cero grupos y V2 para 1..N grupos relacionados por hash dentro del WAL existente, incluyendo cambios de identidad/materialización que no alteran hot state. `effective-head.json` está bajo `alarms/runtime/state/`; registra adopción, hash/posición del WAL, artefacto exacto y `effective_at`. Se publica después de materialización y se reconstruye únicamente desde el WAL validado.
 
-Engine y futuro Delivery deben usar exactamente la materialización adoptada; no elegir latest READY de forma independiente. Delivery/Live y Management son incrementos separados. No convertir esta regla de **lectura de configuración** en una afirmación general de que otras integraciones posteriores no pueden utilizar Cosmos.
+`AlarmPersistence.read_effective_head()` verifica consistencia durable y snapshots; `RuntimeLocalConfigurationReader.load_effective_revision(persistence,evaluator_registry)` carga el artefacto exacto mediante el lector local y comprueba `source_key`, `result_id`, manifest SHA256 y Rn/Cn. `assert_current_effective()` permite revalidar la selección frente a una adopción posterior; `RuntimeEffectiveConfiguration` preserva cabeza y revisión seleccionada.
+
+No existe `materialization/effective.json`: el nombre físico contratado es `runtime/state/effective-head.json`. La publicación READY nunca confiere EFFECTIVE. Un consumidor no puede elegir autónomamente latest READY. **La integración automática del job/executor con esta lectura continúa PLANNED B2c.**
+
+## Consumidores posteriores, separados
+
+Delivery/Live deben usar el mismo artefacto exacto que Runtime adoptó; no adelantar Rn/Cn ni reinterpretar Tool Catalog. Management Projection e History/Analytics consumirán hechos durables en sus propias fronteras. El Engine no debe importar lógica de dashboard y Web no debe leer WAL directamente.

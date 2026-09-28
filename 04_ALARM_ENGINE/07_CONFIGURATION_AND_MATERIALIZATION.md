@@ -1,8 +1,8 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **CURRENT / SOURCE V3 + B.2 RESOLVER + LOCAL PUBLICATION + RUNTIME EXACT READER + B1**
+Estado: **CURRENT / SOURCE V3 + PURE B.2 + PUBLICACIÓN LOCAL + LECTOR EXACTO + B1 + LECTURA EFFECTIVE B2b**.
 
-Corte: `atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e`; canonical previo `58241ddb6db5adbd2e783c7ec9f456f1bda5a321`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Los tests citados proceden de logs locales del usuario; el estado de código se contrastó en Git modo lectura.
+Corte: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`, `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Tests citados provienen de logs locales del usuario; la existencia de código se contrastó en Git READ ONLY.
 
 ## Invariantes previos congelados
 
@@ -16,21 +16,21 @@ TRACE_ONLY != REMOVED
 READY != EFFECTIVE
 ```
 
-B.1 valida guardado/publicación; B.2 realiza la qualification/resolución externa. Resolver, adquisición/publicación del proceso, lectura compartida y Runtime Adoption tienen responsabilidades diferentes.
+B.1 valida persistencia del release; B.2 realiza qualification/resolución externa; el proceso Materialization adquiere/publica; el lector compartido verifica versiones; B1 planifica; B2a/B2b persisten/leen adopción. Son responsabilidades distintas.
 
 ## Source + manifest Tool exacto — CURRENT
 
 ```text
-AlarmConfiguration(rules, messages)
+AlarmConfiguration(rules,messages)
 AlarmConfigurationSnapshot(configuration, tool_dependencies: ToolDependencyManifest)
 source document_type: ada_command_center_alarm_configuration_release
 source schema_version: 3
-AlarmResolutionKey(Rn, Cn): alarm_configuration_revision + confirmed_tool_catalog_revision
+AlarmResolutionKey(Rn,Cn): alarm_configuration_revision + confirmed_tool_catalog_revision
 ```
 
-Source v2 está SUPERSEDED y no se conserva decoder legacy. El manifest de Tool del release Rn cubre referencias definidas de Rules activas/inactivas, escalones habilitados/deshabilitados y visual targets; incluye procedencia y estructura exacta Cn. Manager mantiene la revisión como sidecar del draft y comprueba drift antes de Validate/Publish. No consultar latest Tool Catalog para reinterpretar la versión ya publicada.
+Source v2 está **SUPERSEDED** sin decoder legacy. Tool manifest de Rn cubre referencias definidas de Rules activas/inactivas, escalones enabled/disabled y visual targets con procedencia Cn congelada. Manager conserva revisión en sidecar del draft y verifica drift en Validate/Publish. Materialization obtiene proyección activa de Cosmos, fija la identidad, carga qualification JSON controlada, revalida su digest/procedencia y no usa latest Tool Catalog para reescribir el release.
 
-Existen codec/builder y adaptadores Local/Cosmos de `ProjectionRecord[AlarmConfigurationSnapshot]`; Materialization obtiene la proyección activa desde Cosmos, fija identidad, carga evidencia JSON controlada y revalida digest/proyección antes de persistir. La existencia de adaptadores no valida la operación E2E de infraestructura real.
+Los adaptadores Local/Cosmos y sus contratos existen; su operación de infraestructura real no fue objeto de este gate.
 
 ## Resolver B.2 — CURRENT
 
@@ -41,44 +41,42 @@ Alarm Configuration Rn + ToolDependencyManifest(Cn)
 -> AlarmConfigurationResolution(READY | BLOCKED)
 ```
 
-Toda Rule definida necesita evaluator cualificado por `(family_key, evaluator_key)` y todas las referencias Tool deben existir y estar GREEN, incluso cuando la Rule/step esté inactiva/deshabilitada. B.2 valida routing, Messages y visual targets. `READY` genera `RuntimeAlarmConfiguration` y `DeliveryAlarmConfiguration` de la **misma** `AlarmResolutionKey`; `BLOCKED` emite hallazgos bloqueantes sin artefactos ejecutables. El resolver sigue siendo puro; el paquete `alarms/materialization` integra adicionalmente codec y lector local, que sí realizan lectura I/O.
+Toda Rule definida exige evaluator cualificado `(family_key,evaluator_key)` y referencias Tool válidas GREEN aun en Rules/steps deshabilitados. El resolver valida routing, Messages y visual targets. READY genera `RuntimeAlarmConfiguration` y `DeliveryAlarmConfiguration` con **misma** Rn/Cn; BLOCKED emite findings sin artefactos ejecutables.
 
-Strict routing congelado: `PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END`, exclusivamente nivel siguiente; sin saltos, retrocesos ni same-tier. Strategic terminal; C3 sólo origen; C1 inmediato; C2 delays positivos y offsets acumulados desde `occurrence.started_at`; los steps disabled no ejecutan pero sus referencias se cualifican. Strategic sólo routing, no visual target contratado.
+Strict routing CURRENT: `PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END`, sólo nivel inmediato siguiente, sin saltos/same-tier/regresión. Strategic es terminal; C3 sólo origen; C1 inmediato; C2 con delays positivos y offsets acumulados desde `occurrence.started_at`. Steps disabled no ejecutan pero sus referencias se cualifican. Strategic sólo routing, no visual target contratado.
 
-## Proceso ejecutable y publicación — CURRENT
+El resolver es puro, no todo el paquete, que ahora contiene codec y lector con I/O.
 
-`scopes/ada-command-center/backend/processes/alarms-materialization` permanece en versión **1.0.0** predespacho y usa `atlanticus.runtime.execute_job`. `composition.py` construye el acquirer sobre `CosmosAlarmConfigurationProjectionStore`; `qualification.py` conserva el proveedor controlado `JsonFileAlarmQualificationProvider`; `publication.py` usa `LocalAlarmMaterializationResultStore`. La salida Cosmos monolítica fue sustituida limpiamente; el codec se compartió en `backend/alarms/materialization/codec.py`, sin duplicación local anterior.
+## Proceso ejecutable y publicación local — CURRENT
 
-Layout físico vigente:
+`scopes/ada-command-center/backend/processes/alarms-materialization` mantiene versión predespacho `1.0.0`, usa `atlanticus.runtime.execute_job`, adquiere con `CosmosAlarmConfigurationProjectionStore`, usa `JsonFileAlarmQualificationProvider` controlado y publica con `LocalAlarmMaterializationResultStore`. La salida anterior Cosmos y codec privado quedaron **SUPERSEDED**, no dual-write.
 
 ```text
 VOLUMEN_PATH/ada-command-center/alarms/materialization/
   ready.json
   versions/<result_id>/manifest.json
-  versions/<result_id>/runtime.json          (sólo READY)
-  versions/<result_id>/delivery.json         (sólo READY)
+  versions/<result_id>/runtime.json     (READY)
+  versions/<result_id>/delivery.json    (READY)
 ```
 
-`result_id` incorpora `source_key`, digest de proyección y digest de qualification. Manifest schema 1 contiene procedencia exacta, `resolution_key`, findings e inventario de hashes/tamaños. El writer publica la carpeta completa de versión antes de promover READY; detecta divergencias de identidad/contenido, hace retry/idempotencia cuando corresponde y no promueve BLOCKED. Un resultado BLOCKED conserva diagnóstico sin archivos ejecutables y sin reemplazar READY previo. Las versiones ya publicadas son inmutables y el lector falla cerrado ante corrupción. Atomicidad física en FS/host concreto y multiinstancia: **UNVERIFIED**.
+`result_id` utiliza `source_key`, digest de proyección y digest de qualification. Manifest schema 1 conserva identidad, provenance, `resolution_key`, findings e inventario con hashes/tamaños. Una versión se valida y publica antes de promover READY. BLOCKED mantiene diagnóstico pero no archivos ejecutables ni reemplaza READY anterior. Versiones publicadas inmutables; lector falla cerrado ante corrupción. Atomicidad física real multi-host: **UNVERIFIED**.
 
-## Lector compartido y consumo Runtime — CURRENT
+## Lector compartido, lector Runtime y B1 — CURRENT
 
-`backend/alarms/materialization/local_reader.py` expone `LocalAlarmMaterializationReader`, `ReadyAlarmMaterialization` y `materialization_root`. `backend/processes/alarms-runtime/local_configuration.py` expone `RuntimeLocalConfigurationReader.load_ready_candidate()` y `.load_exact_candidate(result_id, manifest_sha256)`; ninguna llamada convierte READY en EFFECTIVE. Carga exacta valida source, hash del manifest, integridad de Runtime/Delivery, `resolution_key` compartida y semántica READY.
+`backend/alarms/materialization/local_reader.py` ofrece `LocalAlarmMaterializationReader`, `ReadyAlarmMaterialization` y `materialization_root`. `RuntimeLocalConfigurationReader` conserva `load_ready_candidate()` para planificación y `load_exact_candidate(result_id, manifest_sha256)`; ninguna convierte READY en EFFECTIVE.
 
-## Incremento B1 — CURRENT en main, CLOSED para validación local
+`AlarmConfigurationArtifactRef` fija `source_key`, `result_id`, hash del manifest y Rn/Cn. `build_alarm_configuration_revision(candidate,evaluator_registry)` produce `AlarmConfigurationRevision` y sesión con registry explícito; presupone la validación física de la candidata por el lector. B1 permite distintas materializaciones con igual Rn/Cn y planifica sobre `source.defined_alarm_identities UNION target.defined_alarm_identities`, incluso Rules deshabilitadas. ADDED/ENABLED en el plan no implican ejecución garantizada.
 
-`AlarmConfigurationArtifactRef` incorpora `source_key`, `result_id`, `manifest_sha256` y `resolution_key`. En Runtime, `build_alarm_configuration_revision(candidate, evaluator_registry)` vincula una candidata READY previamente obtenida al `AlarmEvaluatorRegistry` explícito y produce `AlarmConfigurationRevision(artifact_ref, defined_alarm_identities, session)`. `plan_configuration_adoption` cubre `source.defined_alarm_identities UNION target.defined_alarm_identities`; acepta diferente `result_id` aun con igual Rn/Cn y rechaza misma identidad de artefacto, conflicto de digest para un mismo result_id y diferentes source_key. Las disposiciones nuevas `ADDED` y `ENABLED` existen **en planificación**.
+## B2a/B2b — CURRENT, frontera posterior a Materialization
 
-**Frontera de seguridad:** `plan.is_adoptable` puede ser verdadero y `plan.requires_execution_upgrade` también. El ejecutor anterior (`adoption_execution.py`) no fue modificado en B1; no afirmar que ejecuta ADDED/ENABLED ni eliminación de Rules deshabilitadas. No hay aún adopción global durable ni Effective Head, incluso para cambios que no alteran hot state. Política de cambios de evaluator/kind/priority_group mantiene rechazos actuales, aunque decisiones históricas registran semánticas objetivo diferentes: **conflicto visible, no resuelto**.
+**B2a.1/B2a.2:** `backend/alarms/persistence` registra adopción global durable V1 sin grupos o V2 con 1..N grupos y referencias exactas, sobre el WAL ya existente. **B2b.1:** `runtime/state/effective-head.json` es proyección reconstruible desde la última adopción durable y snapshots verificados. **B2b.2:** `RuntimeLocalConfigurationReader.load_effective_revision(persistence,evaluator_registry)` carga la revisión exacta EFFECTIVE; `RuntimeEffectiveConfiguration` preserva su `effective_head` y `revision`; `assert_current_effective()` detecta cambios posteriores de selección.
 
-## Evidencia acotada y límites
+No escribir EFFECTIVE desde Materialization. No leer `ready.json` como si fuera autoridad del Engine. No volver a Cosmos para reinterpretar Runtime/Delivery ya materializados. **B2c sigue pendiente:** el ejecutor y el job no están conectados todavía al commit global V1/V2; `is_adoptable` no garantiza ejecución de todas las transiciones.
 
-Logs de pruebas locales del usuario, posteriores a la aplicación de A y B1:
+## Evidencia delimitada y límites
 
-- A: lectura, publicación y tests completos de los tres componentes, lint/format/wheels PASS; `atlanticus@9693e2b...` integró el incremento.
-- B1: Materialization compartido `62 PASS`, Runtime `40 PASS` tras corrección Ruff, Materialization Process `43 PASS`; checks de formato/lint PASS y wheels relevantes construidos. Main `c8f23d9...` contiene el código B1; **no** se repitió CI/pytest en un checkout limpio de ese SHA en este cierre.
-- Infraestructura Cosmos/Blob, qualification automática real, volumen físico multi-host, Runtime Adoption EFFECTIVE y Delivery/Live: **UNVERIFIED/PLANNED**.
+Incrementos previos: A local reader y publicación; B1 artifact exacto/planificación, todos con gates locales indicados en `08_QUALIFICATION_BASELINE.md`. Incrementos del presente corte: B2a.1, B2a.2, B2b.1, B2b.2 con tests/Ruff y builds locales; ficheros integrados en `main` en los checkpoints verificados. No convertir estas pruebas en verificación CI limpia, volumen multi-host, Cosmos/Blob productivo ni ejecutores GREEN reales. Ver `11_SOURCE_LEDGER.md`.
 
-## Siguiente frontera, sin abrirla en este cierre
+## Siguiente frontera
 
-Diseñar y acordar el contrato de adopción **global durable** y la evolución explícita del ejecutor para las disposiciones nuevas sobre el WAL existente. Definir primero seguridad/recovery y `requires_execution_upgrade`; no agregar journal paralelo, grupo artificial, fallback a latest READY, persistencia EFFECTIVE prematura ni compatibilidad legacy. Implementar únicamente tras consenso en otro chat; Delivery queda separado.
+**B2c exclusivamente:** revisar qué disposiciones B1 soporta realmente `adoption_execution.py`, luego conectar el ejecutor con V1/V2/EFFECTIVE preservando recovery y fencing. No ampliar Materialization, Delivery ni contratos Core fuera de un acuerdo explícito.

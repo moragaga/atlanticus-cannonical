@@ -1,91 +1,107 @@
 # Alarm Engine — Runtime Adoption and Effective Configuration
 
-Estado: **CURRENT / LECTOR EXACTO Y PLANNING B1 IMPLEMENTADOS; EXECUTION COMPLETA Y GLOBAL EFFECTIVE PLANNED**
+Estado: **CURRENT / B1 PLAN + B2a WAL GLOBAL V1/V2 + B2b EFFECTIVE HEAD Y LECTOR EXACTO; B2c EJECUTOR INTEGRADO PLANNED**.
 
-Corte: `atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e`; baseline canonical revisada `58241ddb6db5adbd2e783c7ec9f456f1bda5a321`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
+Corte auditado en Git READ ONLY: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`; canonical de partida `be2c424c44648e6488daae36d410cf425eed02b8`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Gates locales comunicados por usuario, no CI/infraestructura E2E. Este archivo propone sustituir la descripción anterior que terminaba en B1, sin introducir contratos nuevos.
 
-## Frontera congelada
+## 1. Invariantes congelados
 
 ```text
 READY != EFFECTIVE
 AlarmResolutionKey = (alarm_configuration_revision, confirmed_tool_catalog_revision)
 AlarmConfigurationArtifactRef = (source_key, result_id, manifest_sha256, resolution_key)
+AlarmArtifactRefSnapshot = (source_key, result_id, manifest_sha256,
+                            alarm_configuration_revision, confirmed_tool_catalog_revision)
 ```
 
-Un READY B.2 contiene `RuntimeAlarmConfiguration` y `DeliveryAlarmConfiguration` con idéntica `AlarmResolutionKey`. Dos manifestaciones READY pueden conservar la misma Rn/Cn y ser artefactos distintos porque cambió su evidencia. `result_id` y SHA256 del manifest permiten pinning exacto. Materialization **no** confiere autoridad de Runtime al publicar READY; Delivery futura no debe seleccionar latest READY autónomamente.
+`RuntimeAlarmConfiguration` y `DeliveryAlarmConfiguration` de un mismo READY llevan igual Rn/Cn. Dos READY con Rn/Cn iguales pueden ser artefactos distintos si difiere qualification; pin exacto requiere `source_key`, `result_id` y hash de manifest además de Rn/Cn. Materialization sólo publica READY, no adopta. La autoridad de adopción es el **WAL del Engine**, no el puntero READY ni un artefacto `effective.json` junto a Materialization.
 
-## CURRENT: lectura y enlace exacto (Incremento A y B1)
+## 2. CURRENT: Materialization, lector y B1
 
-`backend/alarms/materialization/local_reader.py` valida manifest, procedencia e integridad por SHA256/size de Runtime y Delivery, su Rn/Cn compartida, status READY y puntero READY si se usa. Falla cerrado ante corrupción sin fallback. El `ready.json` de Materialization es físicamente CURRENT; `effective.json` es sólo un nombre ilustrativo anterior, **no** un archivo existente/contratado.
+`backend/alarms/materialization/local_reader.py` verifica hash/tamaño, schema, status READY, procedencia y pareja Runtime/Delivery; tiene lectura del READY publicado y lectura exacta. `RuntimeLocalConfigurationReader.load_ready_candidate()` puede adquirir candidatos para **planificación**; `.load_exact_candidate(result_id,manifest_sha256)` lee versión exacta. `build_alarm_configuration_revision(candidate,evaluator_registry)` crea `AlarmConfigurationRevision` con artifact ref exacto, identidades definidas y sesión ejecutable; el registry se inyecta y el builder no sustituye validación física del lector.
 
-En Runtime, `RuntimeLocalConfigurationReader` ofrece `load_ready_candidate()` y `load_exact_candidate(result_id,manifest_sha256)` sobre `VOLUMEN_PATH`. `build_alarm_configuration_revision(candidate,evaluator_registry)` construye la sesión con el registro de evaluadores explícito, crea un `AlarmConfigurationArtifactRef` y produce `AlarmConfigurationRevision(artifact_ref,defined_alarm_identities,session)`; el builder asume una candidata previamente verificada por el lector y comprueba coherencia de identidad/key declaradas. No afirma verificar por sí mismo la integridad física de disco ni producir automáticamente qualifications GREEN.
-
-El paquete compartido de Materialization sigue ofreciendo un resolver B.2 **puro**, pero ahora incluye componentes de lectura con I/O; no etiquetar el paquete completo como puro.
-
-## CURRENT: planificador B1
-
-`plan_configuration_adoption(source,target)` exige mismo `source_key`, artefactos distintos, rechaza conflicto para un mismo `result_id` y permite distinta materialización con idéntica Rn/Cn. Compara:
+B1 `plan_configuration_adoption(source,target)` requiere mismo `source_key`, artefactos diferentes y cubre:
 
 ```text
-universe = source.defined_alarm_identities UNION target.defined_alarm_identities
+source.defined_alarm_identities UNION target.defined_alarm_identities
 ```
 
-Disposiciones presentes:
+Disposiciones actuales: `UNCHANGED`, `COMPATIBLE`, `ADDED`, `ENABLED`, `DISABLED`, `REMOVED`, `STRUCTURAL_RESET`, `REJECTED`. ADDED puede ser Rule target definida activa o deshabilitada; ENABLED es definida source deshabilitada a ejecutable target; DISABLED conserva Rule definida en target pero no ejecutable; REMOVED elimina identidad definida, incluso si source no era ejecutable; UNCHANGED permite ambas definidas deshabilitadas. `STRUCTURAL_RESET` cubre cambio de criticality; planner rechaza `priority_group`, `kind`, `evaluator_key` y ciertas mutaciones C1/C3. Cambios sólo de Delivery o de qualification pueden requerir adopción sin mutación de grupo.
+
+`is_adoptable` sólo significa ausencia de `REJECTED`. `requires_execution_upgrade` detecta `ADDED`, `ENABLED` y `REMOVED` con source no ejecutable. No utilizar `is_adoptable` como gate suficiente para ejecutar el plan vigente.
+
+## 3. CURRENT B2a: adopción global durable V1/V2
+
+`backend/alarms/persistence/configuration_adoption.py`:
+
+- V1 `ConfigurationAdoptionRecord`, schema `configuration-adoption-record.v1`: singleton global sin group commits; `adoption_id`, `previous_artifact_ref` opcional, `target_artifact_ref`, UTC `effective_at`/`committed_at`, hash canónico. No crear snapshot o prioridad sintética.
+- V2 `ConfigurationAdoptionRecordV2`, schema `configuration-adoption-record.v2`: hereda identidad de adopción y añade `group_commits` 1..N, referencias exactas ordenadas `GroupCommitReference(priority_group,commit_id,record_hash)`. Los grupos se registran antes del adoption record final dentro del mismo batch de WAL; referencias, hash, revisiones objetivo y mismo segmento horario UTC se validan antes de confirmación.
+- V1 sigue siendo contrato CURRENT para cero grupos, no decoder legacy transitorio. V2 no redefine el significado de V1 ni de commits normales.
+
+`AlarmPersistence.commit_adoption(record, group_records=(), assert_authority, fenced_mutation)` valida cadena global y estado previo; soporta V1 sin grupos y V2 con grupos. `EngineJournal` valida ambas versiones, cadenas de grupos, continuidad y referencias exactas. `read_durable_adoptions()` permanece separado de `read_durable_records()` de grupos. Primer adoption sobre histórico durable group-only anterior falla cerrado: **migración explícita no implementada**, sin autocorrección oportunista.
+
+Recovery: si falla antes de Durable Head, descarta cola WAL no confirmada; después de Durable Head, recupera registros sin reevaluación; V2 no avanza Materialized Head a la mitad de un grupo transaccional y reintenta materializaciones idempotentemente. Hay garantía de confirmación durable agrupada, **no** snapshot raw externo atómico entre múltiples archivos.
+
+## 4. CURRENT B2b.1: Effective Head recuperable
+
+`backend/alarms/persistence/effective_head.py` implementa `AlarmEffectiveConfigurationHead`, schema `alarm-effective-head.v1`:
 
 ```text
-UNCHANGED
-COMPATIBLE
-ADDED
-ENABLED
-DISABLED
-REMOVED
-STRUCTURAL_RESET
-REJECTED
+adoption_id
+adoption_record_hash
+adoption_position: JournalPosition
+target_artifact_ref: AlarmArtifactRefSnapshot
+effective_at
 ```
 
-`ADDED`: identidad ausente de source definido y presente en target (activa o deshabilitada). `ENABLED`: definida/deshabilitada en source y ejecutable en target. `DISABLED`: ejecutable en source, definida/no ejecutable en target. `REMOVED`: definida en source y ausente en target, incluso si antes estaba deshabilitada. `UNCHANGED` puede abarcar Rules definidas y deshabilitadas en ambos extremos; cambios solamente Delivery pueden conservar semántica Runtime igual. `STRUCTURAL_RESET` continúa para cambios de criticality; rechazo conservado para cambios de priority group, kind, evaluator y determinadas mutaciones de routing C1/C3.
-
-`ConfigurationAdoptionPlan.is_adoptable` comprueba ausencia de `REJECTED`, **no** si el ejecutor actual puede aplicar el plan. `requires_execution_upgrade` detecta `ADDED`, `ENABLED` y `REMOVED` de una Rule definida pero no ejecutable en source. El usuario verificó 17 tests de plan y 40 de suite Runtime, Ruff/format/wheel PASS, y Git confirma el código en `c8f23d9`.
-
-## CURRENT pero PARCIAL: ejecución y durabilidad operacional existentes
-
-`session.py` aporta registry, entradas y sesiones; `adoption_execution.py` aporta `AlarmConfigurationAdoptionExecutor` para las transiciones que sabe preparar, delegando commits de grupos en `AlarmRuntimeComposition.commit_batch`. `job_composition.py` exige recovery y `journal.durable == journal.materialized` antes de iterar. `durability.py` usa `AlarmPersistence` y fencing del contexto del job.
-
-**Brecha verificada:** el ejecutor `adoption_execution.py` no fue modificado en B1. Su agrupación accede a `plan.source.plan_for(identity)` para cada cambio no `UNCHANGED`: ese plan falta para `ADDED`, `ENABLED` y la eliminación de una Rule source deshabilitada. Su comprobación inicial de `is_adoptable` no protege contra `requires_execution_upgrade`. El hecho de que el planificador clasifique transiciones nuevas **no** implica ejecución segura, ni reconcilia hot state para ellas.
-
-El esquema vigente `EngineCommitRecord` / `AlarmPersistence.commit_batch` está ligado a priority groups y exige al menos un registro para commit. Cambios sólo de Delivery o de la identidad exacta del artefacto pueden necesitar adopción global sin commit de ningún grupo; hoy no existe un registro durable global de esa decisión. La semántica actual de commit del Engine continúa:
+Layout contratado:
 
 ```text
-WAL -> DURABLE HEAD -> SNAPSHOTS -> MATERIALIZED HEAD
+VOLUMEN_PATH/ada-command-center/alarms/runtime/state/
+  journal-head.json
+  effective-head.json
+  groups/<priority_group>.json
 ```
 
-Recovery debe alinear `journal.durable == journal.materialized` antes de operaciones dependientes de estado confirmado. Respetar fencing, diferencias crash before/after durable y fail-closed del Engine; **no** trasplantar mecánicamente el protocolo del publicador local de Materialization.
+El Effective Head es proyección del **último adoption record durable**; se publica después de Materialized Head con fencing. `AlarmPersistence.read_effective_head()` exige journal alineado, reconstruye expectativa a partir de la región durable, exige igualdad con proyección física y verifica snapshots de grupos durables. Falta de adopción puede producir `None`; ausencia, corrupción u obsolescencia de proyección con adopción durable requieren recovery antes de lectura efectiva. Recovery reconstruye tras caída incluso con `durable == materialized`; corrupción del WAL y discrepancias de snapshots fallan cerradas. Sin adopción durable, una proyección EFFECTIVE física huérfana es corrupción, no un fallback.
 
-## PLANNED / NO DECLARAR IMPLEMENTADO: autoridad EFFECTIVE global
+Esta proyección no es segundo journal ni owner de publicación de Materialization; no se lee `ready.json` para decidir qué versión restaurar.
 
-Contrato conceptual de la decisión precedente:
+## 5. CURRENT B2b.2: carga exacta desde Runtime
+
+`processes/alarms-runtime/local_configuration.py` incorpora:
 
 ```text
-AlarmEffectiveConfigurationHead
-  resolution_key
-  effective_at
-  adoption_id
+RuntimeEffectiveConfiguration(effective_head, revision)
+RuntimeLocalConfigurationReader.load_effective_revision(persistence, evaluator_registry)
+RuntimeLocalConfigurationReader.assert_current_effective(persistence, selected)
+RuntimeEffectiveConfigurationError
 ```
 
-**Refinamiento PROPOSED, pendiente de definición durable:** la referencia efectiva también necesita pinning exacto de artefacto B1. El eventual `ConfigurationAdoptionCommit` debería capturar `adoption_id`, referencia anterior opcional, referencia objetivo exacta, `effective_at` y commits de grupos afectados, incluyendo cero grupos si sólo cambian Delivery/metadata. **Estos campos siguen siendo una propuesta de contrato**, no un modelo de persistencia existente ni un formato serializado aprobado. La ubicación, schema, owner, secuencia de publicación y mecanismo de recovery del Effective Head continúan OPEN.
+La lectura exige instancia real de `AlarmPersistence` sobre el **mismo VOLUMEN_PATH** y registry de evaluadores explícito. Obtiene cabeza efectiva validada, compara `source_key`, lee `result_id` y manifest SHA256 exactos, construye revisión y compara todos los campos del pin, incluida Rn/Cn. Una segunda lectura de EFFECTIVE descarta selección obsoleta; `assert_current_effective` permite otro chequeo posterior.
 
-La adopción es global, no un efectivo por Rule ni por priority group. No crear grupo sintético, segundo journal, fallback a latest READY, relectura de Cosmos para reinterpretar B.2 ni puente legacy por comodidad. Un cambio sin mutación hot state debe ser igualmente auditable como adopción si cambia el artefacto efectivo.
+Si no existe ninguna adopción efectiva devuelve `None`; no interpreta READY como bootstrap automático. Ante inconsistencia, versión inexistente, corrupción, wrong source o adopción posterior, falla cerrado. **No** altera por sí mismo `job_composition.py` ni `adoption_execution.py`; la existencia del lector no demuestra que el job actual lo utilice ni que Runtime ya efectúe un flujo completo de adopción.
 
-## OPEN específicos de futura Adoption
+## 6. CURRENT pero PARCIAL: ejecutor anterior
 
-1. Contrato y pruebas de ejecución segura de `ADDED`/`ENABLED` y de `REMOVED` desde source deshabilitada; conservar coherencia de grupos y recuperar autoridad tras crash.
-2. Commit global vinculado al artefacto exacto dentro del WAL del Engine, con cero o más group commits, recovery/fencing y publicación EFFECTIVE sin adelantos.
-3. Cómo construir bootstrap inicial y recuperar fuente/target efectivo sin asumir que el READY más reciente está adoptado.
-4. Política explícita para cambios de evaluator/kind/priority group: decisions B.1 desean `COMPATIBLE` o migración estructural, código actual rechaza. No mutar política accidentalmente.
-5. Reconciliación de reappearance timer/condiciones especiales sobre `ManagementEffect` vigente; ocurrencias actuales conservan revisiones separadas en vez del modelo objetivo `resolution_key_at_start`.
-6. Productores operacionales de evaluator/Tool GREEN y pruebas reales de infraestructura; el `AlarmEvaluatorRegistry` local no demuestra por sí solo qualification/despliegue real.
-7. Integración futura de Delivery local exacto, Live/Management Capture **sólo después** de acordar autoridad EFFECTIVE.
+`AlarmConfigurationAdoptionExecutor.execute(...)` en `adoption_execution.py` valida tipo/UTC, `plan.is_adoptable` y alineación del journal; agrupa cada cambio distinto de `UNCHANGED` mediante `plan.source.plan_for(identity)`. Esa búsqueda falla si la Rule no tiene source plan ejecutable, por ejemplo ADDED, ENABLED y REMOVED desde source definida pero deshabilitada. `is_adoptable=True` no impide ese fallo. Para grupos que sabe preparar llama a `reconcile_group_configuration` y `materialize_group_commit`, y finalmente `composition.commit_batch` de grupos; cuando no hay grupos devuelve sin `commit_result`. **No llama a `AlarmPersistence.commit_adoption` V1/V2 ni publica autoridad global como parte del flujo ejecutor.**
 
-## Único siguiente foco técnico
+`AlarmRuntimeJobComposition.recover()` usa el recovery de composición y obliga a completarlo antes de `iteration()`. Comprueba `head.aligned`, pero el ejecutor inyectado y su selección EFFECTIVE operacional completa no se han conectado en este hito. No confundir gates de recovery con orquestación B2c terminada.
 
-**PROPOSED: diseño y revisión de la frontera Runtime Adoption durable.** Verificar HEAD y releer `adoption.py`, `adoption_execution.py`, `session.py`, `job_composition.py`, `composition.py`, `durability.py`, `alarms/persistence/{models,store}.py`, contratos Core de reconciliación y los tests B1. Diseñar en ese orden: límite del ejecutor actual y guardado seguro del plan; commit global con identidad exacta sobre WAL ya existente; crash/recovery y Effective Head. Acordar un incremento mínimo verificable **antes** de cualquier edición. Delivery, infraestructura y UX quedan fuera de este foco.
+## 7. PLANNED B2c: siguiente frontera, sin decisión nueva aquí
+
+Primero debatir **B2c.1, semántica y ejecución segura de las disposiciones ya contratadas por B1**. Revisar grupos origen/destino, source/target definido/ejecutable, casos sin grupos y ausencia de duplicados; contrastar `reconcile_group_configuration` y los tests existentes antes de escribir código. Acordar comportamiento concreto, fallos y casos de regresión. No inventar un plan adicional o un registro nuevo sólo por comodidad.
+
+Sólo después abordar **B2c.2, integración del ejecutor con los contratos físicos ya disponibles**: V1 para 0 grupos, V2 para 1..N, pin exacto de target, checks de head/fencing/recovery y lectura EFFECTIVE. No duplicar journal, puentes legacy ni autorizar latest READY como fuente de ejecución. La política de `evaluator_key`/`kind` y migración de `priority_group` según decisions permanece **OPEN / CONFLICT** y requiere acuerdo explícito fuera de un parche incidental.
+
+## 8. Otros OPEN, fuera del presente incremento
+
+- Reconcile sobre `ManagementEffect` vivo para cambios de timer y Special Conditions.
+- Provenance exacta `resolution_key_at_start` en occurrence, sólo si se confirma contrato/alcance.
+- First bootstrap operacional completo y migración condicional desde histórico group-only, no asumir datos legados concretos.
+- Qualification de evaluadores y Tools GREEN reales; Cosmos/Blob y volumen multi-host físico UNVERIFIED.
+- Fuentes/evaluadores reales, Delivery/Live, Management Capture, History/Analytics y contratos de evidencia/retención: frentes separados.
+
+## 9. Evidencia y frontera de cierre
+
+B2a.1/B2a.2/B2b.1/B2b.2 figuran en el HEAD verificado con PASS local de pruebas, Ruff y builds delimitados en `08_QUALIFICATION_BASELINE.md`. Ninguno demuestra funcionamiento operacional E2E del executor B2c ni CI sobre un checkout limpio. El presente cambio es **sólo documental**, destinado a sustituir el relato B1 anterior sin retroceder a diseños ya SUPERSEDED.

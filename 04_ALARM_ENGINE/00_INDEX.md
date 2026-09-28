@@ -1,38 +1,49 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT / MATERIALIZATION LOCAL + RUNTIME B1 IMPLEMENTADOS / EFFECTIVE GLOBAL PLANNED**
+Estado documental propuesto: **CURRENT / B2a y B2b IMPLEMENTADOS EN MAIN, VALIDADOS LOCALMENTE / B2c PLANNED**.
 
-Corte: `atlanticus@c8f23d91ae1cb817be55b4b812b22ffca518880e`; canonical base revisada `58241ddb6db5adbd2e783c7ec9f456f1bda5a321`; decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Actualización documental propuesta, no modificación remota.
-
-| Archivo | Responsabilidad | Estado en este corte |
-|---|---|---|
-| `01_DOMAIN_MODEL.md` | Dominio, identidad y contratos Core. | CURRENT; sin sustitución en este cierre. |
-| `02_RUNTIME_AND_LIFECYCLE.md` | Lifecycle, prioridad y routing. | CURRENT; sin sustitución. |
-| `03_PERSISTENCE_AND_RECOVERY.md` | WAL, durable/materialized y recovery. | CURRENT para Engine; adopción global todavía PLANNED. |
-| `04_CONCURRENCY_LEASES_AND_FENCING.md` | Authority, fencing y takeover. | CURRENT; deben respetarse en futura adopción. |
-| `05_PROJECTION_AND_PUBLICATION.md` | Source/proyección, publicación local B.2 y futuros consumidores. | ACTUALIZAR: salida local CURRENT, no PLANNED. |
-| `06_MANAGEMENT.md` | Management y deactivation. | CURRENT; sin sustitución. |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | Source v3, B.2, job local, lector e identidad exacta. | ACTUALIZAR: Incrementos A/B1. |
-| `08_QUALIFICATION_BASELINE.md` | Campaña R3.5 y evidencia local reciente delimitada. | ACTUALIZAR evidencia, preservar genealogía. |
-| `09_DECISION_INDEX.md` | Decisiones actuales, refinamientos y conflictos. | ACTUALIZAR A/B1. |
-| `10_OPEN_ITEMS.md` | OPEN verificables y siguiente frontera. | ACTUALIZAR hacia Runtime Adoption durable. |
-| `11_SOURCE_LEDGER.md` | Checkpoints, rutas, tests, límites. | ACTUALIZAR a SHAs y resultados de este corte. |
-| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Engine vs Analytics. | SEPARATE, no tocar. |
-| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Identidad y planificación B1 vs adopción y EFFECTIVE pendientes. | ACTUALIZAR distinción CURRENT/PLANNED. |
-
-## Cadena actual frente a etapas posteriores
+Corte de lectura (2026-09-27):
 
 ```text
-Alarm Source Rn + ToolDependencyManifest(Cn)
-  -> ProjectionRecord[AlarmConfigurationSnapshot] (adaptadores Local/Cosmos)
-  -> [CURRENT] Materialization adquiere proyección Cosmos y qualifications
-  -> [CURRENT] resolver B.2 puro
-  -> [CURRENT] publicación local READY: manifest + Runtime + Delivery, misma Rn/Cn
-     o BLOCKED: manifest/findings, sin pareja ejecutable ni promoción READY
-  -> [CURRENT] RuntimeLocalConfigurationReader: READY actual o artefacto exacto
-  -> [CURRENT] AlarmConfigurationArtifactRef + revisión y plan B1
-  -> [PLANNED] ejecución/adopción global durable, recovery y EFFECTIVE
-  -> [PLANNED / SEPARATE] Delivery local exacto y Live
+Implementación: moragaga/atlanticus:main           ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5
+Canonical consultado: moragaga/atlanticus-cannonical:main be2c424c44648e6488daae36d410cf425eed02b8
+Decisions consultado: moragaga/atlanticus-decisions:main 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-`READY != EFFECTIVE`. El planificador B1 no autoriza a presentar su resultado como adopción durable. No releer Cosmos desde Runtime para cargar los contratos B.2. Próximo foco técnico: **diseño de Runtime Adoption durable**, no otra vuelta a Materialization ni una integración simultánea de Delivery.
+Estos documentos son **reemplazos locales preparados para revisión e integración humana**. No acreditan que `atlanticus-cannonical:main` ya se haya actualizado. El HEAD de implementación contiene también commits de otros frentes; el cierre documental aquí sólo abarca Alarm Engine B2a/B2b.
+
+| Archivo | Responsabilidad | Situación de este corte |
+|---|---|---|
+| `01_DOMAIN_MODEL.md` | Identidad, Core y contratos de dominio | CURRENT; no se reemplaza. |
+| `02_RUNTIME_AND_LIFECYCLE.md` | Reductor y frontera entre lifecycle y adopción | CURRENT; reemplazo puntual de sección de adopción, sin redefinir Core. |
+| `03_PERSISTENCE_AND_RECOVERY.md` | WAL, V1/V2, Durable/Materialized y EFFECTIVE | CURRENT; reemplazo necesario. |
+| `04_CONCURRENCY_LEASES_AND_FENCING.md` | Leases, autoridad y fencing | CURRENT; no se reemplaza. |
+| `05_PROJECTION_AND_PUBLICATION.md` | READY, EFFECTIVE y futuras proyecciones | CURRENT; reemplazo necesario. |
+| `06_MANAGEMENT.md` | Acciones, effects y deactivation | CURRENT; no se reemplaza. |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | Source v3, B.2, lector y planner B1 | CURRENT; reemplazo de su frontera con B2a/B2b. |
+| `08_QUALIFICATION_BASELINE.md` | Evidencia histórica y gates locales | CURRENT; incorporar los cuatro gates, sin reinterpretar F-010. |
+| `09_DECISION_INDEX.md` | Decisiones, refinamientos, discrepancias | CURRENT; actualizar clasificación. |
+| `10_OPEN_ITEMS.md` | OPEN concretos y próxima frontera | CURRENT; quitar falsos pendientes B2a/B2b. |
+| `11_SOURCE_LEDGER.md` | Trazabilidad, SHAs, pruebas y límites | CURRENT; ampliar evidencia. |
+| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Frontera conceptual Analytics | CANDIDATE, debate separado; no se reemplaza. |
+| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Contratos exactos y brecha del ejecutor | CURRENT para B2a/B2b; B2c PLANNED. |
+
+## Cadena real de configuración en este corte
+
+```text
+Source v3: Rn + ToolDependencyManifest(Cn)
+  -> proyección de entrada adquirida por Materialization mediante Cosmos
+  -> resolver B.2 + qualification -> READY o BLOCKED
+  -> publicación local de pareja Runtime/Delivery exacta e inmutable
+  -> READY sigue siendo sólo candidata, no autoridad de ejecución
+  -> B1: AlarmConfigurationArtifactRef + Revision + AdoptionPlan
+  -> B2a: WAL global V1 (0 grupos) o V2 (1..N grupos)
+  -> B2b.1: Effective Head recuperable y validado desde WAL/snapshots
+  -> B2b.2: Runtime puede cargar la revisión EFFECTIVE exacta
+  -> [PLANNED B2c] ejecutar todas las disposiciones admitidas y vincular el ejecutor a V1/V2/EFFECTIVE
+  -> [SEPARATE] fuentes/evaluadores operativos, Live Delivery, Management Capture, History
+```
+
+**READY != EFFECTIVE**. B2b.2 implementa una capacidad explícita de lectura, **no** la conexión automática del job existente con dicha lectura ni la ejecución completa de adopciones. La elección de la versión efectiva nunca se deriva de latest READY. La proyección `effective-head.json` no es otra autoridad: se reconstruye del WAL.
+
+**Próximo foco único recomendado:** B2c, debate contractual y ejecución segura del planificador B1 contra el ejecutor existente, antes de integrar commits V1/V2. No abrir fuentes, Delivery ni History en ese mismo incremento.

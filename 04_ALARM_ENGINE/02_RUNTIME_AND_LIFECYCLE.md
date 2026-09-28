@@ -1,13 +1,8 @@
 # Alarm Engine — Runtime and Lifecycle
 
-Estado: **CURRENT / IMPLEMENTED / TESTED**
+Estado: **CURRENT / CORE IMPLEMENTED + TESTED; B2a/B2b INTEGRADOS; ADOPTION EXECUTION COMPLETA PLANNED**.
 
-Checkpoint:
-
-```text
-moragaga/atlanticus:main
-cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
-```
+Corte de implementación para la nueva frontera: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`. La caracterización histórica del Core corresponde al checkpoint `cd08bd8d2c25bd89eb39fa15cbda209c8e9be617`; B2a/B2b no cambiaron las reglas físicas descritas a continuación.
 
 ## Cycle boundary
 
@@ -164,15 +159,14 @@ delivery_enabled
 
 en Runtime Core.
 
-## Reconfiguration/adoption
+## Reconfiguration/adoption — refinamiento B2a/B2b
 
-El Engine soporta primitives de reconciliation/reset, pero Runtime Adoption global y Effective Head
-siguen sin implementar.
+El Engine mantiene primitives de reconciliation/reset. **CURRENT B2a/B2b:** Persistence registra adopciones globales durables V1 (cero grupos) o V2 (1..N grupos), reconstruye un Effective Head exacto desde WAL/snapshots y Runtime proporciona lectura exacta de EFFECTIVE. Esos incrementos **no** cambian la semántica física y operacional descrita arriba.
+
+**OPEN B2c:** `adoption_execution.py` todavía sólo prepara un subconjunto de cambios B1; exige source plan ejecutable para cambios no `UNCHANGED` y registra commits por grupos con `composition.commit_batch`, no la adopción global `commit_adoption` V1/V2. La existencia de `RuntimeLocalConfigurationReader.load_effective_revision` no implica que el job actual ya lo utilice como flujo de adopción integrado.
 
 La reconciliación de cambios en:
 - `reappearance_after_seconds`;
 - `reappearance_special_conditions`;
 
-sobre un ManagementEffect/hot state vigente pertenece a Runtime Adoption y sigue OPEN.
-
-No resolver esas diferencias dentro de B.2 silenciosamente.
+sobre un ManagementEffect/hot state vigente pertenece a Runtime Adoption y sigue **OPEN**. No resolver esas diferencias dentro de B2c incidentalmente, sin contrato y pruebas específicas.
