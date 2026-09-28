@@ -1,62 +1,76 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT / WEB STARTER + COMPOSE FULL LOCAL VERIFIED / PRODUCTIVE PIPELINE OPEN**
+Estado: **CURRENT / HISTORICAL STARTER QUALIFICATION + ADA RESOURCE PREPARATION 001 LOCAL QUALIFIED / MASTER ACCESS MATERIAL PLANNED**  
+Fuente de implementación actual contrastada: `moragaga/atlanticus@da75752e87036b8318f38f8d405c55e8cb18717d`. Evidencia Docker y tests del artifact nuevo aportada el 2026-09-28; no trasladar automáticamente qualification histórica de otros SHAs a este.
 
-Inspección estática del cierre: `moragaga/atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`; Canonical base para reemplazo: `moragaga/atlanticus-cannonical@7d0de8d9fa27f28170171588bc219c2bae99f34e`. Qualification ejecutada por el usuario en checkpoints anteriores. No confundir ejecución parcial con una qualification global del HEAD.
-
-## Frontera contractual
+## Frontera y ownership
 
 ```text
 SOURCE → ARTIFACT → DISTRIBUTION INPUT
 ```
 
-Atlanticus produce artifacts y contrato de entrega. Pipeline corporativo, infraestructura productiva y despliegue específico pertenecen a DevOps/host. Los wheels internos y externos del wheelhouse son archivos separados; no concluir que se pueden eliminar dependencias externas sin auditar locks y closure.
+Atlanticus produce artifacts y su contrato de entrega. El pipeline corporativo, la infraestructura productiva y el despliegue pertenecen a DevOps/host. Los wheels internos y externos se mantienen identificables; no eliminar dependencias externas sin auditar closure/locks.
 
-## Backend y Web — ownership independiente
+Generadores backend y `deployment/local/generate_compose.py` corresponden a artifacts de procesos; **no** son `compose full` ni `project.py` del Starter Web. No fusionar ambos workflows.
 
-Los scripts backend y `deployment/local/generate_compose.py` producen workspaces de artifacts **de procesos**, no son los perfiles Compose del Starter Web. No mezclar ambos workflows ni introducir un orquestador nuevo por semejanza de nombres.
+## Starter Web y qualification histórica
 
-En Web, `tooling/distribution/web/generate_starter.py` crea Starters editables Generic/ADA con manifest; `build_wheelhouse.py` arma closure offline y `qualify_starter.py` comprueba instalación y capacidades declaradas. `distribution/` es salida generada, no código fuente nuevo.
+`tooling/distribution/web/generate_starter.py` crea Starters editables Generic/ADA con manifest; `build_wheelhouse.py` y los scripts de qualify tratan closure e instalación portable. `distribution/` es resultado generado. Qualification anterior reportada: SOURCE_SMOKE/PORTABLE Generic+ADA con Python 3.14.2; número de wheels y tests antiguos corresponden a sus respectivos checkpoints, no al nuevo artifact.
 
-Qualification histórica reportada: Generic+ADA SOURCE_SMOKE y PORTABLE bajo Python 3.14.2, wheelhouses Generic 36/ADA 108 en checkpoint anterior. No atribuir esas cifras al nuevo artifact ni al HEAD de esta revisión.
+Starter ADA incluye Gunicorn por worker y Compose `infra.yaml`, `web.yaml`, `full.yaml`, además de `tooling/project.py`. Los modos `local`/`durable` de Manager no autorizan inferir combinaciones no documentadas de providers. La configuración `production.py` exige identidad apropiada proporcionada por el host; el Starter no fabrica Entra ni incorpora secretos productivos.
 
-## Incrementos recientes ADA Starter / Docker Compose
+## Resource Preparation 001 — CURRENT EN IMPLEMENTACIÓN / LOCAL VALIDATED
 
-CURRENT en `tooling/distribution/web/starter/ada/`:
+Commit `da75752` incorpora cambios acotados en:
 
-- Starter editable, distribución/wheelhouse y servidor Gunicorn con lifecycle por worker (previamente corregido).
-- `deployment/compose/infra.yaml`, `web.yaml`, `full.yaml` y `tooling/project.py` con comandos `compose {build,up,down,logs,ps,prepare}` y perfiles `infra|web|full`.
-- `full`: Cosmos emulador vNext, Azurite Blob, `resources` inicializador, Web y red/volúmenes externos. `web` depende de recursos preparados y consume Source Blob/Projection Cosmos; se respetan sus namespaces y rutas lógicas.
-- `ADA_MANAGER_PERSISTENCE_PROVIDER=durable`; `ADA_TOOL_SOURCE_PROVIDER=blob`, `ADA_TOOL_PROJECTION_PROVIDER=cosmos` en `full`. Manager CURRENT tiene modalidades `local` y `durable`; Tool permite combinaciones independientes según su propio contrato. No prometer que Manager soporta todas las combinaciones de Tool.
+```text
+scopes/ada/web/application/ada-generic-application/
+  src/ada/web/application/generic/{manager_deployment.py,resource_preparation.py}
+  commented/ada/web/application/generic/{manager_deployment.py,resource_preparation.py}
+  tests/{test_manager_deployment.py,test_resource_preparation_increment.py}
 
-**VERIFIED AUTOMATED REPORTADO:** `33 passed in 0.70s` en pruebas específicas `test_project_tool.py` y `test_compose_integration.py` en el equipo con Docker. 
+tooling/distribution/web/starter/ada/
+  src/application/local_resources.py
+  commented/application/local_resources.py
+  deployment/compose/full.yaml
+  commented/deployment/compose/full.yaml
 
-**VERIFIED MANUAL REPORTADO:** generación de distribución, precheck `PRECHECK_PASS`, build de imagen, inicio de Cosmos/Azurite, job `resources` finalizado con seis contenedores y Gunicorn con tres workers. La consola inicial de `ps full` mostraba health en fase `starting`; no usarla como prueba de readiness final. El usuario confirmó funcionamiento. No se dispone aquí de prueba explícita de persistencia de configuraciones después de `down/up` sin reproyección.
+tooling/tests/distribution/web/ada/
+  {test_compose_integration.py,test_resource_job_degradation.py}
+```
 
-**VERIFIED TESTS del patch visual posterior:** el usuario aplicó el patch de etiquetas del Manager sin errores y ejecutó dos invocaciones de pruebas (once puntos exitosos y `6 passed`); falta comprobación visual en artifact reconstruido.
+El job local espera Cosmos `/ready` y Azurite; prepara contenedor Blob/base Cosmos/seis contenedores. La Web de `full.yaml` no depende del éxito del job. El CLI actual es `ada-generic-manager-resources prepare|validate`, sin el viejo alias `ensure-local`. En producción se omite **toda** interacción Blob durante preparación; la base Cosmos existe externamente.
 
-## Producto futuro, independiente del Manager
+**VERIFIED USER-REPORTED:** suite ADA Generic + tooling (~295 pruebas por contadores aportados) y Ruff de los archivos acotados PASS, `git diff --check` PASS antes del commit. Nuevo Starter generado con 67 wheels internos, `BUILT_UNQUALIFIED`, `PRECHECK_PASS` y build Docker de la imagen `ada-generic:resource-validation-001`. El precheck aislado no sustituye el build y pruebas de runtime; los siguientes ensayos sí ejecutaron la imagen nueva.
 
-Una página aislada de proyección (PLANNED) permitirá inicializar un ambiente cuando no hay perfiles/usuarios promovidos en Cosmos. Consumirá las configuraciones ya disponibles en Storage y las proyectará con APIs de dominio existentes, más el mecanismo especial de Users que se debe crear primero. No es un nuevo Manager remoto ni un editor de módulos. Credenciales de proyecto solicitadas durante la operación; no vencen automáticamente ni consumen el paquete, permiten reintentos y regeneración manual cuando se pierden. Exacta implementación de tooling, protección criptográfica y autorización pre-Users: **OPEN / NO CODE**.
+**VERIFIED DOCKER EN ARTIFACT NUEVO:** ocho recursos `CREATED` en volúmenes nuevos; después `READY` y salida 0; comprobada idempotencia en recursos existentes, reinicio de Cosmos/Azurite manteniendo topología, diagnóstico parcial con Cosmos detenido y restauración de `READY` sin reiniciar la Web ya iniciada. Consola de errores estructurada y salidas 1/2 según el fallo observado. El artifact ensayado precede a la publicación del commit; repetir sobre HEAD limpio permanece **UNVERIFIED**.
 
-No introducir este diseño en generadores actuales hasta congelar contrato y autorizaciones. Source de Users actual es registro de **aplicación**, no de cada herramienta; la asignación operacional futura podrá ser de herramienta, después de su propio diseño.
+**Límite Web:** un cold start con Cosmos ya detenido inició Gunicorn pero `/health/live` no respondió antes de diez segundos. Tras recuperar Cosmos, el mismo contenedor respondió 200 y `/health/ready` informó `checks: {}`. No declarar Home resiliente o readiness de dependencias por ese resultado.
 
-## Estado de env/pipeline
+## Evidencia de versiones anteriores — conservar como HISTORICAL
 
-`*.env.detail` son contratos documentales sin secretos. El uso de mappings para DEV/UAT/PRD y la resolución productiva de secretos aún requieren un gate propio; no inventar valores ni poblar secrets del repositorio. Producción usa identidad y recursos externos legítimos: el archivo `tooling/distribution/web/starter/ada/src/application/production.py` todavía exige inyección de `IdentityProvider` por el host.
+En el checkpoint previo de Starter Web se reportaron SOURCE_SMOKE y PORTABLE de Generic/ADA bajo Python 3.14.2, wheelhouses históricos Generic **36** / ADA **108**, y `33 passed` en la batería Compose/`project.py` específica de aquella versión. Más adelante existió un patch de etiquetas de provider con tests seleccionados aprobados y verificación visual de artifact aún pendiente en aquel corte. Estos antecedentes **no** sustituyen los **67 wheels** ni las pruebas Docker del nuevo incremento 001 y no autorizan mezclar rutas de distribución/backend.
 
-Python objetivo Project `3.14.7` e imagen `python:3.14.7-slim-trixie`; en la implementación Web inspeccionada se observan todavía `3.14.2` y `python:3.14.2-slim-bookworm`. Es un desfase real, no rebasarlo silenciosamente en este cierre.
+## Master Projection — próximo foco aislado, sin código acreditado
 
-## Gates separados
+Los servicios actuales de Users Recovery y su UI **dentro del Manager** ya existen y tienen validación histórica. Master es **otra página por URL**, independiente del Manager, para preparar Sources/proyecciones aun cuando el ambiente no tenga promovidos/Access. Debe manejar ausencia de material protegido (mensaje controlado y ninguna acción) o material válido/autenticación de servicio (plan y proyección autorizada mediante servicios existentes). Users utiliza snapshot aprobado, no promociona candidatos por inferencia.
 
-| Frontera | Estado / evidencia |
+El equipo debe poder preparar material protegido mediante **tooling ADA existente**, subirlo/integrarlo con warmup y utilizarlo sin consumo automático en el primer uso; el diseño exacto de generador, formato, loader, custodia, credenciales, rotación y autorización sigue OPEN. No agregar ahora generadores arbitrarios, variables inventadas, bypass de Manager ni adaptadores legacy. Contrato anterior pre-Manager/Entra necesita reconciliación explícita.
+
+## `.env`, Python y seguridad
+
+`*.env.detail` explica parámetros sin secretos. Mappings DEV/UAT/PRD y resolución productiva de secretos necesitan qualification propia. Baseline Project: Python 3.14.7, imagen objetivo `python:3.14.7-slim-trixie`. Implementación comprobada: metadata de ADA Generic `requires-python ==3.14.2`, tooling Web `PYTHON_VERSION='3.14.2'` e imagen Web histórica 3.14.2/slim-bookworm; **OPEN / SEPARATE**, no actualizar silenciosamente en Master.
+
+## Gates
+
+| Frontera | Estado |
 |---|---|
-| SOURCE_SMOKE / PORTABLE Web anteriores | CLOSED / VERIFIED MANUAL HISTÓRICO |
-| ADA Compose `full` generación, build, arranque emuladores + web | CLOSED / VERIFIED MANUAL; tests Compose 33 |
-| Provider labels patch | TESTS VERIFIED REPORTADOS; visual artifact UNVERIFIED |
-| Persistencia ADA de datos tras reinicio + rutas HTML completas | UNVERIFIED sin evidencia terminal concluyente específica |
-| Entra productiva, Azure deployment, mapping, CI general | PLANNED / UNVERIFIED |
-| Página aislada de proyección/credenciales | PLANNED / NO IMPLEMENTACIÓN |
-| Users validación/recovery desde registry aprobado | PLANNED / NEXT, scope diferente |
+| SOURCE_SMOKE / PORTABLE históricos | CLOSED / evidencia de sus respectivos checkpoints |
+| ADA Compose `full`, artifact Resource Preparation 001 y pruebas de creación/fallo local | CLOSED / VERIFIED USER-REPORTED EN ALCANCE |
+| Docker cold start con Cosmos ya detenido y Home real | OPEN / NO PASA ventana probada de 10 s |
+| Snapshot de documentos tras reinicio, Sources/projections y KPI browser E2E | UNVERIFIED |
+| Azure real, Entra productiva, telemetría externa, CI global | UNVERIFIED |
+| Archivo Master generado/consumido por tooling/warmup y página externa | PLANNED / CONTRATO OPEN |
+| Usuarios aprobados vía Users Recovery dentro del Manager | CURRENT / LAB VALIDATED, no Master implementada |
 
-No reabrir tooling de distribución en `USERS-PROJECTION-RECOVERY-001`. El nuevo proceso deberá primero establecer su contrato backend y luego ser consumido por la página externa.
+No ampliar Resource Preparation para absorber Master ni la recuperación visual del Home. El siguiente chat primero inspeccionará herramientas y puertos reales de Master, y después congelará diseño antes de código.

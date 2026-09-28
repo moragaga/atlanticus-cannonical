@@ -1,66 +1,70 @@
 # Web Platform — Readiness and Decoupling
 
-Estado: **CURRENT / ADA GENERIC BOOTSTRAP IMPLEMENTED / REAL PROVIDERS UNVERIFIED**
-
-Checkpoint de implementación de este cierre: `moragaga/atlanticus@ce1213ec14cdee0be905c042c1cf513d71fb5b2d`.
+Estado: **CURRENT CONTRATO / RESOURCE PREPARATION LOCAL VALIDATED / HOME DEGRADATION PARTIAL AND OPEN**  
+Implementación inspeccionada: `atlanticus@da75752e87036b8318f38f8d405c55e8cb18717d`. Pruebas Docker reportadas el 2026-09-28; no sustituyen pruebas de UI ni Azure.
 
 ## Invariante
 
-La Web debe poder existir con datos, datos parciales, sin configuración/datos persistidos y mientras proveedores opcionales/externos estén indisponibles. No convertir el estado de una capability en fallo global de arranque por comodidad.
+El proceso Web, la capacidad de configuración, los proveedores externos y los datos de negocio tienen disponibilidades independientes:
 
 ```text
 WEB PROCESS / BASE COMPOSITION != CAPABILITY READY
+APPLICATION EXISTENCE != TOOL CONFIGURATION EXISTENCE
+TOOL CONFIGURATION EXISTENCE != KPI DELIVERY DATA EXISTENCE
 ```
 
-Para Tool Projection la resolución CURRENT mantiene cuatro estados:
+La Web base no debe dejar de existir por ausencia de datos ni por un proveedor temporalmente indisponible. La indisponibilidad de repositorios de autorización **nunca** concede permisos de Manager.
+
+## Tool Projection — CURRENT
 
 | Estado | Semántica |
 |---|---|
-| `READY` | Projection válida y utilizable. |
-| `UNCONFIGURED` | Provider accesible, sin configuración/proyección vigente. |
-| `UNAVAILABLE` | Infraestructura configurada inaccesible. |
-| `INVALID` | Contrato/documento no aceptable. |
+| `READY` | Projection válida/utilizable. |
+| `UNCONFIGURED` | Provider accesible, sin Tool vigente. |
+| `UNAVAILABLE` | Provider inaccesible. |
+| `INVALID` | Contrato/documento inválido. |
 
-`UNAVAILABLE` e `INVALID` deben ser diagnosticables. No cambiar automáticamente de provider ni leer legacy si un provider explícito falla.
+La composición real utiliza `AdaGenericSettings` y Tool Persistence; resuelve Tool Projection en el arranque. `READY` habilita el binding operativo y, con configuración KPI Delivery completa, conecta el collector. Los otros estados permiten crear una definición Web base y generan diagnósticos. No reproyecta desde Source al atender una lectura ni cambia silenciosamente de provider. `ToolStructure` entrega ids/vinculaciones, **no crea automáticamente los componentes visuales de cada Tool**.
 
-## Avance ADA Generic — CURRENT
+**Limitación CURRENT:** la resolución inicial de Tool es síncrona. Si Cosmos está inaccesible desde el primer instante, esa resolución puede retrasar la inicialización de los workers. Si arranca sin Tool, no adjunta posteriormente el collector por el mero hecho de recuperar Cosmos. Esa recomposición tardía no se ha implementado ni probado.
 
-Se reemplazó el arranque anterior basado en la ausencia obligatoria de Tool Source por una composición con `AdaGenericSettings`, `AdaStorageNamespace`, `ToolPersistenceSettings`, `compose_tool_persistence` y resolución de Tool Projection para la Web operacional. El Collector se incorpora cuando la Projection Tool está `READY` y existe configuración Cosmos de KPI Delivery. Los otros estados conservan la definición Web base sin inventar Tool Configuration ni realizar proyecciones a partir de Source al leer en runtime.
+## KPI Collector — CURRENT
 
-**Calificación:** código inspeccionado en el commit indicado y prueba local reportada de ADA Generic con **157 tests aprobados**, Ruff sin errores, mirrors validados y wheel construido. No extender ese resultado a un monorepo completo, CI remoto ni proveedores reales.
+Se crea por Tool válida/configuración Delivery; una instancia de cache/poller pertenece a cada worker, y la primera solicitud operacional elegible inicia su thread. `health`, `assets` y rutas de autenticación no inician polling. Defaults: Latest 10 s, Timeseries 120 s, refresco browser 10 s. Browser lee cache del proceso, no Cosmos inline.
 
-## Manager y entorno — CURRENT
+- Primer documento inexistente: `MISSING`; los Component Stores iniciales continúan vacíos.
+- Documento desaparecido después de uno válido: conserva último snapshot bueno y devuelve `MISSING`.
+- Documento incompatible o con antigüedad regresiva: no reemplaza un snapshot vigente válido.
+- Error Cosmos de lectura: `KpiDeliveryReadError` se registra en el polling, preserva la cache y se continúa intentando; recuperación con datos reales tras interrupción **UNVERIFIED end-to-end**.
+- Un dato conservado en cache no es automáticamente fresco. El código inspeccionado de Content State/Time Status transforma la frescura de PI/Dispatch en `STALE`/`SOURCE_ERROR`, pero **no demuestra** una conexión automática entre error del transporte Cosmos KPI y `SOURCE_ERROR` visual para todos los componentes.
 
-`ADA_MANAGER_PERSISTENCE_PROVIDER` selecciona `auto`, `local`, `durable` o `disabled`. `durable` es un **modo de persistencia**, no un periodo de retención ni un tiempo. En este incremento concreto requiere Tool Source `blob` y Tool Projection `cosmos`; reutiliza esas conexiones. Tool Source y Tool Projection **mantienen sus ejes de selección independientes** fuera de ese modo específico del Manager.
+No cambiar polling ni coherencia por conveniencia de esta frontera; diseñar evaluación detallada al incorporar nuevos componentes.
 
-El CLI aplica actualmente:
+## Qualification de Web durante fallos — VERIFIED USER-REPORTED CON LÍMITES
 
-```text
-auto + local       → Manager local
-auto + production  → Manager disabled
-local              → sólo environment local
-durable            → Manager Blob/Cosmos, opt-in; CLI sólo local
-disabled           → sin Manager; Web operacional independiente
-```
+1. En `ada-generic:resource-validation-001`, Web arrancó con emuladores nuevos y respondió `/health/live` HTTP 200 mientras el job `resources` seguía inicializando.
+2. Con Web previamente iniciada, detener Cosmos, validar fallos y restablecerlo no detuvo Gunicorn. Se observó HTTP 200 durante el fallo y, tras recuperación, ocho recursos `READY` sin reiniciar Web.
+3. Al **recrear Web con Cosmos ya detenido**, Gunicorn inició y anunció tres workers, pero `curl /health/live` agotó diez segundos sin respuesta. Después de restablecer Cosmos, el mismo contenedor se observó `healthy`, `/health/live` devolvió 200 y `/health/ready` 200 con `checks: {}`. No afirmar que el Home fue accesible durante la indisponibilidad inicial.
+4. `checks: {}` significa que no existían checks funcionales registrados en esa ejecución; el estado `ready`/200 **no verifica Cosmos ni Tool Projection**.
 
-Un Manager `durable` productivo requiere `IdentityProvider` productivo inyectado desde el host; el ejecutable CLI no lo inventa. La composición puede construir clientes sin health check de arranque; el preflight es una operación explícita. No equiparar esa propiedad con resiliencia e2e ya demostrada.
+Ninguna de esas comprobaciones equivale a una sesión de navegador con Tool válida, documento KPI real y caída/recuperación de delivery.
 
-**Frontera crítica:** la indisponibilidad de un repositorio de identidad/autorización no permite acceso implícito. La disponibilidad de Web base y la disponibilidad autorizada de Manager deben calificarse por separado.
+## Contrato del Home — DECIDED, no confundible con código ya probado
 
-## No-data y límites
+La estructura predefinida del Home pertenece a la aplicación y debe permanecer visible aunque Cosmos esté vacío o temporalmente indisponible. Tool proporciona ids/contratos y vinculaciones; no se le atribuye creación automática de visualizaciones. Distinguir **sin Tool configurada** de **Tool temporalmente inaccesible**. Los componentes conocidos deben poder representar ausencia/no disponibilidad sin inventar valores. Si existen datos buenos anteriores, conservarlos puede ser correcto, pero deben distinguirse de datos vigentes mediante un estado de frescura/error sustentado por evidencia.
 
-```text
-Configuration determines existence/structure.
-Data determines state.
-Persisted state does not determine Web process existence.
-```
+**CURRENT STATIC / OPEN FUNCTIONAL:** el layout actual incluye elementos condicionales (por ejemplo Global Indicators y cuerpo vinculado) y no está probado que exhiba *todos* los componentes conocidos con error cuando falta Cosmos/Tool. No confundir la supervivencia HTTP con continuidad visual/funcional del Home. La recuperación de una Tool nunca cargada es diferente de los reintentos de un collector ya conectado.
 
-Una Tool aún no configurada puede iniciar la Web base. Una Tool configurada sin KPI data conserva estructura con data ausente. Los procesos Backend y los workers Web son independientes; reiniciar Web no debe ser requisito de corrección de un job Backend.
+**PLANNED / FRENTE POSTERIOR:** ensayar y, si hace falta, ajustar el Home predefinido y recuperación de datos en browser sin reinicio cuando hay Tool y delivery reales. Para componentes dinámicos futuros, definir la evaluación específica `MISSING`, retraso y fallo de fuente durante su propio incremento.
 
-## Finding estático a calificar — OPEN
+## Manager / identidad CURRENT
 
-Inspección del commit: `bootstrap._prepare_manager_identity()` crea un `AccessRuntime` para `ManagerPrincipalBinding`, mientras `create_identity_module()` registra **otro** `AccessRuntime` en `register_services`. Las pruebas locales reportadas no acreditan que ambos mantengan el mismo snapshot bajo solicitudes reales. **VERIFIED STATIC / RUNTIME IMPACT UNVERIFIED**. No declarar coherencia end-to-end de identidad/Manager sin probarla; no introducir un shim ni corregir silenciosamente durante el cierre documental.
+`ADA_MANAGER_PERSISTENCE_PROVIDER` admite `auto`, `local`, `durable`, `disabled`; `durable` es modo de persistencia, no retención. El CLI durable local usa Blob/Cosmos; en producción se requiere `IdentityProvider` productivo inyectado desde host. Conexiones Tool Source y Tool Projection conservan ejes independientes salvo los requisitos concretos del Manager durable.
 
-## Próxima qualification
+**Finding estático histórico OPEN:** `bootstrap._prepare_manager_identity()` crea un `AccessRuntime` mientras `create_identity_module()` puede registrar otro. Impacto de sincronización bajo solicitudes reales no está verificado; no introducir un adaptador ni modificarlo durante este cierre.
 
-Prueba Docker de ADA Generic con Cosmos + Blob reales/emulados, preflight, arranque, operaciones administrativas, publicaciones/proyecciones, reinicio y comprobación de autorización. Esta prueba permanece **PLANNED / UNVERIFIED**. No rediseñar por anticipado otros consumidores ni asumir que `docker compose up` ya satisface todo el flujo.
+## Fronteras
+
+- El ensayo de aprovisionamiento local **CLOSED** no certifica Home degradado ni recuperación de un collector con datos reales.
+- La carga diferida de Tool, la configuración de readiness real y los permisos que bloquean proyecciones durante fallos se mantienen **OPEN**, sin ampliar el siguiente incremento Master.
+- Backend workers, proceso Web y browser son superficies distintas; demostrar liveness no prueba callbacks funcionales ni datos entregados.

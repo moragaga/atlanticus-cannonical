@@ -1,150 +1,62 @@
 # ADA Web — Infrastructure Startup
 
-Estado: **CLOSED / VERIFIED / CURRENT**
+Estado: **CURRENT BASE / RESOURCE PREPARATION 001 LOCAL VALIDATED / COLD-START DEGRADED CASE OPEN**  
+Código vigente leído: `atlanticus@da75752e87036b8318f38f8d405c55e8cb18717d`; resultados manuales de Docker aportados por el usuario el 2026-09-28.
 
-## Invariante
+## Contrato
 
-ADA Generic puede levantar su composición base aunque:
-
-```text
-no exista Tool Source current
-no exista Tool Projection
-no existan KPI
-no exista Latest
-no exista Timeseries
-una capability externa esté temporalmente indisponible
-```
-
-La disponibilidad de una capability no define la existencia del proceso Web.
-
-## Separación
+La base Web puede existir sin Tool Source vigente, sin Tool Projection, sin KPI, sin Latest/Timeseries y con capabilities externas transitoriamente indisponibles. Esto es intención contractual; no confundirla con prueba de respuesta instantánea de cada worker en todo escenario.
 
 ```text
-APPLICATION EXISTENCE
-!= TOOL CONFIGURATION EXISTENCE
-!= EXTERNAL INFRASTRUCTURE AVAILABILITY
-!= BUSINESS DATA AVAILABILITY
+APPLICATION EXISTENCE != TOOL CONFIGURATION EXISTENCE
+APPLICATION EXISTENCE != EXTERNAL RESOURCE AVAILABILITY
+APPLICATION EXISTENCE != BUSINESS DATA AVAILABILITY
 ```
 
-## Tool persistence CURRENT
-
-```text
-AdaStorageNamespace
-ToolPersistenceSettings
-ToolPersistenceComposition
-resolve_active_tool_projection()
-```
-
-Estados:
-
-```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
-```
-
-Runtime activo no consulta Source para leer Projection durable.
-
-## Bootstrap CURRENT
-
-ADA Generic consume la capability desde su startup real:
+## Bootstrap / persistence CURRENT
 
 ```text
 AdaGenericSettings
 → provider/client settings
 → ToolPersistenceComposition
 → resolve_operational_tool_projection()
-→ durable Tool Projection
+→ Tool Projection durable, si existe
 → WebApplicationDefinition
 ```
 
-La ruta anterior basada en:
+Estados: `READY`, `UNCONFIGURED`, `UNAVAILABLE`, `INVALID`. No hay fallback a Source ni adaptador legacy. El cliente de la resolución Tool tiene lifecycle corto y se cierra; el cliente KPI Delivery pertenece a otra frontera. Si Tool no está `READY`, se materializa la definición base, pero **no** se incorpora automáticamente un collector de una Tool que llegue mucho después.
+
+`ToolStructure` aporta identificadores/bindings, no crea la visualización concreta. No interpretar una definición base existente como garantía de que todos los componentes predefinidos aparezcan ya con error.
+
+## Collector lifecycle — CURRENT
+
+Un collector/cache y un poller por worker cuando Tool es válida y KPI Delivery está configurado. Poller empieza en la primera solicitud operacional elegible; `/health/*`, `/assets/*` y `/.auth/*` no lo arrancan. Browser callbacks leen cache, no Cosmos inline.
+
+Documento KPI faltante al inicio → `MISSING` y stores iniciales vacíos; documento faltante después de un estado bueno → conservar último bueno. Fallos de lectura reportados/reintentados por el poller sin sustituir datos válidos. La recuperación end-to-end con Tool y delivery reales tras caída de Cosmos **no se ensayó**.
+
+## Resource Preparation / Compose — CURRENT y localmente validado
 
 ```text
-_StartupToolProjectionStore
-resolve_current_tool_projection
+ada-generic-manager-resources prepare
+ada-generic-manager-resources validate
 ```
 
-fue removida.
+`prepare` local crea Blob, base Cosmos y seis contenedores del Manager cuando faltan. `validate` no crea. En producción Blob queda `SKIPPED`, se valida base Cosmos preexistente y se crean únicamente contenedores faltantes. `full.yaml` ya no hace depender Web del resultado del job `resources`; ambos procesos usan los dos emuladores como dependencias de `service_started`. La validación individual permanece ajena al ciclo de vida ordinario del proceso Web.
 
-No existe fallback legacy.
+El usuario verificó con Docker el entorno vacío (`CREATED` ×8), reutilización/reinicios (`READY` ×8), fallo Cosmos (`PARTIAL`: Blob `READY`, Cosmos `FAILED`, seis `BLOCKED`), salida 2 cuando ni siquiera pudo iniciarse preparación y recuperación de topología tras restablecer Cosmos. La Web previamente levantada mantuvo `/health/live` 200 durante la caída.
 
-## Provider lifecycle
+## Finding de cold start y readiness — OPEN
 
-Los clientes utilizados sólo para resolver Tool tienen lifecycle corto y se cierran después de la
-operación de bootstrap.
+Al recrear Web con Cosmos ya detenido, Gunicorn anunció workers, pero `/health/live` no respondió en la ventana de diez segundos. Tras reiniciar Cosmos, **sin recrear de nuevo la Web**, se observaron `/health/live` y `/health/ready` 200. El cuerpo de readiness fue `checks: {}`; por tanto ese resultado prueba la respuesta del endpoint, no preparación de Cosmos ni Tool.
 
-KPI Delivery usa su propia configuración Cosmos cuando Collector está habilitado.
+**No afirmar CLOSED para cold start con Cosmos inaccesible.** La consulta inicial de Tool Projection es síncrona en el bootstrap actual y es un candidato explicativo; no hay medición individual de timeout/stack de cada worker. No confundir el fenómeno con el job de preparación, que ya es independiente.
 
-No asumir conexión compartida con Tool Projection.
+## Home, visualización y datos — frontera posterior
 
-## Collector lifecycle
+Requisito acordado: Home y componentes predefinidos no dependen de Tool para existir; Tool vincula ids y estructura, no genera automáticamente componentes. Distinguir falta de Tool/configuración de falta de conexión y de falta de KPI. El Home debe poder mostrar estados de ausencia/indisponibilidad y, cuando previamente está configurado, recuperar sus datos tras restablecer los workers/lectores. La implementación/render actual y la recuperación visual no han sido validadas con datos reales en Docker.
 
-Collector no hace polling durante Web composition.
+La evaluación particular de nuevos componentes dinámicos se define al crearlos. No inventar un enlace universal entre fallo de transporte KPI y estados visuales de PI/Dispatch.
 
-```text
-/health/*
-/assets/*
-/.auth/*
-→ no start collector poller
-```
+## Fuera de foco actual
 
-El primer request de aplicación elegible inicia polling worker-local.
-
-Browser callbacks consumen cache de proceso, no Cosmos inline.
-
-## Degraded behavior
-
-Tool:
-
-```text
-UNCONFIGURED
-→ Web base remains available
-
-UNAVAILABLE
-→ Web base remains available + diagnostic
-
-INVALID
-→ Web base remains available + invalid diagnostic
-→ no silent fallback
-```
-
-Collector/data:
-
-```text
-KPI Delivery not configured
-→ Web remains available without Collector
-
-missing KPI document
-→ no application startup failure
-
-read failure after valid cache
-→ preserve last good cache where contract allows
-```
-
-## Render/data boundary
-
-Startup no construye una visualización Tool-specific obligatoria.
-
-ADA Generic entrega:
-
-```text
-ToolStructure
-KPI browser stores
-```
-
-La aplicación/desarrollador concreto decide su representación.
-
-## Estado
-
-```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-CLOSED / VERIFIED / CURRENT
-
-ADA-GENERIC-COLLECTOR-RUNTIME-WIRING
-CLOSED / VERIFIED / CURRENT
-
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
-```
+Master Projection externa tiene prioridad siguiente. Mantener cold-start Web, pruebas Home con Tool/Delivery reales, readiness funcional, credenciales y reglas de bloqueo de ejecución como temas OPEN delimitados, sin introducir cambios de Web durante el cierre documental de Resource Preparation.

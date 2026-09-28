@@ -1,10 +1,9 @@
 # Web Platform — Deployment Order
 
-Estado: **CURRENT DIRECTION / ADA GENERIC PARTIALLY IMPLEMENTED / E2E OPEN**
+Estado: **CURRENT DIRECTION / ADA GENERIC RESOURCE PREPARATION LOCAL VALIDATED / E2E OPEN**  
+Implementación: `moragaga/atlanticus@da75752e87036b8318f38f8d405c55e8cb18717d`; qualification Docker local reportada el 2026-09-28.
 
-Checkpoint de implementación del cierre parcial: `moragaga/atlanticus@ce1213ec14cdee0be905c042c1cf513d71fb5b2d`.
-
-## Orden objetivo productivo
+## Secuencia objetivo productiva — contrato, no calificación Cloud
 
 ```text
 0. Base Cloud Infrastructure
@@ -12,82 +11,68 @@ Checkpoint de implementación del cierre parcial: `moragaga/atlanticus@ce1213ec1
    ├── Cosmos account + database
    ├── Storage account
    ├── identity / secrets / networking
-   └── demás infraestructura administrada
+   └── otras dependencias de host
              ↓
-1. WEB
+1. WEB (proceso y capacidades base)
              ↓
 2. RESOURCE PREPARATION
-   ├── validate configuration
-   ├── ensure/validate Cosmos containers
-   ├── ensure/validate Storage resources cuando exista capability
-   └── register external backend requirements
+   ├── validar configuración de providers
+   ├── asegurar/validar contenedores Cosmos autorizados
+   ├── dejar Blob productivo completamente fuera de este preflight
+   └── diagnosticar parcialmente fallos por recurso
              ↓
 3. SOURCE / PROJECTION PREPARATION
-   ├── discover saved releases/files
-   ├── compute projection plan
-   └── project required configuration
+   ├── descubrir releases/files existentes
+   ├── planificar desde dependencias reales
+   └── proyectar configuración pertinente
              ↓
-4. WEB READY / MANAGER READY
+4. APPLICATION / MANAGER OPERATIONAL READINESS
              ↓
 5. BACKEND
-   ├── producers
+   ├── productores
    ├── KPI jobs
    ├── Alarm Runtime
-   └── demás jobs
+   └── otros jobs
 ```
 
-**Web se despliega antes que Backend.** Eso no exige datos de negocio al iniciar la Web: Web debe ofrecer preparación, diagnóstico y evidencia de readiness antes de habilitar productores.
+La Web se despliega antes que Backend, pero la existencia del proceso no acredita permisos administrativos ni datos listos. Este orden de fases no establece un orden global artificial entre `ProjectionTarget` independientes.
 
-## Local Docker — objetivo
+## ADA local — CURRENT
 
 ```text
-Docker infra/emulators
-      ↓
-Web
-      ↓
-create local DB if missing
-      ↓
-ensure containers/resources
-      ↓
-project saved configuration
-      ↓
-Backend jobs
+Docker Cosmos Emulator + Azurite
+          ↓
+Web + resource job como procesos independientes
+          ↓
+Resource Preparation: Blob, base Cosmos, seis contenedores
+          ↓
+Validación explícita / posterior proyección
+          ↓
+Backend, cuando cada dominio cumpla sus precondiciones
 ```
 
-El objetivo `docker compose up` sobre un entorno limpio **no está cerrado**.
+En `tooling/distribution/web/starter/ada/deployment/compose/full.yaml`, `web` **no depende del éxito** de `resources`. Ambos dependen sólo del inicio de `cosmos-emulator` y `azurite`. El job `resources` espera `/ready` de Cosmos y socket Azurite antes de preparar. No afirmar que `web` está inmediatamente funcional ni que una inicialización de Tool puede completarse con Cosmos detenido.
 
-## Qué existe en ADA Generic — CURRENT
-
-`ADA_MANAGER_PERSISTENCE_PROVIDER=durable` permite a la composición local conectar Manager con Blob Source, Cosmos Projection y Users Registry/Runtime; el CLI de recursos se ejecuta por separado:
+CLI y job actuales:
 
 ```text
-uv run ada-generic-manager-resources ensure-local
-uv run ada-generic-manager-resources validate
-uv run ada-generic-application
+ada-generic-manager-resources prepare
+ada-generic-manager-resources validate
+python -m application.local_resources    # job exclusivo Compose local
 ```
 
-`ensure-local` comprueba que exista el contenedor Blob configurado y luego asegura la base Cosmos y los seis contenedores **del plan Manager**. `validate` no modifica recursos. El contenedor Blob aún debe prepararse fuera de ese comando. Ni el plan global de aplicación ni la automatización completa de Docker están implementados aquí.
+`ensure-local` fue reemplazado en el entrypoint actual por `prepare`; no conservarlo como instrucción operacional vigente. `validate` no crea recursos. Local `prepare` sí crea el contenedor Blob faltante; no requiere creación manual previa. El conjunto está **limitado al plan ADA Manager actual**: no crea de manera implícita los recursos de KPI Delivery, Command Center o alarmas.
 
-## Cloud — dirección, sin declarar completado
+## Qualification del flujo parcial — VERIFIED USER-REPORTED
 
-```text
-Support / IaC
-→ infraestructura base (incluida base Cosmos y cuenta Storage)
-→ Web
-→ recursos de aplicación permitidos
-→ projection bootstrap
-→ Backend
-```
+Se generó distribución ADA con 67 wheels internos y `PRECHECK_PASS`, se construyó la imagen `ada-generic:resource-validation-001`, se desplegó con contenedores/volúmenes nuevos y el job inicial generó ocho `CREATED`/salida 0; validación posterior ocho `READY`. Se comprobó idempotencia, reinicio de emuladores preservando topología, error parcial Cosmos con Blob intacto y recuperación de validación sin reiniciar Web. `/health/live` respondió 200 durante inicialización de recursos y cuando Cosmos cayó **después** de arrancar Web.
 
-No ejecutar `ensure-local` en `production`. La identidad productiva concreta y los permisos Cloud de aprovisionamiento no se cualificaron en este hito.
+No se ha probado aún publicación/proyección de Sources, inicialización Master, usuarios finales ni circulación de KPI a través de este Starter completo. El arranque frío con Cosmos caído no cumplió la ventana de respuesta de diez segundos; véase `04_WEB_READINESS_AND_DECOUPLING.md`.
 
-## Criterio de soporte futuro
+## Cloud — PLANNED / UNVERIFIED
 
-1. Preparar infraestructura base.
-2. Desplegar Web.
-3. Verificar bootstrap/readiness cuando exista superficie integrada.
-4. Ejecutar/confirmar proyecciones.
-5. Confirmar READY.
-6. Desplegar/habilitar Backend.
+La base Cosmos y cuenta Blob deben existir externamente; `prepare` productivo sólo asegura contenedores Cosmos faltantes y **omite toda operación Blob**. Permisos reales, identidad Entra del Manager, observabilidad remota y ejecución Azure siguen sin probarse. No atribuir calificación productiva por haber probado emuladores locales.
 
-Esta secuencia es un contrato de dirección. La prueba siguiente se limita a reproducir y verificar el flujo ADA Generic/Manager durable, sin declarar cerrados los productores u otras aplicaciones.
+## Siguiente frontera
+
+**MASTER-PROJECTION-001** (ver `06_PRE_MANAGER_BOOTSTRAP_SURFACE.md`): página aislada para la proyección inicial cuando falta la autorización ordinaria, material protegido generado por tooling ADA existente y sus dos estados obligatorios de acceso. Primero inspección y contrato; luego implementación únicamente tras autorización. No implementar en este hito la asignación organizacional ADA, Home degradado ni componentes dinámicos.
