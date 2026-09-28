@@ -1,101 +1,96 @@
 # Alarm Engine — Source Ledger
 
-Estado: **AUDIT LEDGER / B2a + B2b INTEGRADOS EN MAIN / GATES LOCALES CLOSED / NUEVA INFRAESTRUCTURA UNVERIFIED**.
+Estado: **CURRENT / ledger de cierre B2c.5c + B2c.5d; base histórica B.2/B2a/B2b preservada como referencias; tests físicos/CI UNVERIFIED**. Fecha: 2026-09-28. El Git del asistente permanece READ ONLY.
 
-Fecha del corte: 2026-09-27. Todos los repositorios se consultaron en modo **READ ONLY**; el contenido de Git se distingue de los logs de validación proporcionados por el usuario y de las propuestas aún no implementadas.
-
-## Autoridades verificadas
+## Autoridades contrastadas
 
 ```text
-Implementación MAIN : moragaga/atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5
-Canonical vigente  : moragaga/atlanticus-cannonical@be2c424c44648e6488daae36d410cf425eed02b8
-Decisions vigente  : moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Implementación a cierre: moragaga/atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013
+Decisions al corte   : moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical de base    : moragaga/atlanticus-cannonical@46877f174513b2475f17b7dc739cd43951fa4ed0
 ```
 
-El HEAD final fue comunicado por el usuario y comprobado mediante lectura de la rama `main` y comparación con el checkpoint anterior. **No** se confunde con un HEAD futuro de canonical tras integrar estos reemplazos. Parte de los HEAD intermedios incluyen commits de otros frentes; los commits de archivos específicos siguientes fueron contrastados individualmente.
+La comprobación del último HEAD se hizo contra el branch `main` y el contenido concreto del catálogo/registro. Los recuentos de pruebas proceden de logs aportados por el usuario; **no** se ejecutaron CI ni `pytest` en el checkout Git remoto. El commit a799 contiene cambios relativos al traslado de ejemplos; no adjudicar a Alarm Engine commits de otras áreas entre checkpoints.
 
-## Genealogía relevante del producto
+## Genealogía de implementación relevante
+
+| Hito | SHA / referencia |
+|---|---|
+| Pure B.2 inicial | `9398786ae9af7c00de1bcca9d7a311fe9ef2155f` |
+| Strict routing | `411aea44ac60c09d2b07ce41d34c3f378788b97b` |
+| Materialization proceso | `b600ca591b56d0924aed752dfae6e9fab2c6f1d6` |
+| Salida Materialization local | `1076dfaab2537f2ccd4d7b3cc9df8dac245f534d` |
+| Lector compartido/adaptador inicial A | `9693e2b791b34624d551c52821274231ae05f2af` |
+| Artefacto exacto/planning B1 | `c8f23d91ae1cb817be55b4b812b22ffca518880e` |
+| Persistence B2a.1 V1 | `3c616dab38a80467359c48c05144389db0211b80` |
+| Persistence B2a.2 V2 | `e0578d3338138693430249803b6397e32f422227` |
+| B2b.1 Effective Head | `3ce75d87f7158f2cd70b53e6a99864b4c42bede9` |
+| B2b.2 lector Runtime exacto | `ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5` |
+| B2c.5c fuentes/requisitos + validación local | `672ed047f59459034d2fde23d05427e234bd01d5` |
+| B2c.5d catálogo/ejemplo inicial | `f5aeea997cf3672cd96fef104be83ab6b4f440b7` |
+| B2c.5d traslado final a examples | `a799dc15105d3e037f36ab77129ef0cfa8999013` |
+
+La genealogía original R3.5/F-010 no se sustituye con B2c y reside en `atlanticus-decisions:main/alarm_test/` y `08_QUALIFICATION_BASELINE.md`.
+
+## Archivos CURRENT comprobados
 
 ```text
-Pure B.2 inicial                                    9398786ae9af7c00de1bcca9d7a311fe9ef2155f
-Strict routing                                     411aea44ac60c09d2b07ce41d34c3f378788b97b
-Materialization proceso checkpoint                b600ca591b56d0924aed752dfae6e9fab2c6f1d6
-Materialization local antes del lector            1076dfaab2537f2ccd4d7b3cc9df8dac245f534d
-Lector compartido + adapter Runtime (A)          9693e2b791b34624d551c52821274231ae05f2af
-Artefacto exacto + planning B1                    c8f23d91ae1cb817be55b4b812b22ffca518880e
-B2a.1 commits de archivos Persistence             3c616dab38a80467359c48c05144389db0211b80
-B2a.2 commits de archivos Persistence             e0578d3338138693430249803b6397e32f422227
-B2b.1 commits de archivos Persistence             3ce75d87f7158f2cd70b53e6a99864b4c42bede9
-B2b.1 checkpoint HEAD comunicado                 963c21d340be6bd157550d516ad32d97668fbc57
-B2b.2 commits de archivos Runtime                ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5
+scopes/ada-command-center/
+  domain/alarms/src/ada_command_center/domain/alarms/
+    definition.py, configuration.py, models.py
+  backend/alarms/core/src/ada_command_center/alarms/core/
+    evaluation.py, models.py, lifecycle.py, priority.py, evidence.py, commit.py, deactivation.py
+  backend/alarms/persistence/src/ada_command_center/alarms/persistence/
+    configuration_adoption.py, effective_head.py, journal.py, store.py
+  backend/alarms/materialization/src/ada_command_center/alarms/materialization/
+    resolver.py, artifact_reference.py, local_reader.py, runtime.py, delivery.py
+  backend/processes/alarms-materialization/src/ada_command_center/processes/alarms_materialization/
+    acquisition.py, qualification.py, publication.py, job.py, composition.py
+  backend/processes/alarms-runtime/src/ada_command_center/processes/alarms_runtime/
+    adoption.py, adoption_execution.py, configured_iteration.py, local_configuration.py,
+    job_composition.py, process.py, operational_runner.py, cycle.py, session.py,
+    iteration.py, source_adapter.py, source_reader.py
+    catalog/__init__.py, catalog/registry.py
+    catalog/examples/__init__.py
+    catalog/examples/threshold/__init__.py, evaluator.py, requirements.py
+  backend/processes/alarms-runtime/commented/ada_command_center/processes/alarms_runtime/
+    catalog/registry.py, catalog/examples/threshold/*.py
+  backend/processes/alarms-runtime/tests/
+    test_parameterized_sources.py, test_alarm_source_reader.py,
+    test_example_threshold_catalog.py, test_example_threshold_cycle.py,
+    test_architecture.py, test_commented_mirror.py
+  web/alarms/configuration/src/ada_command_center/web/alarms/configuration/web/
+    layout.py, callbacks.py
 ```
 
-Detalles confirmados: `3c616dab` modificó 13 archivos de Persistence B2a.1 y tests; `e0578d` modificó nueve archivos de Persistence B2a.2. `3ce75d8` modificó los nueve archivos de B2b.1 mientras el HEAD comunicado `963c21d` agregó posteriormente otro commit no relacionado de paquetes ZIP. `ebc7a8b` modificó exactamente cinco archivos de B2b.2; su parent directo `de3ae0...` añadió cambios a ADA Web/distribution **ajenos al scope** de Alarm Engine. No describir todo diff entre checkpoints como trabajo de alarmas.
+En `a799dc1`, `catalog/registry.py` devuelve `AlarmEvaluatorRegistry(contracts=())`, no registra el ejemplo. Ejemplo real identificado por `(family_key='mina',evaluator_key='threshold')` sólo bajo imports explícitos de tests. `process.py` requiere los puertos `evaluator_registry` y `source_loader`, por lo que la futura composición debe inspeccionar/reutilizar interfaces ya presentes. `source_reader.py` soporta datasets parquet por aplicación; sin ambiente de datos reales este hecho no constituye prueba física.
 
-## Archivos CURRENT contrastados
+Web: `layout.py` presenta `default_deactivation.max_duration_hours` mediante `_number_field`; `domain/alarms/definition.py` acepta máximo habilitado entero 1..12. No existe evidencia de un contrato CURRENT para opción `fin del turno`; es un OPEN identificado por el usuario.
 
-```text
-scopes/ada-command-center/backend/
-  alarms/materialization/
-    src/ada_command_center/alarms/materialization/
-      resolver.py                       # resolver puro de B.2
-      codec.py, runtime.py, delivery.py # pareja Rn/Cn
-      local_reader.py                   # READY publicado/exacto
-      artifact_reference.py            # pin exacto B1
-  alarms/persistence/
-    src/ada_command_center/alarms/persistence/
-      configuration_adoption.py        # V1, V2, GroupCommitReference
-      journal.py, models.py, store.py  # WAL, durable/materialized, recovery
-      effective_head.py                # alarm-effective-head.v1
-      paths.py, serialization.py       # layout y JSON/hash
-    commented/...                      # espejos pedagógicos equivalentes
-    tests/
-      test_configuration_adoption.py
-      test_configuration_adoption_v2.py
-      test_effective_head.py
-  processes/alarms-materialization/
-    src/ada_command_center/processes/alarms_materialization/
-      acquisition.py, qualification.py, publication.py
-      job.py, composition.py
-  processes/alarms-runtime/
-    src/ada_command_center/processes/alarms_runtime/
-      local_configuration.py           # READY/exacto + EFFECTIVE exacto
-      adoption.py                      # planificador B1
-      adoption_execution.py            # ejecutor parcial anterior a B2
-      job_composition.py               # recovery barrier e iteration hook
-      composition.py, durability.py    # commits de grupo y fencing
-      session.py, iteration.py, cycle.py
-    tests/
-      test_adoption_plan.py
-      test_local_configuration_reader.py
-      test_effective_local_configuration.py
-```
+## Evidencia local del usuario, delimitada
 
-Los paquetes relevantes se conservan en versión `1.0.0` predespacho. El Project adopta Python 3.14.7 de forma general, pero los `pyproject.toml` de estos paquetes Command Center fijan `==3.14.2`. Los logs de este corte usan `uv run --python 3.14.2`; no modificar metadata transversal en este hito. La existencia histórica de varios `uv.lock` se conoce, pero no se determinó si deben desaparecer; no declararlos legacy ni eliminarlos incidentalmente.
+| Hito | Evidencia comunicada |
+|---|---|
+| A | Materialization 49, proceso 43, Runtime 23 PASS y gates Ruff/format/build delimitados. |
+| B1 | Materialization 62, Runtime 40, proceso 43 PASS, gates de los paquetes afectados. |
+| B2a.1 | Persistence 57 PASS, Ruff/format/diff PASS. |
+| B2a.2 | 18 específicas PASS, suite Persistence y Ruff/format/diff PASS tras corregir fixture de test. |
+| B2b.1 | 19 específicas y Persistence 94 PASS, Ruff/format/wheel/sdist PASS. |
+| B2b.2 | 15 específicas y Runtime 55 PASS, Ruff/format/wheel/sdist PASS. |
+| B2c.5c | Runtime+integration **119 PASS**; Core+Persistence+Materialization+Runtime+integration **436 PASS**; Ruff lint PASS, 33 archivos formateados, diff PASS. |
+| B2c.5d antes de traslado | 6 específicas, regresión **442 PASS**, lint PASS; formateo de un test seguía pendiente y no era gate completo. |
+| B2c.5d tras traslado | **7 específicas + 443 de regresión PASS**, Ruff lint PASS, **40 archivos format PASS**, diff PASS, antes del commit final. |
 
-## Pruebas locales comunicadas por el usuario
+**UNVERIFIED:** test rerun sobre checkout limpio de `a799dc1`, CI, wheel específico tras mover examples, todos los datasets físicos, Cosmos/Blob/Azure reales y volumen multi-host.
 
-| Incremento | Evidencia del usuario | Alcance probado |
-|---|---|---|
-| A | Materialization 49 PASS, proceso 43 PASS, Runtime 23 PASS, Ruff/format/build PASS | Publicación/lectura local y adaptación inicial. |
-| B1 | Materialization 62 PASS; Runtime 40 PASS; proceso 43 PASS; Ruff/format/build de paquetes relevantes PASS | Pin B1 y planificación, **no** ejecución completa. |
-| B2a.1 | Persistence 57 PASS; Ruff/format PASS; `git diff --check` PASS; wheel previo al último format PASS | Adopción global V1, recovery local. |
-| B2a.2 | 18 pruebas específicas PASS tras corregir **test** cross-hour; suite Persistence PASS; Ruff/format/diff PASS; wheel/sdist de log previo PASS | V1/V2, batches y crash/recovery. |
-| B2b.1 | 19 específicas + suite Persistence **94 PASS**; Ruff/format/diff y wheel/sdist PASS | Proyección EFFECTIVE y recovery local. |
-| B2b.2 | 15 específicas + suite Runtime **55 PASS**; Ruff/format/diff y wheel/sdist PASS | Lector EFFECTIVE exacto y fail-closed local. |
+## Discrepancias y límites
 
-B2a.2: fixture cronológica del test fue la única corrección detectada, no bug productivo demostrado. B2b.2: primera ejecución de CLI ocurrió fuera del workspace, no encontró Ruff/pytest/pyproject; segunda desde `scopes/ada-command-center/backend` PASS. En B2b.1 hubo warning README de sdist, sin bloquear el build y sin requerir README nuevo.
+- **CURRENT vs decisions B.1:** `adoption.py` sigue rechazando `evaluator_key`, `kind` o `priority_group` que en decisiones históricas se quieren compatibles o migrables; pendiente separado, no corregido.
+- **CURRENT vs canonical de partida:** el corte documental `46877f...` termina con B2c PLANNED o sólo B2b; actualizar a través de estos reemplazos no implica que ya estén integrados remotamente.
+- **Python baseline:** Project 3.14.7 objetivo vs metadata Command Center `==3.14.2`; no editar como efecto lateral.
+- **OperationalScope PI:** el contrato actual carece de semana operacional genérica; `ShiftScope.CURRENT_WEEK` no equivale y FABRICA_PLANES WEEKLY es fuente distinta. KPI Runtime pendiente separado.
+- **OPEN Web:** deactivation fin de turno requiere contrato funcional, no sólo cambiar número por selector.
 
-Estos datos son **VERIFIED de logs proporcionados** y se comprobó que el código integra en los commits citados. Son **UNVERIFIED como CI/rerun limpio sobre el SHA final**; tampoco prueban producción ni volumen físico multi-host.
+## Próximo corte
 
-## Decisions y discrepancias documentadas
-
-La genealogía histórica está en `atlanticus-decisions:main/alarm_decisions/`, especialmente `R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md` y decisiones B.2 de proyección/publicación. B.1 desea `evaluator_key` y `kind` COMPATIBLE y cambio `priority_group` con migración de origen/destino; planificador actual los rechaza. El ejecutor sigue sin cubrir `ADDED`, `ENABLED` y `REMOVED` desde source no ejecutable; B2a/B2b son infraestructura disponible, **no** reparación automática del ejecutor.
-
-Canonical `be2c424...` es anterior a los incrementos de este cierre; sus afirmaciones de global adoption/Effective Head PLANNED no representan `atlanticus@ebc7a8b...`. Los presentes archivos reemplazan esa descripción **sólo después de su integración manual**.
-
-## Límites y siguiente corte
-
-**OPEN / UNVERIFIED:** E2E operativo, Cosmos/Blob reales, qualification GREEN real, volumen multi-host, migración real de historia group-only si existe. **PLANNED B2c:** ejecución/adopción integral sobre contratos V1/V2/EFFECTIVE actuales. **SEPARATE:** Delivery/Live, Management Capture, History/Analytics, cambios Python transversales y UX routing visual.
-
-El siguiente chat debe releer `atlanticus:main` y `atlanticus-decisions:main` y revisar canonical tras integración humana. No efectuar operaciones Git remotas desde el asistente.
+**B2c.6 — sólo auditar y acordar wiring del proceso** con los puertos existentes, catálogo productivo vacío y sources actuales; no mezclar qualification productiva, Web, Live, History ni migraciones ajenas.

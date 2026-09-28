@@ -1,49 +1,45 @@
 # Alarm Engine — Index
 
-Estado documental propuesto: **CURRENT / B2a y B2b IMPLEMENTADOS EN MAIN, VALIDADOS LOCALMENTE / B2c PLANNED**.
-
-Corte de lectura (2026-09-27):
+Estado: **CURRENT — B2c.5c y B2c.5d integrados en código; B2c.6 PLANNED**. Corte: 2026-09-28.
 
 ```text
-Implementación: moragaga/atlanticus:main           ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5
-Canonical consultado: moragaga/atlanticus-cannonical:main be2c424c44648e6488daae36d410cf425eed02b8
-Decisions consultado: moragaga/atlanticus-decisions:main 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Implementación     moragaga/atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013
+Decisiones         moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical de base  moragaga/atlanticus-cannonical@46877f174513b2475f17b7dc739cd43951fa4ed0
 ```
 
-Estos documentos son **reemplazos locales preparados para revisión e integración humana**. No acreditan que `atlanticus-cannonical:main` ya se haya actualizado. El HEAD de implementación contiene también commits de otros frentes; el cierre documental aquí sólo abarca Alarm Engine B2a/B2b.
+Este archivo describe el estado del frente **Alarm Engine**, no certifica otros frentes del monorepo. Los reemplazos son locales hasta que el usuario los integre; volver a verificar HEAD y diff antes de copiar.
 
-| Archivo | Responsabilidad | Situación de este corte |
-|---|---|---|
-| `01_DOMAIN_MODEL.md` | Identidad, Core y contratos de dominio | CURRENT; no se reemplaza. |
-| `02_RUNTIME_AND_LIFECYCLE.md` | Reductor y frontera entre lifecycle y adopción | CURRENT; reemplazo puntual de sección de adopción, sin redefinir Core. |
-| `03_PERSISTENCE_AND_RECOVERY.md` | WAL, V1/V2, Durable/Materialized y EFFECTIVE | CURRENT; reemplazo necesario. |
-| `04_CONCURRENCY_LEASES_AND_FENCING.md` | Leases, autoridad y fencing | CURRENT; no se reemplaza. |
-| `05_PROJECTION_AND_PUBLICATION.md` | READY, EFFECTIVE y futuras proyecciones | CURRENT; reemplazo necesario. |
-| `06_MANAGEMENT.md` | Acciones, effects y deactivation | CURRENT; no se reemplaza. |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | Source v3, B.2, lector y planner B1 | CURRENT; reemplazo de su frontera con B2a/B2b. |
-| `08_QUALIFICATION_BASELINE.md` | Evidencia histórica y gates locales | CURRENT; incorporar los cuatro gates, sin reinterpretar F-010. |
-| `09_DECISION_INDEX.md` | Decisiones, refinamientos, discrepancias | CURRENT; actualizar clasificación. |
-| `10_OPEN_ITEMS.md` | OPEN concretos y próxima frontera | CURRENT; quitar falsos pendientes B2a/B2b. |
-| `11_SOURCE_LEDGER.md` | Trazabilidad, SHAs, pruebas y límites | CURRENT; ampliar evidencia. |
-| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Frontera conceptual Analytics | CANDIDATE, debate separado; no se reemplaza. |
-| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | Contratos exactos y brecha del ejecutor | CURRENT para B2a/B2b; B2c PLANNED. |
+| Archivo | Propósito / situación |
+|---|---|
+| `01_DOMAIN_MODEL.md` | Identidad y Core; contratos existentes, no reescritos en B2c.5d. |
+| `02_RUNTIME_AND_LIFECYCLE.md` | Reductor, lifecycle, prioridad y coordinación con adopción. |
+| `03_PERSISTENCE_AND_RECOVERY.md` | WAL, confirmación V1/V2, Durable/Materialized y EFFECTIVE. |
+| `04_CONCURRENCY_LEASES_AND_FENCING.md` | Leases/fencing, conservados. |
+| `05_PROJECTION_AND_PUBLICATION.md` | READY, EFFECTIVE y futuras proyecciones; READY no es autoridad operativa. |
+| `06_MANAGEMENT.md` | Gestión/desactivación; fin de turno permanece abierto en configuración Web/Domain. |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | Source v3, B.2 y frontera con la configuración ejecutable. |
+| `08_QUALIFICATION_BASELINE.md` | Evidencia histórica y nuevas suites locales B2c.5c/B2c.5d. |
+| `09_DECISION_INDEX.md` | Genealogía, refinamientos y conflictos que no se resuelven silenciosamente. |
+| `10_OPEN_ITEMS.md` | OPEN restantes y próximo foco único. |
+| `11_SOURCE_LEDGER.md` | Trazabilidad por SHA, rutas de código y logs. |
+| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Frontera Analytics CANDIDATE, no ampliada aquí. |
+| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | B1/B2a/B2b/B2c y catálogo; siguiente frontera de composición. |
 
-## Cadena real de configuración en este corte
+## Cadena vigente al corte
 
 ```text
-Source v3: Rn + ToolDependencyManifest(Cn)
-  -> proyección de entrada adquirida por Materialization mediante Cosmos
-  -> resolver B.2 + qualification -> READY o BLOCKED
-  -> publicación local de pareja Runtime/Delivery exacta e inmutable
-  -> READY sigue siendo sólo candidata, no autoridad de ejecución
-  -> B1: AlarmConfigurationArtifactRef + Revision + AdoptionPlan
-  -> B2a: WAL global V1 (0 grupos) o V2 (1..N grupos)
-  -> B2b.1: Effective Head recuperable y validado desde WAL/snapshots
-  -> B2b.2: Runtime puede cargar la revisión EFFECTIVE exacta
-  -> [PLANNED B2c] ejecutar todas las disposiciones admitidas y vincular el ejecutor a V1/V2/EFFECTIVE
-  -> [SEPARATE] fuentes/evaluadores operativos, Live Delivery, Management Capture, History
+Source v3: AlarmConfiguration Rn + ToolDependencyManifest(Cn)
+  -> proyección Cosmos de entrada + resolver B.2/qualification
+  -> pareja Runtime/Delivery READY local exacta o BLOCKED
+  -> B1: revisión y plan de adopción con pin exacto
+  -> B2a: WAL durable adopción global V1 (0 grupos) / V2 (1..N)
+  -> B2b: Effective Head reconstruible + lectura EFFECTIVE exacta
+  -> B2c: job/adopción/sesión fijada + ciclo de evaluación
+  -> B2c.5c: fuente/partición actual + requisitos + lectura consolidada
+  -> B2c.5d: catálogo de contratos, productivo vacío; ejemplo controlado separado
+  -> [PLANNED B2c.6] composición ejecutable real de las dependencias existentes
+  -> [SEPARATE] qualification operacional, datasets reales, Live, Management Capture, History
 ```
 
-**READY != EFFECTIVE**. B2b.2 implementa una capacidad explícita de lectura, **no** la conexión automática del job existente con dicha lectura ni la ejecución completa de adopciones. La elección de la versión efectiva nunca se deriva de latest READY. La proyección `effective-head.json` no es otra autoridad: se reconstruye del WAL.
-
-**Próximo foco único recomendado:** B2c, debate contractual y ejecución segura del planificador B1 contra el ejecutor existente, antes de integrar commits V1/V2. No abrir fuentes, Delivery ni History en ese mismo incremento.
+**Congelado:** READY != EFFECTIVE; artefacto de revisión exacta por source/result/hash/Rn-Cn; no crear WAL paralelo, grupo sintético, registro automático de ejemplos ni soporte legacy no acordado. Las rutas del proceso y su condición de wheel distribuible no sustituyen la validación de una composición productiva real. No asumir que la suite local prueba Cosmos/Blob ni datos PI reales.

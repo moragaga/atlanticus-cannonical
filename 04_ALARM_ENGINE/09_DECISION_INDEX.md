@@ -1,50 +1,39 @@
 # Alarm Engine — Decision Index
 
-Estado: **CURRENT / BASE B.1 Y B.2 + ADOPCIÓN DURABLE B2a + EFFECTIVE B2b IMPLEMENTADOS; EJECUTOR COMPLETO B2c PLANNED**.
+Estado: **CURRENT — inventario documental de decisiones implementadas/refinadas y conflictos pendientes; no crea decisiones formales nuevas en `atlanticus-decisions`**. Lectura 2026-09-28: implementación `a799dc15105d3e037f36ab77129ef0cfa8999013`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, canonical de partida `46877f174513b2475f17b7dc739cd43951fa4ed0`.
 
-Fuentes leídas en Git READ ONLY (2026-09-27): `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`, `atlanticus-cannonical@be2c424c44648e6488daae36d410cf425eed02b8`, `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. Las etiquetas `ALARM-*` siguientes son **inventario documental descriptivo**, no identificadores oficiales nuevos de decisiones en `atlanticus-decisions`.
+Los identificadores `ALARM-*` de esta tabla son **descriptivos**, no nuevas keys oficiales de decisiones. Consultar `alarm_decisions/R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md` y decisiones B.2 para interpretar vigencia histórica.
 
-| Identificador descriptivo | Frontera / decisión | Estado demostrado en este corte |
+| Identificador descriptivo | Decisión o frontera | Estado al corte |
 |---|---|---|
-| ALARM-DEF-B1 | Rules, Messages y semántica deseada | HISTORICAL FROZEN, con conflictos de política de cambios aún OPEN. |
-| ALARM-PROJ-B2 | Proyección/materialización | HISTORICAL REFINED: salida Cosmos anterior SUPERSEDED por volumen local. |
-| ALARM-SOURCE-V3 | `AlarmConfigurationSnapshot` schema 3 y manifest Tool Cn en Rn | CURRENT; source v2 SUPERSEDED, sin decoder legacy. |
-| ALARM-TOOL-FREEZE | Manifest exacto, drift Validate/Publish | CURRENT; no reinterpretar Rn con latest. |
-| ALARM-CONFIG-PROJECTION | Builder, codec, proyección Local/Cosmos entrada | CURRENT; infra E2E UNVERIFIED. |
-| ALARM-B2-RESOLVER | `resolve_alarm_configuration` puro | CURRENT; el paquete B.2 completo también contiene I/O. |
-| ALARM-ROUTING-STRICT | PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC | CURRENT / FROZEN; sin same-tier ni saltos. |
-| ALARM-MATERIALIZATION-EXECUTABLE | Job Cosmos entrada + qualification controlada | CURRENT; gate local CLOSED, productores operativos UNVERIFIED. |
-| ALARM-MATERIALIZATION-COSMOS-OUTPUT | Salida B.2 en Cosmos | SUPERSEDED / eliminada; no dual-write. |
-| ALARM-MATERIALIZATION-LOCAL-OUTPUT | READY/BLOCKED, versiones inmutables, manifest/hash | CURRENT / CLOSED local; volumen físico UNVERIFIED. |
-| ALARM-LOCAL-READER | READY y versión exacta compartida | CURRENT. |
-| ALARM-EXACT-ARTIFACT-B1 | `AlarmConfigurationArtifactRef(source,result_id,manifest_sha256,key)` | CURRENT. |
-| ALARM-ADOPTION-PLAN-B1 | Unión de identidades definidas, `ADDED`/`ENABLED` | CURRENT; planificación no equivale a ejecución. |
-| ALARM-ADOPTION-WAL-V1 | Adopción global cero grupos y pin exacto | CURRENT / B2a.1 CLOSED local. |
-| ALARM-ADOPTION-WAL-V2 | Adopción global 1..N grupos con referencias/hash | CURRENT / B2a.2 CLOSED local. |
-| ALARM-EFFECTIVE-PROJECTION | Effective Head exacto reconstruible y validado | CURRENT / B2b.1 CLOSED local. |
-| ALARM-RUNTIME-EFFECTIVE-READER | Lector Runtime exacto con revalidación de selección | CURRENT / B2b.2 CLOSED local. |
-| ALARM-ADOPTION-EXECUTION | Aplicar integralmente B1 y confirmar V1/V2 | CURRENT / PARCIAL en ejecutor antiguo; B2c PLANNED. |
-| ALARM-QUALIFICATION-PRODUCERS | Evaluadores/productores GREEN reales | OPEN / UNVERIFIED, JSON controlado no es productor real. |
-| ALARM-DELIVERY-LIVE-MGMT | Delivery/Live, Capture y Projection | PLANNED / SEPARATE. |
-| ALARM-VISUAL-ROUTING-OWNERSHIP | Targets visuales conceptuales vs editor acoplado | OPEN / CONFLICT separado. |
+| ALARM-DEF-B1 | `AlarmDefinition`, Rules/Messages, identidad y parámetros simples | CURRENT como dominio; cambios `evaluator_key`/`kind`/grupo divergentes respecto de intención deseada. |
+| ALARM-SOURCE-V3 | Source v3 y Tool manifest exacto | CURRENT; v2 SUPERSEDED sin decoder legacy. |
+| ALARM-ROUTING-STRICT | PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END | CURRENT / FROZEN. |
+| ALARM-B2-RESOLVER | Resolver B.2 puro | CURRENT; el paquete incorpora I/O separado. |
+| ALARM-MATERIALIZATION-LOCAL | READY/BLOCKED local, pareja Rn/Cn exacta, manifest | CURRENT; salida Cosmos B.2 anterior SUPERSEDED. |
+| ALARM-B1-EXACT-REF | `AlarmConfigurationArtifactRef` y planning por identidades definidas | CURRENT. |
+| ALARM-B2A-WAL | V1 0 grupos y V2 1..N grupos con referencias exactas | CURRENT; V1 no es legacy. |
+| ALARM-B2B-EFFECTIVE | Effective Head reparable + lector exacto | CURRENT. |
+| ALARM-B2C-EXECUTION | Adopción/evaluación en sesión fijada con recovery/lease | CURRENT en código; despliegue físico UNVERIFIED. |
+| ALARM-B2C5C-SOURCES | Fuentes/particiones registradas, consolidación y entrega individual | CURRENT, 436 pruebas locales del gate compartido. |
+| ALARM-B2C5D-CATALOG | Evaluador y requisitos por lógica, registro productivo separado de ejemplos | CURRENT, 443 pruebas locales al cierre. |
+| ALARM-B2C6-WIRING | Arranque/composición ejecutable real de puertos ya existentes | PLANNED, debate primero. |
+| ALARM-WEB-DEACTIVATION-END-SHIFT | Configurar límite `fin del turno` | OPEN, no decidido ni implementado; frente Web/Domain/Core/calendario distinto de B2c.6. |
+| ALARM-QUALIFICATION-REAL | Productores de qualification operacional y despliegue físico | UNVERIFIED / OPEN. |
+| ALARM-LIVE-HISTORY | Proyección Live, Management Capture, Analytics | PLANNED / SEPARATE. |
 
-## SUPERSEDED / REFINED en genealogía
+## Genealogía SUPERSEDED y refinamientos
 
-1. **SUPERSEDED — salida Materialization Cosmos:** mantiene Cosmos sólo como entrada de proyección; versión de salida local inmutable, sin store de salida Cosmos ni codec privado duplicado.
-2. **SUPERSEDED — source v2 y viejas variantes de strict routing:** contrato CURRENT de Source es schema 3 con manifest Tool exacto; routing sólo nivel siguiente. No introducir decoders o adaptadores temporales por comodidad.
-3. **REFINED — identidad Rn/Cn insuficiente:** B1 añadió `source_key`, `result_id` y SHA256 manifest como pin exacto. Rn/Cn no desaparece: identifica la resolución lógica, pero no diferencia evidencia de qualification con mismo Rn/Cn.
-4. **REFINED — universo de planning:** B1 considera source definido UNION target definido, incluso Rules disabled, y añade `ADDED`/`ENABLED`; el ejecutor sigue por debajo de ese contrato.
-5. **REFINED / IMPLEMENTED — adopción durable global:** lo antes PLANNED ya está físicamente representado en WAL existente mediante V1 (cero grupos) y V2 (1..N grupos con hash), sin grupo sintético ni segundo journal. Los commits ordinarios mantienen su contrato.
-6. **REFINED / IMPLEMENTED — Effective Head:** modelo `alarm-effective-head.v1` con `adoption_id`, hash, posición WAL, `target_artifact_ref` y `effective_at`; proyección publicada tras materialized, reparable desde WAL. No hay `materialization/effective.json`.
-7. **REFINED / IMPLEMENTED — Runtime exacto:** lector B2b.2 obtiene EFFECTIVE de Persistence, lee versión exacta y detecta cambios posteriores. **No** enlaza automáticamente el ejecutor/job existente.
-8. **FROZEN — READY distinto de EFFECTIVE:** incluso un cambio Delivery-only puede requerir adopción global cero grupos; publicar READY, planificar o leer READY no son adopciones operacionales.
+1. **SUPERSEDED:** Source v2 y salida Materialization Cosmos. El flujo actual es Source v3 con Tool manifest exacto; salida READY/BLOCKED en volumen local. Cosmos permanece como entrada de proyección cuando corresponde.
+2. **REFINED:** Rn/Cn solos no fijan la qualification ni el artefacto físico. La referencia usa source/result/hash/resolution; READY nunca concede autoridad EFFECTIVE.
+3. **REFINED:** B1 planifica unión de identidades definidas; B2a implementa adopción durable mediante WAL existente V1/V2; B2b añade Effective Head y lectura exacta; B2c integra ejecución de sesión/ciclo. Una descripción antigua de 'B2c completo pendiente' está SUPERSEDED en cuanto a esas piezas ya presentes.
+4. **REFINED B2c.5c/B2c.5d:** el puerto general de requisitos puede aceptar tupla estática o resolver dinámico. La **convención acordada para nuevas lógicas del catálogo** es que el desarrollador declare los datos manualmente; los parámetros Web, si existen, influyen en evaluación, no en resolver columnas/particiones. La primera propuesta paramétrica B2c.5d quedó SUPERSEDED, **sin borrar** el puerto existente.
+5. **SUPERSEDED:** ejemplo registrado automáticamente bajo familia `mina` como si fuese alarma productiva. La referencia actual está en `catalog/examples/threshold` y `catalog/registry.py` retorna cero contratos. No instalar un catálogo real por inferencia.
 
-## Conflictos actuales que requieren decisión expresa, no resolución silenciosa
+## Conflictos y OPEN, no reconciliados por este cierre
 
-- **DECISIONS B.1 vs MAIN:** `evaluator_key` y `kind` son COMPATIBLE deseado y cambio de `priority_group` exige reconciliar ambos grupos; `adoption.py` actualmente rechaza esas mutaciones. B2c no debe resolverlas incidentalmente ni describirlas como disponibles.
-- **B1 planner vs MAIN executor:** `plan.is_adoptable=True` no implica `plan.requires_execution_upgrade=False`; `adoption_execution.py` exige `source.plan_for(identity)` para todo cambio distinto de `UNCHANGED`, por lo que falla en `ADDED`, `ENABLED` y `REMOVED` desde source disabled. También confirma grupos mediante `commit_batch` sin adoptar configuración V1/V2.
-- **MAIN vs canonical existente:** al corte `be2c424...`, `00`, `02`, `05`, `07`, `08`, `09`, `10`, `11` y `13` aún tratan adopción durable/Effective Head como PLANNED o sólo hacen referencia a B1. Estos reemplazos proponen corregir ese desfase, no afirman integración remota.
-- **Python baseline:** Project fija 3.14.7; metadata de los paquetes Command Center de este corte exige `==3.14.2`. Frente separado; no cambiar metadatos en este cierre.
-- **Histórico de Special Condition y visual routing:** contrastar definiciones con contratos Core/editor actuales en su foco; no inferir que B2a/B2b resolvieron esas diferencias.
-
-Git permanece READ ONLY desde el asistente; ninguna fila crea una decisión formal nueva en `atlanticus-decisions` ni certifica infraestructura productiva.
+- **Decisions B.1 vs main:** `evaluator_key`/`kind` deseados compatibles y `priority_group` con migración entre grupos; `adoption.py` sigue rechazando estas mutaciones. No declarar ganadora ninguna interpretación: código es CURRENT; decisión histórica conserva intención pendiente de implementación/acuerdo.
+- **Web/Domain vs necesidad expresada:** actualmente `max_duration_hours` entero 1..12 y editor numérico; no hay contrato confirmado de selección fin de turno. No inventar un enum, opción, calendario o algoritmo en este cierre.
+- **Conceptual visual targets vs editor:** la independencia conceptual frente a routing continúa en tensión con sincronización existente; debate UX separado.
+- **Python:** proyecto objetivo 3.14.7 y paquetes Command Center `==3.14.2`, no alinear incidentalmente.
+- **Canonical de partida:** aún narra B2c como pendiente de implementar. Estos archivos son candidatos de actualización y no prueban un push a canonical.

@@ -1,42 +1,37 @@
 # Alarm Engine — Open Items
 
-Estado: **B2a/B2b CLOSED LOCAL E INTEGRADOS EN MAIN / B2c SIGUIENTE FOCO PLANNED / INFRAESTRUCTURA REAL UNVERIFIED**.
+Estado: **B2c.5c y B2c.5d CLOSED en evidencia local e integrados en `atlanticus:main`; B2c.6 PLANNED; infraestructura física UNVERIFIED**. Corte 2026-09-28: código `a799dc15105d3e037f36ab77129ef0cfa8999013`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, canonical previo `46877f174513b2475f17b7dc739cd43951fa4ed0`.
 
-Corte: `atlanticus@ebc7a8bf8d49e931fd4e2487dac5ee036011a0a5`, canonical consultado `be2c424c44648e6488daae36d410cf425eed02b8`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.
+## CURRENT / CLOSED en el alcance demostrado
 
-## CLOSED / CURRENT confirmados para esta transición
+- Source v3 Rn/Cn y Tool manifest exacto; B.2, qualification controlada, READY/BLOCKED local; lector compartido READY/exacto, sin salida Cosmos dual.
+- B1 referencia exacta y planificación sobre identidades definidas; B2a WAL V1 sin grupos y V2 con 1..N grupos, ambos formatos CURRENT; B2b Effective Head reconstruible y selección de revisión exacta; B2c ejecutor/iteración/recuperación/sesión fijada presentes en main y probados localmente por los incrementos previos.
+- B2c.5c: lector de fuentes/particiones registradas, carga consolidada y proyección de datos por alarma. Gate local reportado: 436 pruebas de regresión PASS y Ruff/format/diff sin hallazgos.
+- B2c.5d: ejemplo controlado en `catalog/examples/threshold`; catálogo productivo deliberadamente **vacío**; requisitos del desarrollador estáticos e independientes de parámetros Web opcionales. Gate local reportado después del traslado: 7 específicas y 443 de regresión PASS, Ruff PASS, 40 archivos formateados. Confirmación remota de presencia del código en `a799dc1`.
 
-- A y B1: Source v3 Rn/Cn exacto, resolver B.2, publicación READY/BLOCKED local, lector compartido READY/exacto, `AlarmConfigurationArtifactRef` y planificador sobre unión de identidades definidas.
-- B2a.1: V1 adopción global durable de cero grupos en WAL, sin snapshot ficticio; cadenas y crash/recovery probados localmente.
-- B2a.2: V2 adopción global con 1..N grupos, references exactas, confirmación y replay agrupados. V1 sigue siendo formato actual, no legacy.
-- B2b.1: `AlarmEffectiveConfigurationHead` `alarm-effective-head.v1`, proyección en `runtime/state/effective-head.json`, validación/reparación tras recovery y bloqueo de lectura incoherente.
-- B2b.2: Runtime obtiene `RuntimeEffectiveConfiguration(effective_head,revision)` desde `AlarmPersistence.read_effective_head()` y el lector exacto; comprueba pin completo y puede detectar sustitución posterior. READY sigue disponible sólo como candidata de nuevas adopciones.
-- Gates locales de B2a/B2b: tests, Ruff, formato y builds según evidencia delimitada en `08_QUALIFICATION_BASELINE.md`; código contrastado en HEAD de Git. No adjudicar CI/E2E.
+## OPEN — razones y frontera de salida
 
-## OPEN verificables: qué falta y por qué
+| Elemento | Estado | Motivo / acción posterior |
+|---|---|---|
+| Composición ejecutable real `alarms-runtime` | **PLANNED — siguiente foco único B2c.6** | Existen `build_alarm_runtime_process` y `build_alarm_source_adapter`; no está validado el wiring operacional real con registry productivo, rutas de datasets, PI provider y dependencias de lanzamiento. Inspeccionar puertos y entrypoints existentes antes de diseñar pieza nueva. |
+| Catálogo productivo real | **CURRENT vacío / PLANNED** | Cero evaluadores reales registrados. El ejemplo no debe incorporarse productivamente. Registrar futuras lógicas sólo cuando el usuario autorice contratos efectivos. |
+| Pruebas físicas de todas las fuentes/particiones | **UNVERIFIED / condicionado por entorno** | El usuario aún no dispone de dataset preparado ni ambiente montado. Tests usan datos controlados; validar sólo cuando exista entorno. |
+| Pipeline real Tool GREEN/evaluator qualification | **UNVERIFIED / OPEN** | Registro de evaluadores y qualification JSON controlada no implican productor/servicio real. |
+| Deactivation Web hasta fin del turno | **OPEN / SEPARATE** | `default_deactivation.max_duration_hours` es numérico en Web; Domain exige int 1..12 para deactivation habilitada. La intención/efecto de Core llevan `effective_until` UTC, pero no hay política confirmada para fin de turno. Requiere debate Web/Domain/Core/calendario y tests de horario/cap sin introducir solución aquí. |
+| Semana operacional genérica para PI/KPI Runtime | **OPEN / SEPARATE** | `OperationalScope` actual no ofrece semana genérica; `ShiftScope.CURRENT_WEEK`, `TimeWindow` y `DataPartition.WEEKLY` de FABRICA_PLANES no son sustitutos semánticos. Registrar para el frente KPI correspondiente, no implementar en Alarm Engine. |
+| Política de cambio `evaluator_key`, `kind` y `priority_group` | **OPEN / CONFLICT Decisions vs main** | B.1 documenta compatibilidad/migración deseada, pero `adoption.py` sigue rechazando. Exige decisión/validación separadas. |
+| Migración de prioridad con Rule disabled y estado residual | **OPEN / riesgo previo no resuelto** | No inferir búsqueda global o migración automática. La restricción operativa previa se conserva hasta verificación específica. |
+| Reappearance de `ManagementEffect` vivo con cambios de timer/SC | **OPEN / SEPARATE** | Necesita reconciliación explícita y pruebas cuando se decida su alcance. |
+| `resolution_key_at_start` de occurrence | **PLANNED / opcional pendiente de contrato** | No añadir dato persistente sin decisión de provenance. |
+| Live Delivery / Management Capture / History-Analytics | **PLANNED / SEPARATE** | No leer WAL desde Web; proyectar hechos durables según contratos futuros. |
+| Lecturas externas de snapshots durante adopción V2 | **OPEN para lectores futuros** | Materialized Head es barrera agrupada; raw reads multiarquivo no son MVCC. Diseñar al abordar Live/History. |
+| Migración condicional desde histórico group-only | **OPEN / condicionado por despliegue** | Primer adoption sobre historial incompatible falla cerrado; no introducir migración ni legacy sin inventario real. |
+| Visual targets vs routing del editor | **OPEN / CONFLICT UX** | Independencia deseada vs sincronización actual; no corregir incidentalmente. |
+| Python 3.14.7 objetivo vs `==3.14.2` de paquetes | **OPEN / SEPARATE** | No forzar cambio transversal durante composición de alarmas. |
+| CI limpia, builds después del traslado, Azure/Blob/Cosmos y volumen multi-host | **UNVERIFIED** | Logs locales anteriores al commit no son CI/E2E ni certifican wheels nuevos; requiere gate dedicado al tener condiciones. |
 
-| Elemento | Estado | Motivo / condición de salida | Frente |
-|---|---|---|---|
-| Ejecutar `ADDED`/`ENABLED`/`REMOVED` desde source disabled | **PLANNED / OPEN** | B1 los planifica, executor vigente exige source plan ejecutable; diseñar reconciliación explícita y tests de estado/grupos. | **B2c.1 — próximo foco único**. |
-| Conectar el executor a adopción V1/V2 y EFFECTIVE | **PLANNED / OPEN** | `adoption_execution.py` aún usa `composition.commit_batch` y sin grupos devuelve sin commit; debe confirmar globalmente también Delivery-only. | B2c.2, tras acordar B2c.1. |
-| Bootstrap inicial del ejecutor | **PLANNED / OPEN** | Persistence soporta primera V1/V2, pero no hay flujo integral demostrado que materialice/active primera versión con executor/job. No usar latest READY como autoridad tras arranque. | B2c, según diseño. |
-| Enlace del job operacional a selección EFFECTIVE | **PLANNED / OPEN** | B2b.2 aporta lector/revalidación explícitos; job/composition actual no los invoca como flujo integrado demostrado. | B2c posterior a contratos. |
-| Evaluator/key, kind, priority_group change | **OPEN / CONFLICT** | Decisions B.1 contempla COMPATIBLE o migración de dos grupos; planner MAIN rechaza. Precisa decisión de alcance propia. | No ampliar B2c.1 automáticamente. |
-| Migración de `priority_group` para Rules deshabilitadas con estado residual | **OPEN / ACCEPTED RISK MVP** | B1 conserva identidades definidas pero no el grupo de una Rule deshabilitada. Si se cambia su grupo al reactivarla, el planner puede no detectarlo y una desactivación residual podría permanecer en el grupo anterior. El MVP prohíbe operativamente ese cambio, no incorpora búsqueda global ni migración y acepta expresamente el riesgo hasta una evolución dedicada. | Migración de `priority_group` posterior a B2c. |
-| Reappearance sobre `ManagementEffect` vivo | **OPEN** | Cambio de timer/special_conditions del plan necesita reconciliación de estado vivo verificable. | Incremento dedicado de Adoption después del básico. |
-| `resolution_key_at_start` en occurrence | **PLANNED** | Estado actual conserva revisiones Alarm/Tool separadas; identidad exacta al inicio aún no implementada. | Contrato dedicado si se confirma. |
-| Producción real de evaluator qualifications y Tool GREEN | **UNVERIFIED / OPEN** | `AlarmEvaluatorRegistry` y JSON controlled qualification no son pipeline operacional real. | Integración futura, fuera de B2c.1. |
-| Loader de fuentes/ejecución E2E | **PLANNED** | Core/session/iteration tienen puertos `atlanticus.operational_data`; conexión a fuentes reales y evaluadores reales del job no está probada aquí. | Después de B2c. |
-| History / evidencia operacional / Delivery / Management Capture | **PLANNED / SEPARATE** | Existen hechos/evidencias/acciones en Core y WAL, pero falta su flujo real y contratos externos exactos. No duplicar Engine. | Focos posteriores. |
-| Materialization/Runtime sobre Cosmos/Blob y volumen final multi-host | **UNVERIFIED / BLOCKED POR ENTORNO** | Los gates unitarios/locales no prueban producción, sharing, rename/fsync interhost ni takeover físico. | Qualification operacional cuando exista entorno. |
-| Cualquier lectura externa directa de snapshots durante V2 | **OPEN para futuro consumidor** | Los snapshots físicos se escriben individualmente; el cursor materialized es agrupado, pero raw reads no son MVCC. | Contrato de lector Live/History cuando corresponda. |
-| Migración desde histórico durable exclusivamente de grupos previo a primera adopción | **OPEN / CONDICIONAL** | Persistence rechaza primera adopción sobre histórico no migrado; no hay migrador ni inventario de datasets reales que lo requieran. | Sólo si rollout demuestra necesidad. |
-| Routing visual/editor | **OPEN / CONFLICT** | Independencia conceptual vs acoplamiento del editor antiguo sin reconciliar. | Debate UX separado. |
-| Python Project 3.14.7 vs metadata `==3.14.2` | **OPEN / SEPARATE** | Diferencia transversal real, no introducir cambio masivo durante Alarm Adoption. | Incremento de distribución/configuración ajeno. |
-| CI/checkout limpio y E2E tras commit final | **UNVERIFIED** | PASS pertenecen a working trees locales previos al push; se confirmó presencia de código en HEAD, no rerun en checkout aislado. | Gate posterior cuando corresponda. |
+## Una frontera siguiente y exclusiones
 
-## Una única frontera siguiente
+**PROPOSED B2c.6:** debate sobre la composición ejecutable existente de `alarms-runtime`, sin alterar contratos de Domain/Core/Persistence/Materialization ni registrar ejemplos productivamente. Revisar `process.py`, entrypoints/scripts actuales, `catalog/registry.py`, `source_reader.py` y pruebas antes de escribir código. Solo después de consenso realizar wiring mínimo comprobable sin datasets reales. Deactivation al fin de turno, semana PI, Analytics, Live, qualification real y versiones/distribución se mantienen OPEN **pero fuera de este incremento**.
 
-**B2c.1 — revisión/diseño y ejecución segura de las disposiciones B1 que el executor no cubre.** Abrir nuevo chat con un nuevo HEAD leído de Git, contrastar `adoption.py`, `adoption_execution.py`, tests B1, grupos y `reconcile_group_configuration`; acordar primero semántica y pruebas para source/target definido/ejecutable/vacío. No mutar código ni añadir nuevos contratos sin autorización. B2c.2 (commit global V1/V2 y conexión EFFECTIVE), integración de sources y Live quedan posteriores.
-
-Los presentes reemplazos son locales; verificar diff contra el canonical real antes de copiarlos. No se realizaron mutaciones Git en este cierre.
+Los reemplazos MD son locales; comparar contra canonical HEAD antes de sobreescribir. No hay mutación Git autorizada en esta entrega.
