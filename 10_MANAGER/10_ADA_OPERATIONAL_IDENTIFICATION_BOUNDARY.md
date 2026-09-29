@@ -42,7 +42,7 @@ ASSIGNMENT       user_id + area_id? + position_id? + group_id?
 | Proyección de catálogo | CURRENT / VERIFIED STATIC | Documento `ada_operational_catalog_projection` con áreas, grupos y cargos; revisión exacta de Source. |
 | Proyección individual | CURRENT / VERIFIED STATIC | Documento `ada_operational_assignment_projection`, con IDs y `source_release_id`, partición por SourceKey; no modificar otros registros de `users-support`. |
 | Persistencia Cosmos | CURRENT / VERIFIED STATIC | `CosmosOperationalProjectionStore`, CAS mediante ETag y reintentos acotados; contenedor inyectable. Las pruebas usan `users-support`; la configuración física productiva no queda demostrada por tests unitarios. |
-| Snapshot operacional consolidado | **PLANNED / NOT IMPLEMENTED** | No confundir con los Source individuales actuales. Shape, cobertura y política de actualización requieren cierre de contrato. |
+| Snapshot operacional consolidado | **PLANNED / NOT IMPLEMENTED; SEMÁNTICA FUNCIONAL DECIDED** | Archivo único sobrescrito sin versiones propias, con los usuarios que tengan al menos un dato operacional asignado; destinado únicamente a recuperar el conjunto. No confundirlo con Source individuales actuales ni con proyecciones Cosmos. Schema, inventario, concurrencia y recuperación siguen OPEN. |
 | Registro de eventos Cosmos por cada cambio | **UNVERIFIED / NO CONTRACT** | Actualmente existe un documento de proyección **vigente** por SourceKey. Una actualización de documento Cosmos no constituye automáticamente un evento histórico independiente. |
 
 La publicación del Source y la proyección Cosmos son pasos distintos, sin transacción distribuida. Una publicación exitosa seguida de error de proyección debe poder reintentarse desde Source durable. Las pruebas actuales ejercitan estos casos con dobles locales; no extrapolar a infraestructura Azure.
@@ -68,7 +68,7 @@ SOURCE INDIVIDUAL + COSMOS PROJECTION           CLOSED / CURRENT / VERIFIED STAT
 PROJECTED-POSITION GATE PATCH                  CLOSED / CURRENT / INCORPORATED IN MAIN
 MANAGER OPERATIONAL UI (CURRENT LAYOUT)         CURRENT / VERIFIED STATIC
 NEW TWO-TAB MANAGER ORGANIZATION               PLANNED / DECIDED DESIGN
-OPERATIONAL CONSOLIDATED SNAPSHOT              PLANNED / CONTRACT OPEN
+OPERATIONAL CONSOLIDATED SNAPSHOT              PLANNED / FUNCTION DECIDED / TECH CONTRACT OPEN
 SESSION OPERATIONAL RESOLUTION                 PLANNED / WIRING UNVERIFIED
 PROFILES + OPERATIONAL CATALOG WARMUP           PLANNED / BOUNDARY DECIDED
 RUFF I001                                       OPEN / ISOLATED CORRECTION
@@ -77,4 +77,4 @@ LIVE AZURE/ENTRA E2E                            UNVERIFIED
 
 ## Continuidad
 
-Consultar `11_ADA_OPERATIONAL_DATA_ROADMAP.md` para el orden de incrementos, bloqueos, criterios de aceptación y única decisión aún necesaria sobre el snapshot. Consultar `../15_WEB_PLATFORM/14_ADA_OPERATIONAL_SESSION_AND_WARMUP.md` para la frontera de consumo en tiempo de ejecución.
+Consultar `11_ADA_OPERATIONAL_DATA_ROADMAP.md` para el orden de incrementos, bloqueos y criterios de aceptación del contrato técnico del snapshot ya definido funcionalmente. Consultar `../15_WEB_PLATFORM/14_ADA_OPERATIONAL_SESSION_AND_WARMUP.md` para la frontera de consumo en tiempo de ejecución.

@@ -21,13 +21,13 @@ Ruff reported:              I001 in operational-identification/service.py; NOT P
 4. El inicio/recarga de sesión resuelve identidad/promoción; el usuario no promovido es `guest`. Tras promoción se requiere recarga de página. La asignación individual se consulta bajo demanda en Cosmos para esa sesión.
 5. El warmup de cada proceso solo incorpora **Profiles** y **catálogo operacional**, con refresco periódico; **no** precarga usuarios ni sus asignaciones. Tampoco determina promociones ni resuelve autorización por sí mismo.
 
-## OPEN principal — significado de «snapshot único en Storage»
+## DECIDED — significado de «snapshot único en Storage»
 
-**VERIFIED:** la implementación actual publica **un Source por usuario** y otro Source independiente para catálogo. Ya contienen historial propio. `SourceStore` carece de operación genérica para enumerar todas las claves publicadas; `UsersAdministrationStore.list_users()` enumera promovidos actuales, no necesariamente usuarios retirados.
+**VERIFIED:** la implementación actual publica **un Source por usuario** y otro Source independiente para catálogo, cada uno con su propio historial. No existe aún un consolidado. `SourceStore` no enumera todas las claves publicadas y `UsersAdministrationStore.list_users()` solo enumera promovidos actuales.
 
-**DECIDED COMO NECESIDAD DE PRODUCTO:** tras modificaciones se requiere un snapshot durable de estado operacional que permita recuperación controlada. **NO DECIDED AÚN:** si este snapshot consolidado será una vista reconstruible **adicional** o reemplazará los Source individuales existentes. Tampoco están congelados su schema, identificación de universo de usuarios, semántica de retirados, política de concurrencia/reconciliación y modo exacto de disparo.
+**DECIDED:** después de cambios de asignación, se mantiene **un solo archivo de snapshot operacional consolidado**, sobrescrito con el estado vigente y **sin versionado propio**. Incluye exclusivamente usuarios con algún dato operacional asignado (al menos uno de `area_id`, `position_id` o `group_id` no nulo). Si un usuario deja de tener datos asignados, no debe aparecer en el siguiente snapshot. Su objetivo exclusivo es permitir la **recuperación conjunta** de esas asignaciones; aplicaciones y workers nunca lo consumen. No equivale al historial existente de los Source individuales.
 
-**PROPOSED — opción de menor riesgo:** conservar los Source individuales que ya están probados y agregar un **snapshot consolidado derivado** para respaldo/reconstrucción; nunca consumirlo desde app/workers. Debe registrar revisiones de origen, criterio de inclusión y permitir reconstrucción determinista. No implementarlo hasta resolver explícitamente qué representa «único» y qué ocurre con asignaciones de usuarios que dejan de estar promovidos. **BLOCKED:** diseño detallado del snapshot por estas decisiones pendientes.
+**OPEN DE DISEÑO, sin reinterpretar la decisión anterior:** definir esquema y ruta física del único archivo, método de actualización atómica, control de concurrencia, recuperación de escrituras interrumpidas e inventario completo de asignaciones. La continuidad o retirada de los Source individuales actuales requiere decisión explícita de migración; no eliminarlos ni declarar que el snapshot ya está implementado. También falta determinar cómo afectan al inventario los usuarios retirados de la lista de promovidos.
 
 **No confundir:** una nueva versión vigente de una proyección individual en Cosmos no equivale a un registro histórico append-only. Si «un registro por cambio en Cosmos» significa guardar eventos separados además del documento vigente, es un requisito distinto y actualmente OPEN/UNVERIFIED.
 
@@ -36,7 +36,7 @@ Ruff reported:              I001 in operational-identification/service.py; NOT P
 | Orden | Incremento | Estado | Entregable y aceptación mínima |
 |---|---|---|---|
 | 0 | Higiene focalizada | **OPEN / IN PROGRESS** | Resolver `I001` en `service.py` y mantener espejo comentado equivalente; ejecutar Ruff y suite completa en scope, sin ampliar alcance. |
-| 1 | Cerrar contrato del snapshot | **PLANNED / DESIGN** | Elegir si sustituye o complementa Sources existentes; schema/versiones, inventario de usuarios, semántica de retiro, consistencia Source/Cosmos y recuperación. Sin código antes del acuerdo. |
+| 1 | Completar contrato técnico del snapshot | **PLANNED / DESIGN** | Conservar el significado DECIDED (un archivo sobrescrito, sin versiones, solo usuarios con datos). Resolver esquema, inventario de usuarios, tratamiento de retirados, convivencia/migración de Sources actuales, disparador, concurrencia y recuperación. Sin código antes del acuerdo. |
 | 2 | Backend snapshot operacional | **PLANNED / BLOCKED por 1** | Implementar mínimo contrato acordado, publicación/reconstrucción verificable, ETag o concurrencia equivalente, idempotencia/fault recovery y pruebas; producción + espejo comentado. |
 | 3 | Manager UX de dos pestañas | **PLANNED / SEPARATE** | Reordenar pantallas según diseño, integrar estado/trazabilidad general y verificar callbacks; apariencia/responsive con revisión visual, no snapshots de CSS. |
 | 4 | Proyección y recuperación integrada | **PLANNED / SEPARATE** | Verificar guardado Source → proyección Cosmos del catálogo y por usuario, reintentos, versiones exactas y no interferencia con otras familias documentales; pruebas Azurite/Cosmos cuando proceda. |
@@ -56,4 +56,4 @@ No convertir esta tabla en autorización para desarrollar simultáneamente todos
 
 ## Próximo foco único
 
-**Diseño contractual del snapshot operacional durable**, con una corrección de higiene previa aislada (`I001`) si se decide empezar por ella. No mezclar implementación de snapshot con Manager, sesión, worker ni warmup. Una vez aceptado el contrato, entregar solo archivos nuevos/modificados con tests de comportamiento y espejo pedagógico.
+**Completar diseño técnico del snapshot único ya definido funcionalmente**, tras validar la corrección de higiene aislada (`I001`). No mezclar implementación de snapshot con Manager, sesión, worker ni warmup. Una vez aceptado el contrato, entregar solo archivos nuevos/modificados con tests de comportamiento y espejo pedagógico.

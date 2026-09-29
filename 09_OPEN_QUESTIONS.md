@@ -109,8 +109,8 @@ Historian reprocess_from optimization
 
 ## OPEN — ADA Datos operacionales, 2026-09-29 (frente independiente)
 
-1. **BLOCKED hasta decisión de diseño:** «snapshot único» en Blob: ¿vista consolidada **adicional** reconstruible conservando Source por usuario, o reemplazo total del modelo individual? Definir schema, versionado, concurrencia, recuperación y disparadores.
-2. **BLOCKED hasta decisión de dominio:** criterio del conjunto de usuarios del snapshot: promovidos actuales, deshabilitados y/o retirados. `UsersAdministrationStore.list_users()` no es índice histórico de todos los Source publicados.
+1. **DECIDED / NO LONGER OPEN:** «snapshot único» significa un solo archivo en Blob, sobrescrito y sin versionado propio. Contiene solo usuarios con al menos un campo operacional asignado y sirve exclusivamente para recuperación conjunta; jamás para consumo de apps/workers. **OPEN técnico:** esquema, ruta, concurrencia, actualización atómica, reintentos y reconciliación. Conservar o sustituir los Source individuales actuales sigue requiriendo una decisión de migración expresa.
+2. **OPEN inventario:** cómo enumerar a todos los usuarios que mantienen datos operacionales, incluidos los que dejaron de estar promovidos, para evitar omisiones durante reconstrucción. `UsersAdministrationStore.list_users()` no equivale a un índice de todos los Source publicados.
 3. **OPEN / UNVERIFIED:** «un registro en Cosmos por cada cambio» no es lo que implementa el store actual, que mantiene una proyección vigente por usuario. Confirmar si se requiere un histórico append-only en Cosmos, distinto del historial de Source.
 4. **OPEN / QUICK FIX:** Ruff `I001` en `operational-identification/service.py` y espejo comentado; repetir tests y Ruff.
 5. **PLANNED:** nuevo orden UI «Datos operacionales» / «Asignación», estado/trazabilidad conforme al Manager genérico, pruebas funcionales y validación visual.

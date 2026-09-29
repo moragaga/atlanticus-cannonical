@@ -99,7 +99,7 @@ OPERATIONAL-DOMAIN-AND-INDIVIDUAL-SOURCES        CLOSED / CURRENT
 OPERATIONAL-COSMOS-PROJECTIONS                 CLOSED / CURRENT
 OPERATIONAL-EXISTING-MANAGER-UI                 CURRENT / REORDER PLANNED
 OPERATIONAL-RUFF-I001                          OPEN / ISOLATED
-OPERATIONAL-SNAPSHOT-CONTRACT                  PLANNED / NEXT DESIGN / OPEN
+OPERATIONAL-SNAPSHOT-CONTRACT                  PLANNED / FUNCTION DECIDED / TECH OPEN
 OPERATIONAL-SNAPSHOT-IMPLEMENTATION            PLANNED / BLOCKED BY CONTRACT
 OPERATIONAL-MANAGER-NEW-TABS                   PLANNED / SEPARATE
 OPERATIONAL-PROJECTION-E2E-QUALIFICATION        PLANNED / SEPARATE
@@ -107,6 +107,6 @@ OPERATIONAL-SESSION-INDIVIDUAL-COSMOS           PLANNED / SEPARATE
 OPERATIONAL-PROFILES-CATALOG-WARMUP             PLANNED / SEPARATE
 ```
 
-**Decisión vigente:** el warmup solo carga **Profiles y catálogo operacional**; nunca usuarios, promociones ni asignaciones. La consulta individual ocurre al resolver la sesión Entra/Users y una promoción requiere recarga de la página. Apps y workers solo consumen Cosmos; Blob es durable/histórico. El «snapshot único» en Storage conserva cuestiones de contrato antes de implementarse.
+**Decisión vigente:** el warmup solo carga **Profiles y catálogo operacional**; nunca usuarios, promociones ni asignaciones. La consulta individual ocurre al resolver la sesión Entra/Users y una promoción requiere recarga de la página. Apps y workers solo consumen Cosmos; Blob es durable/histórico. El «snapshot único» en Storage está definido funcionalmente: un archivo sobrescrito sin versiones con solo usuarios que tienen asignaciones, para recuperar el conjunto. Permanecen abiertas su instrumentación técnica y la eventual migración de los Source individuales existentes.
 
 Plan completo y gates: `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`. El NEXT indicado arriba sigue siendo el NEXT **del frente KPI**, no una prioridad universal frente al trabajo operacional paralelo.
