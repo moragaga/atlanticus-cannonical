@@ -50,6 +50,12 @@ full ToolDependencyManifest (incluye STRATEGIC)
 
 El editor tiene además `routing_tools` derivados del manifest completo: puede ofrecer Strategic como destino de routing aunque no tenga contrato visual. No usar esa lista para inventar componentes/presentación Strategic.
 
+## B1d — evidencia física local y frontera Web pendiente
+
+**VERIFIED por salida local reportada:** proyecciones Cosmos de `validation_process` (release `e11cb787f51d44a5afd17febf68019a4`) y `validation_integrated` (release `1499a4f9720b47d680e91ef6faada941`); discovery `READY` en ambas conexiones, consolidación manual desde Manager y `verify-catalog` con revisión `6a26feedc3cf7cee4ebcf5a93ad59314180635875ab25423bb576a052e517243` en Storage/Azurite. Son **insumos controlados de qualification**, no registros productivos ni un requisito de que siempre existan esas dos Tools.
+
+El código de UI del catálogo está en la aplicación temporal, a diferencia de la capability separada Alarm Configuration; su extracción a `web/tools/...` está **DECIDED como objetivo y PLANNED en código**. Este cambio de ownership Web no modifica el catálogo persistido ni la evidencia congelada Rn/Cn. La Source local observada de Alarm Configuration no verifica aún la publicación ni la proyección Cosmos durable de alarmas.
+
 ## Publish exact Rn/Cn — CURRENT
 
 ```text

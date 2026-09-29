@@ -1,8 +1,23 @@
 # ADA Command Center — Open Items
 
-Estado: **CURRENT / desarrollo modular activo; Alarm Engine B2c.5d CLOSED local e integrado; composición B2c.6 PLANNED; Web deactivation hasta fin del turno OPEN**.
+Estado: **CURRENT — B2c.7 es el corte Engine posterior; B1d Tool Catalog cerrado en qualification local, extracción Web/Starter PLANNED; deactivation y modal Alarm OPEN**. Los hitos B2c.5/B2c.6 mencionados abajo se conservan como contexto histórico de ese corte, no como próximos trabajos vigentes.
 
 Corte de este reemplazo: `moragaga/atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, canonical base `46877f174513b2475f17b7dc739cd43951fa4ed0`. Este documento actualiza **sólo** los hechos de Alarm Engine y la nueva observación sobre la autoría Web; no revalida por implicación las demás áreas de Command Center.
+
+## OPEN del incremento Web antes de cierre canónico final (B1d, 2026-09-29)
+
+| Elemento | Estado | Razón / condición |
+|---|---|---|
+| Publicación/descubrimiento/consolidación Tool Catalog | **CLOSED en qualification local / VERIFIED por logs** | Dos Tool Sources/Projections, discovery READY y revisión de Blob verificada; no acredita Azure ni Starter. |
+| Biblioteca `web/tools/...` de Tool Catalog | **DECIDED objetivo / PLANNED** | UI/callbacks residen en el host temporal; extraer con API de composición reutilizable, sin acoplarse a la aplicación ni duplicar backend. |
+| Host `ada-command-center-configuration-manager` | **CURRENT / NORMALIZATION PLANNED** | Reintegrar desde la biblioteca; no conservar implementación duplicada ni shims una vez validada. |
+| Starter `ada-command-center-generic` | **PLANNED** | Componer y distribuir Tool Catalog y Alarm Configuration desde capacidades separadas; identidad/perfiles/navigation sólo según demanda. |
+| Barrido de rutas, `.env.detail` y qualification | **OPEN / PLANNED** | Inventariar uso real y no borrar evidencia de qualification; el paquete de prueba no está en el árbol remoto inspeccionado. `.env` de prueba no se versiona. |
+| UX Tool Catalog | **OPEN / SEPARATE** | Revisión visual y convenciones Manager; no tests exclusivos de CSS visual. |
+| Desactivación de alarmas y cierre del modal tras guardar | **OPEN / SEPARATE** | Definir semántica de tiempo/fin del turno; corregir cierre de modal sólo tras guardado exitoso, sin alterar workflow Source/Projection incidentalmente. |
+| Alarm Source Blob y Projection Cosmos durable | **UNVERIFIED / DIFERIDO** | El test local dejó Source en filesystem; verificador durable no encontró Source/Projection. No afirmar migración automática. |
+
+El cierre de Tool Catalog en un ambiente de cualificación **no** equivale al cierre de la extracción/reutilización Web ni al Golden Path durable de alarmas.
 
 ## CLOSED / CURRENT con evidencia delimitada
 
@@ -17,7 +32,7 @@ Corte de este reemplazo: `moragaga/atlanticus@a799dc15105d3e037f36ab77129ef0cfa8
 
 **OPEN / requisito observado por el usuario, no solucionado:** la Web actual ofrece un máximo numérico y no permite establecer fin del turno como máximo. Antes de modificar UI se requiere contrastar reglas de negocio (qué significa máximo; instante de inicio, zona/calendario operacional Mine/Plant, límites 1..12, aprobación y overrides Message), capa de configuración/publicación, contratos del Core y calendario existente. **No** añadir enum, adaptador legacy, campo adicional o conversión silenciosa sin decisión. Este frente debe permanecer **SEPARATE de B2c.6**.
 
-## Próximo foco del frente de este cierre: B2c.6
+## HISTORICAL — siguiente foco del corte previo: B2c.6 (reemplazado en secuencia por B2c.7)
 
 Auditar la **composición ejecutable real** ya existente de Alarm Runtime: `build_alarm_runtime_process(...)` exige inyectar `evaluator_registry` y `source_loader`; `build_alarm_source_adapter(...)` está disponible. `catalog/registry.py` permanece vacío deliberadamente, `catalog/examples/threshold` es sólo referencia. Identificar entrypoints y conexiones reales antes de implementar wiring mínimo, sin datasets reales y sin tocar Core/Domain/Web.
 

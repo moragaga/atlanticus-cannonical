@@ -114,6 +114,12 @@ El siguiente job B.2 no debe implementar estas políticas temporales. El schedul
 
 `is_special_condition` marca esta Rule; `reappearance.special_conditions` referencia otras Rules especiales de la misma familia/grupo. No confundirlas al integrar.
 
+## 9.1 Observaciones posteriores B1d — abiertas para un frente Web independiente
+
+La interfaz del catálogo estuvo operativa durante la prueba controlada B1d y mostró dos Tools consolidadas, pero su UI no fue aceptada estéticamente y continúa implementada dentro del host temporal. **PLANNED:** extraer primero una biblioteca Web Tool Catalog, después revisar estilo y pages reutilizando el Manager actual, sin crear tests para congelar CSS visual.
+
+Alarm Configuration permitió crear una configuración y se comprobó una Source **local**; la revisión durable de Alarm Source/Projection no se completó. **OPEN:** al guardar correctamente desde el editor/modal, cerrar el modal sólo después de que el guardado sea exitoso y mantenerlo abierto ante validaciones/errores. **OPEN/SEPARATE:** tiempo máximo de desactivación, incluido «hasta fin de turno»; exigir definición de semántica y calendario antes de tocar Domain. No reabrir contratos de routing/visual targets por estas observaciones.
+
 ## 10. Cierre de foco y siguiente etapa
 
 El trabajo de diseño/implementación del routing estricto y su prueba de componentes está **CLOSED** para este chat. La aceptación host/browser y E2E permanece **UNVERIFIED**, no se declara falsamente terminada.

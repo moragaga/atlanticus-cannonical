@@ -1,6 +1,6 @@
 # Atlanticus — Authority
 
-Estado: **CURRENT — actualización documental acotada a ADA Command Center / Alarm Engine B2c.7, 2026-09-28**. Este corte **no recalifica** otros dominios de Atlanticus ni sustituye sus documentos canónicos especializados.
+Estado: **CURRENT — cortes separados: Alarm Engine B2c.7 (2026-09-28) y ADA Command Center Web/Tool Catalog B1d (2026-09-29)**. Ningún corte recalifica otros dominios ni convierte tareas PLANNED en implementación.
 
 ## Fuentes y límites del corte
 
@@ -32,6 +32,17 @@ Git es **SOLO LECTURA** por defecto: no efectuar commits, push, nuevas ramas, PR
 **VERIFIED por logs locales de usuario, no por CI remoto:** gate final B2c.7d, 32 pruebas específicas PASS; regresión conjunta Engine + Delivery, 162 PASS y 1 SKIPPED; Ruff lint PASS; Ruff format PASS para 61 archivos. El commit final `c67fcb5b105cc561c16719a8bca4ea5aa74c3fae` fue corroborado en Git junto con sus ocho archivos; **no** se reejecutó CI ni checkout limpio en este cierre.
 
 **UNVERIFIED:** build/distribución del commit final, repetición de gates en checkout limpio, Docker de ambos procesos independientes, almacenamiento físico/multi-host, migración de cursores/volúmenes FACTS v1 existentes, destino real de publicación y CI.
+
+## Delta de autoridad acotado: Command Center B1d — 2026-09-29
+
+- **VERIFIED en Git:** `atlanticus@a518ff98c6303220e24ae3c645d3982e657fd22e` incorpora B1d (descubrimiento/Manager Tool Catalog); `atlanticus:main@caced5d7711cf059d36ec61aecc9b3e9629bd41f` conserva ese incremento. La comparación entre ambos muestra otro cambio posterior de ADA, fuera de este corte.
+- **Base de este incremento documental:** `atlanticus-cannonical:main@ec16bd2ccf0ae06065b8ee1d3a231ef4d2cbac57`. Decisiones leídas: `atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`. El HEAD de canonical ahora es `a5bb42157ee7a5dd2fd64ccc43fa4519628ce25c`, con un commit adicional que no toca los 13 archivos de este parche (comparación verificada). Este delta de arquitectura Web es una decisión del Project que aún debe registrarse formalmente si corresponde; no atribuirla retroactivamente a decisions.
+- **VERIFIED sólo según comandos/logs locales del usuario:** 38 tests del backend de descubrimiento, 31 del Manager Web, 6 de qualification; dos Tool Sources y proyecciones Cosmos creadas mediante los servicios existentes; discovery READY en dos conexiones; catálogo confirmado y contrastado en Azurite. Revisión de esa prueba: `6a26feedc3cf7cee4ebcf5a93ad59314180635875ab25423bb576a052e517243` (dato del ambiente de cualificación, no revisión universal ni producto).
+- **VERIFIED en el mismo ambiente:** Alarm Source en proveedor `local`, release `1d76643e80f849cc931702689aec45a6`. **UNVERIFIED:** publicación/proyección Alarm bajo proveedor `durable`, Azure productivo, build/distribución del futuro Starter y CI limpia. El verificador durable informó ausencia de Source/Projection.
+- **DECIDED como objetivo, aún PLANNED en implementación:** extraer la UI/Manager de Tool Catalog a una biblioteca Web reutilizable de ADA Command Center; el host actual pasará a consumirla. Después, integrar Tool Catalog y Alarm Configuration desde una aplicación distribuible `ada-command-center-generic` o Starter, sin dependencias obligatorias prematuras a perfiles/usuarios/navegación.
+- La ruta de cualificación `scopes/ada-command-center/qualification/tool-catalog-b1d/` y los `.env` de prueba fueron usados localmente; la primera **no aparece en el árbol remoto inspeccionado**. No declararlos distribuidos ni eliminar evidencia antes de inventario. Secretos y `.env` locales nunca forman parte de canonical.
+
+Este delta Web **no cambia** el gate B2c.7 del Engine, los contratos `CURRENT`/FACTS, el límite de Analytics ni los estados de adopción. Las referencias históricas a HEAD en párrafos anteriores conservan el contexto de su fecha, no describen el HEAD actual.
 
 ## Invariantes conservados
 

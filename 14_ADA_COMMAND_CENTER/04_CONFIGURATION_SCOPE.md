@@ -98,6 +98,12 @@ Source release
 
 No Tool reread.
 
+## Evidencia de configuración B1d y límite de aceptación
+
+En la qualification B1d se publicó/proyectó cada Tool por los contratos ADA existentes y se confirmó un catálogo consumido por el Manager de Command Center. Se observó una Alarm Source en filesystem con el proveedor `local`; **no** se verificó su publicación/proyección física con proveedor `durable`. Estos resultados no cambian `AlarmConfigurationSnapshot` v3, el guard de drift Cn ni la obligatoriedad de publicar y proyectar por separado. Cambiar `local -> durable` no constituye migración automática.
+
+La UI de Tool Catalog requiere extracción y revisión visual propia. Quedan **OPEN / SEPARATE** la semántica del tiempo máximo de desactivación (incluido fin del turno) y el cierre correcto del modal al guardar una configuración de alarma; no afirmar que la Source local prueba esas correcciones.
+
 ## Estado posterior y foco actual
 
 En `atlanticus:main@7b61eaea463bab10a595166fa12d015e4c015c78` existen adapters

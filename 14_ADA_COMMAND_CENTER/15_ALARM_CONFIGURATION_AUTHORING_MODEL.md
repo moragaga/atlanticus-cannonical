@@ -45,6 +45,12 @@ El par `(family_key,evaluator_key)` resuelve implementación de código; `alarm_
 
 **OPEN / necesidad registrada por el usuario:** poder fijar como máximo de desactivación el término del turno operativo en lugar de una cantidad numérica fija. Esto puede atravesar Web/Domain/Materialization/Core/calendario: antes de diseñar UI decidir semántica exacta, Mine/Plant y turno aplicable, zona/instante, aprobación, overrides de mensajes y compatibilidad con la restricción actual 1..12. No introducir ningún campo, enum, algoritmo o migración en este cierre; tampoco interpretar la existencia del `effective_until` UTC de Core como cumplimiento de la autoría pedida.
 
+## Delta de aceptación Web B1d (sin cambiar Source v3)
+
+La cualificación B1d verificó el catálogo consolidado y su presencia en el Manager, además de una Alarm Source bajo proveedor `local`; **no** acreditó Source Blob/Projection Cosmos durable de alarmas. La publicación y la proyección son acciones separadas. La experiencia de creación observada no equivale a aceptación integral del flujo durable.
+
+**OPEN / siguiente foco específico Web, tras extraer Tool Catalog y normalizar el Starter:** definir el tiempo de desactivación/«fin del turno» sin asumir un contrato nuevo, y cerrar el modal de configuración **sólo cuando guardar termine con éxito**, preservando mensajes de validación y errores si falla. No inferir que estas dos correcciones estén implementadas por el hecho de haber usado la UI.
+
 ## Frontera siguiente de este cierre
 
 Este asunto Web es **separado** del próximo incremento técnico B2c.6, que auditará la composición ejecutable real de Alarm Runtime. La publicación Source v3, Materialization READY/BLOCKED y pin EFFECTIVE existen; no reabrirlos al estudiar el selector de desactivación. La decisión futura debe partir del código/decisions actualizados y contar con autorización explícita.

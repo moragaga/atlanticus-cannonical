@@ -1,6 +1,6 @@
 # ADA Command Center — Current Implementation
 
-Estado: **CURRENT para frontera Alarm Materialization/Engine/Delivery input B2c.7d; otros componentes no revalidados aquí**. Corte 2026-09-28. Commit alarmas leído directamente en Git `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` contiene un commit posterior solamente en ADA Generic. Decisions `50c2bb3...`. Los logs locales no equivalen a CI limpia.
+Estado: **CURRENT — B2c.7d Engine/Delivery (corte 2026-09-28) y B1d Web Tool Catalog (delta 2026-09-29), auditados con evidencias separadas**. Engine: `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`. B1d: `a518ff98c6303220e24ae3c645d3982e657fd22e`, presente en `main@caced5d7711cf059d36ec61aecc9b3e9629bd41f`. Decisions `50c2bb3...`. Los logs locales no equivalen a CI limpia.
 
 ## Componentes relevantes
 
@@ -38,6 +38,16 @@ scopes/ada-command-center/
 | B2c.7c integración Engine real/Delivery, datos controlados y restart de instancias | CLOSED gate local; Docker independiente UNVERIFIED. |
 | B2c.7d FACTS v2 encadenado y recovery estricto | CLOSED gate local; volúmenes v1 existentes BLOCKED sin decisión. |
 | Live materializer/`AlarmLiveProjection`, Management Capture, History/Analytics | PLANNED/SEPARATE; NO inferir de `alarms-delivery` input. |
+
+## B1d — inventario Web/Tool Catalog incorporado (sin recalificar Engine)
+
+**CURRENT en main verificado:** `backend/tools/catalog` mantiene `ToolCatalogSnapshot` y Storage; `backend/tools/discovery-cosmos` mantiene inspección/confirmación de varias conexiones y los controles de drift. La UI y callbacks del catálogo **todavía residen** en `web/application/ada-command-center-configuration-manager/.../catalog_manager.py`, integrados mediante `ManagerEntry(route='/tool-catalog')` y prefijo `/manager` de la aplicación. `pages/manager.py` sólo registra `/manager`: la UI Tool no es una página independiente. Alarm Configuration ya reside en su propia capability `web/alarms/configuration`.
+
+El host actual tiene `__main__` para entorno `local`, proveedor `local|durable`, lectura de `.env` desde el directorio del host, Blob compartido para catálogo y distintas conexiones Cosmos por nombre. Con proveedor `local`, Alarm Source y Projection utilizan filesystem; con `durable`, Alarm Source usa Blob y Projection Cosmos. La existencia de estos adapters en código no certifica el flujo físico durable de alarmas.
+
+**VERIFIED por logs del usuario:** backend 38 tests; Manager Web 31; qualification 6; dos Tool Sources/proyecciones reales de prueba en bases Cosmos separadas, discovery READY y catálogo confirmado/contrastado en Azurite. El usuario observó Tools en el Manager y persistió una Alarm Source local. **UNVERIFIED:** Source y Projection Alarm en modo durable, CI limpia, distribución de Starter y aceptación visual final de Tool Catalog. El verificador durable devolvió ausencia de Source/Projection.
+
+**DECIDED objetivo / PLANNED implementación:** extraer la UI del catálogo a una librería `web/tools/...` independiente del host, hacer que el host la consuma y componer un Starter distribuible propio de Command Center. El directorio `qualification/tool-catalog-b1d` consta en trabajo local, **no** en el árbol remoto inspeccionado; inventariar antes de eliminar archivos o retenerlos como tests productivos.
 
 ## Materialization: estado anterior reemplazado
 

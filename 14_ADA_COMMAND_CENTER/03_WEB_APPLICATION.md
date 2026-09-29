@@ -1,6 +1,6 @@
 # ADA Command Center — Web Application
 
-Estado: **CURRENT DIRECTION / CONFIGURATION CAPABILITY IMPLEMENTED / APPLICATION SHELL PENDING**
+Estado: **CURRENT — capability Alarm y host temporal Configuration Manager; DECIDED/PLANNED — Tool Catalog Web independiente y Starter distribuible** (corte B1d 2026-09-29).
 
 Command Center requiere Web propia.
 
@@ -27,12 +27,22 @@ Esto **no** equivale todavía a la aplicación Web completa de Command Center.
 
 Permanece pendiente:
 
-- package/application entrypoint propio;
+- package/application entrypoint propio del Starter distribuible (ya existe un host temporal de configuración);
 - shell/header final;
 - navegación general de Command Center;
 - montaje de Dashboard e Historia/Explorer;
 - montaje final de las capabilities Manager dentro de ese shell;
 - provider/runtime composition productiva.
+
+## B1d: host existente y composición objetivo
+
+**CURRENT:** existe `web/application/ada-command-center-configuration-manager` con entrypoint local, `ManagerSurface`, Alarm Configuration y Tool Catalog integrado directamente en el host. El catálogo se registra hoy como `ManagerEntry` (`/manager/tool-catalog`), no como una página Dash autónoma. Esto corrige la lectura histórica de que no existía ningún entrypoint de Command Center; **no** equivale a un shell productivo o Starter distribuible.
+
+**DECIDED / PLANNED:** extraer Tool Catalog a una biblioteca Web de ADA Command Center, análoga en independencia a `web/alarms/configuration`, que exponga integración de Manager (vista y callbacks) sin importar ni configurar el host. La composición de conexiones y providers permanece en la capa de aplicación; Discovery/Consolidation y Store siguen en backend. Definir contratos públicos antes de mover los consumidores, trasladar código sin duplicados ni shims de larga vida y hacer que el host actual consuma la biblioteca extraída.
+
+**PLANNED:** después de verificar la extracción, crear `ada-command-center-generic` (Starter distribuible) que componga inicialmente Tool Catalog y Alarm Configuration. El Starter no crea un segundo dominio, no depende de `ada-generic-application` ni incorpora usuarios, perfiles, navegación u otros servicios hasta existir demanda y contrato. La ubicación/nombre físico final se fija antes de implementar. El host temporal podrá retirarse cuando el Starter cubra y valide sus responsabilidades.
+
+**UNVERIFIED:** build/distribución, autenticación productiva y funcionamiento del Starter. La cualificación B1d del usuario validó el flujo Tool en entorno local/Azurite/Cosmos Emulator, no estas capacidades futuras.
 
 ## Shell
 

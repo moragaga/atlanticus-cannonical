@@ -23,6 +23,14 @@ Estado: **PARTIALLY IMPLEMENTED — Materialization/Engine/Delivery input B2c.7 
 | Management Capture/Projection y Web operacional | Servicios/Web | PLANNED / SEPARATE. |
 | History/Analytics durable consultable | Analytics | CANDIDATE / PLANNED. |
 
+## Qualification B1d — recorrido Tool cerrado sólo en el entorno controlado
+
+**VERIFIED según ejecución local del usuario:** `prepare --apply` y `prepare` validaron dos bases Cosmos con contenedor `ada-tool-projection`; Source→Projection de Process/Integrated Operations pasó; `inspect-catalog` devolvió dos conexiones `READY`, dos candidatos y `can_confirm=true`; la confirmación manual seguida de `verify-catalog` corroboró el blob `conciencia_situacional/command-center/tool-catalog/current.json` con los releases exactos. La UI mostró ambas herramientas y existe una Alarm Source `local` en filesystem.
+
+**UNVERIFIED:** continuidad hasta Alarm Source Blob/Cosmos Projection durable: `verify-alarm` no encontró Source/Projection durable. Este resultado **no** bloquea considerar cerrado el alcance local de qualification de Tool Catalog; tampoco permite llamar completo al Golden Path de alarmas. La futura adopción visual/operacional se validará con una ejecución real, fuera de B1d.
+
+**DECIDED/PLANNED, condición de cierre arquitectónico Web:** extraer Tool Catalog Web independiente, integrar desde host actual y componer/distribuir el Starter `ada-command-center-generic`; limpiar restos temporales después de inventario. Este trabajo es independiente de la qualification Engine/Delivery Docker B2c.7.
+
 ## Separaciones obligatorias
 
 ```text
