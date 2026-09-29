@@ -1,112 +1,46 @@
 # Atlanticus — Roadmap
 
-Estado: **ROADMAP POR FRENTE — checkpoint KPI histórico preservado + delta ADA operacional 2026-09-29**
+Estado: **ROADMAP POR FRENTE — checkpoints anteriores preservados + delta Manager M01 / ADA M02 (2026-09-29)**. Ningún NEXT de un frente constituye prioridad universal.
 
-## Checkpoint publicado
+## Checkpoint KPI publicado — histórico para este cierre
 
 ```text
 moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
+
+KPI-RUNTIME-REPROCESS-CURRENT                 CLOSED / checkpoint anterior
+KPI-DELIVERY-REGISTRY-CONSUMPTION            CLOSED / checkpoint anterior
+KPI-TIMESERIES-REGISTRY-CONSUMPTION          CLOSED / checkpoint anterior
+KPI-HISTORIAN-REPROCESS-CURRENT              CLOSED / checkpoint anterior
+ATLANTICUS-WEB-OBSERVABILITY-SERVICE         CLOSED / checkpoint anterior
+ADA-WEB-KPI-COLLECTOR-CAPABILITY             CLOSED / checkpoint anterior
+KPI-COLLECTOR-DEFINITION-ATTACHMENT          CLOSED / checkpoint anterior
+KPI-COLLECTOR-REAL-WEB-SMOKE                 CLOSED / checkpoint anterior
+
+ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION PLANNED / NEXT DEL FRENTE KPI
 ```
 
-## KPI backend flow
+El NEXT del frente KPI es montar el Collector ya implementado **en la composición operacional existente**, no rediseñarlo ni crear otra aplicación. Buscar la ToolConfiguration y su proyección en código CURRENT, reutilizar Cosmos actual y montar el collector mediante `attach_ada_kpi_collector(existing WebApplicationDefinition, collector)` antes de `create_web_application`. Validar ToolStructure real, inicio del poller solo a petición operacional y llegada de Latest/Timeseries a browser stores.
+
+Frentes separados de KPI: `KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT` OPEN; `PYTHON-METADATA-ALIGNMENT` OPEN / SEPARATE; `FULL-BACKEND-PYTEST-TOPOLOGY` BLOCKED / SEPARATE. Este hito Manager no los modifica ni los recalifica.
+
+## Frente separado: ADA Datos operacionales
+
+**Estado CURRENT de dominio y persistencia:** código de ADA contiene catálogo, Source por usuario, proyecciones Cosmos, validaciones de cargo y UI propia bajo `ManagerEntry`. El hito anterior comprobó código y registró 25 pruebas operacionales PASS del usuario y otro gate Manager de 13 PASS. No reproducir esos recuentos como qualification M01.
+
+**Delta M01 — CLOSED / CURRENT:** `moragaga/atlanticus:main@9cc2cebe595ef1341830374ad2bb3c61baf6f5a2` está publicado y contiene solo extensión genérica de vista complementaria de Manager, 11 archivos modificados y un test nuevo. Gate local M01: **82 Manager PASS**, espejos AST PASS, `git diff --check` PASS; seis avisos Ruff previos permanecen. No CI ni validación visual ADA.
 
 ```text
-KPI-RUNTIME-REPROCESS-CURRENT
-CLOSED / VERIFIED / CURRENT
-
-KPI-DELIVERY-REGISTRY-CONSUMPTION
-CLOSED / VERIFIED / CURRENT
-
-KPI-TIMESERIES-REGISTRY-CONSUMPTION
-CLOSED / VERIFIED / CURRENT
-
-KPI-HISTORIAN-REPROCESS-CURRENT
-CLOSED / VERIFIED / CURRENT
+OPERATIONAL-DOMAIN-AND-INDIVIDUAL-SOURCES       CLOSED / CURRENT
+OPERATIONAL-COSMOS-PROJECTIONS                CLOSED / CURRENT
+OPERATIONAL-EXISTING-MANAGER-UI                CURRENT / PRE-M02
+MANAGER-COMPANION-M01                         CLOSED / CURRENT
+ADA-OPERATIONAL-M02                           PLANNED / NEXT SOLO DE ESTE CHAT
+OPERATIONAL-SNAPSHOT-TECH-CONTRACT            PLANNED / OPEN / SEPARATE
+OPERATIONAL-SNAPSHOT-IMPLEMENTATION           PLANNED / BLOCKED BY CONTRACT
+OPERATIONAL-SESSION-INDIVIDUAL-COSMOS          PLANNED / SEPARATE
+OPERATIONAL-PROFILES-CATALOG-WARMUP            PLANNED / SEPARATE
 ```
 
-## Collector capability
+**Foco único tras este cierre:** M02, adaptar `Datos operacionales` a `ManagerModule`/`ManagerCompanionView` y consumir **los workflows de catálogo ya existentes**, con asignaciones individuales inmediatas. Antes de codificar, reconciliar la propuesta posterior «Asignaciones» / «Catálogo de cargos» con el canonical previo «Datos operacionales» / «Asignación». Evitar selector duplicado, publicar cargos fuera de workspace y modificar dominios genéricos.
 
-```text
-ATLANTICUS-WEB-OBSERVABILITY-SERVICE
-CLOSED / VERIFIED / CURRENT
-
-ADA-WEB-KPI-COLLECTOR-CAPABILITY
-CLOSED / VERIFIED / CURRENT
-
-KPI-COLLECTOR-DEFINITION-ATTACHMENT
-CLOSED / VERIFIED / CURRENT
-
-KPI-COLLECTOR-REAL-WEB-SMOKE
-CLOSED / VERIFIED / CURRENT
-```
-
-## NEXT del checkpoint KPI — no perder esta frontera
-
-```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
-PLANNED / NEXT
-```
-
-Objetivo único: **integrar el collector ya implementado** en la composición operacional real.
-
-No volver a discutir polling, coherency, stores ni observability salvo conflicto demostrado.
-
-El siguiente chat debe inspeccionar la fuente autoritativa para ubicar la composición que ya
-resuelve la Tool y sus conexiones. Después debe hacer el wiring mínimo:
-
-```text
-ToolConfiguration CURRENT
-    ↓
-ToolStructure + tool projection revision
-    ↓
-Cosmos client/configuration CURRENT
-    ↓
-CosmosKpiDeliveryReader
-    ↓
-AdaKpiCollector
-    ↓
-attach_ada_kpi_collector(existing WebApplicationDefinition, collector)
-    ↓
-create_web_application
-```
-
-Acceptance del siguiente foco debe comprobar la aplicación operacional real, no sólo el package
-collector aislado.
-
-## Frentes separados
-
-```text
-KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT
-OPEN / SEPARATE
-
-PYTHON-METADATA-ALIGNMENT
-OPEN / SEPARATE
-
-FULL-BACKEND-PYTEST-TOPOLOGY
-BLOCKED / SEPARATE
-```
-
-No mezclar estos frentes con la integración operacional del collector.
-
----
-
-## Roadmap separado: ADA Datos operacionales — 2026-09-29
-
-**VERIFIED:** `atlanticus@caced5d7711cf059d36ec61aecc9b3e9629bd41f` implementa catálogo y asignaciones con Source independientes, proyecciones Cosmos y Manager. El usuario reportó 25 pruebas PASS del scope y, en gate anterior separado, 13 pruebas PASS del Manager. Ruff mantiene un `I001` OPEN. No extrapolar los gates a Azure/Entra.
-
-```text
-OPERATIONAL-DOMAIN-AND-INDIVIDUAL-SOURCES        CLOSED / CURRENT
-OPERATIONAL-COSMOS-PROJECTIONS                 CLOSED / CURRENT
-OPERATIONAL-EXISTING-MANAGER-UI                 CURRENT / REORDER PLANNED
-OPERATIONAL-RUFF-I001                          OPEN / ISOLATED
-OPERATIONAL-SNAPSHOT-CONTRACT                  PLANNED / FUNCTION DECIDED / TECH OPEN
-OPERATIONAL-SNAPSHOT-IMPLEMENTATION            PLANNED / BLOCKED BY CONTRACT
-OPERATIONAL-MANAGER-NEW-TABS                   PLANNED / SEPARATE
-OPERATIONAL-PROJECTION-E2E-QUALIFICATION        PLANNED / SEPARATE
-OPERATIONAL-SESSION-INDIVIDUAL-COSMOS           PLANNED / SEPARATE
-OPERATIONAL-PROFILES-CATALOG-WARMUP             PLANNED / SEPARATE
-```
-
-**Decisión vigente:** el warmup solo carga **Profiles y catálogo operacional**; nunca usuarios, promociones ni asignaciones. La consulta individual ocurre al resolver la sesión Entra/Users y una promoción requiere recarga de la página. Apps y workers solo consumen Cosmos; Blob es durable/histórico. El «snapshot único» en Storage está definido funcionalmente: un archivo sobrescrito sin versiones con solo usuarios que tienen asignaciones, para recuperar el conjunto. Permanecen abiertas su instrumentación técnica y la eventual migración de los Source individuales existentes.
-
-Plan completo y gates: `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`. El NEXT indicado arriba sigue siendo el NEXT **del frente KPI**, no una prioridad universal frente al trabajo operacional paralelo.
+**Snapshot funcional DECIDED / técnico OPEN:** archivo único durable sobrescrito y sin versiones propias, solo usuarios con algún atributo operacional no nulo y exclusivamente para recuperación conjunta; nunca superficie de consumo apps/workers. No confundirlo con Source individuales ni convertirlo en requisito de M02. El diseño del snapshot, la integración Entra/sesión y el warmup de Profiles + catálogo son incrementos independientes. Ver `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`.

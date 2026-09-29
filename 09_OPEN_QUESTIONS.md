@@ -1,121 +1,53 @@
 # Atlanticus — Open Questions
 
-Estado: **CANONICAL OPEN ITEMS**
+Estado: **OPEN ITEMS POR FRENTE**. Actualización focal: Manager M01 CLOSED / ADA M02 PLANNED (2026-09-29). No recalificar otros ámbitos por una prueba local de Manager.
 
-## CLOSED — KPI backend
-
-```text
-KPI-RUNTIME-REPROCESS-CURRENT
-CLOSED / VERIFIED / CURRENT
-
-KPI-DELIVERY-REGISTRY-CONSUMPTION
-CLOSED / VERIFIED / CURRENT
-
-KPI-TIMESERIES-REGISTRY-CONSUMPTION
-CLOSED / VERIFIED / CURRENT
-
-KPI-HISTORIAN-REPROCESS-CURRENT
-CLOSED / VERIFIED / CURRENT
-```
-
-## CLOSED — Collector capability
+## KPI backend y Collector — checkpoints históricos CLOSED
 
 ```text
-ATLANTICUS-WEB-OBSERVABILITY-SERVICE
-CLOSED / VERIFIED / CURRENT
-
-ADA-WEB-KPI-COLLECTOR-CAPABILITY
-CLOSED / VERIFIED / CURRENT
-
-KPI-COLLECTOR-DEFINITION-ATTACHMENT
-CLOSED / VERIFIED / CURRENT
-
-KPI-COLLECTOR-REAL-WEB-SMOKE
-CLOSED / VERIFIED / CURRENT
+KPI-RUNTIME-REPROCESS-CURRENT                 CLOSED / checkpoint anterior
+KPI-DELIVERY-REGISTRY-CONSUMPTION            CLOSED / checkpoint anterior
+KPI-TIMESERIES-REGISTRY-CONSUMPTION          CLOSED / checkpoint anterior
+KPI-HISTORIAN-REPROCESS-CURRENT              CLOSED / checkpoint anterior
+ATLANTICUS-WEB-OBSERVABILITY-SERVICE         CLOSED / checkpoint anterior
+ADA-WEB-KPI-COLLECTOR-CAPABILITY             CLOSED / checkpoint anterior
+KPI-COLLECTOR-DEFINITION-ATTACHMENT          CLOSED / checkpoint anterior
+KPI-COLLECTOR-REAL-WEB-SMOKE                 CLOSED / checkpoint anterior
 ```
 
-Ya no están OPEN:
+Siguen cerrados según **sus** checkpoints: intervalos Latest/Timeseries, política de coherencia, stores, mapping, ciclo de poller, observability y attachment de `WebApplicationDefinition`.
 
-```text
-exact numeric intervals
-Latest/Timeseries server coherency policy
-browser store ownership
-component/destination mapping
-poller lifecycle
-Web observability integration
-WebApplicationDefinition attachment
-```
+## OPEN — integración operacional del Collector, frente KPI independiente
 
-## OPEN — Collector operational integration
+`ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION` permanece **PLANNED / NEXT del frente KPI**. Ubicar en `atlanticus:main` la composición operacional real con ToolConfiguration, Tool projection revision y cliente/configuración Cosmos; montar `AdaKpiCollector` mediante el attachment existente, sin crear otra aplicación. La aceptación incluye ToolStructure real, health sin poller, primera petición que lo inicia y Latest/Timeseries disponibles en browser stores.
 
-```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
-PLANNED / NEXT
-```
+`KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT` permanece OPEN / SEPARATE. Optimizaciones `Latest Delivery REPROCESS_CURRENT`, `Timeseries Delivery REPROCESS_CURRENT` y `Historian reprocess_from` permanecen PROPOSED / DEFERRED.
 
-Pregunta operacional única:
+## OPEN transversal, no ligado a M01
 
-```text
-¿Dónde y cómo se compone CURRENT la aplicación operacional real que posee ToolConfiguration,
-Tool projection revision y Cosmos configuration/client para poder instanciar AdaKpiCollector y
-aplicar attach_ada_kpi_collector?
-```
+- `PYTHON-METADATA-ALIGNMENT`: baseline Project 3.14.7 frente a paquetes/uv Manager que todavía utilizan 3.14.2. OPEN / SEPARATE; no actualizar incidentalmente metadata/lockfiles durante M02.
+- `FULL-BACKEND-PYTEST-TOPOLOGY`: revalidar fallos históricos de collection alrededor de `tests.support`; no asumir su presencia o ausencia actual. BLOCKED / SEPARATE.
 
-No responder desde memoria ni creando una aplicación nueva. Inspeccionar `atlanticus:main` y
-usar el composition root real.
+## M01 Manager — cuestiones cerradas y límite de evidencia
 
-Acceptance a cerrar allí:
+**CLOSED / VERIFIED:** implementación opcional `ManagerCompanionView` publicada en `atlanticus:main@9cc2cebe595ef1341830374ad2bb3c61baf6f5a2` y pruebas locales comunicadas 82 PASS con mirrors AST. La publicación remota del commit fue comprobada posteriormente: **ya no** está pendiente de push. No abrir nueva implementación genérica por este cierre.
 
-```text
-collector realmente montado en la aplicación operacional
-ToolStructure real alimenta component stores
-reader usa Cosmos configuration CURRENT
-health sigue sin arrancar poller
-request operacional inicia poller
-Latest/Timeseries llegan a stores de lectura browser
-```
+**OPEN / SEPARATE:** seis incidencias Ruff previas a M01 (source import; `ManagerError` sin uso en layout; test_brand_header F401; tests registry/surface/workspace I001). El gate global de Ruff **no** está limpio; la suite global/CI y el smoke visual de ADA M02 son UNVERIFIED. Corregir baseline requiere otro alcance, no M02.
 
-## OPEN — KPI Inspection stale Definition consumer
+## OPEN / BLOCKED DESIGN — M02 ADA Datos operacionales
 
-```text
-KPI-INSPECTION-DEFINITION-PROVIDER-REALIGNMENT
-OPEN / SEPARATE
-```
+1. **Conflicto documental de orden y labels.** Canonical anterior: «Datos operacionales» primero, «Asignación» después. Diseño posterior del chat: «Asignaciones» como companion inicial y «Catálogo de cargos» como módulo administrativo. **OPEN** hasta reconciliación explícita con decisiones vigentes; no modificar código antes del acuerdo.
+2. **Conexión exacta del workspace del catálogo.** El código ya posee `OperationalCatalogDraftEditor`, Source/Validation/Projection contracts y servicios registrados condicionalmente. Confirmar su wiring para convertir `ManagerEntry` a `ManagerModule` sin duplicar servicios, inventar configuración ni conservar publicación directa legacy. PLANNED / DESIGN.
+3. **Pruebas M02 todavía inexistentes.** Validar no interferencia entre catálogo y asignaciones, CAS/reintento, guardado de borrador sin publicación, selección de cargos activos/proyectados, 10/20 páginas y regresión Manager; presentación/modal/responsive por inspección visual. UNVERIFIED.
+4. **Labels de proveedores.** La UI operacional actual recibe nombres de los providers de Tool en la composición. Confirmar fuente/metadatos de proveedor que realmente corresponde al dominio operacional, sin reemplazar por etiquetas inventadas. OPEN / DESIGN.
 
-## OPEN — Python metadata
+## OPEN — Snapshot operacional, sesión y warmup: frentes separados
 
-```text
-Project baseline = Python 3.14.7
-some package metadata observed = 3.14.2
-PYTHON-METADATA-ALIGNMENT = OPEN / SEPARATE
-```
+- **DECIDED significado del snapshot, NOT IMPLEMENTED:** un solo archivo durable sobrescrito, sin versionado propio, con usuarios que tienen al menos un campo operacional asignado; sirve solo para reconstrucción colectiva y no para lectura runtime. OPEN técnico: schema/ruta, inventario completo incluso ex-promovidos, disparador, CAS/concurrencia, atomicidad, recovery e intención explícita sobre convivencia/migración de los Source individuales. Implementación BLOCKED por ese contrato; M02 no presupone dicho cambio.
+- **UNVERIFIED:** un evento Cosmos append-only por cambio; el store inspeccionado mantiene un documento de proyección vigente por usuario y no demuestra histórico de eventos separado. Decidir solo ante un requisito real.
+- **Sesión individual Cosmos:** PLANNED / UNVERIFIED wiring Entra. Usuario no promovido = guest; requiere recarga tras promoción; resolver atributos individuales bajo demanda desde Cosmos y catálogo común.
+- **Warmup:** PLANNED / solo catálogo Profiles y catálogo operacional. Excluye usuarios, promociones, asignaciones y snapshot. Intervalo de 10 min PROPOSED, no runtime implementado.
+- **Lint operacional histórico:** `I001` en `operational-identification/service.py` fue reportado en otro hito; su persistencia en HEAD actual es **UNVERIFIED**, revalidar si se abre ese frente. No confundirlo con las seis incidencias Manager de M01.
+- **UNVERIFIED:** Azure/Entra E2E, Docker/integración física, varios workers y ejecución clean-checkout contra el nuevo M01.
 
-## BLOCKED / SEPARATE — full backend test topology
-
-```text
-collection failures around tests.support
-UNVERIFIED AS PREEXISTING
-```
-
-## PROPOSED / DEFERRED
-
-```text
-Latest Delivery REPROCESS_CURRENT
-Timeseries Delivery REPROCESS_CURRENT
-Historian reprocess_from optimization
-```
-
----
-
-## OPEN — ADA Datos operacionales, 2026-09-29 (frente independiente)
-
-1. **DECIDED / NO LONGER OPEN:** «snapshot único» significa un solo archivo en Blob, sobrescrito y sin versionado propio. Contiene solo usuarios con al menos un campo operacional asignado y sirve exclusivamente para recuperación conjunta; jamás para consumo de apps/workers. **OPEN técnico:** esquema, ruta, concurrencia, actualización atómica, reintentos y reconciliación. Conservar o sustituir los Source individuales actuales sigue requiriendo una decisión de migración expresa.
-2. **OPEN inventario:** cómo enumerar a todos los usuarios que mantienen datos operacionales, incluidos los que dejaron de estar promovidos, para evitar omisiones durante reconstrucción. `UsersAdministrationStore.list_users()` no equivale a un índice de todos los Source publicados.
-3. **OPEN / UNVERIFIED:** «un registro en Cosmos por cada cambio» no es lo que implementa el store actual, que mantiene una proyección vigente por usuario. Confirmar si se requiere un histórico append-only en Cosmos, distinto del historial de Source.
-4. **OPEN / QUICK FIX:** Ruff `I001` en `operational-identification/service.py` y espejo comentado; repetir tests y Ruff.
-5. **PLANNED:** nuevo orden UI «Datos operacionales» / «Asignación», estado/trazabilidad conforme al Manager genérico, pruebas funcionales y validación visual.
-6. **PLANNED:** integración de Cosmos con sesión Entra, guest → promoción → recarga → lectura individual, sin precarga de usuarios en warmup.
-7. **PLANNED:** warmup exclusivo de catálogo Profiles y catálogo operacional, refresco periódico configurable (10 min propuesto), estados de degradación. Usuarios/asignaciones **excluidos**.
-8. **UNVERIFIED:** Azure/Entra end-to-end, multi-worker real y metadata Python 3.14.7 del scope (el archivo consultado requiere `==3.14.2`).
-
-Referencia y orden de trabajo: `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`. Estos abiertos **no sustituyen** el foco KPI descrito arriba.
+Referencia de frontera: `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`. El NEXT M02 corresponde exclusivamente al siguiente chat del frente Manager y no sustituye el NEXT propio del KPI Collector.
