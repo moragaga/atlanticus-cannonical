@@ -1,92 +1,67 @@
 # ADA Command Center — Domain Ownership and Migration
 
-Estado: **CURRENT / C1 WEB TOOLS CLOSED estructuralmente; domain/alarms y domain/tools CURRENT; normalización transversal diferida**. Checkpoint: `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`, 2026-09-29.
+Estado: **CURRENT — C1 Tool owners Web CLOSED; C2 Source Key única Domain y consumidores Web/Backend CLOSED estructuralmente; frontera técnica Projection Cosmos pendiente aparte**. Checkpoint: `atlanticus:main@18029e19ff01e58b9c9399c132ff32b5ca913f06`.
 
-## Alarm authored domain — CURRENT
+## Domain Alarms — CURRENT / delta C2
 
 ```text
 scopes/ada-command-center/domain/alarms
 ada-command-center-alarms-domain==1.0.0
 ```
 
-Owns Alarm authoring contracts and `AlarmConfigurationSnapshot` v3; no posee UI Tool, Blob persistence ni jobs.
+El Domain posee el contrato de authoring `AlarmConfiguration`, `AlarmConfigurationSnapshot` v3 y ahora la identidad transversal **en texto plano** `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`, declarada en `identity.py` y exportada desde `__init__.py`. La constante no conoce `SourceKey` de Web, Cosmos, Blob ni paths de jobs. El host Web realiza `SourceKey(ALARM_CONFIGURATION_SOURCE_KEY)` en su composición; Materialization, Runtime y Delivery importan el mismo texto y lo exponen desde sus settings.
 
-## Command Center Tools shared domain — CURRENT
+Esta extensión C2 tiene frontera transversal real porque la misma identidad es verificada en Source/Projection, READY, Runtime EFFECTIVE y Delivery; no es un motivo para trasladar infraestructura al Domain.
+
+## Domain Tools — CURRENT desde antes de C2
 
 ```text
 scopes/ada-command-center/domain/tools
 ada-command-center-tools-domain==1.0.0
-
 ToolDependencyEntry
 ToolDependencyManifest
 ```
 
-Contrato transversal compartido por publicación/historia Alarm y Materialization. No trasladar consolidación ni adapters físicos al dominio por la sola razón de estar implementados en Python.
+Los tipos transversales Tool manifest permanecen independientes de consolidación física. La dirección de dependencias declarada después de C1 persiste: contracts `ada-web-tools` → Domain Tools → snapshot wrapper Domain Alarms. `domain/alarms` **no** tiene dependencias vacías. Una normalización futura de tipos estructurales actualmente residentes en `ada-web-tools` sigue diferida; C2 no la realizó.
 
-## Dependency direction CURRENT / límite no resuelto
-
-```text
-ada-web-tools structural contracts
-        ↓
-domain/tools
-        ↓
-domain/alarms snapshot wrapper
-```
-
-`domain/alarms` no tiene `dependencies=[]`. La normalización transversal de tipos estructurales que hoy viven en `ada-web-tools` continúa `PLANNED / DEFERRED`. C1 no la ejecutó y no debe introducir una refactorización incidental.
-
-## Tool Catalog / Discovery / UI — CURRENT tras C1
+## Tool services Web — C1 CLOSED
 
 ```text
-scopes/ada-command-center/web/tools/catalog
-    ada-command-center-web-tool-catalog==0.1.0
-    snapshots, codecs, consolidación y persistencia Blob CURRENT
-
-scopes/ada-command-center/web/tools/discovery-cosmos
-    ada-command-center-web-tool-discovery-cosmos==0.1.0
-    discovery, conexiones nombradas, inspect/confirm/adopted
-
-scopes/ada-command-center/web/tools/catalog-manager
-    ada-command-center-web-tool-catalog-manager==0.1.0
-    UI y callbacks Manager capability-local
+web/tools/catalog            -> snapshots, consolidación y Blob CURRENT
+web/tools/discovery-cosmos   -> conexiones nombradas, inspect/confirm/adopted
+web/tools/catalog-manager    -> UI/callbacks capability-local
 ```
 
-`backend/tools/catalog`, `backend/tools/discovery-cosmos` y los antiguos namespaces/distribuciones son **SUPERSEDED / ELIMINADOS de Git en C1**; no reinstalar aliases, shims ni implementaciones duplicadas. El host temporal `web/application/ada-command-center-configuration-manager` compone dependencias, principal, providers y conexión física; la UI de Tool Catalog ya no reside en él.
+`backend/tools` y namespaces/packages antiguos están SUPERSEDED. El host temporal Web compone services y capability UI; no replica su lógica. Una función server-side escrita en Python y usada solo por Web sigue perteneciendo a Web; Domain no absorbe adapters por mera cercanía.
 
-**Regla de ownership acordada:** en ADA Command Center, `backend` organiza trabajos ejecutables y lógica específica de sus procesos. La lógica Python server-side usada exclusivamente por Web pertenece a Web, independientemente de que use Cosmos/Blob. Cuando un contrato es genuinamente compartido y se demuestra la frontera transversal, definir su owner neutral/Domain mínimo; Web no se reduce a HTML, CSS, JavaScript y Dash.
-
-## Backend Alarm — CURRENT
+## Backend Alarm y frontera no resuelta
 
 ```text
-scopes/ada-command-center/backend/alarms/materialization
+backend/alarms/materialization          -> resolver B.2, codec/lector READY exacto
+backend/alarms/core                     -> Engine puro
+backend/alarms/persistence              -> WAL/EFFECTIVE/fencing
+backend/processes/alarms-materialization
+backend/processes/alarms-runtime
+backend/processes/alarms-delivery
 ```
 
-Owner de resolver B.2 puro, contratos y lector exacto; no adquiere automáticamente responsabilidad de Source/Projection Web ni de UI.
+C2 unificó el valor **ambiental** `APPLICATION=ada-command-center` en los tres procesos, manteniendo `service_name`/`job_key` propios. La ruta `VOLUMEN_PATH` sigue siendo entrada absoluta definida por el operador; las raíces durables existentes permanecen bajo `VOLUMEN_PATH/ada-command-center/alarms`. No hay legado que migrar: el usuario confirmó que no existía despliegue previo.
 
-```text
-scopes/ada-command-center/backend/processes/alarms-materialization
-scopes/ada-command-center/backend/processes/alarms-runtime
-scopes/ada-command-center/backend/processes/alarms-delivery
-```
+**Dependencia OPEN:** `backend/processes/alarms-materialization` aún importa adaptador y resource contract de `web/alarms/projection-cosmos`. C2 mantuvo esa dependencia actual y eliminó sólo el nombre físico Cosmos ambiental duplicado, consumiendo `ALARM_CONFIGURATION_PROJECTION_STORAGE_RESOURCE` para physical name/partition. Una futura resolución de ownership requiere alcance propio y contrato neutral real, no mover todo a Domain ni crear shims.
 
-Procesos operacionales existentes. El lock redundante individual de `processes/alarms-materialization/uv.lock` se retiró en C1; workspace `backend/uv.lock` permanece. **OPEN separadamente:** el proceso Materialization importa hoy el adaptador de infraestructura `web/alarms/projection-cosmos`. No convertir esa dependencia actual en mandato de mover todo a Domain ni resolverla silenciosamente durante C2.
+## Web Alarm Source/Projection — CURRENT
 
-## Alarm Source/Projection y composición Web
+`web/alarms/configuration` posee authoring, Source/Release y workflows; `web/alarms/persistence`, `web/alarms/projection-local` y `web/alarms/projection-cosmos` contienen adapters existentes. `web/application/ada-command-center-configuration-manager` compone cliente, principal, provider y binding Cosmos durable.
 
-`web/alarms/configuration` posee Source codec/workflow, correlación workspace y builder base. `web/alarms/persistence`, `web/alarms/projection-local` y `web/alarms/projection-cosmos` exponen adapters ya existentes. El Manager temporal compone Source/Projection y los Tool services. Estas piezas no constituyen el Starter distribuible de Command Center.
+El physical name `ada-command-center-alarm-configuration-projection` y su partición `/partition_key` proceden del resource contract Web actual; Web resuelve connection ref mediante la topología existente, Materialization lee las propiedades contractuales. **NO** significa que ambas aplicaciones apunten automáticamente a la misma cuenta/base: Materialization mantiene `ALARM_COSMOS_ENDPOINT`, `ALARM_COSMOS_DATABASE_NAME` y credencial por despliegue. El physical name del contenedor Blob de Web permanece configurable. Delivery posee registry de conexiones Cosmos independiente; no derivarlo del input Alarm Projection.
 
-## Próximas fronteras acordadas sin implementación
+## Fronteras siguientes sin código C2 adicional
 
-- `C2 PLANNED`: tres jobs con APPLICATION/rutas y Source Key comunes; contenedor Cosmos físico derivado de un resource contract, nombre de contenedor Blob sí configurable. Debatir owner exacto y compatibilidad real antes de tocar consumidores.
-- `C3 PLANNED`: qualification real programática; productor y verificadores GREEN siguen OPEN.
-- `C4 PLANNED`: Delivery consume sólo último CURRENT, no historial FACTS backlog; Runtime sigue produciendo FACTS durables.
-- `C5 PLANNED`: evidencia técnica no parametrizada artificialmente y `.env.detail` consistente tras verificar contratos.
-- `Starter PLANNED`: `ada-command-center-generic` propio, no heredar automáticamente ADA Generic ni acoplar Atlanticus a ADA.
+- **C3 PLANNED / BLOCKED:** definir productor/verificadores qualification GREEN reales; la intervención humana manual sigue admitida.
+- **C4 PLANNED:** sustituir el consumo CURRENT+FACTS del receiver Delivery por latest CURRENT solamente; **mantener** producción Runtime FACTS v2 y su WAL.
+- **C5 PLANNED:** resolver evidencia técnica y completar auditoría ambiental restante con contrato y propietario reales.
+- **SEPARATE:** Starter propio `ada-command-center-generic`, Live materializer, Management Capture, History/Analytics, Docker/Azure y aceptación Web visual.
 
-## No legacy
+## No legacy / no inferencia
 
-No aliases/shims para Source schema v2, snapshot antiguo, modelos authored duplicados ni namespaces de Tool anteriores. Respetar frozen Manager global: navegación, Home, workflow y permisos siguen bajo la capacidad genérica Manager; los módulos poseen su formulario y lógica específica.
-
-## Evidencia / límites
-
-C1 fue verificado en Git remoto y gates locales del usuario (tests, Ruff, wheels e importaciones de host). `UNVERIFIED`: instalación wheel aislada, Web/browser final, Azure/CI completa y Starter. No transformar esos pendientes en trabajos iniciados por inferencia.
+No restaurar `backend/tools`, convertir Domain en infraestructura, forzar migraciones sin estado real, crear alias de Source, introducir nombres físicos Cosmos en `.env`, inferir rutas/montajes del desarrollador, suprimir FACTS antes de C4 ni adjudicar implementación Live por el receptor actual. Conservar separación de ownership y cumplir etapa de debate contractual antes de nuevas modificaciones.

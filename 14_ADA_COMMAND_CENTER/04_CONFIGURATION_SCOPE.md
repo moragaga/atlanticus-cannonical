@@ -1,90 +1,65 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT / ALARM CONFIGURATION SNAPSHOT V3 IMPLEMENTED; C1 WEB TOOL OWNERSHIP CLOSED / aceptación browser y Source/Projection durable UNVERIFIED**. C1 `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`.
+Estado: **CURRENT — Alarm Configuration Snapshot Source v3, Tool dependencies Rn/Cn, C1 Web ownership y C2 identidad compartida implementadas; durable E2E y UX final UNVERIFIED**. Checkpoint: `atlanticus:main@18029e19ff01e58b9c9399c132ff32b5ca913f06`.
 
-Command Center owns Alarm Configuration administration and reuses `atlanticus.web.manager`. Generic Manager remains unchanged.
+Command Center administra Alarm Configuration y reutiliza `atlanticus.web.manager` sin modificar la semántica del Manager genérico.
 
-## Editable aggregate
+## Aggregate y publicación CURRENT
 
 ```text
 AlarmConfiguration
     rules
     messages
-```
 
-El editor no embebe Tool definitions.
-
-## Durable published aggregate
-
-```text
 AlarmConfigurationSnapshot
     configuration: AlarmConfiguration
     tool_dependencies: ToolDependencyManifest
+    schema_version: 3
 ```
 
-Es el payload durable CURRENT de Alarm Source schema v3. La formulación anterior según la cual Tool metadata no modificaba el snapshot durable está **SUPERSEDED**.
+Las definiciones Tool no se embeben como configuración editable Alarm. El workspace mantiene el sidecar `_confirmed_tool_catalog_revision`, que NO es miembro de `AlarmConfiguration`. Source schema v2 está SUPERSEDED; no se agregó decoder legacy.
 
-## Tool correlation
-
-Metadata específica del workspace:
+### Flujo vigente
 
 ```text
-_confirmed_tool_catalog_revision
+Save Draft  -> lee Confirmed Tool Catalog y fija Cn en workspace
+Validate    -> valida configuración, Cn actual y todas las referencias Tool
+Verify      -> concurrencia de Source gestionada por Manager
+Publish     -> verifica otra vez Cn (drift guard) y congela ToolDependencyManifest(Cn)
 ```
 
-No forma parte de `AlarmConfiguration`.
+El manifest incluye origins, todos los escalones de routing definidos —incluso inactivos— y visual targets de todas las Rules, incluidas inactivas. Un cambio Cn posterior no reinterpreta Rn/Cn; una Source histórica es inmutable. `VALID_AT_SAVE != READY != EFFECTIVE`.
 
-## Save / validate / publish
+## C1 — Tool ownership CURRENT
+
+`web/tools/catalog` construye y persiste el Confirmed Tool Catalog CURRENT en Blob; `web/tools/discovery-cosmos` inspecciona conexiones Tool Cosmos nombradas y confirma revisiones; `web/tools/catalog-manager` implementa UI/callbacks de esa capability. El host temporal compone servicios. `backend/tools` SUPERSEDED. STRATEGIC puede ser destino de routing, pero no visual target mientras no exista su proyección visual acordada. El editor no usa latest Tool para corregir retrospectivamente un snapshot congelado.
+
+## C2 — Source Key y topología
+
+`domain/alarms/identity.py` declara la constante de **texto plano** `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`. El host Web la convierte a `SourceKey` técnico para construir el módulo; Materialization, Runtime y Delivery la importan desde Domain, eliminando la variable ambiental homónima. La constante no suprime comprobaciones de `source_key` en proyecciones, manifest READY, selección exacta y EFFECTIVE.
+
+El resource contract Cosmos EXISTENTE está en `web/alarms/projection-cosmos/storage.py`:
 
 ```text
-Save Draft
--> read current Confirmed Tool Catalog
--> pin Cn in workspace
-
-Validate
--> intrinsic AlarmConfiguration validation
--> require pinned Cn == current Cn
--> require every referenced Tool key exists
-
-Verify Source
--> generic Manager source concurrency
-
-Publish
--> require Cn still current
--> select referenced ToolDependencyEntries
--> persist AlarmConfigurationSnapshot v3
+logical_id       ada.command_center.alarms.configuration.projection
+physical_name    ada-command-center-alarm-configuration-projection
+partition_key    /partition_key
+allowed_override CONNECTION_REF
 ```
 
-No es obligatoria una caché de validación en memoria. Un workspace guardado C1 no se publica silenciosamente si Tools avanza a C2; release histórica R1/C1 permanece inmutable.
+Web lo resuelve al componer su conexión. Materialization consume el mismo contrato para nombre de contenedor y partición de validación; `ALARM_PROJECTION_CONTAINER` deja de ser variable de despliegue. La cuenta/base/credencial Cosmos de **entrada** para Materialization siguen siendo manuales y deben coincidir físicamente con las del host durable. No se validó aún esa coincidencia en infraestructura real.
 
-## Tool references persistidas
+**No confundir:** el nombre de contenedor **Blob** sí es ambiental y se mantiene. Las conexiones **de salida** de Delivery son independientes y se configuran mediante su registro nombrado. `APPLICATION=ada-command-center` identifica los tres procesos; `VOLUMEN_PATH` absoluta/compartida es una decisión operacional del desarrollador, no derivada de la constante de Source ni calculada automáticamente.
 
-Comprenden Tool origins, todos los pasos de escalamiento (incluidos disabled), todos los visual targets y todas las Rules (incluidas inactive).
+## Evidencia histórica y límites
 
-## Authoring UI y C1
+B1d observó Confirmed Tool Catalog desde dos Tool Source/Projection controladas y una Alarm Source local. C1 cerró ownership Web estructural; C2 cerró la eliminación de divergencias contractuales de configuración. **UNVERIFIED:** Alarm Source Blob + Projection Cosmos durable E2E, Azure real, equivalencia física del montaje en jobs independientes y aceptación visual final del browser. Tener adapters en código no acredita ese gate.
 
-El read model expone sugerencias Tool/Component/Subcomponent. STRATEGIC no es elegible para visualización Alarm, pero el manifest completo derivado del mismo snapshot conserva todos los tipos Tool; `routing_tools` y visual `tools` son superficies distintas de la implementación.
+## OPEN / frentes distintos
 
-El catálogo Cn se origina hoy en `web/tools/catalog`, se descubre/confirma mediante `web/tools/discovery-cosmos` y la UI propia reside en `web/tools/catalog-manager`; el host temporal sólo los compone. La afirmación B1d «UI de Tool Catalog requiere extracción» está **SUPERSEDED** por C1. Su **revisión visual** sigue OPEN/SEPARATE; ninguna suite automatizada certifica aceptación visual final.
+- C3: productor/verificadores de qualification reales, no deducidos a partir de `ALARM_QUALIFICATIONS_FILE`.
+- C4: Delivery CURRENT-only; no cambia la semántica de Source/Tool authoring.
+- C5: resolver pareja de evidencia técnica Runtime y auditoría del resto de `.env.detail`.
+- UX: fin del turno, estado de guardado/modal y autonomía visual frente al routing siguen requiriendo decisión propia.
 
-## Projection base
-
-```text
-Source release
--> AlarmConfigurationProjectionBuilder
--> ProjectionRecord[AlarmConfigurationSnapshot]
-```
-
-No relectura posterior de latest Tool Catalog para una release Rn/Cn ya publicada.
-
-## Evidencia histórica B1d y límite de aceptación
-
-La qualification B1d publicó/proyectó Tools por contratos ADA existentes y confirmó un catálogo consumido por el Manager. Se observó una Alarm Source en filesystem `local`, **no** publicación/proyección física durable de Alarm Source con provider `durable`. La publicación y la proyección son acciones separadas; cambiar `local -> durable` no implica migración automática. El guard Cn y Source v3 permanecen intactos tras C1.
-
-OPEN/SEPARATE: semántica de máximo de desactivación, incluido fin del turno, y cierre del modal de Alarm Configuration únicamente después de guardado exitoso. No inferir que la Source local acredita estas correcciones.
-
-## Adapters y siguiente frontera
-
-Existen adapters local/Cosmos y composición Source local/Blob y Projection local/Cosmos en código, observado ya en el corte histórico `atlanticus@7b61eaea463bab10a595166fa12d015e4c015c78`; esto **reemplaza** afirmaciones antiguas sobre inexistencia de adapter Cosmos, pero no acredita Azure E2E.
-
-**Siguiente foco de este traspaso C2:** normalizar la identidad/rutas y el contrato de contenedor Cosmos del job Materialization junto con Runtime y Delivery, manteniendo Blob container ambiental. C1 no autorizó modificar el editor ni sus contratos de negocio; revisión UX corresponde a otro foco.
+El cierre C2 no autorizó cambiar el agregado, Source schema v3, UI, routing, qualification ni los productores de datos físicos.

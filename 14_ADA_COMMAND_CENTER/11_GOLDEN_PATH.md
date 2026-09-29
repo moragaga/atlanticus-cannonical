@@ -1,59 +1,56 @@
 # ADA Command Center — Golden Path
 
-Estado: **PARTIALLY IMPLEMENTED: C1 Tool services Web CLOSED estructuralmente; Materialization/Engine/Delivery input B2c.7 validados históricamente en local; durable Alarm E2E, Live/Web/History y Docker distribuido UNVERIFIED/PLANNED**. Corte C1 2026-09-29: `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`. Corte B2c.7 histórico: `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`. No convertir el nuevo commit en una nueva qualification de Engine.
+Estado: **PARTIALLY IMPLEMENTED — C1 CLOSED; C2 identidad/configuración contractual CLOSED con gates locales acotados; B2c.7 Engine/Delivery integrado históricamente en local; Source/Projection durable E2E, qualification C3, Delivery C4, Live/Web/History y Docker/Azure UNVERIFIED/PLANNED**. Checkpoint C2 remoto: `atlanticus:main@18029e19ff01e58b9c9399c132ff32b5ca913f06`.
 
-## Recorrido con estados delimitados
+## Recorrido y evidencia
 
-| Paso | Owner | Estado según evidencia de los distintos cortes |
+| Etapa | Owner | Estado acotado |
 |---|---|---|
-| Tool owners publican Projections; Manager reconcilia Cn | Tool/Manager Web | CURRENT preexistente; qualification física local B1d histórica. |
-| Confirmed Tool Catalog Cn -> Blob CURRENT | `web/tools/catalog` | CURRENT; ownership de `backend/tools` SUPERSEDED en C1. Azure físico UNVERIFIED. |
-| Discovery/confirm por conexiones Cosmos nombradas | `web/tools/discovery-cosmos` | CURRENT C1; sin catálogo Cosmos de salida. |
-| UI Tool Catalog capability reutilizable | `web/tools/catalog-manager` | CURRENT; host temporal compone la biblioteca, sin duplicación UI. |
-| Alarm authoring pin Cn, Validate/Publish y drift guard | Alarm Web | CURRENT preexistente. |
-| Source release Rn congela ToolDependencyManifest(Cn) schema v3 | Alarm Configuration | CURRENT. |
-| Persistencia/proyección operativa de entrada Alarm | Web/Materialization | CURRENT en código; infraestructura Cosmos física E2E UNVERIFIED. |
-| B.2 adquiere proyección, aplica qualification y resuelve | Materialization | CURRENT; JSON manual actual, productor GREEN real UNVERIFIED; automatización C3 PLANNED. |
-| READY local manifest+Runtime/Delivery o BLOCKED | Materialization | CURRENT; salida Cosmos B.2 monolítica antigua SUPERSEDED. |
-| B1 exact pin; WAL adoption V1/V2; EFFECTIVE derivado | Engine/Persistence | CURRENT; recovery local validado en cortes previos. |
-| Runtime ejecuta sesión efectiva y publica CURRENT completo v1 | Engine | CURRENT; tests locales B2c.7. |
-| Runtime exporta sólo commits durables como FACTS v2 encadenados | Engine | CURRENT; tests locales B2c.7. |
-| Job separado recibe CURRENT/FACTS con pin/cursor propio | Delivery input | CURRENT en código; comportamiento de replay FACTS objetivo SUPERSEDED para futuro C4. |
-| Engine→Delivery volumen controlado y re-instanciación | Gate local | CLOSED local histórico, no Docker/multi-host. |
-| Tool services Web C1 test/wheels/importaciones host | Gate local | CLOSED estructural: suites Web, Backend conjuntas y Ruff; **instalación aislada y aceptación visual UNVERIFIED**. |
-| Tres jobs con APPLICATION/rutas/Source Key unificadas y Cosmos físico por contrato | C2 | PLANNED; `.env.detail` actuales NO cumplen todavía. |
-| Qualification verificable automática | C3 | PLANNED / BLOCKED hasta definir verificadores reales y productor. |
-| Delivery sólo último CURRENT, sin backlog FACTS | C4 | PLANNED; NO modificar exportación FACTS Runtime. |
-| Contrato evidencia técnica interno y `.env.detail` depurada | C5 | PLANNED; claves de evidencia técnica final OPEN. |
-| Starter Command Center distribuible, full Web productiva | Web | PLANNED. El host actual es temporal. |
-| Live cause/visibility/priority, AlarmLiveProjection | Live Delivery | PROJECT CONTRACT AGREED / NOT IMPLEMENTED. |
-| Management Capture, History/Analytics y dashboard | Servicios separados | PLANNED / SEPARATE. |
+| Tool Sources/Projections y discovery por conexiones nombradas | Tool/Web | CURRENT; B1d qualification local histórica, no Azure productivo. |
+| Confirmed Tool Catalog Cn → Blob CURRENT | `web/tools/catalog` | CURRENT; C1 Web ownership CLOSED. |
+| Discovery/inspect/confirm | `web/tools/discovery-cosmos` | CURRENT; C1 CLOSED. |
+| Tool Catalog UI capability reusable | `web/tools/catalog-manager` | CURRENT; C1 CLOSED; browser final UNVERIFIED. |
+| Alarm authoring Rn/Cn: Save/Validate/Publish + drift guard | Alarm Web/Domain | CURRENT Source v3. |
+| Source Key única `alarm-configuration` | `domain/alarms` + Web y jobs consumidores | CURRENT; C2 CLOSED. |
+| Source Blob / Alarm Projection Cosmos de entrada | Web/Materialization | Adapters y contrato físico CURRENT; conexión E2E durable UNVERIFIED. |
+| Cosmos physical name y partición derivadas de resource contract | Web + Materialization | CURRENT; C2 CLOSED, sin `ALARM_PROJECTION_CONTAINER` ambiental. |
+| Tres jobs APPLICATION común, leases separados y volumen administrado | Procesos Alarm | CURRENT C2; montaje real multi-proceso UNVERIFIED. |
+| Qualification de candidato Rn/Cn | Materialization | CURRENT JSON de entrada manual; C3 productor automático BLOCKED BY DESIGN. |
+| B.2 READY/BLOCKED y pareja de artefactos exactos | Materialization | CURRENT, validado en tests locales anteriores. |
+| WAL adopción → EFFECTIVE exacto | Persistence/Runtime | CURRENT, gate histórico local. |
+| Engine CURRENT v1 completo | Runtime | CURRENT; gate histórico local. |
+| Engine FACTS v2 encadenados a partir de commits durables | Runtime | CURRENT; **preservar al ejecutar C4**. |
+| Receptor independiente CURRENT **y FACTS** con cursor propio | Delivery input | CURRENT; su reducción a CURRENT-only es **C4 PLANNED**. |
+| Motor Engine→Delivery bajo filesystem controlado/reinicio | Gate local previo | CLOSED histórico; Docker/multi-host UNVERIFIED. |
+| Contrato técnico evidencia Runtime e inspección restante de env | C5 | PLANNED; propietario/key/version OPEN. |
+| Starter Command Center Web y aceptación durable UI | Web | PLANNED / UNVERIFIED. |
+| Live materializer + AlarmLiveProjection | Live | CONTRACT AGREED / NOT IMPLEMENTED. |
+| Management Capture/Projection, History/Analytics | Frentes independientes | PLANNED. |
 
-## Qualification B1d — alcance histórico, no recalificado por C1
-
-El usuario observó `prepare --apply`/`prepare` sobre dos bases Cosmos de qualification con contenedor Tool Projection, Source→Projection de Process/Integrated Operations, discovery READY en dos conexiones y confirmación manual seguida de verificación del Blob `conciencia_situacional/command-center/tool-catalog/current.json`. Es prueba local/Azurite/Cosmos Emulator del corte B1d; no es preloading ni despliegue productivo. `verify-alarm` durable no encontró Source/Projection Alarm en aquel corte. Esa ausencia no reabre la qualification del catálogo ni permite declarar completo el Golden Path.
-
-## C1 — evidencia nueva acotada
-
-Git remoto `3961385a...` confirma `web/tools/catalog`, `web/tools/discovery-cosmos` y `web/tools/catalog-manager`; `backend/tools` ya no tiene archivos versionados. El usuario regeneró locks, ejecutó pruebas, Ruff, mirrors y wheel builds de ambas bibliotecas reubicadas; smoke de importaciones del host pasó. Esto cierra **la migración de ownership**, no Browser UI, instalación aislada del wheel, autenticación productiva ni Starter.
-
-## Separaciones obligatorias — congeladas
+## Flujo operacional y contratos congelados
 
 ```text
-Rn/Cn y manifest Tool son exactos al publicar Source release v3.
-VALID_AT_SAVE != READY != EFFECTIVE.
-READY publica Runtime y Delivery juntos, con un mismo AlarmResolutionKey/pin exacto.
-BLOCKED conserva diagnóstico, sin artefactos ejecutables.
-INVALID != REMOVED; DISABLED != REMOVED; TRACE_ONLY != REMOVED.
-WAL -> DURABLE -> MATERIALIZED -> EFFECTIVE projection.
-Engine CURRENT v1 completo (snapshot) != FACTS v2 encadenados (hechos durables).
-Engine export cursor != Delivery consumption cursor (CURRENT actual en código).
-Delivery input receiver != AlarmLiveProjection.
-C1 Web Tool Catalog/Discovery/UI no introduce ownership Backend para ellos.
+Tool Sources/Projections -> Confirmed Tool Catalog Cn (Blob)
+      -> Alarm Configuration Web: Source Rn + manifest Cn (v3)
+      -> Alarm Projection Cosmos (contrato físico compartido C2)
+      -> Materialization con qualification manual actual
+           +-- BLOCKED: diagnóstico; no promover artifacts
+           `-- READY: manifest exacto + runtime.json + delivery.json
+      -> Engine WAL adoption/rehydration -> EFFECTIVE exacto
+      -> Engine CURRENT v1 (snapshot reemplazable)
+      -> Engine FACTS v2 (hechos durables, flujo propio)
+      -> Delivery input CURRENT+FACTS (CURRENT; reemplazo C4 PLANNED)
+      -> Live / Web / History: NO implementados por este gate
 ```
 
-Cn posterior no cambia retroactivamente Rn/Cn. Runtime y Delivery no reobtienen su configuración desde Cosmos: utilizan versión local exacta acorde a EFFECTIVE. Nuevo requisito de C4: cuando esté implementado, Delivery leerá sólo el último CURRENT disponible y no consumirá historial atrasado; durante C1 la implementación actual CURRENT+FACTS sigue vigente. Runtime FACTS durables subsisten para funciones independientes.
+El mismo `AlarmResolutionKey` y el mismo pin completo `source_key + result_id + manifest_sha256 + resolution_key` rigen consumidores. `INVALID != REMOVED`, `DISABLED != REMOVED`, `TRACE_ONLY != REMOVED`; READY no activa Engine. Runtime y Delivery no deben reobtener configuración de Cosmos ni sustituir una revisión exacta con latest READY.
 
-## Fronteras abiertas / siguiente foco actual
+C2 reduce inconsistencia de configuración, no elimina decisiones manuales del operador: `VOLUMEN_PATH` físicamente compartida, binding Cosmos a misma cuenta/base, rutas PI/productores y evidencia qualification requieren entrada explícita. No hay migración de despliegues: el usuario confirmó que no se había desplegado anteriormente. El Blob container sigue ambiental.
 
-**Foco único siguiente C2:** auditar/comparar decisiones y código de identidad/rutas operacionales de los tres jobs, Source Key compartida y `ALARM_CONFIGURATION_PROJECTION_STORAGE_RESOURCE`; mantener contenedor Blob en env y retirar contenedor Cosmos ambiental sólo junto al cambio de composición. No incluir C3 productor Qualification, C4 Delivery, C5 evidencia técnica ni Starter. Qualification Engine/Delivery Docker separada continúa abierta en su otro frente; el «próximo entregable Docker» del corte B2c.7 permanece registro histórico y NO desplaza el foco C2 de este traspaso.
+## Evidencia de cierre C2 y gate faltante
+
+El usuario informó `domain/alarms` 56 PASS, backend 238 PASS/1 SKIPPED/1 DESELECTED en el gate diagnóstico previo a corrección, Configuration Manager 28 PASS, un test específico Materialization 1 PASS, `uv lock --check` satisfactorio. El commit C2 final incluye la corrección de la prueba operacional, verificada en Git. **UNVERIFIED:** ejecución sin `-k` después del commit final, causa del SKIPPED, instalaciones aisladas, hardware/servicios externos, CI, Docker y navegador. Las cifras no se mezclan con B1d/C1/B2c históricos.
+
+## Frontera propuesta después de C2
+
+**C4 Delivery CURRENT-only**, en otro chat y con etapa previa de diseño. No mezclar productor C3, contrato de evidencia C5, LIVE, Analytics, Tool Catalog, UX o Docker. La qualification Docker de Engine/Delivery continúa como gate distinto, no se declara resuelta por C2.

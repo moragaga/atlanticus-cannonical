@@ -1,30 +1,43 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT — C1 ownership Tool Catalog/Discovery Web CLOSED estructuralmente (2026-09-29); B1d qualification Tool y B2c.7 Engine/Delivery preservados como cortes históricos independientes; C2–C5 PLANNED, no implementados**.
+Estado: **CURRENT — C1 ownership Web CLOSED; C2 identidad operacional / Source Key / topología Cosmos CLOSED en código e integración local declarada (2026-09-29); C3/C4/C5 PLANNED; Starter, Live, History, Docker/Azure y aceptación visual independientes**.
 
-Checkpoint comprobado para C1: implementación `moragaga/atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`; decisions HEAD leído `moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`; base canónica sustituida `moragaga/atlanticus-cannonical:main@faec587c3fb321e76c1a3da38a4d8193a2f1fdb5`. Revalidar HEAD antes de futuros cambios. La evidencia B2c.7 Engine histórica permanece referida a `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`, no se recalifica por C1. La qualification física B1d de Tool Catalog permanece histórica, no se equipara a Azure productivo ni a Web Starter.
+## Autoridad y alcance del corte
 
-Este índice distingue el cierre de **migración estructural C1** de los gates futuros de configuración, qualification, Delivery, Live, distribución y visual.
+- Implementación verificada por lectura directa de Git: `moragaga/atlanticus:main@18029e19ff01e58b9c9399c132ff32b5ca913f06`.
+- Decisiones revisadas: `moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`; sus decisiones históricas pueden conservar topologías reemplazadas por implementación y dirección canónica posteriores.
+- Base canónica que sustituyen estos documentos: `moragaga/atlanticus-cannonical:main@15ba51fb5a140601fd4e2a8d78a01a5b87c6eeaa`.
+- Evidencia local entregada por el usuario: `domain/alarms` 56 PASS; tres procesos backend 238 PASS, 1 SKIPPED y 1 test del registro operacional excluido durante el gate; Configuration Manager 28 PASS; prueba específica de configuración Materialization 1 PASS; `uv lock --check` satisfactorio. El usuario corrigió después el test de registro operacional y el commit actual contiene la corrección. **UNVERIFIED:** nueva ejecución total del backend sin exclusiones posterior a esa corrección, CI, Docker y recursos Azure físicos.
+- C1 permanece CLOSED según su evidencia histórica; sus pruebas no se reasignan a C2. C2 CLOSED estructuralmente y con gates locales acotados; no se declara qualification operativa física.
 
-| Archivo | Contenido | Estado referido a C1 |
-|---|---|---|
-| `01_PRODUCT_SCOPE.md` | Scope de producto. | SIN CAMBIOS; no recalificado. |
-| `02_CURRENT_IMPLEMENTATION.md` | Inventario B2c.7/B1d y delta de C1 verificado. | REEMPLAZO C1. |
-| `03_WEB_APPLICATION.md` | Host temporal y capabilities Web Tool actuales; Starter futuro. | REEMPLAZO C1. |
-| `04_CONFIGURATION_SCOPE.md` | Source v3/authoring, C1 Tool ownership y límites B1d. | REEMPLAZO C1. |
-| `05_TOOL_TO_ALARM_CONFIGURATION.md` | Tool Cn en Blob, manifest exacto y owner Web corregido. | REEMPLAZO C1. |
-| `06_ENGINE_AND_PROJECTIONS.md` | Engine/Materialization/Delivery físico, futuro Live. | HISTÓRICO; sin recalificación C1. |
-| `07_ANALYTICS_AND_STORYTELLING.md` | Analytics independiente. | SEPARATE; FACTS no acredita Analytics. |
-| `08_INITIAL_DASHBOARD.md` | Dashboard conceptual. | SEPARATE. |
-| `09_IDENTITY_NAVIGATION_PROFILES.md` | Identity/navegación. | SIN CAMBIOS. |
-| `10_INITIAL_OUT_OF_SCOPE.md` | No objetivos. | SIN CAMBIOS. |
-| `11_GOLDEN_PATH.md` | Flujo End-to-End, C1 Web cerrado, B2c.7 conservado y gates abiertos. | REEMPLAZO C1. |
-| `12_SOURCE_LEDGER.md` | Genealogía histórica B1d + commit C1, sin reescribir historia. | REEMPLAZO C1. |
-| `13_OPEN_ITEMS.md` | Deudas remanentes y separación estricta C2/C3/C4/C5. | REEMPLAZO C1. |
-| `14_TOOL_CATALOG.md` | Owners Web actuales, Blob CURRENT, migración cerrada, pruebas delimitadas. | REEMPLAZO C1. |
-| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Aggregate/Source v3, C1 delta y UX pendiente. | REEMPLAZO C1. |
-| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Contrato Live conceptual y receptor CURRENT+FACTS vigente antes de C4. | SIN CAMBIOS C1; actualizar sólo con evidencia C4 futura. |
-| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | Domain Tools y ownership Web CURRENT; límites con Backend. | REEMPLAZO C1. |
-| `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md` | UX histórica preservada, C1 corrige owner Tool y próximos focos. | REEMPLAZO C1. |
+## Navegación documental
 
-**Hitos futuros independientes:** C2 compartición de APPLICATION/rutas/Source Key y contratos de contenedor Cosmos; C3 qualification verificable automática; C4 Delivery latest CURRENT-only; C5 evidencia técnica/env documental. Los nombres y límites de C2–C5 son decisiones de dirección del Project, **no** certificaciones de código ni autorización implícita para implementarlos. Starter, Browser/UI, Docker y Analytics se mantienen fuera de estos cierres salvo nuevo alcance explícito.
+| Documento | Responsabilidad y estado después de C2 |
+|---|---|
+| `01_PRODUCT_SCOPE.md` | Alcance de producto, no modificado por C2. |
+| `02_CURRENT_IMPLEMENTATION.md` | Implementación vigente de C1/C2 y límites de prueba. **REEMPLAZO C2**. |
+| `03_WEB_APPLICATION.md` | Host temporal y composición Web; Source Key consumida desde Domain. **REEMPLAZO C2**. |
+| `04_CONFIGURATION_SCOPE.md` | Alarm Source v3 y contratos de identidad/configuración ya normalizados. **REEMPLAZO C2**. |
+| `05_TOOL_TO_ALARM_CONFIGURATION.md` | Tool manifest Rn/Cn y routing, preservados; sin modificación C2. |
+| `06_ENGINE_AND_PROJECTIONS.md` | Engine, Materialization y Delivery actuales con identidad compartida; Live separado. **REEMPLAZO C2**. |
+| `07_ANALYTICS_AND_STORYTELLING.md` | Analytics independiente; sin modificación C2. |
+| `08_INITIAL_DASHBOARD.md` | Dashboard conceptual; sin modificación C2. |
+| `09_IDENTITY_NAVIGATION_PROFILES.md` | Identidad, navegación y perfiles; sin modificación C2. |
+| `10_INITIAL_OUT_OF_SCOPE.md` | No objetivos; sin modificación C2. |
+| `11_GOLDEN_PATH.md` | Ruta end-to-end, C2 completado y gates aún abiertos. **REEMPLAZO C2**. |
+| `12_SOURCE_LEDGER.md` | Histórico inmutable C1/B1d/B2c y nuevo checkpoint C2. **REEMPLAZO C2**. |
+| `13_OPEN_ITEMS.md` | C2 cerrado; C3/C4/C5 y frentes independientes abiertos. **REEMPLAZO C2**. |
+| `14_TOOL_CATALOG.md` | Owner Web C1; sin cambio C2. |
+| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Authoring/UX y Source v3, sin refactor C2. |
+| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | CURRENT receiver CURRENT+FACTS; futuro C4 CURRENT-only y Live distinto. Sin cambio contractual C2. |
+| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | Domain identidad transversal y dependencias que siguen abiertas. **REEMPLAZO C2**. |
+| `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md` | UX pendiente e independiente; sin modificación C2. |
+
+## Fronteras siguientes, no iniciadas por este cierre
+
+- **C3 PLANNED / BLOCKED BY DESIGN:** qualification verificable, productor y evaluadores GREEN reales aún no acreditados; archivo manual actual sigue válido.
+- **C4 PLANNED / FOCO RECOMENDADO:** cambiar receptor de Delivery de CURRENT+FACTS al último CURRENT; mantener Engine FACTS v2 y WAL. Requiere auditoría/diseño antes de código.
+- **C5 PLANNED:** identificación del contrato técnico de evidencia y revisión restante de `.env.detail`; no inventar key/version.
+- **SEPARATE:** prueba Docker de jobs independientes, recursos físicos Blob/Cosmos, distribución aislada, Starter Web, Live Delivery, Management Capture, History/Analytics y ajustes UX.
+
+**Regla de cierre:** Git continúa SOLO LECTURA durante la documentación. Este paquete es reemplazo propuesto de los archivos listados, no un commit ni evidencia de nuevas pruebas.

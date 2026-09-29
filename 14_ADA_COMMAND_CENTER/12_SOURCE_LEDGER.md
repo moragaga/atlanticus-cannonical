@@ -1,107 +1,72 @@
 # ADA Command Center — Source Ledger
 
-Estado: **AUDIT LEDGER — historia conservada y nuevo delta C1 Web verificado en 2026-09-29**. El título de la siguiente sección histórica «Current implementation» es histórico; sus SHAs **no** describen el HEAD actual.
+Estado: **AUDIT LEDGER — historia conservada; delta C1 estructural y delta C2 de configuración/identidad verificados en Git (2026-09-29)**. Los SHAs históricos describen únicamente sus cortes; **HEAD C2 actual** se registra separadamente.
 
-## Current implementation — checkpoint histórico
-
-```text
-moragaga/atlanticus@880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
-```
-
-Relevant closure commits:
+## Autoridad actual para este reemplazo
 
 ```text
-9b9600ae96c9153cf70d0fb401905963b8583c2f
--> Command Center domain/tools + ToolDependencyManifest
-
-d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
--> AlarmConfigurationSnapshot v3
--> Tool manifest persistence
--> workspace Tool revision pin
--> validation/publication drift guard
--> local runtime integration
+Implementación       moragaga/atlanticus:main@18029e19ff01e58b9c9399c132ff32b5ca913f06
+Decisiones leídas    moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canónico previo      moragaga/atlanticus-cannonical:main@15ba51fb5a140601fd4e2a8d78a01a5b87c6eeaa
 ```
 
-Los commits entre `d2a5e148...` y `880cb692...` pertenecían a otro frente de operational-data en aquel corte.
+Esta actualización **no** cambia Git. Antes de integrar, comparar HEAD para evitar sobrescribir documentación posterior.
 
-## Canonical base del checkpoint histórico
+## Corte previo de Domain/Source v3 — HISTORICAL
 
 ```text
-moragaga/atlanticus-cannonical@148b178df74ee3083681140f3bb7997a02435b80
+atlanticus antiguo checkpoint   880cb692054c2cd78cdc29cf62ab7b16bbd2c3d6
+Domain Tools / Manifest         9b9600ae96c9153cf70d0fb401905963b8583c2f
+Alarm Source Snapshot v3        d2a5e14822d3711e64668b8e70cfa15d7ddae2f0
+canonical histórico            148b178df74ee3083681140f3bb7997a02435b80
 ```
 
-## Decisions históricas
+`domain/tools` introdujo `ToolDependencyEntry`/`ToolDependencyManifest`. El snapshot actual mantiene `AlarmConfigurationSnapshot(configuration, tool_dependencies)`; `confirmed_tool_catalog_revision` se deriva del manifest. Source schema v2 SUPERSEDED, v3 CURRENT sin decoder v2. Workspace sidecar `_confirmed_tool_catalog_revision`, Validate/Publish drift guard y persistencia exacta de Tool dependencies permanecen. Pruebas históricas de aquel corte: domain/tools 8, domain/alarms 50, web/alarms/configuration 35, configuration-manager 11; no son métricas de C1 o C2.
+
+## B1d histórico — qualification Tool local
 
 ```text
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Implementación B1d         a518ff98c6303220e24ae3c645d3982e657fd22e
+Inspección posterior       caced5d7711cf059d36ec61aecc9b3e9629bd41f
+Decisions                 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canónico del corte         ec16bd2ccf0ae06065b8ee1d3a231ef4d2cbac57
+Canónico posterior B1d    a5bb42157ee7a5dd2fd64ccc43fa4519628ce25c
 ```
 
-## Qualification histórica
+B1d calificó localmente dos Tool Sources/Projections Cosmos controladas, discovery/confirmación y Blob CURRENT en Azurite; Tool catalog revision observada `6a26feedc3cf7cee4ebcf5a93ad59314180635875ab25423bb576a052e517243`. El usuario informó 38 pruebas backend, 31 Manager y 6 de qualification, Ruff/format PASS. Una Alarm Source **local** observada no acreditó Alarm Source Blob/Projection Cosmos durable; `verify-alarm` no encontró esa pareja entonces. Los archivos de qualification temporal se limpiaron posteriormente. En B1d los services Tool estaban en `backend/tools`: descripción histórica SUPERSEDED por C1, nunca arquitectura vigente.
+
+## C1 — Web Tool ownership CLOSED estructuralmente
 
 ```text
-domain/tools             8 passed
-domain/alarms           50 passed
-web/alarms/configuration 35 passed
-configuration-manager   11 passed
+atlanticus C1           3961385aecd0eb7e373018fc25e509a71dccc409
+commit previo           a4dc45fc7fa17ef20e6ddfa828bbb3a471c17f2d
+commit ajeno intermedio d4239806c01f0f8bf4b4d3e680715ca460667bcb
+canonical base C1       faec587c3fb321e76c1a3da38a4d8193a2f1fdb5
 ```
 
-Lint y format gates GREEN según ese hito; no atribuir estas cifras a C1.
+Verificado en Git y evidencias del usuario: `web/tools/catalog`, `web/tools/discovery-cosmos`, `web/tools/catalog-manager` son owners independientes; Manager temporal los compone sin UI duplicada. `backend/tools` desapareció como árbol versionado; se eliminaron nombres antiguos sin adapters. Se quitaron lock redundante individual de Materialization, se actualizaron dependencias/imports y se reportaron pruebas/Ruff/espejos/wheels/importaciones host favorables. **UNVERIFIED en C1:** distribución aislada, navegador final, CI, Azure y Starter.
 
-## Cambios contractuales históricos
+## B2c.7 — historial operacional independiente
 
-**Added:** `scopes/ada-command-center/domain/tools`, `ToolDependencyEntry`, `ToolDependencyManifest`.
+Referencia implementada histórica `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`: Runtime CURRENT v1 completo y FACTS v2 encadenados, receptor Delivery CURRENT+FACTS con cursor propio, integración local controlada/reinstanciación. La documentación previa registra múltiples gates B2c.7 locales, incluido un corte final con 32 pruebas específicas; estas cifras NO se reasignan a C1 ni a C2. Qualification Docker independiente nunca se infiere de ese corte.
 
-**Alarm Source anterior:**
+## C2 — identidad, volumen y topología operacional (NUEVO CORTE, 2026-09-29)
 
 ```text
-AlarmConfigurationSnapshot
-    configuration
-    confirmed_tool_catalog_revision
+Base de implementación auditada antes de C2  53c20b2462e8637bd00f75487b0df05dc8452daa
+HEAD final C2 leído en Git               18029e19ff01e58b9c9399c132ff32b5ca913f06
+Decisions HEAD                            50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical HEAD aún anterior a C2          15ba51fb5a140601fd4e2a8d78a01a5b87c6eeaa
 ```
 
-**CURRENT:**
+**DECIDED:** el usuario confirmó que no hay despliegues previos ni flujo productivo que migrar; se acordó limpieza sin backward compatibility. `APPLICATION=ada-command-center` común a tres jobs con distintos `job_key`; el operador conserva control manual sobre `VOLUMEN_PATH`, conexiones y evidence. Source Key literal `alarm-configuration` debe tener definición única Domain; Cosmos physical name y partition key derivan del contrato ya existente, no de `.env`; nombre Blob ambiental se conserva. C3/C4/C5 quedan explícitamente fuera de C2.
 
-```text
-AlarmConfigurationSnapshot
-    configuration
-    tool_dependencies
-```
+**VERIFIED Git:** `domain/alarms/identity.py` declara y exporta constante; Web la convierte a `SourceKey`; tres jobs derivan `settings.source_key`; `.env.detail`, `secrets.detail.json` y specs ya no contienen `ALARM_CONFIGURATION_SOURCE_KEY`; Materialization obtiene nombre y partición del resource contract Cosmos y quita `ALARM_PROJECTION_CONTAINER`. Tres plantillas/manifiestos usan `APPLICATION=ada-command-center`; los tres `job_key` independientes permanecen; Delivery conserva recepción CURRENT+FACTS. El commit final incorpora corrección del test `test_all_current_source_partitions_are_registered_without_future_sources` para fuentes que el registro Operational Data ya incluía. No se incluyen ni vuelven a editar tests en este paquete documental.
 
-`confirmed_tool_catalog_revision` se deriva. Source schema v2 **SUPERSEDED**, v3 **CURRENT**, sin decoder legacy v2.
+**VERIFIED por logs locales compartidos por el usuario durante C2:** Domain 56 PASS; backend 238 PASS, 1 SKIPPED, 1 DESELECTED al excluir la prueba previa al arreglo; Configuration Manager 28 PASS; Materialization C2 1 PASS; `uv lock --check` exitoso; integración ZIP/parche y `git diff --check` sin error en el momento reportado. La corrección del test de catálogo sí está en el commit final pero la ejecución integral posterior **no fue mostrada**.
 
-**Workspace:** sidecar `_confirmed_tool_catalog_revision`. Manager genérico no se modificó por este cambio. Un Tool snapshot genera authoring references y dependency evidence.
+**UNVERIFIED/OPEN:** backend completo luego del último commit, skipped gate y Ruff final; igualdad física cuenta/base Cosmos entre Web y Materialization, montajes reales separados, Docker multi-proceso, CI/Azure, instalación aislada, Starter y aceptación visual. Cierre C2 significa código/gates locales acotados, no Golden Path integral.
 
-## Corte B1d histórico — implementación y qualification (2026-09-29)
+## Conflictos históricos no reescritos
 
-```text
-atlanticus B1d implementado             a518ff98c6303220e24ae3c645d3982e657fd22e
-atlanticus inspeccionado posteriormente caced5d7711cf059d36ec61aecc9b3e9629bd41f
-atlanticus-decisions leído              50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-canonical leído en corte B1d            ec16bd2ccf0ae06065b8ee1d3a231ef4d2cbac57
-canonical HEAD posterior B1d            a5bb42157ee7a5dd2fd64ccc43fa4519628ce25c
-```
-
-En este corte HISTÓRICO `backend/tools/discovery-cosmos` y `backend/tools/catalog` eran owners; la UI aún estaba en el host temporal. Esa descripción **quedó SUPERSEDED por C1**; no usarla como arquitectura vigente.
-
-Qualification B1d por logs del usuario: 38 tests backend, 31 Manager Web y 6 qualification, Ruff/format PASS; dos Sources/Projections Tool en Cosmos controlado, reconciliación, confirmación y lectura cruzada en Azurite con revisión `6a26feedc3cf7cee4ebcf5a93ad59314180635875ab25423bb576a052e517243`. Alarm Source `local` release `1d76643e80f849cc931702689aec45a6`; `verify-alarm` durable observó ausencia de Source/Projection. No convertir estos datos en preloading, Azure productivo o requisitos estructurales del producto. El directorio temporal B1d fue eliminado en un incremento posterior; el histórico conserva que estuvo presente localmente.
-
-## Nuevo corte C1 — Tool services pertenecen a Web (2026-09-29)
-
-```text
-atlanticus:main verificado en Git           3961385aecd0eb7e373018fc25e509a71dccc409
-commit C1                                 3961385aecd0eb7e373018fc25e509a71dccc409
-commit previo: tests Runtime              a4dc45fc7fa17ef20e6ddfa828bbb3a471c17f2d
-commit intermedio ajeno a C1              d4239806c01f0f8bf4b4d3e680715ca460667bcb
-atlanticus-decisions:main                50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-atlanticus-cannonical:main base sustituida faec587c3fb321e76c1a3da38a4d8193a2f1fdb5
-```
-
-**VERIFIED remoto:** `web/tools/catalog`, `web/tools/discovery-cosmos` y `web/tools/catalog-manager` son módulos independientes. El Configuration Manager consume la capability UI y compone los servicios, sin código UI duplicado. El árbol Git no contiene archivos versionados bajo `backend/tools`; `domain/tools` mantiene manifest compartido. El commit C1 trasladó dos distribuciones, sus espejos y tests, corrigió importaciones y dependencias y retiró el `uv.lock` redundante de `backend/processes/alarms-materialization`; `backend/uv.lock` es el lock del workspace.
-
-**VERIFIED por logs locales del usuario:** pruebas, Ruff, espejos, `uv lock --check`, generación de los dos wheels `web_tool_catalog` y `web_tool_discovery_cosmos`, importación desde venv de Configuration Manager, verificación de ausencia de package identifiers anteriores y `git diff --cached --check` sin errores. La limpieza física local de `.venv` abandonados bajo `backend/tools` fue indicada; sólo la ausencia de archivos Git versionados está confirmada remotamente.
-
-**UNVERIFIED:** instalación aislada de wheels, navegador/aceptación visual post-C1, CI completa, Azure, Starter y recorrido Alarm durable E2E. No recalificar B2c.7 por esta migración.
-
-## Historical conflicts no corregidos por C1
-
-`atlanticus-decisions` conserva historia posiblemente desactualizada para SharePoint como autoridad física, la re-resolución Rn contra una Tool revision posterior y la salida consolidada Tool a Command Center Cosmos. El Markdown de reglas globales de Manager revisado en este cierre no se opone al ownership Web C1; no se hizo nueva auditoría exhaustiva de los DOCX de decisions. Otros conflictos de alarmas permanecen registrados en sus documentos propios.
+Los Markdown `R3.6M-006B.2...` de Decisions siguen conteniendo formulaciones históricas que asignaban autoridad a SharePoint y describían reconciliación/salidas físicas distintas. Implementación/canónicos recientes usan Confirmed Tool Catalog en Blob y Alarm Source durable en Blob con Projection Cosmos de entrada y READY local; esa diferencia requiere reconciliación formal si se reabre el documento de decisions, no crear adaptadores ni devolver la implementación al diseño antiguo. Los documentos históricos también distinguen Live de Management; esa separación **se preserva**. No se realizó auditoría exhaustiva de todos los DOCX del repositorio Decisions.
