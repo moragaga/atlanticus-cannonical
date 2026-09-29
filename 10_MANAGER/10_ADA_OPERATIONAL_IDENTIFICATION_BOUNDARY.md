@@ -1,49 +1,80 @@
-# ADA Manager — Operational Identification Boundary
+# ADA Manager — Datos operacionales: catálogo y asignaciones
 
-Estado: **PRODUCT-LEVEL DESIGN AGREED / PLANNED / NO IMPLEMENTATION — CONTRACT REFINEMENT OPEN**
+Estado: **CURRENT / BACKEND Y MANAGER IMPLEMENTADOS EN SU ALCANCE ACTUAL; UX REORDENADA Y SNAPSHOT CONSOLIDADO PLANNED**. Corte documental: **2026-09-29**. Este documento sustituye exclusivamente la clasificación histórica «PLANNED / NO IMPLEMENTATION» de esta capacidad, no reabre otros dominios del Manager.
 
-## Propósito
+## Autoridad y alcance de la constatación
 
-Identificar operacionalmente a usuarios ADA existentes para consumo futuro de gestión de alarmas, **sin modificar Atlanticus Users** ni utilizar área/cargo/grupo como sustitutos de Profiles o Access.
+- **VERIFIED — código remoto:** `moragaga/atlanticus:main@caced5d7711cf059d36ec61aecc9b3e9629bd41f`, leído el 2026-09-29. Inspección específica de `scopes/ada/web/operational-identification`, Manager, Source/Projection, Users y Storage. La rama canonical de partida para integrar este candidato era `moragaga/atlanticus-cannonical:main@ec16bd2ccf0ae06065b8ee1d3a231ef4d2cbac57`.
+- **VERIFIED — ejecución local comunicada por el usuario:** `uv run --locked pytest` en `scopes/ada/web/operational-identification`: **25 passed en 0.13 s**. La ejecución separada del Manager previamente comunicada arrojó **13 passed**; corresponde a otro gate y no demuestra la suite global. El parche del gate de cargo proyectado fue aplicado y quedó incorporado a `atlanticus:main`, confirmado por inspección del código y sus pruebas.
+- **VERIFIED — lint parcial pendiente:** `uv run --locked ruff check src tests` reportó únicamente `I001` en `src/ada/web/operational/identification/service.py` (bloque de imports). **No declarar Ruff PASS** ni asignar estado CLOSED a este detalle antes de corregir producción y espejo comentado y reejecutar el gate.
+- **UNVERIFIED:** CI, tests monorepo, E2E Azure/Entra, ejecución productiva Blob/Cosmos, comportamiento visual final tras reorganización y warmup operacional. El objetivo general del Project es Python 3.14.7; `operational-identification/pyproject.toml` consultado aún exige `==3.14.2`. No afirmar alineación de metadata por la versión mostrada en el shell.
+- `atlanticus-decisions` no se utiliza como prueba de implementación de este corte; la conciliación histórica integral de otros dominios es otro trabajo. Si una decisión vigente contradice el código, registrar conflicto, no reinterpretarla silenciosamente.
 
-## Página futura
+## Ownership y frontera CURRENT
 
-Un módulo propio de ADA bajo Manager con dos pestañas internas:
+- El dominio y sus contratos son propios de **ADA**, bajo `ada.web.operational.identification`. No extender `UserRecord`, `EffectiveUser`, Profiles, Access o Atlanticus Users con atributos específicos de ADA.
+- El Manager consume `OperationalIdentificationService` como `ManagerEntry`, ruta `/operational-identification`, grupo `administration`, título ya implementado «Datos operacionales» y autorización server-side `operational.manage`.
+- `UsersAdministrationStore` identifica a los usuarios promovidos existentes. **VERIFIED:** la proyección de Users promovidos es responsabilidad separada (`users-runtime` en la composición durable histórica); `users-support` contiene las proyecciones de apoyo como Profiles/ADA Access y, cuando se configura así, los documentos operacionales. No afirmar que los usuarios promovidos nacen en `users-support`.
+- Source durable conserva los datos publicables y las versiones históricas; Cosmos sirve las proyecciones operacionales. Las aplicaciones y workers **no** deben consultar Blob como superficie de consumo.
 
-- **Asignaciones:** seleccionar exclusivamente usuarios ya promovidos/proyectados y asociar información opcional.
-- **Cargos:** crear, mantener y desactivar manualmente el catálogo de cargos específicos del proyecto.
+## Contrato de dominio CURRENT — congelar durante la siguiente iteración
 
-Campos de asignación:
+```text
+AREA             mina | planta
+GROUP            1 | 2 | 3 | 4
+POSITION         id estable generado por backend; label editable; active boolean
+ASSIGNMENT       user_id + area_id? + position_id? + group_id?
+```
 
-| Campo | Valores previstos | Estado inicial |
+- Los tres campos de asignación son opcionales (`null` permitido) sin obligación de completar datos ficticios. No crear un cuarto campo «operational scope» por la mención histórica: la necesidad actual está cubierta por Área = Mina/Planta; **INFERRED, sujeto a nuevo requisito**.
+- Un cargo tiene identificador inmutable; su etiqueta puede editarse; puede desactivarse, pero no eliminarse retrospectivamente del catálogo. Etiquetas únicas sin distinguir mayúsculas/minúsculas.
+- El backend solo admite asignaciones a usuarios ya promovidos. Para asignar un cargo **nuevo o diferente**, exige catálogo Source proyectado a la revisión actual y cargo activo. Retener un cargo previamente asignado permite editar otros campos aun cuando esté desactivado o pendiente una proyección posterior del catálogo; no asignarlo a un usuario nuevo en ese estado.
+- Área y grupo son referencias fijas en el dominio actual y se presentan como información, no como catálogos editables.
+- La autorización de gestión (`operational.manage`) **no** otorga por sí sola permisos de sesión al usuario asignado. Identidad/promoción y Access/Profile conservan sus fronteras.
+
+## Persistencia y proyección CURRENT
+
+| Superficie | Estado constatado | Contrato |
 |---|---|---|
-| Área | Mina / Planta | No informado (`null`) |
-| Cargo | Identidad de catálogo manual propio | No informado (`null`) |
-| Grupo | 1, 2, 3, 4 | No informado (`null`) |
+| Source de catálogo | CURRENT / VERIFIED STATIC | `SourceKey('ada-operational-catalog')`; revisiones publicadas e historial. |
+| Source individual | CURRENT / VERIFIED STATIC | `SourceKey('ada-operational-user:' + user_id)`; uno por usuario, independiente y con concurrencia optimista. |
+| Codec Source | CURRENT / VERIFIED STATIC | Recurso `operational/data.json.gz`; `schema_version=1`; clases `catalog` / `assignment`. |
+| Proyección de catálogo | CURRENT / VERIFIED STATIC | Documento `ada_operational_catalog_projection` con áreas, grupos y cargos; revisión exacta de Source. |
+| Proyección individual | CURRENT / VERIFIED STATIC | Documento `ada_operational_assignment_projection`, con IDs y `source_release_id`, partición por SourceKey; no modificar otros registros de `users-support`. |
+| Persistencia Cosmos | CURRENT / VERIFIED STATIC | `CosmosOperationalProjectionStore`, CAS mediante ETag y reintentos acotados; contenedor inyectable. Las pruebas usan `users-support`; la configuración física productiva no queda demostrada por tests unitarios. |
+| Snapshot operacional consolidado | **PLANNED / NOT IMPLEMENTED** | No confundir con los Source individuales actuales. Shape, cobertura y política de actualización requieren cierre de contrato. |
+| Registro de eventos Cosmos por cada cambio | **UNVERIFIED / NO CONTRACT** | Actualmente existe un documento de proyección **vigente** por SourceKey. Una actualización de documento Cosmos no constituye automáticamente un evento histórico independiente. |
 
-Los tres campos son opcionales indefinidamente; cargos externos a sala no deben recibir datos ficticios para completar formularios. Guest no necesita asignación operacional. No introducir datos operacionales en los documentos genéricos de Users ni cambiar sus pantallas existentes.
+La publicación del Source y la proyección Cosmos son pasos distintos, sin transacción distribuida. Una publicación exitosa seguida de error de proyección debe poder reintentarse desde Source durable. Las pruebas actuales ejercitan estos casos con dobles locales; no extrapolar a infraestructura Azure.
 
-**OPEN / UNVERIFIED — terminología:** en la planificación reciente se mencionó *operational scope*. Este documento solo tiene definido el campo **Área** (Mina / Planta); no está verificado que ambos conceptos sean equivalentes. Antes de definir modelos o formularios debe resolverse si se trata del mismo atributo, de un atributo diferente o de una relación. Hasta entonces no añadir campos, valores ni reglas derivados de ese término.
+## Manager CURRENT frente a UX DECIDED
 
-Los atributos se relacionarán mediante identidad estable ya promovida; conservar el contexto necesario de emisor/directorio, no asociar por nombre o correo. El acceso a la página debe concederse por la configuración normal de perfiles/permisos de ADA, **sin fijar un nombre de perfil privilegiado**. La clave de autorización concreta se decidirá al implementar.
+**CURRENT — interfaz en Git:** título general «Datos operacionales», pestañas de superficie «Configuración» / «Estado y trazabilidad» y, dentro de Configuración, «Asignaciones» antes de «Cargos». Existen modales, búsqueda/paginación, guardado por Source, proyección y reintentos.
 
-## Fuente y proyección
+**DECIDED — UX objetivo todavía NO implementada:** la primera pestaña interna será **Datos operacionales**, seguida a su lado por **Asignación**. En la primera se crean/editan/desactivan cargos; Mina/Planta y grupos 1–4 se muestran solo como referencias. Incorporar el estado y la trazabilidad según el patrón general Atlanticus de guardar/proyectar, sin perder observabilidad del catálogo ni de cada asignación. En Asignación se seleccionan únicamente los promovidos disponibles y se utiliza un modal; `user_id` permanece estable. Primero revisar la convención visual/funcional del Manager, luego realizar un incremento acotado. **No declarar esta nueva distribución UI como CURRENT por el mero cambio de nombre de la ruta.**
 
-La configuración de cargos y asignaciones será propia de ADA. El Source durable deberá seguir las reglas vigentes de Storage. La ubicación Cosmos de consumo se evaluará: `users-support` es candidato físico, NO decisión de topología definitiva. Antes de reutilizarlo verificar tipos documentales, particiones y ownership; no insertar atributos en `CosmosUsersStore` existente por comodidad.
+## Sesión y warmup — DECIDED / integración PLANNED
 
-La futura página aislada de proyección deberá incorporar estos Sources **después** de que el dominio exista y de que el proceso especial de usuarios haya resuelto las identidades correspondientes. No declarar dependencias exactas o schemas antes de auditar APIs.
+- La sesión Entra resuelve identidad y promoción por usuario; quien aún no ha sido promovido se representa como `guest` según el flujo definido para ADA. Una promoción requiere que esa persona **recargue la página** para re-resolver sesión. No convertir la caché de warmup en autoridad de promociones ni suponer que una recarga sustituye todas las garantías de revocación server-side.
+- Tras resolver un usuario promovido y habilitado, la integración **PLANNED** consultará su **proyección operacional individual en Cosmos** y resolverá etiquetas mediante el catálogo operacional compartido ya proyectado. El backend implementa `assignment_for_resolved_user`, pero el wiring completo del inicio de sesión Entra con ese consumo sigue **UNVERIFIED**.
+- El **warmup DECIDED** se limita a **catálogo de Profiles** (incluidos atributos de presentación del perfil) y **catálogo operacional** (cargos, áreas y grupos). **EXCLUDED:** listado de usuarios, promociones, asignaciones individuales y snapshot consolidado de usuarios. Refresco periódico configurable, valor inicial **PROPOSED: 10 minutos**; no declarar scheduler/runtime implementado.
+- `UserRecord` ya admite colores opcionales individuales además de los colores propios de `ProfileDefinition`: conservar el ownership respectivo. El warmup de perfiles no autoriza a incorporar datos específicos de usuarios al cache compartido.
 
-## Continuidad propuesta — incrementos separados
+## Transiciones de estado
 
-1. **PROPOSED / DESIGN:** contrastar *operational scope* con Área; auditar contratos actuales de identidad promovida, catálogos, Source/Projection y autorización ADA. Definir primero identidad estable de asignaciones, reglas de integridad, permisos y contratos de persistencia, sin inventar topología Cosmos.
-2. **PLANNED / BACKEND:** implementar el dominio propio de cargos y asignaciones, su Source durable y la proyección aprobada; probar contratos, referencias y persistencia.
-3. **PLANNED / MANAGER:** integrar las pestañas Asignaciones y Cargos como módulo ADA gobernado por permisos del Manager, sin trasladar lógica de dominio a Atlanticus Manager genérico.
-4. **PLANNED / QUALIFICATION:** probar el flujo desde usuarios promovidos reales hasta Source, proyección y lectura de asignaciones. Cualquier incorporación a Master exige otro diseño e incremento; no alterar sus seis pares actuales como efecto lateral.
+```text
+BACKEND DOMAIN/CATALOG                         CLOSED / CURRENT / VERIFIED STATIC + 25 TESTS USER-REPORTED
+SOURCE INDIVIDUAL + COSMOS PROJECTION           CLOSED / CURRENT / VERIFIED STATIC
+PROJECTED-POSITION GATE PATCH                  CLOSED / CURRENT / INCORPORATED IN MAIN
+MANAGER OPERATIONAL UI (CURRENT LAYOUT)         CURRENT / VERIFIED STATIC
+NEW TWO-TAB MANAGER ORGANIZATION               PLANNED / DECIDED DESIGN
+OPERATIONAL CONSOLIDATED SNAPSHOT              PLANNED / CONTRACT OPEN
+SESSION OPERATIONAL RESOLUTION                 PLANNED / WIRING UNVERIFIED
+PROFILES + OPERATIONAL CATALOG WARMUP           PLANNED / BOUNDARY DECIDED
+RUFF I001                                       OPEN / ISOLATED CORRECTION
+LIVE AZURE/ENTRA E2E                            UNVERIFIED
+```
 
-## Ideas diferidas explícitamente
+## Continuidad
 
-`extra` **sólo en Cosmos** como potencial extensión de una proyección consolidada de usuarios, con referencias a información operativa, y posible ampliación futura del ámbito de Access sobre asignaciones. Son ideas para analizar **después**; NO crear ahora campo, contenedor, readers, migración ni contrato de consumidores. El acceso CURRENT sigue determinado por `profile_key -> access_keys`.
-
-## Estado / frontera
-
-`ADA-OPERATIONAL-IDENTIFICATION`: **PLANNED / SEPARATE INCREMENT**. El diseño de producto de Asignaciones/Cargos está documentado, pero los contratos técnicos, la semántica de *operational scope*, la autorización concreta y la topología de consumo siguen **OPEN**. No se implementa código, esquema, UI ni integración Master en este cierre documental. Tras la reconciliación documental de Master, la calificación Docker de su distribución y el diseño de este dominio son frentes independientes; cada chat debe abrir uno solo.
+Consultar `11_ADA_OPERATIONAL_DATA_ROADMAP.md` para el orden de incrementos, bloqueos, criterios de aceptación y única decisión aún necesaria sobre el snapshot. Consultar `../15_WEB_PLATFORM/14_ADA_OPERATIONAL_SESSION_AND_WARMUP.md` para la frontera de consumo en tiempo de ejecución.

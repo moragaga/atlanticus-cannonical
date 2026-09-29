@@ -104,3 +104,18 @@ Latest Delivery REPROCESS_CURRENT
 Timeseries Delivery REPROCESS_CURRENT
 Historian reprocess_from optimization
 ```
+
+---
+
+## OPEN — ADA Datos operacionales, 2026-09-29 (frente independiente)
+
+1. **BLOCKED hasta decisión de diseño:** «snapshot único» en Blob: ¿vista consolidada **adicional** reconstruible conservando Source por usuario, o reemplazo total del modelo individual? Definir schema, versionado, concurrencia, recuperación y disparadores.
+2. **BLOCKED hasta decisión de dominio:** criterio del conjunto de usuarios del snapshot: promovidos actuales, deshabilitados y/o retirados. `UsersAdministrationStore.list_users()` no es índice histórico de todos los Source publicados.
+3. **OPEN / UNVERIFIED:** «un registro en Cosmos por cada cambio» no es lo que implementa el store actual, que mantiene una proyección vigente por usuario. Confirmar si se requiere un histórico append-only en Cosmos, distinto del historial de Source.
+4. **OPEN / QUICK FIX:** Ruff `I001` en `operational-identification/service.py` y espejo comentado; repetir tests y Ruff.
+5. **PLANNED:** nuevo orden UI «Datos operacionales» / «Asignación», estado/trazabilidad conforme al Manager genérico, pruebas funcionales y validación visual.
+6. **PLANNED:** integración de Cosmos con sesión Entra, guest → promoción → recarga → lectura individual, sin precarga de usuarios en warmup.
+7. **PLANNED:** warmup exclusivo de catálogo Profiles y catálogo operacional, refresco periódico configurable (10 min propuesto), estados de degradación. Usuarios/asignaciones **excluidos**.
+8. **UNVERIFIED:** Azure/Entra end-to-end, multi-worker real y metadata Python 3.14.7 del scope (el archivo consultado requiere `==3.14.2`).
+
+Referencia y orden de trabajo: `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`. Estos abiertos **no sustituyen** el foco KPI descrito arriba.

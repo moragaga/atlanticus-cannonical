@@ -1,10 +1,10 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT EXECUTION CHECKPOINT**
+Estado: **ÍNDICE POR ÁMBITO — checkpoint KPI histórico preservado + delta ADA operacional CURRENT 2026-09-29**
 
-## Autoridad
+## Autoridad del checkpoint KPI anterior (HISTORICAL para ADA Datos operacionales)
 
-Implementación publicada CURRENT:
+Implementación publicada en aquel checkpoint:
 
 ```text
 moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf
@@ -64,7 +64,7 @@ ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION   PLANNED / NEXT
 | `13_ADA_WEB/` | Web platform ADA, observability y collector qualification. | CURRENT |
 | `16_KPI_BACKEND_RECOVERY/` | KPI backend recovery + Registry consumption. | CLOSED / CURRENT |
 
-## Siguiente foco único
+## Siguiente foco único del checkpoint KPI
 
 ```text
 ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
@@ -74,3 +74,15 @@ PLANNED / NEXT
 No volver a diseñar Collector. El próximo chat debe localizar la composición operacional real,
 resolver Tool/Cosmos con los contratos CURRENT y montar el collector mediante el attachment ya
 implementado.
+
+---
+
+## Actualización focal ADA Datos operacionales — 2026-09-29
+
+**Alcance exclusivo:** esta adición no recalifica ni sustituye los checkpoints KPI y otros dominios anteriores. Los SHAs anteriores describen el contexto de su propio hito; para **Datos operacionales ADA** la implementación fue verificada separadamente en `moragaga/atlanticus:main@caced5d7711cf059d36ec61aecc9b3e9629bd41f`, contra canonical de partida `moragaga/atlanticus-cannonical:main@ec16bd2ccf0ae06065b8ee1d3a231ef4d2cbac57`.
+
+- `10_MANAGER/10_ADA_OPERATIONAL_IDENTIFICATION_BOUNDARY.md`: **CURRENT**, backend/catalogo/asignaciones/Manager y distinción respecto a nueva UX.
+- `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`: **CURRENT PLAN**, contratos OPEN y orden de incrementos del frente.
+- `15_WEB_PLATFORM/14_ADA_OPERATIONAL_SESSION_AND_WARMUP.md`: **DECIDED DESIGN / PLANNED**, sesión Cosmos individual y warmup exclusivo de Profiles y catálogo operacional, nunca usuarios o asignaciones.
+
+**Evidencia local comunicada:** 25 tests del scope operacional PASS y 13 tests del Manager en gate separado; `ruff check` detectó un `I001` pendiente. No es calificación CI/Azure/Entra. **Foco único de este frente:** cerrar contrato del snapshot histórico único/consolidado antes de implementarlo. Esta prioridad local no reemplaza la prioridad del frente KPI Collector indicada arriba.

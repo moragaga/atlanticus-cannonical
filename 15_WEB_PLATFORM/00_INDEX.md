@@ -18,6 +18,7 @@ Corte funcional Master: `atlanticus@9c6daffd04b9c249f75a55b6cdb9b44e6d92a795`; H
 | `11_OPEN_ITEMS.md` | Cierre acotado 001D, Docker de la distribución nueva y otros gates Master/Users. | CURRENT / OPEN GATES |
 | `12_USERS_PROFILES_NAVIGATION_CAPABILITY_BOUNDARY.md` | Ownership genérico de Users/Profiles/Access/Navigation. | CURRENT BASELINE |
 | `13_USERS_PROJECTION_RECOVERY.md` | Snapshots aprobados y recuperación especial dentro del Manager. | CURRENT / SCOPE CLOSED + GATES PRODUCTIVOS OPEN |
+| `14_ADA_OPERATIONAL_SESSION_AND_WARMUP.md` | Nuevo contrato de consumo ADA: sesión individual Cosmos, warmup exclusivo de dos catálogos. | **DECIDED DESIGN / PLANNED** |
 
 ## Evidencia Master CURRENT
 
@@ -38,6 +39,14 @@ Corte funcional Master: `atlanticus@9c6daffd04b9c249f75a55b6cdb9b44e6d92a795`; H
 - El material se consume desde una ruta externa opcional. La subida/warmup automático, rotación operacional productiva, Entra/Azure y CI general siguen **UNVERIFIED**. La distribución `9c6daffd` cuenta con sync local limpio, pero **no** tiene calificación Docker propia.
 - Conservar los límites previos de Users Recovery, Resource Preparation y Home; Master no acredita esos otros frentes.
 
-## Continuidad tras el cierre documental
+## Continuidad del checkpoint Master anterior (HISTORICAL para ADA Datos operacionales)
 
 **PROPOSED / PRÓXIMO FOCO TÉCNICO ÚNICO:** calificar en Docker la distribución Master `9c6daffd` sin transferir la evidencia Docker de `ca3ee508`. El E2E de los otros cinco dominios, Users Master REPLACE, Azure/Entra y la migración Python conservan gates independientes. **PLANNED / SEPARATE:** ADA Operational Identification (Asignaciones/Cargos), descrito en `../10_MANAGER/10_ADA_OPERATIONAL_IDENTIFICATION_BOUNDARY.md`; no ampliar automáticamente las seis proyecciones de Master.
+
+---
+
+## Actualización focal ADA Datos operacionales — 2026-09-29
+
+**SUPERSEDED solo para el dominio operacional:** la última oración anterior que califica ADA Operational Identification como «PLANNED» es histórica del corte Master. `atlanticus:main@caced5d7711cf059d36ec61aecc9b3e9629bd41f` ya contiene su backend y Manager; su nuevo diseño de pestañas y el warmup continúan PLANNED.
+
+Consultar `14_ADA_OPERATIONAL_SESSION_AND_WARMUP.md` para la distinción **DECIDED** entre consulta individual de sesión y warmup exclusivo de **Profiles + catálogo operacional**. Usuarios, promociones y asignaciones individuales están fuera de warmup. La composición productiva Entra y el scheduler de refresco permanecen UNVERIFIED / PLANNED. El contrato durable y el roadmap se encuentran en `../10_MANAGER/10_ADA_OPERATIONAL_IDENTIFICATION_BOUNDARY.md` y `../10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`.
