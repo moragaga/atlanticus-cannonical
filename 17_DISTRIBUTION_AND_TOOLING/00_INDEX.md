@@ -7,7 +7,7 @@ Master/distribución nueva contrastados en `atlanticus@9c6daffd04b9c249f75a55b6c
 |---|---|---|
 | `01_BACKEND_GENERATION.md` | Artifacts de procesos backend | CURRENT / OTHER FOCUS |
 | `02_FRONTEND_GENERATION.md` | Starters y wheelhouses Web, historial de qualifications | CURRENT / HISTORICAL |
-| `03_ARTIFACT_DISTRIBUTION.md` | Starter ADA, Resource Preparation, Master 001A–001D.4, evidencias Docker/local sync y gates | **CURRENT — actualizado en este cierre propuesto** |
+| `03_ARTIFACT_DISTRIBUTION.md` | Starter ADA, Resource Preparation, Master 001A–001D.4, evidencias Docker/local sync y gates | **CURRENT — INTEGRATED IN CANONICAL 571f9c09** |
 | `04_SCRIPTS_VALIDATION.md` | Gates de integridad por frontera | CURRENT DIRECTION |
 | `05_SUPPORT_SERVICES.md` | Cosmos/Storage y entornos local/productivo | CURRENT DIRECTION |
 | `06_ENV_DETAIL.md` | Documentación de variables sin secretos y **única ruta opcional Master** | CURRENT DIRECTION; sin variables nuevas por 001D.4 |
@@ -41,4 +41,4 @@ Master no es Manager; preview del plan es read-only, Apply individual requiere a
 
 Python de la distribución vigente: **3.14.2**. Baseline Project objetivo: **3.14.7 / `python:3.14.7-slim-trixie`**. Discrepancia **OPEN / OTHER FOCUS**.
 
-**NEXT ÚNICO:** reconciliar los reemplazos canónicos del cierre 001D con `atlanticus-cannonical:main` y la documentación de decisiones pertinente. Sin implementar nuevas funcionalidades en ese chat.
+**NEXT TÉCNICO PROPUESTO, TRAS INTEGRAR EL AJUSTE DOCUMENTAL:** calificación Docker propia de la distribución Master `9c6daffd`. El recorrido positivo de Navigation en `ca3ee508` y el sync local en `9c6daffd` son evidencias distintas; no declarar Docker de la nueva distribución validado por herencia. ADA Operational Identification se diseña en otro incremento.

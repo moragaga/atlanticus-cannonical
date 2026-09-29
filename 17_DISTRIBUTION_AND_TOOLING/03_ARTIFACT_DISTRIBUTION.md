@@ -80,4 +80,4 @@ Este conjunto **cierra 001D.4 para sincronización local**. El help verifica inv
 
 Baseline objetivo Project Python **3.14.7** e imagen **`python:3.14.7-slim-trixie`**. ADA Generic/Starter/distribución aquí verificados siguen fijados en **3.14.2**; **OPEN / SEPARATE**, no migrar por efecto lateral. `.env.detail` es documental, sin secretos; no añadir variables/rutas redundantes. El material Master real nunca se entrega dentro de artifacts ni en repositorios.
 
-**NEXT ÚNICO:** integrar/reconciliar la documentación canónica del cierre 001D.1–001D.4. Sin más código ni nueva ejecución Docker durante ese foco documental.
+**NEXT TÉCNICO PROPUESTO:** después de la integración humana de este ajuste documental, calificar en Docker la distribución `9c6daffd`: arranque del Starter sincronizado como paquete, material Master externo, login y repetición del flujo Navigation → Master prepare/confirm → Manager recargado. No atribuirle automáticamente el resultado de `ca3ee508`. La validación de los otros cinco dominios, Users REPLACE, ADA Operational Identification y Azure siguen siendo incrementos separados.

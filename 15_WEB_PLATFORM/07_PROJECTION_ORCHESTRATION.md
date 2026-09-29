@@ -65,4 +65,4 @@ Master consulta el catálogo de snapshots como estado separado: `CATALOG_UNAVAIL
 - **OPEN / OPERATIONS:** material en host productivo, custodia/rotación/revocación operacional; `ADA_MASTER_PROJECTION_MATERIAL_PATH` es una ruta externa, no un uploader/warmup automático.
 - **BLOCKED / OTHER FOCUS:** Users Master REPLACE hacia destinos sin promovidos (`identity_realm`), mantenimiento/revocación e interrupción/reintento real.
 
-Próximo foco único de este cierre: **consolidar la documentación canónica de Master y distribución ADA**. No abrir código, refactor, Users, alarmas, KPI, migración Python ni infraestructura productiva en este traspaso.
+Consolidación documental: los siete archivos Master/Starter se encuentran integrados en `atlanticus-cannonical@571f9c09e7968c9bc3563cdd6d2ff50c6ab21649`; la igualdad exacta con candidatos locales anteriores no fue comprobada. Tras cerrar la corrección de índices, el próximo foco técnico propuesto es calificar en Docker la distribución `9c6daffd`. ADA Operational Identification constituye un dominio PLANNED independiente; no se añade a las seis proyecciones existentes por efecto documental.
