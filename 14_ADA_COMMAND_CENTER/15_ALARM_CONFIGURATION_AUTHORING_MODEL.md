@@ -1,6 +1,6 @@
 # ADA Command Center — Alarm Configuration Authoring Model
 
-Estado: **CURRENT — Snapshot v3, editor guiado y routing estricto en código; deactivation fin de turno OPEN / no definido**. Corte de este frente 2026-09-28: `atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013`. Los gates anteriores de Web eran de componente, **no** aceptación host/browser global.
+Estado: **CURRENT — Source Snapshot v3, editor guiado, routing estricto; C1 Tool services/UI Web CLOSED estructuralmente; deactivation fin de turno y aceptación browser OPEN**. Corte histórico de este frente 2026-09-28 `atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013`; delta de ownership verificado `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`. Los gates previos de componente NO equivalen a aceptación global de host/browser.
 
 ## Agregado editable y versión durable
 
@@ -15,42 +15,42 @@ AlarmConfigurationSnapshot
   schema_version: 3
 ```
 
-La familia se deriva de `AlarmIdentity.family_key` y de mensajes con `scope=FAMILY`; no hay entidad Family persistida separada. `alarm_key` es identidad estable; `rule_name`, display y título no la sustituyen. `confirmed_tool_catalog_revision` se obtiene del manifest exacto congelado con la release Rn. Source v2 está SUPERSEDED y no tiene decoder compat actual. Conservar referencias de Rules activas/inactivas, origen Tool, steps habilitados/deshabilitados, targets visuales y estructuras Tool exactas para reconstrucción sin latest Tool Catalog.
+Familia derivada de `AlarmIdentity.family_key` y Messages `scope=FAMILY`, sin entidad Family separada. `alarm_key` estable; no sustituirlo con `rule_name`/display/title. Cn deriva del manifest Tool congelado junto con Rn. Source v2 SUPERSEDED, sin decoder legacy actual. Conservar referencias de Rules activas/inactivas, origen, steps habilitados/deshabilitados, visual targets y estructura Tool exacta para reconstrucción sin latest.
 
-## Workspace / Save / Validate / Publish — CURRENT
+## Workspace, Save, Validate, Publish — CURRENT
 
-El editor opera sobre `AlarmConfiguration` y metadata sidecar de workspace `_confirmed_tool_catalog_revision`, que no es parte del agregado. Save Draft pinnea Cn; Validate comprueba configuración intrínseca, pin actual y referencias Tool definidas; Publish repite y congela subset exacto en Source v3. Si Cn cambia, requiere acción deliberada de actualización. Releases históricas Rold/Cold no se reescriben. `VALID_AT_SAVE != B.2 READY != EFFECTIVE`. Un borrador transitoriamente incompleto no debe publicarse silenciosamente.
+El editor trabaja con `AlarmConfiguration` y sidecar `_confirmed_tool_catalog_revision` fuera del agregado. Save Draft fija Cn; Validate comprueba configuración intrínseca, pin actual y referencias Tool; Publish vuelve a comprobar y congela subset exacto en Source v3. Si Cn cambia, se necesita acción deliberada. Releases Rold/Cold inmutables. `VALID_AT_SAVE != B.2 READY != EFFECTIVE`; no publicar un borrador incompleto silenciosamente.
 
-El editor guiado existente organiza familias, Rules/Messages y la selección Tool/Component/Subcomponent y routing; hay suites locales previas del componente. La aceptación visual/responsive y host/browser completo no queda certificada por las pruebas del Engine.
+El editor guiado gestiona familias, Rules/Messages, selección Tool/Component/Subcomponent y routing. C1 migró el servicio/UI del Tool Catalog confirmado a bibliotecas Web independientes (`web/tools/catalog`, `web/tools/discovery-cosmos`, `web/tools/catalog-manager`); esto no modifica los contratos de authoring ni cierra aceptación visual/host/browser.
 
-## Routing FROZEN; presentation boundary OPEN
+## Routing FROZEN; presentación OPEN
 
 ```text
 PROCESS -> INTEGRATED_OPERATIONS -> STRATEGIC -> END
 ```
 
-Sin saltos, mismo nivel o retrocesos. C1 y C2 pueden no declarar destinos; C3 solo origen; C1 inmediato y C2 tiempos positivos/offsets calculados en B.2. Web comparte `next_routing_tool_kind` con Domain. Configuración histórica inválida debe permanecer visible para corrección, sin eliminación automática ni cambio implícito de criticidad. `routing_tools` puede incluir Strategic, `tools` de visualización contiene Process/Integrated Operations; no añadir target visual Strategic sin contrato expreso.
+No saltar, repetir nivel ni retroceder. C1/C2 pueden permanecer en origen; C3 sólo origen. C1 routing inmediato y C2 espera positiva con offsets B.2. Web reutiliza `next_routing_tool_kind`. Configuración histórica incompatible queda visible para corrección, sin borrado automático ni cambio silencioso de criticality.
 
-Cada Rule conserva `visual_targets` con Tool, `component_keys`, subcomponentes identificados por `(owner_component_key,subcomponent_key)` y `process_projection_mode` exclusivo de Process. `QUEUE_IN_QUEUE` para Integrated Operations y `CAROUSEL` para Process corresponden a estrategia futura de visualización, **no campos Source v3 ni scheduler nuevo**. Sigue **OPEN / CONFLICT** la independencia conceptual de targets visuales vs sincronización actual desde routing del editor. Fuente contextual: `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
+`routing_tools` puede incluir STRATEGIC; `tools` para visual tiene PROCESS e INTEGRATED_OPERATIONS. Visual targets por Rule contienen Tool, `component_keys`, subcomponentes `(owner_component_key,subcomponent_key)` y `process_projection_mode` sólo para Process. `QUEUE_IN_QUEUE` de Integrated Operations y `CAROUSEL` de Process son estrategias visuales futuras, no campos Source v3 ni scheduler ya programado. Sigue OPEN/CONFLICT la independencia conceptual de targets visuales respecto a la sincronización actual desde routing; ver `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
 
-## Parametrización de evaluación — precisión B2c.5d
+## Parametrización del evaluator — precisión B2c.5d
 
-Las Rules conservan `evaluator_key` y `parameters: Mapping[str,str|float|bool]` (sin `None`, listas, diccionarios anidados ni expresiones). Los parámetros **son opcionales** como inputs de negocio: la Web no debe crear una obligación general de límite/factor para todas las alarmas ni usarlos para resolver automáticamente columnas, particiones o fuentes del evaluator. El desarrollador decide los parámetros que lee y cualquier validación propia. Los requisitos de datos para lógicas nuevas del catálogo se definen manualmente en el contrato del evaluador y no son un catálogo de parámetros global. El ejemplo controlado B2c.5d usa `limit` opcional con default demostrativo 80.0; **no** es una Rule/producto registrado en producción.
+Rules conservan `evaluator_key` y `parameters: Mapping[str,str|float|bool]` sin `None`/listas/dicts anidados/expresiones. Los parámetros de negocio son opcionales: Web no debe imponer un `limit`/`factor` global ni derivar automáticamente columnas, particiones y fuentes de datos. Desarrollador de evaluador define sus parámetros y requisitos de datos. Ejemplo controlado B2c.5d con `limit` default 80.0 es una DEMO, no Rule/evaluator registrado en producción.
 
-El par `(family_key,evaluator_key)` resuelve implementación de código; `alarm_key` identifica la Rule configurada específica. `EvidenceSnapshot` flexible es salida de evaluación en backend; la Web de configuración no decide el lifecycle, WAL ni almacenamiento de evidencia.
+`(family_key,evaluator_key)` resuelve implementación; `alarm_key` identifica la Rule. `EvidenceSnapshot` es resultado flexible del backend evaluator, no autorización para que la Web de configuración decida lifecycle/WAL/evidencia.
 
-## OPEN / nueva observación: límite de desactivación hasta fin del turno
+## OPEN — máximo de desactivación hasta fin de turno
 
-**VERIFIED / CURRENT:** en `web/alarms/configuration/web/layout.py`, `default_deactivation.max_duration_hours` se muestra con `_number_field`. Domain define `AlarmDeactivationDefinition` y `MessageDeactivationDefinition` con `max_duration_hours: int|None`; si deactivation está habilitada se exige entero **1..12**. Este es el contrato de authoring y publicación realmente soportado a la fecha. No hay selector contractual confirmado para un máximo definido como **fin del turno**.
+**CURRENT:** `default_deactivation.max_duration_hours` usa `_number_field`; Domain `AlarmDeactivationDefinition`/`MessageDeactivationDefinition` aceptan `max_duration_hours: int|None` y, al habilitar desactivación, exigen entero **1..12**. No hay selector contractual confirmado para límite «fin del turno». Que Core maneje `effective_until` UTC no implementa esa capacidad de authoring.
 
-**OPEN / necesidad registrada por el usuario:** poder fijar como máximo de desactivación el término del turno operativo en lugar de una cantidad numérica fija. Esto puede atravesar Web/Domain/Materialization/Core/calendario: antes de diseñar UI decidir semántica exacta, Mine/Plant y turno aplicable, zona/instante, aprobación, overrides de mensajes y compatibilidad con la restricción actual 1..12. No introducir ningún campo, enum, algoritmo o migración en este cierre; tampoco interpretar la existencia del `effective_until` UTC de Core como cumplimiento de la autoría pedida.
+Antes de tocar código decidir semántica exacta, turno Mine/Plant, timezone/calendario, aprobación, overrides Message y compatibilidad con 1..12. No introducir campos/enums/algoritmos/migraciones sin decisión de este frente independiente.
 
-## Delta de aceptación Web B1d (sin cambiar Source v3)
+## Qualification B1d / cierre de ownership C1
 
-La cualificación B1d verificó el catálogo consolidado y su presencia en el Manager, además de una Alarm Source bajo proveedor `local`; **no** acreditó Source Blob/Projection Cosmos durable de alarmas. La publicación y la proyección son acciones separadas. La experiencia de creación observada no equivale a aceptación integral del flujo durable.
+B1d verificó catálogo confirmado y aparición de Tools en Manager más una Alarm Source `local`, NO Alarm Source Blob/Projection Cosmos durable. La publicación y la proyección siguen siendo acciones distintas. C1 cerró la extracción UI a `web/tools/catalog-manager` y traslado de servicios a Web; pruebas/wheels/importaciones locales GREEN pero browser/UX siguen UNVERIFIED.
 
-**OPEN / siguiente foco específico Web, tras extraer Tool Catalog y normalizar el Starter:** definir el tiempo de desactivación/«fin del turno» sin asumir un contrato nuevo, y cerrar el modal de configuración **sólo cuando guardar termine con éxito**, preservando mensajes de validación y errores si falla. No inferir que estas dos correcciones estén implementadas por el hecho de haber usado la UI.
+**OPEN / frente Web separado:** decidir «fin de turno» y cerrar modal sólo tras guardar con éxito; mostrar errores sin cerrarlo cuando falla. El Starter distribuible aún está PLANNED. Estos trabajos NO son el siguiente foco C2 ni están autorizados por el cierre C1.
 
-## Frontera siguiente de este cierre
+## Frontera siguiente del traspaso
 
-Este asunto Web es **separado** del próximo incremento técnico B2c.6, que auditará la composición ejecutable real de Alarm Runtime. La publicación Source v3, Materialization READY/BLOCKED y pin EFFECTIVE existen; no reabrirlos al estudiar el selector de desactivación. La decisión futura debe partir del código/decisions actualizados y contar con autorización explícita.
+La implementación Materialization READY/BLOCKED y los contratos EFFECTIVE exactos existen antes de C1. El foco siguiente C2 es sólo APPLICATION/rutas/Source Key y contenedor Cosmos según contrato para los tres procesos. No reabrir source v3, routing o presentación visual ni mezclar producer Qualification/Live Delivery durante ese incremento.

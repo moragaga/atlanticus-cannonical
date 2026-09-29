@@ -1,14 +1,21 @@
 # ADA Command Center — Tool Catalog
 
-Estado: **CURRENT V1 backend/Storage y Manager B1d integrado en host temporal / CLOSED qualification local; DECIDED/PLANNED extracción Web y Starter**. Corte adicional 2026-09-29.
+Estado: **CURRENT V1 / C1 WEB OWNERSHIP IMPLEMENTED & STRUCTURALLY CLOSED / B1d LOCAL TOOL QUALIFICATION HISTORICAL; Starter, Azure y aceptación browser UNVERIFIED**. Checkpoint implementado: `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409` (2026-09-29).
 
-## Backend owner
+## Ownership CURRENT después de C1
 
 ```text
-scopes/ada-command-center/backend/tools/catalog
+scopes/ada-command-center/web/tools/catalog
+    ada-command-center-web-tool-catalog==0.1.0
+scopes/ada-command-center/web/tools/discovery-cosmos
+    ada-command-center-web-tool-discovery-cosmos==0.1.0
+scopes/ada-command-center/web/tools/catalog-manager
+    ada-command-center-web-tool-catalog-manager==0.1.0
 ```
 
-## Contract
+Los antiguos paquetes `backend/tools/catalog`, `backend/tools/discovery-cosmos`, namespaces `ada_command_center.tools.*` y nombres de distribución anteriores están **SUPERSEDED / ausentes del árbol Git actual**. No usar wrappers de compatibilidad. El hecho de ejecutar lógica Python del lado servidor no implica ownership Backend si sirve exclusivamente a Web. Contratos genuinamente transversales permanecen en `domain/tools`.
+
+## Contract — CURRENT
 
 ```text
 ToolCatalogEntry
@@ -24,41 +31,25 @@ ToolCatalogSnapshot
     tools
 ```
 
-Revision is deterministic from normalized Tool entries.
+Revision determinista derivada de Tool entries normalizadas; entradas de Tool ordenadas/unívocas según su contrato implementado.
 
-## Consolidation
+## Consolidation y discovery — CURRENT
 
-The package consumes configured Tool ProjectionStore inputs and produces an all-or-nothing snapshot.
+`web/tools/catalog` consume entradas Tool ProjectionStore configuradas y genera snapshot all-or-nothing. Un refresh fallido **no** sobrescribe Storage CURRENT. `web/tools/discovery-cosmos` descubre/inspecciona por conexiones Cosmos externas nombradas, exige revisión/fingerprint para detectar drift, confirma y aporta `ToolCatalogManagerService`. No convertir reconocimiento de proyecciones externas en preloading productivo inferido.
 
-A failed refresh does not overwrite current Storage state.
-
-## Durable output
+## Durable output — CURRENT
 
 ```text
 ToolCatalogStore
 BlobToolCatalogStore
+Confirmed Tool Catalog -> Blob CURRENT
 ```
 
-V1 persists one CURRENT catalog in Storage/Blob.
+Existe un único catálogo CURRENT reemplazable en Storage/Blob V1. NO existe historia interna del catálogo ni proyección de salida consolidada a Command Center Cosmos. El nombre del contenedor Blob puede venir de `.env` del host; su blob y namespace se derivan de la composición actual de la aplicación. Las referencias Cosmos físicas de otros contratos no se configuran mediante nombres de contenedor en `.env`.
 
-No catalog history or retention is implemented here.
+## Consumer — Alarm Configuration / manifest exacto
 
-## Command Center topology
-
-Operational integration may observe multiple upstream Tool Cosmos/projection surfaces plus prior
-Storage state during reconciliation/certification.
-
-Confirmed output:
-
-```text
-Confirmed Tool Catalog -> Storage
-```
-
-It intentionally does not project back into Command Center Cosmos.
-
-## Consumer — Alarm Configuration
-
-One exact snapshot produces:
+Una única revisión leída produce:
 
 ```text
 AlarmToolReferenceCatalog
@@ -67,72 +58,48 @@ AlarmToolReferenceCatalog
     dependencies: ToolDependencyManifest
 ```
 
-UI tools omit STRATEGIC.
-Dependency catalog preserves all snapshot entries.
-
-## Shared downstream Tool contract
-
-Owner:
+Las UI Tool references omiten STRATEGIC; el `ToolDependencyManifest` conserva todas las entries necesarias para el snapshot. Contrato compartido:
 
 ```text
 scopes/ada-command-center/domain/tools
-```
-
-```text
 ToolDependencyEntry
 ToolDependencyManifest
 ```
 
-Shared by Alarm publication/history and backend Materialization.
+Alarm publicación/historia congela en `AlarmConfigurationSnapshot.tool_dependencies` el subconjunto exacto del catálogo Cn asociado a Rn. B.2 no necesita buscar una versión histórica del Blob Catalog, ni consultar Cosmos Tool latest para reinterpretar una release Alarm antigua.
 
-## History strategy
+## Authoring behavior — CURRENT
 
-Tool Catalog Store still keeps only CURRENT.
+`AlarmConfiguration` conserva Rules + Messages. `Save Draft` exige catálogo confirmado CURRENT; validación verifica claves referenciadas bajo la revisión fijada; publicación rechaza revision drift y congela `ToolDependencyManifest(Cn)`. Queda SUPERSEDED la formulación antigua «catálogo opcional para authoring». No alterar estas reglas en la normalización de rutas futura.
 
-Historical exact Tool evidence required by an Alarm revision is persisted in:
-
-```text
-AlarmConfigurationSnapshot.tool_dependencies
-```
-
-Therefore B.2 does not require versioned historical lookup from `BlobToolCatalogStore`.
-
-## Authoring behavior
-
-`AlarmConfiguration` remains Rules + Messages.
-
-But Alarm Manager publication is no longer externally unrestricted:
-- Save Draft requires current Confirmed Tool Catalog;
-- validation requires referenced keys in pinned revision;
-- publish rejects revision drift.
-
-This refines the old "catalog is only optional authoring assistance" statement.
-
-## Integración Manager B1d — CURRENT; ownership Web objetivo — PLANNED
-
-**CURRENT en `atlanticus:main@caced5d7711cf059d36ec61aecc9b3e9629bd41f`:**
+## Manager integration — CURRENT tras B1d y C1
 
 ```text
-backend/tools/catalog/                         # snapshot/codec/Blob store/consolidación
-backend/tools/discovery-cosmos/                 # discovery nombrado y ToolCatalogManagerService
 web/application/ada-command-center-configuration-manager/
-  src/.../catalog_manager.py                   # UI y callbacks B1d, aún ligados al host
-  src/.../composition.py                       # ManagerEntry y prefijo /manager
-  src/.../local_runtime.py | durable_runtime.py  # adapters/providers por composición
-web/alarms/configuration/                      # capability Web independiente
+    composition.py                        # integra ManagerEntry/host
+    local_runtime.py | durable_runtime.py # compone clients y providers
+web/tools/catalog-manager/
+    manager.py                            # UI y callbacks capability-local
+web/tools/discovery-cosmos/
+    manager.py                            # ToolCatalogManagerService
+web/tools/catalog/                      # consolidación, Blob y codec
+web/alarms/configuration/              # authoring independente
 ```
 
-El `pages/manager.py` del host registra el contenedor `/manager`; Tool Catalog se monta como `ManagerEntry(route='/tool-catalog')`. **No** es una página autónoma ni una librería Web reutilizable todavía. Discovery usa conexiones Cosmos externas con nombre; confirmación re-inspecciona y exige fingerprint/revisión previa iguales para detectar drift. El catálogo CURRENT permanece en Blob y no se proyecta a Command Center Cosmos.
+El host temporal registra `/manager` y monta Tool Catalog como Manager Entry `/tool-catalog`; no se convierte por ello en página autónoma ni en Starter productivo. La biblioteca UI expone una fábrica pública `create_tool_catalog_manager_entry(manager, principal_provider, group_key='configuration')` y no importa el host. La aplicación decide conexiones, provider/principal y Store; Domain no importa aplicación Web temporal.
 
-**VERIFIED en entorno de cualificación local del usuario:** 38 tests backend, 31 Web Manager, 6 qualification; Sources/Projections Cosmos independientes y `READY` para dos conexiones; confirmación manual y `verify-catalog` de Blob, con revisión de ejemplo `6a26feedc3cf7cee4ebcf5a93ad59314180635875ab25423bb576a052e517243`. El caso de prueba no es preloading productivo; las Tool keys y releases usados no definen estructura fija del producto. Azure productivo/CI/distribución permanecen **UNVERIFIED**.
+**VERIFIED por Git y usuario en C1:** commit remoto C1 `3961385a...`; código, espejos, tests y namespaces bajo Web; locks actualizados; Tool Catalog 13 tests, Discovery 38, Catalog Manager 8, host 27 y regresiones Alarm Web/Backend reportadas; Ruff/format GREEN tras cambios limitados a imports; wheels de `web_tool_catalog` y `web_tool_discovery_cosmos` construidos; importaciones del host de los tres paquetes nuevas PASS. No equiparar tests/importación con prueba de navegador ni distribución aislada.
 
-**DECIDED target / PLANNED implementation:** extraer la interfaz y sus callbacks a una biblioteca `scopes/ada-command-center/web/tools/...`, independiente tanto del Configuration Manager actual como del futuro Starter. Exponer una composición pública de Manager equivalente en independencia a la de `web/alarms/configuration`; la aplicación aporta el servicio de inspección/confirmación/adopción, principal/autorización y configuración de conexiones. El módulo Web no debe adquirir conexiones globales, decidir providers, importar `__main__` del host ni duplicar `backend/tools/catalog`/`discovery-cosmos`.
+**HISTORICAL B1d local qualification:** 38 tests backend, 31 Web Manager y 6 qualification del corte B1d, Cosmos Emulator + Azurite con dos conexiones READY, confirmación manual y verificación del Blob de revisión `6a26feedc3cf7cee4ebcf5a93ad59314180635875ab25423bb576a052e517243`. Aquellas Tool keys y releases fueron fixtures de qualification, no topología productiva fija. No declarar Alarm Source/Projection durable E2E probado a partir de este gate.
 
-Después de extraer: el host actual consume la nueva biblioteca, se elimina su `catalog_manager.py` anterior sin adaptadores de compatibilidad, y un Starter `ada-command-center-generic` compone Tool Catalog más Alarm Configuration para distribución. Identidad, perfiles, usuarios, navegación y futuras capacidades son **opt-in**, no paquetes obligatorios por anticipación. Este diseño no altera Domain Tools ni la evidencia histórica Rn/Cn. La revisión visual y normalización de pages son posteriores, sujetas a aceptación visual.
+## Starter objetivo — PLANNED / no implementado por C1
+
+`ada-command-center-generic` deberá componer Tool Catalog y Alarm Configuration desde bibliotecas independientes, sólo después de acordar ubicación física/entrypoint y ejecutar gates propios. Identidad, navegación, usuarios y perfiles se integran cuando su contrato real lo requiera; no crear un segundo dominio ni acoplarse a `ada-generic-application`. El host temporal podrá retirarse cuando el Starter cubra y valide sus responsabilidades; NO hacerlo en C1.
 
 ## Non-goals
 
-- Tool authoring in Command Center;
-- consolidated Tool Cosmos output;
-- B.2 inside Tool Catalog;
-- Tool catalog history solely for Alarm materialization.
+- Authoring de Tools en Command Center.
+- Salida Tool Catalog consolidada a Command Center Cosmos.
+- B.2/qualification dentro de Tool Catalog.
+- Historia de Tool Catalog sólo para Materialization.
+- Live/History/Analytics o cualificación Azure/Docker inferidos por C1.

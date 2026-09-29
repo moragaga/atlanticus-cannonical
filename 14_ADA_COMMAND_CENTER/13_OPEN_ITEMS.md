@@ -1,52 +1,57 @@
 # ADA Command Center — Open Items
 
-Estado: **CURRENT — B2c.7 es el corte Engine posterior; B1d Tool Catalog cerrado en qualification local, extracción Web/Starter PLANNED; deactivation y modal Alarm OPEN**. Los hitos B2c.5/B2c.6 mencionados abajo se conservan como contexto histórico de ese corte, no como próximos trabajos vigentes.
+Estado: **CURRENT — C1 extracción de Tool UI y traslado de Tool services a Web CLOSED estructuralmente; C2/C3/C4/C5 PLANNED; Starter, Azure, UX y otros frentes OPEN**. Corte C1 `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, canonical base `faec587c3fb321e76c1a3da38a4d8193a2f1fdb5`. Los checkpoints históricos de Engine/B1d conservan fechas y alcances propios.
 
-Corte de este reemplazo: `moragaga/atlanticus@a799dc15105d3e037f36ab77129ef0cfa8999013`, decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`, canonical base `46877f174513b2475f17b7dc739cd43951fa4ed0`. Este documento actualiza **sólo** los hechos de Alarm Engine y la nueva observación sobre la autoría Web; no revalida por implicación las demás áreas de Command Center.
+## Estado del frente Web después de C1 (2026-09-29)
 
-## OPEN del incremento Web antes de cierre canónico final (B1d, 2026-09-29)
-
-| Elemento | Estado | Razón / condición |
+| Elemento | Estado | Condición / evidencia delimitada |
 |---|---|---|
-| Publicación/descubrimiento/consolidación Tool Catalog | **CLOSED en qualification local / VERIFIED por logs** | Dos Tool Sources/Projections, discovery READY y revisión de Blob verificada; no acredita Azure ni Starter. |
-| Biblioteca `web/tools/...` de Tool Catalog | **DECIDED objetivo / PLANNED** | UI/callbacks residen en el host temporal; extraer con API de composición reutilizable, sin acoplarse a la aplicación ni duplicar backend. |
-| Host `ada-command-center-configuration-manager` | **CURRENT / NORMALIZATION PLANNED** | Reintegrar desde la biblioteca; no conservar implementación duplicada ni shims una vez validada. |
-| Starter `ada-command-center-generic` | **PLANNED** | Componer y distribuir Tool Catalog y Alarm Configuration desde capacidades separadas; identidad/perfiles/navigation sólo según demanda. |
-| Barrido de rutas, `.env.detail` y qualification | **OPEN / PLANNED** | Inventariar uso real y no borrar evidencia de qualification; el paquete de prueba no está en el árbol remoto inspeccionado. `.env` de prueba no se versiona. |
-| UX Tool Catalog | **OPEN / SEPARATE** | Revisión visual y convenciones Manager; no tests exclusivos de CSS visual. |
-| Desactivación de alarmas y cierre del modal tras guardar | **OPEN / SEPARATE** | Definir semántica de tiempo/fin del turno; corregir cierre de modal sólo tras guardado exitoso, sin alterar workflow Source/Projection incidentalmente. |
-| Alarm Source Blob y Projection Cosmos durable | **UNVERIFIED / DIFERIDO** | El test local dejó Source en filesystem; verificador durable no encontró Source/Projection. No afirmar migración automática. |
+| Publicación/descubrimiento/consolidación Tool Catalog | CURRENT / qualification B1d local CLOSED | Dos Sources/Projections de qualification, discovery READY y revisión Blob local; no Azure ni Starter. |
+| Biblioteca `web/tools/catalog` | CURRENT / C1 CLOSED | Ya aloja snapshots/consolidación/Blob con distribución nueva; viejo `backend/tools/catalog` SUPERSEDED. |
+| Biblioteca `web/tools/discovery-cosmos` | CURRENT / C1 CLOSED | Ya aloja conexiones nombradas y servicio inspect/confirm/adopted; viejo `backend/tools/discovery-cosmos` SUPERSEDED. |
+| `web/tools/catalog-manager` | CURRENT / extracción UI CLOSED | UI/callbacks independientes; Configuration Manager la compone sin implementación duplicada. |
+| Host temporal `ada-command-center-configuration-manager` | CURRENT | Regresiones/importaciones locales tras C1 PASS; browser/aceptación final post-C1 UNVERIFIED. |
+| Starter `ada-command-center-generic` | PLANNED | Componer/distribuir capacidades Web independientes, sin dependencia de ADA Generic ni paquetes prematuros de identidad/navigation. |
+| Barrido `.env.detail` y configuración de procesos Alarm | PLANNED C2/C5 | Faltan reglas comunes APPLICATION/SourceKey y nombre Cosmos físico por contrato, más auditoría variable por variable; conservar contenedor Blob ambiental. |
+| Qualification GREEN/Evaluator automática de Materialization | PLANNED C3 / BLOCKED BY DESIGN | No productor/verificadores reales confirmados; hoy JSON manual de input. |
+| Delivery último CURRENT y limpieza del arranque | PLANNED C4 | Receptor actual CURRENT+FACTS y cursor; sin replay en contrato futuro, Runtime FACTS permanece. |
+| Evidencia técnica Runtime KEY/VERSION | PLANNED C5 / OPEN | Eliminar parametrización no útil sólo al identificar key/version y propietario real; no inventar constantes. |
+| Instalación aislada wheels / CI / Azure / browser Web | UNVERIFIED | C1 validó wheel build/importaciones, no estos gates. |
+| UX Tool Catalog | OPEN / SEPARATE | Revisión visual y convenciones Manager; no tests de CSS visual. |
+| Desactivación fin del turno y cierre del modal | OPEN / SEPARATE | Requiere semántica/UX explícitas, no corregidas por C1. |
+| Alarm Source Blob y Projection Cosmos durable | UNVERIFIED / SEPARATE | B1d sólo demostró Source local; no inferir durable E2E ni migración automática. |
 
-El cierre de Tool Catalog en un ambiente de cualificación **no** equivale al cierre de la extracción/reutilización Web ni al Golden Path durable de alarmas.
+C1 CLOSED no implica Golden Path Alarm durable completo ni Starter distribuible funcional. El directorio de qualification Tool B1d temporal fue limpiado tras ese corte; no reconstruirlo por inferencia.
 
-## CLOSED / CURRENT con evidencia delimitada
+## Contratos CURRENT/CLOSED preservados
 
-- Extracción del dominio Alarm; Tool Catalog v1; autoría estructurada por Rules/Messages; ToolDependencyManifest y captura de historial Tool; `AlarmConfigurationSnapshot` schema v3 con manifest Cn exacto; protección de drift en Validate/Publish; identidad/revisión Tool correlacionadas con release Alarm.
-- `resolve_alarm_configuration` B.2 puro; publicación Materialization READY/BLOCKED local; lector exacto; B1 reference/plan; B2a WAL V1/V2; B2b Effective Head exacto; ejecución y sesiones B2c.
-- B2c.5c (lectura por registro actual y requisitos por evaluador), regresión local reportada **436 PASS**; B2c.5d (catálogo y ejemplo separado), **7 específicas + 443 regresión PASS, Ruff PASS y 40 archivos formateados**. Presencia de los archivos del ejemplo y registro vacío comprobada en a799dc1.
-- Las suites de componentes Web anteriores y registros de composición Cosmos/local no acreditan por sí mismos despliegue Azure, pruebas en navegador host real ni conformidad final de UI.
+- Domain Alarm extraído y Tool Catalog v1, autoría estructurada Rules/Messages, `ToolDependencyManifest` con revisión exacta, Source schema v3, guard de drift en Validate/Publish y referencias Tool congeladas Rn/Cn.
+- Resolver B.2 puro; Materialization local READY/BLOCKED y lector exacto; Engine WAL B1/B2a/B2b, EFFECTIVE y Runtime B2c; outputs CURRENT v1 y FACTS v2, receptor Delivery actual.
+- Gates históricos específicos B2c.5c informaron 436 PASS; B2c.5d 7 específicas/443 regresión PASS y Ruff. Estos conteos NO son C1 ni certificación Azure.
+- Gates C1 reportados: pruebas de catálogo, discovery, UI y consumidores, Ruff/format, dos wheels y smoke importación host. No atribuir a C1 distribución instalada aislada o pruebas browser.
 
-## OPEN — nueva observación: desactivación hasta fin del turno
+## OPEN — fin del turno y modal (anterior a C1)
 
-**VERIFIED en main:** en la autoría Web de alarmas `default_deactivation.max_duration_hours` se representa con `_number_field`. El contrato `AlarmDeactivationDefinition` y el override de mensajes usan `max_duration_hours: int|None`; para desactivación habilitada exigen entero **1..12**. El Engine dispone de `effective_until` UTC para solicitudes/efectos, pero esto **no** prueba que un operador o configurador pueda elegir la expresión **'hasta el fin del turno'** como máximo de desactivación.
+En Web Alarm, `default_deactivation.max_duration_hours` se presenta con `_number_field`; `AlarmDeactivationDefinition` y override de mensajes modelan `max_duration_hours: int|None`, y desactivación habilitada exige entero **1..12**. El Engine maneja timestamps UTC (`effective_until`) para solicitudes/efectos, pero ello no define la expresión «hasta fin del turno» como opción elegible. Pendiente decidir calendario operacional, zona Mine/Plant, inicio/límites, aprobación y overrides antes de modificar Domain/Source/Engine/UI. No añadir enums ni conversiones por intuición. Modal: cierre sólo tras guardar exitosamente, evaluación UI separada. Consultar `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
 
-**OPEN / requisito observado por el usuario, no solucionado:** la Web actual ofrece un máximo numérico y no permite establecer fin del turno como máximo. Antes de modificar UI se requiere contrastar reglas de negocio (qué significa máximo; instante de inicio, zona/calendario operacional Mine/Plant, límites 1..12, aprobación y overrides Message), capa de configuración/publicación, contratos del Core y calendario existente. **No** añadir enum, adaptador legacy, campo adicional o conversión silenciosa sin decisión. Este frente debe permanecer **SEPARATE de B2c.6**.
+## HISTORICAL — B2c.6 y B2c.7
 
-## HISTORICAL — siguiente foco del corte previo: B2c.6 (reemplazado en secuencia por B2c.7)
+El corte B2c.6 solicitó auditar la composición ejecutable de Runtime: `build_alarm_runtime_process` recibe registry y source_loader; `build_alarm_source_adapter` existe. `catalog/registry.py` productivo permanece vacío y `catalog/examples/threshold` es muestra, no evaluador autorizado. Las salidas/current/FACTS y el input receiver se incorporaron posteriormente en B2c.7 y están presentes antes de C1. La qualification Docker independiente de Engine/Delivery es otro gate todavía UNVERIFIED; no desplaza C2 como próximo foco aquí.
 
-Auditar la **composición ejecutable real** ya existente de Alarm Runtime: `build_alarm_runtime_process(...)` exige inyectar `evaluator_registry` y `source_loader`; `build_alarm_source_adapter(...)` está disponible. `catalog/registry.py` permanece vacío deliberadamente, `catalog/examples/threshold` es sólo referencia. Identificar entrypoints y conexiones reales antes de implementar wiring mínimo, sin datasets reales y sin tocar Core/Domain/Web.
+## Otros OPEN no iniciados durante C1
 
-## Otros OPEN que no se declaran resueltos
+- **Web authoring UX/host/browser:** ayudas, gestión de familia, persistencia, feedback y flujos Source/Projection físicos fuera de gates automáticos locales.
+- **UI Tool revision:** notificación explícita de Cn cambiado frente al pin guardado, sujeta a aceptación.
+- **Routing visual:** contrato conceptual visual targets independiente del routing vs sincronización implementada del editor, conflicto pendiente.
+- **Cosmos Alarm physical topology:** Manager ya deriva contenedor de resource contract; Materialization aún lo recibe desde env (C2).
+- **Qualification operativa:** sin productor GREEN/evaluator real; no autodeclarar éxito ni confundir archivo previo con artefacto READY (C3).
+- **Delivery/Live:** receiver actual no constituye Live Projection; pendiente C4 y contrato futuro Live por separado.
+- **Management Capture/Projection, History/Analytics:** PLANNED/SEPARATE, Web no lee WAL.
+- **Source v2 en despliegues reales:** sin decoder legacy actual; revisar sólo si existe estado real que requiera migración.
+- **Python objetivo:** 3.14.7 del Project contra metadata `==3.14.2` en paquetes Command Center; scope de distribución ajeno a C1/C2 salvo acuerdo.
+- **OperationalScope semana para PI/KPI:** no confundir otros enums/capacidades, frente separado.
+- **Boundary de infraestructura:** Materialization todavía importa `web/alarms/projection-cosmos`; diseñar owner cuando corresponda, no trasladar automáticamente a Domain puro.
 
-- **Web authoring UX/host/browser:** validar la experiencia real, ayudas, gestión de familia, feedback, persistencia y flujos Source/Projection que no estén acreditados por suites unitarias. Ver `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`.
-- **UI Tool revision:** notificación explícita de que Cn cambió respecto del pin guardado, si aún falta aceptación de producto.
-- **Routing visual:** conceptual visual targets independientes frente a sincronización actual del editor, decisión específica pendiente.
-- **Proyección Cosmos:** adapter/composición local y Cosmos presentes en código; despliegue Azure E2E UNVERIFIED.
-- **Productores Tool GREEN/evaluator qualification:** UNVERIFIED operacionalmente.
-- **Runtime/Delivery/findings y Live:** no equiparar artefactos Materialization locales con Live Delivery Web ya implementado; flujo externo exacto pendiente.
-- **Management Capture/Projection, History y Analytics:** PLANNED / SEPARATE, no acceso directo Web al WAL.
-- **Source v2 histórico en deployments:** no hay decoder legacy actual; inventario/migración sólo si se demuestra necesidad de despliegue.
-- **Python:** objetivo transversal 3.14.7 vs metadata Command Center `==3.14.2`; frente de distribución separado.
-- **OperationalScope semana para PI/KPI Runtime:** ausente; `ShiftScope.CURRENT_WEEK` y FABRICA_PLANES WEEKLY no sustituyen ese contrato. Registrar como OPEN en KPI, no implementar aquí.
+## Siguiente foco único
 
-**No reabrir workstreams durante el cierre.** Las decisiones de semántica fin de turno y forma final de presentación Web corresponden a otro foco, posterior y explícitamente autorizado.
+C2: leer de nuevo `atlanticus:main` y las decisiones/canónicos vigentes, fijar el contrato mínimo compartido de APPLICATION/VOLUMEN_PATH/Source Key y resolver Cosmos physical name de Materialization desde contrato existente. Mantener nombre de contenedor Blob en `.env`. Producir sólo propuesta primero; implementar más tarde tras autorización. No reabrir C3/C4/C5/Starter/UX en el mismo incremento.

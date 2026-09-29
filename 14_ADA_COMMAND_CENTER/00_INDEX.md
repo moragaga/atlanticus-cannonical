@@ -1,28 +1,30 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT — cortes independientes B2c.7 (Engine/Delivery, 2026-09-28) y B1d (Tool Catalog Web, 2026-09-29)**. La evidencia Engine sigue referida a `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; B1d está incorporado en `a518ff98c6303220e24ae3c645d3982e657fd22e` y presente en `main@caced5d7711cf059d36ec61aecc9b3e9629bd41f`. Decisions `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`; base de lectura de estos documentos `ec16bd2ccf0ae06065b8ee1d3a231ef4d2cbac57` (HEAD posterior `a5bb42157ee7a5dd2fd64ccc43fa4519628ce25c`, sin cambios en rutas tocadas). No se recalifican Analytics ni otros dominios.
+Estado: **CURRENT — C1 ownership Tool Catalog/Discovery Web CLOSED estructuralmente (2026-09-29); B1d qualification Tool y B2c.7 Engine/Delivery preservados como cortes históricos independientes; C2–C5 PLANNED, no implementados**.
 
-Este índice conserva los gates históricos de Engine y añade **únicamente** la implementación/qualification B1d del catálogo y el diseño pendiente de su extracción Web/Starter. Los estados por archivo se delimitan al contenido efectivamente revisado.
+Checkpoint comprobado para C1: implementación `moragaga/atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`; decisions HEAD leído `moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`; base canónica sustituida `moragaga/atlanticus-cannonical:main@faec587c3fb321e76c1a3da38a4d8193a2f1fdb5`. Revalidar HEAD antes de futuros cambios. La evidencia B2c.7 Engine histórica permanece referida a `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`, no se recalifica por C1. La qualification física B1d de Tool Catalog permanece histórica, no se equipara a Azure productivo ni a Web Starter.
 
-| Archivo | Contenido | Estado en este hito |
+Este índice distingue el cierre de **migración estructural C1** de los gates futuros de configuración, qualification, Delivery, Live, distribución y visual.
+
+| Archivo | Contenido | Estado referido a C1 |
 |---|---|---|
 | `01_PRODUCT_SCOPE.md` | Scope de producto. | SIN CAMBIOS; no recalificado. |
-| `02_CURRENT_IMPLEMENTATION.md` | Inventario B2c.7 + estado real B1d, con límites de qualification. | ACTUALIZADO B1d. |
-| `03_WEB_APPLICATION.md` | Host Manager actual y Starter distribuible pendiente. | ACTUALIZADO B1d. |
-| `04_CONFIGURATION_SCOPE.md` | Source v3/authoring y límites de aceptación B1d. | ACTUALIZADO, sin cambio contractual. |
-| `05_TOOL_TO_ALARM_CONFIGURATION.md` | Reconciliation→Storage→manifest exacto y prueba física local B1d. | ACTUALIZADO. |
-| `06_ENGINE_AND_PROJECTIONS.md` | Materialization local, EFFECTIVE, outputs Engine, recepción Delivery y proyecciones futuras. | REEMPLAZO B2c.7 ADJUNTO. |
-| `07_ANALYTICS_AND_STORYTELLING.md` | Analytics independiente. | SEPARATE; no afirmar implementado por FACTS. |
+| `02_CURRENT_IMPLEMENTATION.md` | Inventario B2c.7/B1d y delta de C1 verificado. | REEMPLAZO C1. |
+| `03_WEB_APPLICATION.md` | Host temporal y capabilities Web Tool actuales; Starter futuro. | REEMPLAZO C1. |
+| `04_CONFIGURATION_SCOPE.md` | Source v3/authoring, C1 Tool ownership y límites B1d. | REEMPLAZO C1. |
+| `05_TOOL_TO_ALARM_CONFIGURATION.md` | Tool Cn en Blob, manifest exacto y owner Web corregido. | REEMPLAZO C1. |
+| `06_ENGINE_AND_PROJECTIONS.md` | Engine/Materialization/Delivery físico, futuro Live. | HISTÓRICO; sin recalificación C1. |
+| `07_ANALYTICS_AND_STORYTELLING.md` | Analytics independiente. | SEPARATE; FACTS no acredita Analytics. |
 | `08_INITIAL_DASHBOARD.md` | Dashboard conceptual. | SEPARATE. |
-| `09_IDENTITY_NAVIGATION_PROFILES.md` | Identity y navegación. | SIN CAMBIOS. |
-| `10_INITIAL_OUT_OF_SCOPE.md` | No-objetivos. | SIN CAMBIOS. |
-| `11_GOLDEN_PATH.md` | Flujo E2E con evidencia B1d delimitada y B2c.7 conservado. | ACTUALIZADO. |
-| `12_SOURCE_LEDGER.md` | Genealogía Manager más corte B1d; Engine en `04_ALARM_ENGINE/11_SOURCE_LEDGER.md`. | ACTUALIZADO. |
-| `13_OPEN_ITEMS.md` | Extracción Tool Web, Starter, limpieza y UX Alarm separada. | ACTUALIZADO. |
-| `14_TOOL_CATALOG.md` | Catálogo, Manager B1d, extracción Web decidida/pendiente. | ACTUALIZADO. |
-| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Aggregate/Source v3; evidencia local y modal pendientes. | ACTUALIZADO, contrato v3 intacto. |
-| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Contrato Live conceptual con estado actualizado del productor y receptor. | REEMPLAZO B2c.7 ADJUNTO; Live aún PLANNED. |
-| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | Owners Domain/Web y extracción sin dependencia de host. | ACTUALIZADO. |
-| `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md` | UX/routing y defectos de modal/desactivación diferidos. | ACTUALIZADO; conflictos OPEN. |
+| `09_IDENTITY_NAVIGATION_PROFILES.md` | Identity/navegación. | SIN CAMBIOS. |
+| `10_INITIAL_OUT_OF_SCOPE.md` | No objetivos. | SIN CAMBIOS. |
+| `11_GOLDEN_PATH.md` | Flujo End-to-End, C1 Web cerrado, B2c.7 conservado y gates abiertos. | REEMPLAZO C1. |
+| `12_SOURCE_LEDGER.md` | Genealogía histórica B1d + commit C1, sin reescribir historia. | REEMPLAZO C1. |
+| `13_OPEN_ITEMS.md` | Deudas remanentes y separación estricta C2/C3/C4/C5. | REEMPLAZO C1. |
+| `14_TOOL_CATALOG.md` | Owners Web actuales, Blob CURRENT, migración cerrada, pruebas delimitadas. | REEMPLAZO C1. |
+| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Aggregate/Source v3, C1 delta y UX pendiente. | REEMPLAZO C1. |
+| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Contrato Live conceptual y receptor CURRENT+FACTS vigente antes de C4. | SIN CAMBIOS C1; actualizar sólo con evidencia C4 futura. |
+| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | Domain Tools y ownership Web CURRENT; límites con Backend. | REEMPLAZO C1. |
+| `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md` | UX histórica preservada, C1 corrige owner Tool y próximos focos. | REEMPLAZO C1. |
 
-**Focos independientes:** para B1d Web, extraer Tool Catalog a biblioteca reutilizable y luego componer/distribuir Starter; sólo entonces cerrar limpieza y actualizar estado de implementación. Para Engine, conserva por separado qualification/distribución Docker. `AlarmLiveProjection`, Capture e History/Analytics permanecen SEPARATE. No actualizar estados de otros proyectos por inferencia.
+**Hitos futuros independientes:** C2 compartición de APPLICATION/rutas/Source Key y contratos de contenedor Cosmos; C3 qualification verificable automática; C4 Delivery latest CURRENT-only; C5 evidencia técnica/env documental. Los nombres y límites de C2–C5 son decisiones de dirección del Project, **no** certificaciones de código ni autorización implícita para implementarlos. Starter, Browser/UI, Docker y Analytics se mantienen fuera de estos cierres salvo nuevo alcance explícito.

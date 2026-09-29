@@ -1,10 +1,8 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT / ALARM CONFIGURATION SNAPSHOT V3 IMPLEMENTED**
+Estado: **CURRENT / ALARM CONFIGURATION SNAPSHOT V3 IMPLEMENTED; C1 WEB TOOL OWNERSHIP CLOSED / aceptación browser y Source/Projection durable UNVERIFIED**. C1 `atlanticus:main@3961385aecd0eb7e373018fc25e509a71dccc409`.
 
-Command Center owns Alarm Configuration administration.
-
-It reuses `atlanticus.web.manager`; the Manager generic remains unchanged.
+Command Center owns Alarm Configuration administration and reuses `atlanticus.web.manager`. Generic Manager remains unchanged.
 
 ## Editable aggregate
 
@@ -14,7 +12,7 @@ AlarmConfiguration
     messages
 ```
 
-The editor does not embed Tool definitions.
+El editor no embebe Tool definitions.
 
 ## Durable published aggregate
 
@@ -24,22 +22,19 @@ AlarmConfigurationSnapshot
     tool_dependencies: ToolDependencyManifest
 ```
 
-This is the CURRENT durable Alarm source payload.
-
-The earlier statement that Tool Catalog metadata did not change the durable Alarm snapshot is
-SUPERSEDED.
+Es el payload durable CURRENT de Alarm Source schema v3. La formulación anterior según la cual Tool metadata no modificaba el snapshot durable está **SUPERSEDED**.
 
 ## Tool correlation
 
-Workspace-specific metadata:
+Metadata específica del workspace:
 
 ```text
 _confirmed_tool_catalog_revision
 ```
 
-is not part of `AlarmConfiguration`.
+No forma parte de `AlarmConfiguration`.
 
-## Save/validate/publish
+## Save / validate / publish
 
 ```text
 Save Draft
@@ -60,33 +55,17 @@ Publish
 -> persist AlarmConfigurationSnapshot v3
 ```
 
-No in-memory validation cache is required.
+No es obligatoria una caché de validación en memoria. Un workspace guardado C1 no se publica silenciosamente si Tools avanza a C2; release histórica R1/C1 permanece inmutable.
 
-## Drift behavior
+## Tool references persistidas
 
-```text
-saved workspace C1
-Tools becomes C2
-publish without new save/validation
--> rejected
-```
+Comprenden Tool origins, todos los pasos de escalamiento (incluidos disabled), todos los visual targets y todas las Rules (incluidas inactive).
 
-Existing durable `R1/C1` remains unchanged.
+## Authoring UI y C1
 
-## Tool references persisted
+El read model expone sugerencias Tool/Component/Subcomponent. STRATEGIC no es elegible para visualización Alarm, pero el manifest completo derivado del mismo snapshot conserva todos los tipos Tool; `routing_tools` y visual `tools` son superficies distintas de la implementación.
 
-Includes Tools referenced by:
-- origin;
-- every escalation step, including disabled;
-- every visual target;
-- every Rule, including inactive.
-
-## Authoring UI
-
-UI read model continues to expose Tool/Component/Subcomponent suggestions.
-
-STRATEGIC is excluded from Alarm authoring suggestions, but the full dependency catalog derived from
-the same Tool snapshot retains every Tool entry.
+El catálogo Cn se origina hoy en `web/tools/catalog`, se descubre/confirma mediante `web/tools/discovery-cosmos` y la UI propia reside en `web/tools/catalog-manager`; el host temporal sólo los compone. La afirmación B1d «UI de Tool Catalog requiere extracción» está **SUPERSEDED** por C1. Su **revisión visual** sigue OPEN/SEPARATE; ninguna suite automatizada certifica aceptación visual final.
 
 ## Projection base
 
@@ -96,21 +75,16 @@ Source release
 -> ProjectionRecord[AlarmConfigurationSnapshot]
 ```
 
-No Tool reread.
+No relectura posterior de latest Tool Catalog para una release Rn/Cn ya publicada.
 
-## Evidencia de configuración B1d y límite de aceptación
+## Evidencia histórica B1d y límite de aceptación
 
-En la qualification B1d se publicó/proyectó cada Tool por los contratos ADA existentes y se confirmó un catálogo consumido por el Manager de Command Center. Se observó una Alarm Source en filesystem con el proveedor `local`; **no** se verificó su publicación/proyección física con proveedor `durable`. Estos resultados no cambian `AlarmConfigurationSnapshot` v3, el guard de drift Cn ni la obligatoriedad de publicar y proyectar por separado. Cambiar `local -> durable` no constituye migración automática.
+La qualification B1d publicó/proyectó Tools por contratos ADA existentes y confirmó un catálogo consumido por el Manager. Se observó una Alarm Source en filesystem `local`, **no** publicación/proyección física durable de Alarm Source con provider `durable`. La publicación y la proyección son acciones separadas; cambiar `local -> durable` no implica migración automática. El guard Cn y Source v3 permanecen intactos tras C1.
 
-La UI de Tool Catalog requiere extracción y revisión visual propia. Quedan **OPEN / SEPARATE** la semántica del tiempo máximo de desactivación (incluido fin del turno) y el cierre correcto del modal al guardar una configuración de alarma; no afirmar que la Source local prueba esas correcciones.
+OPEN/SEPARATE: semántica de máximo de desactivación, incluido fin del turno, y cierre del modal de Alarm Configuration únicamente después de guardado exitoso. No inferir que la Source local acredita estas correcciones.
 
-## Estado posterior y foco actual
+## Adapters y siguiente frontera
 
-En `atlanticus:main@7b61eaea463bab10a595166fa12d015e4c015c78` existen adapters
-local/Cosmos, stores de Source local/Blob y composición de persistencia de Alarm Configuration.
-Esto **reemplaza** la afirmación histórica de que todavía faltaba crear el adapter Cosmos,
-pero no demuestra un despliegue Azure end-to-end.
+Existen adapters local/Cosmos y composición Source local/Blob y Projection local/Cosmos en código, observado ya en el corte histórico `atlanticus@7b61eaea463bab10a595166fa12d015e4c015c78`; esto **reemplaza** afirmaciones antiguas sobre inexistencia de adapter Cosmos, pero no acredita Azure E2E.
 
-La prioridad inmediata es cerrar la UX del Manager. Ver
-`18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`; Materialization y Live Delivery son
-frentes posteriores y no se implementan aquí.
+**Siguiente foco de este traspaso C2:** normalizar la identidad/rutas y el contrato de contenedor Cosmos del job Materialization junto con Runtime y Delivery, manteniendo Blob container ambiental. C1 no autorizó modificar el editor ni sus contratos de negocio; revisión UX corresponde a otro foco.
