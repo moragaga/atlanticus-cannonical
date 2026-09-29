@@ -1,73 +1,86 @@
 # ADA Command Center — Open Items
 
-Estado: **CURRENT — C1 Web Tool ownership CLOSED; C2 identidad/Source Key/topología Cosmos CLOSED estructuralmente y con gates locales delimitados. C3/C4/C5 PLANNED; Starter, durable E2E, Docker, Live/Management/Analytics y UX pendientes independientes**.
+Estado: **CURRENT — C1/C2/C4 y UX-01/UX-02 CLOSED dentro de sus gates; Starter genérico propio con runtime y Home mínima PLANNED como siguiente foco; defectos UX, reconciliación contractual, Live/Management/History e integración física siguen OPEN o PLANNED**. Actualización: 2026-09-29.
 
-## Autoridad del corte
+## 1. Autoridad del corte
 
 ```text
-atlanticus:main           18029e19ff01e58b9c9399c132ff32b5ca913f06
+atlanticus:main           2e7500a6b8b4d5bbdad26d807abfa57936db99d5
 atlanticus-decisions:main 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-canonical:main previo    15ba51fb5a140601fd4e2a8d78a01a5b87c6eeaa
+canonical:main previo    2e8bbf4780cafc4cea3b18351861aa97a4fb0053
 ```
 
-El commit remoto actual incluye la corrección de una prueba operacional realizada por el usuario; no modificarla ni incorporar tests extra durante este cierre documental.
+**Precaución documental:** el canónico remoto es anterior a la integración del reemplazo C4 y al cierre UX-01/UX-02. Los reemplazos C4 generados en un chat anterior no constan integrados al repositorio; contrastar cualquier archivo local posterior antes de utilizar este paquete. El presente cierre es documental: Git SOLO LECTURA, sin implementación nueva ni validación Docker/Azure adicional.
 
-## Estado consolidado por elemento
+## 2. Estado consolidado por elemento
 
-| Elemento | Estado | Evidencia / frontera |
+| Elemento | Estado | Evidencia o frontera |
 |---|---|---|
-| C1 Catalog/Discovery/Tool UI propiedad Web | **CLOSED / CURRENT** | Bibliotecas bajo `web/tools` y composición host; `backend/tools` SUPERSEDED; qualification B1d local histórica. |
-| C2 APPLICATION operacional común | **CLOSED / CURRENT** | Tres plantillas/manifiestos declaran `ada-command-center`; `job_key` separa sus leases. |
-| C2 VOLUMEN_PATH manual y compartido | **CLOSED contractual / UNVERIFIED físico** | Tres procesos conservan configuración absoluta manual; no hay prueba multi-host del mismo montaje. |
-| C2 Source Key única | **CLOSED / CURRENT** | Texto `alarm-configuration` en `domain/alarms`, Web y procesos consumidores. Variables env/secret redundantes eliminadas. |
-| C2 Alarm Cosmos physical name/partition | **CLOSED en código / UNVERIFIED físico** | Materialization y Web consumen resource contract existente; misma cuenta/base real no acreditada. |
-| Backend completo después del commit final | **OPEN / UNVERIFIED** | El último gate reportado fue 238 PASS/1 SKIP/1 DESELECT antes del arreglo; usuario corrigió el test en Git, falta log sin exclusión. |
-| Qualification Materialization C3 | **PLANNED / BLOCKED BY DESIGN** | JSON manual CURRENT, sin productor/validadores GREEN productivos verificados. |
-| Delivery CURRENT-only C4 | **PLANNED** | Receiver actual continúa CURRENT+FACTS/cursor; objetivo de siguiente debate. |
-| Evidencia técnica/environments C5 | **PLANNED / OPEN** | `ALARM_TECHNICAL_EVIDENCE_CONTRACT_KEY/VERSION` necesitan owner y valores contractuales reales. |
-| Docker separado + volúmenes reales | **UNVERIFIED / SEPARATE** | Integración local controlada histórica no equivale a distribución aislada. |
-| Alarm Source Blob / Projection Cosmos E2E | **UNVERIFIED / SEPARATE** | Contratos/adapters presentes; binding real y publicación/proyección física sin gate reportado. |
-| Starter Web propio | **PLANNED** | Host temporal CURRENT, browser/aceptación final UNVERIFIED. |
-| Live Delivery / AlarmLiveProjection | **CONTRACT AGREED / PLANNED** | Input receiver no es Live materializer; no mezclar C4 con Live. |
-| Management Capture/Projection, History/Analytics | **PLANNED / SEPARATE** | No inferir de WAL/FACTS disponibles ni leer WAL desde Web. |
-| UI desactivación fin de turno y guardado modal | **OPEN / SEPARATE** | Requiere contrato temporal/calendario y validación visual/funcional explícita. |
-| `backend/materialization -> web/projection-cosmos` | **OPEN / SEPARATE** | Importación actual conocida; C2 no reubicó la dependencia. |
+| C1 catálogo/discovery/UI Tool con ownership Web | **CLOSED / CURRENT** | `web/tools/catalog`, `discovery-cosmos`, `catalog-manager`; `backend/tools` SUPERSEDED; B1d local histórico. |
+| C2 `APPLICATION=ada-command-center`, Source Key Domain | **CLOSED / CURRENT** | Tres jobs con distintos `job_key`/leases; Source Key literal `alarm-configuration` en Domain. |
+| C2 `VOLUMEN_PATH` | **CLOSED contractual / UNVERIFIED físico** | Configuración absoluta manual; mismo montaje físico multi-contenedor no demostrado. |
+| C2 recurso Cosmos de Projection | **CLOSED en código / UNVERIFIED físico** | Web/Materialization usan resource contract; conexión real a misma cuenta/base no acreditada. |
+| C4 Delivery receptor CURRENT-only | **CLOSED / CURRENT** | Git y cierre anterior: último CURRENT, valida pin/EFFECTIVE/READY; Runtime FACTS v2 permanece. Los reemplazos canónicos C4 anteriores requieren reconciliación documental. |
+| UX-01 modal Save Draft | **CLOSED en implementación/tests** | Éxito cierra modal; errores no deben cerrarlo; 122 PASS previos reportados en Web. |
+| UX-02 límite Rule/Message | **CLOSED en implementación/tests** | `1..11 | END_OF_SHIFT`, Source schema v3 inalterado; commit `2e7500a...`, 20 archivos, suites 59+64+123=246 PASS. |
+| Arranque Web de prueba sin emuladores | **CLOSED para prueba local aislada** | Lanzador EXTERNO, host real, stores archivo, una Tool Process sintética; NO Starter/host distribuido. |
+| Crear familias, Rules, Messages; asignar y guardar | **VERIFIED / CLOSED básico** | Aceptación manual reportada por el usuario; no implica recuperación tras reinicio ni Product UX complete. |
+| Defectos de retención de valores, validaciones, alertas | **OPEN** | Findings observados; sin causa ni regression gate visual específicos; pueden afectar calidad de borrador. |
+| UX END_OF_SHIFT selección manual/operación real | **UNVERIFIED / PLANNED** | Tests estáticos y UI implementados; falta fuente de hora real, UTC y gestión E2E. |
+| B.1 frozen deactivation `1..12` vs Git `1..11 | END_OF_SHIFT` | **CONFLICT / OPEN** | Mismo campo `max_duration_hours` y Source v3; exige decisión documental/versionado formal. |
+| Python baseline 3.14.7 frente a metadata `==3.14.2` | **OPEN** | El prompt de shell indicaba 3.14.7, pero no se verificó el intérprete seleccionado por `uv run`; distribución limpia no cualificada. |
+| Host temporal nativo sin dependencia Blob en `local` | **NOT IMPLEMENTED / separate** | `__main__` real usa Tool Catalog Blob en ambos providers; no adoptar fixture como producción. |
+| Starter genérico con runtime/home | **PLANNED / NEXT** | Meta del usuario para próximo debate, sin implementación aquí. |
+| C3 Qualification GREEN producer/evaluadores | **PLANNED / BLOCKED BY DESIGN** | JSON manual CURRENT, productor/verificadores reales sin identificar. |
+| C5 contrato technical evidence/env restantes | **PLANNED / OPEN** | Owner/key/version reales sin decidir; no inventar variables. |
+| Docker artefactos/servicios independientes | **UNVERIFIED / separate** | Regresión local no implica equivalencia física en contenedores. |
+| Alarm Source Blob ↔ Projection Cosmos E2E | **UNVERIFIED / separate** | Adapters/contracts existen, no hay gate físico de binding. |
+| Live Delivery y `AlarmLiveProjection` | **PLANNED / NOT IMPLEMENTED** | Receptor C4 no enriquece ni publica Live. |
+| Management Capture/Projection, History/Analytics | **PLANNED / separate** | No inferir de CURRENT ni FACTS. |
+| `backend/processes/alarms-materialization → web/alarms/projection-cosmos` | **OPEN técnico heredado** | Frontera de ownership sin refactor autorizado. |
+| Independencia visual targets ↔ routing | **CONFLICT / OPEN** | Contrato visual y sincronización actual de editor divergen; resolver en UX propio, no Starter. |
 
-## Contratos CURRENT preservados
+## 3. Invariantes CURRENT preservados
 
-- Source `AlarmConfigurationSnapshot` v3 congela ToolDependencyManifest Rn/Cn; Save/Validate/Publish no reinterpreta Tool latest.
-- C2 fija la Source Key textual única `alarm-configuration` en Domain, no en cuatro configuraciones editables.
-- C2 comparte valor de APPLICATION sin compartir `job_key`; `VOLUMEN_PATH` sigue siendo input manual y debe apuntar físicamente al mismo almacenamiento.
-- Cosmos Alarm Projection tiene nombre físico/partición declarados en su resource contract, solo connection ref admite override; nombre Blob sigue configurado ambientalmente.
-- `VALID_AT_SAVE != READY != EFFECTIVE`. READY publica Runtime y Delivery conjuntamente, BLOCKED no sustituye READY íntegro.
-- Pin exacto `source_key + result_id + manifest_sha256 + resolution_key`; Engine WAL/EFFECTIVE es autoridad operacional.
-- Engine CURRENT v1 completo y FACTS v2 encadenados son productos distintos. Delivery **hoy** recibe ambos y conserva cursor de FACTS.
-- Live Projection, Management Projection y History/Analytics son fronteras distintas; Web no calcula priority/routing ni lee WAL.
+- Source `AlarmConfigurationSnapshot` v3 con ToolDependencyManifest Cn congelado. `VALID_AT_SAVE != READY != EFFECTIVE`, sin latest Tool reinterpretando Rn/Cn.
+- `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'` en Domain; host Web transforma a `SourceKey` técnico. C2 comparte APPLICATION entre jobs sin compartir `job_key`/lease; `VOLUMEN_PATH` manual/absoluta exige mismo medio físico, no solo la misma string.
+- Cosmos Alarm Projection físico derivado de resource contract, no `.env` duplicado; contenedor Blob permanece ambiental y conexiones Tool Cosmos pueden ser múltiples/nombradas.
+- READY íntegro reúne `runtime.json` y `delivery.json` + manifest; BLOCKED no reemplaza READY. Pin completo `source_key + result_id + manifest_sha256 + resolution_key`; WAL/EFFECTIVE es autoridad operacional.
+- Runtime CURRENT v1 completo/reemplazable y FACTS v2 inmutables encadenados son productos distintos. Delivery C4 consume **únicamente último CURRENT**; no elimina FACTS Runtime ni construye Live.
+- `enabled=false` implica `max_duration_hours=None, approval_required=false`. Override Message ausente hereda; presente reemplaza regla completa. Configuración actual `1..11 | END_OF_SHIFT`; no convertir silenciosamente `12` a fin del turno.
+- Familias derivadas, sin Family durable vacía; routing `PROCESS → INTEGRATED_OPERATIONS → STRATEGIC → END`. Visual targets/routing son fronteras conceptuales distintas aunque editor actual pueda sincronizarlos.
+- Live Projection, Management Projection e History/Analytics siguen separadas; Web no calcula priority/routing, interpolación de cause ni usa WAL como API.
 
-## C3, C4 y C5 — estados estrictamente separados
+## 4. OPEN UX observados y alcance de prueba
 
-**C3 — PLANNED / BLOCKED BY DESIGN.** Antes de automatizar `ALARM_QUALIFICATIONS_FILE` identificar fuente/produtor GREEN, evaluadores y verificación reales. El input manual existente es una operación legítima controlada; el sistema verifica coherencia antes de promover READY.
+**Valores perdidos:** el usuario vio campos que se borran durante edición. No se identificó callback ni patrón de reproducción. **No** congelar el comportamiento como aceptable: su prioridad se decidirá en incremento UX si bloquea escenarios reales o antes de producción.
 
-**C4 — PLANNED / próximo foco propuesto.** Debatir cambio de `LocalAlarmDeliveryReceiver` y composición del job para consumir el último CURRENT sin backlog FACTS, manteniendo chequeos exact pin y EFFECTIVE. Auditar semántica de reinicios, timestamps y rutas existentes; **no** eliminar productor FACTS v2, WAL, componentes History ni implementar Live por inferencia. Revisar tests afectadas antes de implementar.
+**Validaciones intermitentes:** algunos mensajes de validación desaparecen. Falta determinar condiciones/state; no suponer que los validators del Domain fallaron, ya que las suites pasaron.
 
-**C5 — PLANNED.** Auditar valores reales y propiedad de contrato técnico de evidence Runtime; no inventar constantes ni alterar producción para limpiar `.env` cosméticamente. C2 únicamente quitó variables duplicadas demostrablemente contractuales.
+**Alertas persistentes:** avisos `success`/`warning`/`danger` permanecen visibles. No inventar temporizador ni patrón genérico sin decisión UX y diagnóstico.
 
-## Conflictos y diferidos
+**Aceptación parcial:** guardar familias/Rules/Messages y asignarlas quedó **CLOSED** en browser aislado, pero no se acreditaron reinicio/recovery, edición de todas las secciones, error matrix, selección manual de END_OF_SHIFT con round-trip, ni responsive visual definitivo. Estos OPEN no revocan los gates de componentes y tampoco constituyen aprobación productiva de la UI.
 
-1. **Canonical previo frente a implementación C2:** documentos `00`, `02`, `04`, `11`, `12`, `13`, `17` seguían diciendo C2 PLANNED o anunciándolo como próximo; este paquete los sustituye. Se actualizan también `03` y `06` por consumo Web y estado operacional C2. La base canónica remota permanece antigua hasta integración humana.
-2. **Decisions históricos SharePoint/Tool Cosmos frente a pipeline actual:** no resolver silenciosamente; ver `12_SOURCE_LEDGER.md`. La separación Live/Management sigue compatible.
-3. **Fuente registral Operational Data frente a test previo de Runtime:** Git actual ya corrige el test por el usuario; no tratarlo como nuevo incremento ni aportar otro parche. La habilitación real de rutas de `FABRICA_KPIS`/`METEODATA` en Alarm Runtime es una decisión distinta, no consecuencia del listado global de fuentes.
-4. **Python metadata:** paquetes Command Center con `requires-python==3.14.2` frente al baseline 3.14.7 declarado y entorno informado por usuario; revisión distribución separada, no modificar dependencia por inferencia.
-5. **Otros conflictos** documentados en `16_ALARM_LIVE_DELIVERY_CONTRACT.md` (supresión Special Cascade y política de Messages) permanecen OPEN, sin intervención C2.
+## 5. OPEN de contrato y operación
 
-## OPEN heredados de Web/Authoring que no se abrieron en C2
+**Fin del turno:** el editor implementa el valor estático `END_OF_SHIFT`. El Web operacional debe obtener el término real del proceso/turno, con semántica y timezone acordados, y enviar `effective_until` UTC al Core; no hay Management Capture/Web operacional implementado que cierre este camino. Decisions B.1 DESIGN FROZEN todavía declara máximo numérico `1..12` y cálculo conceptual limitado por `shift_end`; Git actual usa `1..11 | END_OF_SHIFT` en mismo campo. La discrepancia necesita decisión formal antes de consumidores adicionales.
 
-- **Fin del turno:** hoy `default_deactivation.max_duration_hours` usa campo numérico y Domain requiere un entero `1..12` si la capacidad se habilita. `effective_until` UTC no define por sí solo `shift_end`. Antes de editar decidir zona, calendario/turno Mine o Plant, aprobación y overrides Message.
-- **Modal:** UX debe cerrar únicamente tras guardado exitoso; validación visual y funcional independiente.
-- **Routing visual:** la separación conceptual visual-target/routing no debe darse por implementada en el editor, que actualmente puede sincronizar targets desde routing. Requiere decisión de experiencia propia.
-- **Revision Tool Cn:** aviso UX de cambios respecto al pin del workspace sigue OPEN.
-- **Management:** lifecycle de requests deactivation obsoletas y otros conflictos de Core/decisions no se reabrieron aquí.
+**Source v3 compatibilidad:** codec de configuración acepta `str` tagged en `max_duration_hours` sin version bump; impacto en snapshots históricos `12`/consumidores externos es **UNVERIFIED**. El usuario instruyó no dejar legacy: resolver como contrato, no meter fallback/alias no autorizado ni migración ficticia.
 
-## Próximo foco único recomendado
+**C3 qualification:** automatizar requiere fuente GREEN y evaluadores reales autorizados; la qualification mediante intervención humana/manual es un contrato legítimo mientras tanto. **C5 evidence/env:** registrar owner/key/version verificables antes de llenar plantillas.
 
-**C4: frontera de recepción Delivery CURRENT-only**, en chat separado y con auditoría/diseño antes de autorización de código. Git SOLO LECTURA por defecto. No abrir C3/C5/Live/History/Starter/Docker en ese mismo incremento.
+**Integración física/distribución:** verificar package/runtime, `requires-python`, nombres/paths/env existentes, cuenta/base Cosmos común y montaje físico compartido entre jobs. Ninguno se acredita por suites UX ni por host sin emuladores.
+
+## 6. Conflictos canónico / Decisions / implementación
+
+1. Canonical remoto `15_...` y `18_...` describen desactivación `1..12`, modal y UX de fin de turno todavía OPEN. Git y gates de este hito los hacen CURRENT/CLOSED **sólo en editor estático**; cálculo operacional sigue OPEN.
+2. Canonical remoto `00/02/03/04/06/11/12/13/16/17/18` refleja C4 PLANNED/CURRENT+FACTS cuando Git ya tiene C4 CURRENT-only. Los reemplazos C4 de otro cierre existen como trabajo preparado, **no** se acreditó su integración. No sobrescribir su detalle al combinar estos reemplazos UX.
+3. B.1/B.2 Decisions históricos sobre SharePoint/topología, Special Cascade y Messages inactive conservan conflictos heredados; no reescribir o resolver implícitamente con Starter.
+4. Project fija Python 3.14.7 mientras varios `pyproject.toml` de Command Center contienen `requires-python==3.14.2`; compatibilidad de instalación/distribución aislada sigue OPEN.
+5. El host `__main__` en `local` usa Tool Catalog Blob, pero el lanzador aislado externo usa `TestOnlyFileCatalog`: ninguno de los dos hechos significa que el Starter genérico actual ya exista.
+
+## 7. Documentos y siguiente frontera
+
+Este paquete contiene reemplazos completos de `00_INDEX.md`, `03_WEB_APPLICATION.md`, `11_GOLDEN_PATH.md`, `13_OPEN_ITEMS.md`, `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md`, `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md`. Integrar sólo tras comprobar diff contra canonical local y otros reemplazos C4 existentes. Para sincronización canónica global **todavía** conciliar `02_CURRENT_IMPLEMENTATION.md`, `04_CONFIGURATION_SCOPE.md`, `06_ENGINE_AND_PROJECTIONS.md`, `12_SOURCE_LEDGER.md`, `16_ALARM_LIVE_DELIVERY_CONTRACT.md`, `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` con el paquete C4 previo, sin reconstruirlo por inferencia. `00_AUTHORITY.md` y `01_CURRENT_STATE.md` raíz pertenecen a un refresh global del Project, no a este incremento UX.
+
+**PLANNED / único próximo foco:** debate/diseño del Starter genérico **propio** de Command Center con composición de runtime existente y Home mínima que permita acreditar un recorrido real para ejecutar alarmas. No Navigation, Users, Profiles, dashboard complejo, History ni nueva UX en el mismo incremento. Antes de construir frontend, definir cuál es el primer gate del Engine CURRENT/Delivery receptor actual y el eventual contrato Live que sería necesario para mostrar alarmas operacionales, sin fingir que existe.

@@ -1,15 +1,15 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT — Source v3, B.2 READY local, WAL/EFFECTIVE, Engine CURRENT v1/FACTS v2, Delivery input CURRENT+FACTS; C2 identidad/configuración unificadas CLOSED. Live, Management y Analytics PLANNED**. Implementación actual leída en `atlanticus:main@18029e19ff01e58b9c9399c132ff32b5ca913f06`.
+Estado: **CURRENT — Source v3; READY local; WAL/EFFECTIVE; Runtime CURRENT v1 + FACTS v2; Delivery input exclusivamente último CURRENT tras C4. C1/C2/C4 CLOSED local; Live, Management y Analytics PLANNED.** Código auditado `atlanticus@45eff96d777f4711cb011f779ffc0a6c87bf0ca4`.
 
 ## Source y materialización exacta
 
-`AlarmConfigurationSnapshot(configuration, ToolDependencyManifest(Cn))` queda congelado al publicar Source Rn. La proyección de entrada `ProjectionRecord[AlarmConfigurationSnapshot]` conserva contenido y procedencia; el resolver B.2 NO relee latest Tool Catalog para reinterpretar Rn/Cn.
+`AlarmConfigurationSnapshot(configuration, ToolDependencyManifest(Cn))` congela Rn/Cn. Materialization consume la proyección de entrada sin reinterpretar Tool latest; qualification manual externa y B.2 producen:
 
 ```text
-Alarm Source Rn / Tool manifest Cn
-  -> Alarm Projection Cosmos (acquisition)
-  -> qualification externa + resolver puro B.2
+Alarm Source Rn + Tool manifest Cn
+  -> Alarm Projection Cosmos
+  -> qualification externa (JSON manual CURRENT) + resolver B.2
   -> VOLUMEN_PATH/ada-command-center/alarms/materialization/
        ready.json
        versions/<result_id>/manifest.json
@@ -17,36 +17,43 @@ Alarm Source Rn / Tool manifest Cn
        versions/<result_id>/delivery.json
 ```
 
-READY se publica únicamente con pareja Runtime/Delivery íntegra y coincidente. BLOCKED mantiene diagnóstico sin artefactos ejecutables ni reemplazar READY. La antigua salida monolítica B.2 a Cosmos está SUPERSEDED; no introducir salida doble ni adapters legacy.
+READY requiere pareja Runtime/Delivery íntegra, mismo pin, manifest/hash. BLOCKED deja diagnóstico sin sustituir READY. La salida monolítica previa B.2 a Cosmos es SUPERSEDED; no añadir otra vez ni adaptadores.
 
-## Delta C2
+## C2 preservado
 
-El valor acordado `APPLICATION=ada-command-center` figura en los tres `.env.detail` y manifiestos; los `JobDefinition` siguen siendo `alarms-materialization`, `alarms-runtime` y `alarms-delivery` con `job_key` propios, por lo que sus leases son independientes bajo raíz operacional compartida. `VOLUMEN_PATH` es absoluta, suministrada manualmente y debe señalar el **mismo montaje físico** para tres procesos. La raíz durable `VOLUMEN_PATH/ada-command-center/alarms` no se traslada ni se deriva de APPLICATION por el cambio.
-
-Domain declara Source Key única `alarm-configuration`, consumida por Web y los tres jobs. Materialization deriva nombre físico de entrada y partición del existente `ALARM_CONFIGURATION_PROJECTION_STORAGE_RESOURCE`, sin env de nombre Cosmos. Sus endpoint/base/credencial siguen siendo explícitos; su identidad física con Web no se acreditó en recursos reales. No se agregaron migraciones: el usuario confirmó ausencia de despliegues previos que preservar.
+Los tres procesos usan `APPLICATION=ada-command-center` con `job_key`/leases individuales; `VOLUMEN_PATH` absoluta y manual debe apuntar al mismo volumen físico. Source Key única Domain `alarm-configuration`; Materialization deriva contenedor/partición Cosmos del resource contract existente. Los bindings físicos de Cosmos de Web/Materialization y los montajes reales siguen UNVERIFIED. No hay legado desplegado que migrar.
 
 ## Runtime y outputs CURRENT
 
-Runtime selecciona pin exacto `(source_key, result_id, manifest_sha256, resolution_key)` y verifica EFFECTIVE derivado del WAL. La adopción WAL V1/V2 y recuperación son contratos previos preservados; READY por sí solo NO implica EFFECTIVE.
+Runtime selecciona `(source_key, result_id, manifest_sha256, resolution_key)` exacto, adopta en WAL y mantiene EFFECTIVE; READY por sí solo no es EFFECTIVE. Publica CURRENT v1 completo y reemplazable en `runtime/output/current/latest.json` tras confirmar durabilidad requerida. Puede cambiar evidence sin nuevo commit de ciclo de vida. Independientemente exporta FACTS v2 inmutables y encadenados por `previous_batch` bajo `runtime/output/facts/`, con cursor **productor** `runtime/output/state/facts-export-cursor.json`.
 
-Engine publica CURRENT v1 completo/reemplazable en `runtime/output/current/latest.json`, después de confirmar durabilidad requerida. Puede actualizar evidence aunque no exista un nuevo commit de ciclo de vida. Exporta de los commits durables FACTS v2 inmutables en `runtime/output/facts/`, encadenados con `previous_batch`; su progreso productor está en `runtime/output/state/facts-export-cursor.json`. Un FACTS v1 real heredado no obtiene adaptador por inferencia.
+La recepción C4 no altera estos productos, el WAL ni la semántica de recuperación del Engine. No introducir FACTS v1 adapters.
 
-## Delivery input **actual**, no el objetivo C4
+## Delivery input — C4 CURRENT-only
 
-`processes/alarms-delivery` recibe **CURRENT y FACTS v2** desde Engine, valida checksum/source/pin y usa READY exacto de B.2 y EFFECTIVE de Runtime. Mantiene inbox y cursor independiente: `delivery/input/state/facts-consumption-cursor.json`. La configuración aún contiene `ALARM_DELIVERY_MAX_FACTS_PER_ITERATION` y su consumo de lotes; C2 no modificó esa conducta. El receptor no procesa el WAL ni constituye `AlarmLiveProjection`.
+`processes/alarms-delivery` consume **solo el último CURRENT**. Lee la proyección EFFECTIVE y valida el snapshot recibido (SHA256, source, formato, integridad, UTC, unicidad de occurrences y evaluación). Exige igualdad de pin exacto con EFFECTIVE y resolución pareja mediante `LocalAlarmMaterializationReader.read_exact_ready`. No usa latest READY como sustituto ni consulta el WAL directamente.
 
-**C4 PLANNED (no ejecutado en este cierre):** retirar recepción de backlog FACTS en Delivery y consumir únicamente el último CURRENT. Mantener intactos FACTS v2 producidos por Engine para History/Analytics futuros. Antes de editar hay que auditar consumidores, pruebas e invariantes de recuperación; no inferir eliminación de información histórica ni construir Live durante C4.
+- Si no hay EFFECTIVE: `WAITING_EFFECTIVE`; si no hay CURRENT o su pin difiere: `WAITING_CURRENT`.
+- Si se pierde igualdad durante el ciclo: `EFFECTIVE_CHANGED`; no se incorpora el snapshot no alineado.
+- Si `as_of` retrocede respecto al inbox: `STALE_SOURCE`; mismo timestamp con contenido distinto falla cerrado; igualdad exacta produce `CURRENT_UNCHANGED`.
+- Si es válido y nuevo: se reemplaza atómicamente `delivery/input/current/latest.json` bajo fence y se informa `CURRENT_STAGED`.
+- Un CURRENT válido con `alarms=[]` representa cero ocurrencias abiertas, distinto de ausencia física de CURRENT. El receptor no recorre snapshots intermedios ni espera backlog histórico.
+- `recover()` valida el CURRENT recibido previamente; desaparecieron la lectura de FACTS, su cursor consumidor y el ajuste `ALARM_DELIVERY_MAX_FACTS_PER_ITERATION`.
 
-## Fronteras separadas
+**Decisión C4 sobre desalineación:** si EFFECTIVE es B y el CURRENT observado corresponde a A, Delivery no acepta B hasta que el último CURRENT coincida; no agregar coordinación temporal, retries especiales ni reescritura del Runtime. El archivo de inbox A puede seguir presente durante espera, pero este receptor no realiza despacho. Una futura Live Projection debe aplicar otra vez la igualdad exacta al consumir el inbox; su implementación no está autorizada por C4.
 
-- **Engine CURRENT:** verdad operacional serializada de su ciclo.
-- **Delivery input CURRENT:** recepción y validación, no enriquecimiento Live.
-- **AlarmLiveProjection:** contrato futuro de enriquecimiento por Delivery Configuration exacta, visibilidad/prioridad ya resuelta y `cause_text`, no implementado.
-- **Management Projection / Capture:** historia/acciones de usuarios, responsabilidad distinta.
-- **History/Analytics:** modelo de lectura futuro desde hechos durables; jamás Web leyendo WAL como API.
+El bootstrap conserva `config/connections.json`, creación de `ParallelCosmosPublisher` y `ALARM_DELIVERY_MAX_WORKERS` sin modificar su funcionamiento. Si falta registry, el entrypoint hoy termina antes de ejecutar el job; separar la evaluación de esta dependencia de cualquier futura simplificación de infraestructura.
 
-La prueba B2c.7 histórica demostró integración controlada y reinstanciación, no Docker aislado ni multi-host. C2 aportó pruebas locales de configuración y regresiones acotadas, **no** reconvalidó todo ese gate físicamente. El test del catálogo operacional fue corregido por el usuario en el commit C2 final, sin evidencia de ejecución total posterior compartida en este cierre.
+## Fronteras independientes
 
-## Próxima frontera sugerida, sin autorización de implementación
+- **Engine CURRENT:** estado operacional actual con prioridad ya resuelta.
+- **Delivery input:** recepción/validación CURRENT y almacenamiento local, no publicación Live.
+- **AlarmLiveProjection:** contrato futuro de enriquecimiento con Delivery Configuration exacta, visibilidad, causa y destino; NOT IMPLEMENTED.
+- **Management Capture/Projection:** intenciones/acciones de usuarios; servicio y proyección distintos.
+- **History/Analytics:** consumo futuro de hechos durables; Web no lee WAL ni deriva History del inbox CURRENT.
 
-Debatir **C4 Delivery CURRENT-only** exclusivamente. C3 producer qualification, C5 evidencia técnica, Docker y Live/Management/History permanecen fuera del incremento.
+## Evidencia y siguiente frontera
+
+**VERIFIED:** comparación Git entre baseline C2 y C4 (un commit, 14 cambios Delivery), 29 pruebas Delivery y 16 publicadores Runtime PASS comunicados; regresión local con workspace completo **567 PASS / 1 SKIPPED** y Ruff PASS en archivos C4. **UNVERIFIED:** CI, Docker separado y recursos físicos/multi-host; los gates históricos B2c.7 no equivalen a qualification distribuida.
+
+**PROPOSED / PLANNED siguiente foco único:** revisar y calificar **artefactos distribuidos de Runtime + Delivery en Docker como procesos independientes**, con volumen compartido y configuración exacta. Sin abrir C3/C5/Live/History durante ese gate.
