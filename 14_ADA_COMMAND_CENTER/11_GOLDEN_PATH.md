@@ -1,82 +1,127 @@
 # ADA Command Center — Golden Path
 
-Estado: **PARTIALLY IMPLEMENTED — C1/C2/C4 y authoring UX-01/UX-02 cerrados bajo sus propios gates; recorrido completo con Starter genérico + Runtime real + visualización operacional NO ACREDITADO.** Corte UX: 2026-09-29.
+Estado: **PARTIALLY IMPLEMENTED — C1/C2/C4, authoring UX-01/UX-02 y naming físico de Alarm Projection cerrados bajo sus gates. Recorrido completo con Resource Preparation/startup gate, Starter genérico, Runtime real y visualización operacional permanece NO ACREDITADO.** Corte: 2026-09-30.
 
 ## 1. Autoridad y límites del corte
 
 ```text
-Implementation inspeccionada   moragaga/atlanticus:main@2e7500a6b8b4d5bbdad26d807abfa57936db99d5
-Decisions inspeccionadas      moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical remoto previo       moragaga/atlanticus-cannonical:main@2e8bbf4780cafc4cea3b18351861aa97a4fb0053
+Implementation inspeccionada   moragaga/atlanticus:main@fe606cbefb932211b8329df9285004f4933df41d
+Decisions inspeccionadas       moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical previo               moragaga/atlanticus-cannonical:main@c2f442b523fb4429f5a8a76c1e6919687016773f
 ```
 
-El checkpoint canónico remoto aún documenta C4 PLANNED/CURRENT+FACTS. Git C4 y el handoff previo del Project ya registran receptor Delivery **CURRENT-only**; los reemplazos canónicos C4 anteriores no están acreditados como integrados a Git. Este documento actualiza esa distinción sin declarar qualification física adicional. Tests/manual UX son evidencia local del usuario, no CI ni prueba integrada del Golden Path.
+La realidad implementada de este corte es `atlanticus:main`. Las pruebas mencionadas son evidencia local reportada por el usuario y no equivalen a CI, Docker ni Azure.
 
 ## 2. Recorrido actual, owners y gates
 
 | Etapa | Owner actual | Estado demostrable |
 |---|---|---|
-| Tool Sources/Projections y conexiones nombradas | Tool/Web | CURRENT; B1d qualification local controlada histórica, no Azure. |
-| Confirmed Tool Catalog Cn en Blob | `web/tools/catalog` | CURRENT / C1 CLOSED. |
-| Discovery, inspect y confirmación humana | `web/tools/discovery-cosmos` | CURRENT / C1 CLOSED; las Tools Cosmos solas no forman automáticamente el catálogo. |
+| Tool Sources/Projections y conexiones nombradas | Tool/Web | CURRENT; qualification local controlada histórica, no Azure. |
+| Confirmed Tool Catalog Cn | `web/tools/catalog` | CURRENT / C1 CLOSED en Blob. En host `local` todavía depende de Storage. |
+| Discovery, inspect y confirmación humana | `web/tools/discovery-cosmos` | CURRENT / C1 CLOSED. |
 | Tool Catalog UI reusable | `web/tools/catalog-manager` | CURRENT / C1 CLOSED. |
-| Alarm editor Rn/Cn, Save/Validate/Publish | Alarm Web/Domain | Source v3 CURRENT; UX-01/UX-02 CLOSED por código/tests y operación manual básica. |
-| Familias/Rules/Messages, asignación y guardado | Alarm Web | VERIFIED / CLOSED en navegador **aislado con catálogo de fixture**. No se demostró recuperación tras reinicio ni guardado durable Blob/Cosmos. |
+| Alarm editor Rn/Cn, Save/Validate/Publish | Alarm Web/Domain | Source v3 CURRENT; UX-01/UX-02 cerrados dentro de sus gates. |
 | Source Key `alarm-configuration` única | Domain + Web/jobs | CURRENT / C2 CLOSED. |
-| Alarm Source Blob/Projection Cosmos entrada física | Web/Materialization | Adapters/contrato CURRENT, integración física E2E UNVERIFIED. |
-| `APPLICATION` común; leases separados y `VOLUMEN_PATH` manual | Procesos Alarm | CURRENT contrato C2; mismo volumen real entre contenedores UNVERIFIED. |
-| Qualification Rn/Cn | Materialization | JSON manual CURRENT; C3 productor automático BLOCKED por decisiones/evidencia ausentes. |
-| B.2 READY/BLOCKED, pareja Runtime/Delivery exacta | Materialization | CURRENT y tests históricos; BLOCKED nunca reemplaza READY íntegro. |
-| WAL adopción → EFFECTIVE | Persistence/Runtime | CURRENT y gate histórico local; Docker independiente UNVERIFIED. |
-| Engine CURRENT v1 completo y FACTS v2 durables | Runtime | CURRENT; preservar ambos productos. |
-| Receptor Delivery último CURRENT con pin/READY/EFFECTIVE | `processes/alarms-delivery` | C4 CLOSED por código y regresión local anteriores; NO recibe backlog FACTS. |
-| Starter genérico propio con runtime y Home mínima | Web | **PLANNED / ÚNICO PRÓXIMO FOCO**; solo host Configuration Manager temporal existe. |
-| Live materializer y `AlarmLiveProjection` | Backend Live | PROJECT CONTRACT AGREED, NOT IMPLEMENTED; no deducir de receiver C4. |
-| Management Capture/Projection y History/Analytics | Frentes independientes | PLANNED, fuera del Starter inicial. |
-| Ejecución/distribución Docker y Azure real | Integración | UNVERIFIED en este hito. |
+| Alarm Projection physical name | Alarm Web/Projection | CURRENT / CLOSED: `alarm-configuration`; nombre largo anterior SUPERSEDED. |
+| Alarm Projection local filesystem | Configuration Manager local | CURRENT: `conciencia_situacional/command-center/projections/alarm-configuration/...`. |
+| Alarm Projection Cosmos | Web/Materialization | Contract CURRENT: container `alarm-configuration`, PK `/partition_key`; binding físico E2E UNVERIFIED. |
+| `APPLICATION` común; leases separados y `VOLUMEN_PATH` manual | Procesos Alarm | CURRENT contractual; mismo volumen real multi-contenedor UNVERIFIED. |
+| Qualification Rn/Cn | Materialization | JSON manual CURRENT; C3 productor automático no decidido. |
+| B.2 READY/BLOCKED, pareja Runtime/Delivery exacta | Materialization | CURRENT. |
+| WAL adopción → EFFECTIVE | Persistence/Runtime | CURRENT; Docker independiente UNVERIFIED. |
+| Engine CURRENT v1 completo y FACTS v2 durables | Runtime | CURRENT. |
+| Receptor Delivery último CURRENT con pin/READY/EFFECTIVE | `processes/alarms-delivery` | C4 CLOSED / CURRENT-only. |
+| Resource Preparation + startup gate | Integración/Starter | **PLANNED / ÚNICO PRÓXIMO FOCO**. |
+| Tool Catalog local filesystem | Web Tool Catalog | **NOT IMPLEMENTED**; bloqueo para considerar `local` completamente filesystem. |
+| Starter genérico propio con runtime y Home mínima | Web | PLANNED después de cerrar la frontera de recursos/arranque. |
+| Live materializer y `AlarmLiveProjection` | Backend Live | CONTRACT AGREED en Project, NOT IMPLEMENTED. |
+| Management Capture/Projection y History/Analytics | Frentes independientes | PLANNED. |
+| Docker/Azure real | Integración | UNVERIFIED. |
 
-## 3. Contratos de la cadena congelados
+## 3. Contratos de cadena congelados
 
 ```text
 Tool Sources/Projections
-  -> confirmed Tool Catalog Cn (Blob)
+  -> confirmed Tool Catalog Cn
   -> Alarm Configuration Source Rn + ToolDependencyManifest Cn (v3)
-  -> Alarm Projection Cosmos (binding físico por comprobar)
+  -> Alarm Projection
+       local:   conciencia_situacional/command-center/projections/alarm-configuration/...
+       durable: Cosmos container alarm-configuration, PK /partition_key
   -> Qualification vigente: intervención humana/JSON controlado
   -> Materialization: BLOCKED diagnóstico o READY pareja exacta
   -> Engine WAL adoption / EFFECTIVE (pin completo)
   -> Engine CURRENT v1 completo/reemplazable
-  -> Engine FACTS v2 inmutables (canal distinto, preservado)
+  -> Engine FACTS v2 inmutables, canal separado
   -> Delivery input LAST CURRENT ONLY, pin/EFFECTIVE/READY exactos
-  -> [NO IMPLEMENTED] Live materializer + AlarmLiveProjection
-  -> [PLANNED] Command Center Web operacional con Home mínima
+  -> [NOT IMPLEMENTED] Live materializer + AlarmLiveProjection
+  -> [PLANNED] Command Center Web operacional
 ```
 
-Pin exacto: `source_key + result_id + manifest_sha256 + resolution_key`; Runtime/Delivery no reemplazan configuración por latest READY ni reinterpretan Rn/Cn desde latest Tool Catalog. `INVALID != REMOVED`, `DISABLED != REMOVED` y `TRACE_ONLY != REMOVED`; READY no activa Engine. Web no procesa WAL ni resuelve priority/routing/cause o deactivation capability por su cuenta.
+Pin exacto: `source_key + result_id + manifest_sha256 + resolution_key`. Runtime/Delivery no sustituyen configuración por latest READY ni reinterpretan Rn/Cn desde latest Tool Catalog. READY no activa Engine. Web no procesa WAL ni resuelve priority/routing/cause por su cuenta.
 
-La salida de Runtime `FACTS v2` y su cursor productor **permanecen CURRENT** después de C4; sólo el receptor de Delivery deja de consumir esos lotes. La recepción del último CURRENT no constituye generación de una proyección Live ni prueba de disparo visible en navegador.
+La salida Runtime FACTS v2 permanece CURRENT aunque Delivery no la consuma como entrada.
 
-## 4. Hito UX y test local — VERIFIED acotado
+## 4. Convención de identidad física cerrada en este hito
 
-El usuario aplicó un parche de 20 archivos para UX-02 y comprobó `--check`, `git apply --check`, `git apply`, `git diff --check` y:
+La aplicación constituye el boundary de su Cosmos. Por ello el resource physical name no repite aplicación/provider:
 
 ```text
-Domain Alarms           59 PASS
-Alarm Materialization   64 PASS
-Alarm Configuration Web 123 PASS
-TOTAL                  246 PASS
+CORRECTO
+alarm-configuration
+
+SUPERSEDED
+ada-command-center-alarm-configuration-projection
 ```
 
-La versión Git `2e7500a...` contiene UX-02: Rule/Message ofrecen `1..11` o `END_OF_SHIFT`, propagado como límite estático. UX-01 ya implementó cierre de modal sólo tras Save Draft exitoso.
+El mismo physical name identifica el último nivel de la proyección local. No se mantiene alias/migración legacy.
 
-**VERIFIED por test manual posterior:** el usuario abrió el host real con lanzador de prueba completamente aislado, creó familias, Rules y Messages, asignó Messages y guardó. El test NO arrancó Engine/Delivery ni conectó Blob/Cosmos; utilizó una Tool Process sintética y archivos de prueba aislados. **Hallazgos OPEN:** campos ocasionalmente borrados, validaciones que desaparecen, alertas que no se despejan.
+La convención demostrada en este hito aplica a Alarm Configuration. No crear por inferencia containers o nombres para recursos todavía no contratados.
 
-**Separación crítica:** la opción authored `END_OF_SHIFT` **no** produce automáticamente un `effective_until`. El Web operacional deberá obtener la hora final real del proceso/turno y remitir UTC; Core no posee calendario de turnos.
+## 5. Evidencia local del hito
 
-## 5. Gate real aún no demostrado y frontera siguiente
+Commit integrado:
 
-No se ha mostrado un único gate que reúna: Tool real + catálogo confirmado + Alarm Source/Projection durable + qualification real/manual explícita + READY + EFFECTIVE + Engine CURRENT + Delivery CURRENT-only + lectura operacional de una proyección Live por la Home. No simular ese gate con fixture UI ni extender el receiver para llamarlo Live sin contrato.
+```text
+fe606cbefb932211b8329df9285004f4933df41d
+```
 
-**PLANNED / único foco próximo:** debate/diseño de **Starter Web genérico de Command Center** con composición del runtime y **Home mínima**. Auditar packages, entrypoints, configuración/env, bootstrap, distribución y contratos backend ya existentes. Determinar qué puede comprobarse como gate de **ejecución de alarmas** hasta CURRENT/Delivery y qué necesitaría el futuro Live para mostrarlas en Home. Sin Navigation, Users, Profiles, dashboard complejo, History/Analytics ni cambios de backend no acordados.
+Pruebas aisladas:
 
-Los gates C3 (producer qualification), C5 (evidence), Docker/montaje, Source Blob↔Cosmos real y Live/Management continúan separados o **BLOCKED** por sus contratos. No ampliar el siguiente incremento para cerrar artificialmente todo el Golden Path.
+```text
+Alarm Configuration Web                         123 PASS
+Alarm Projection Cosmos                           5 PASS
+ADA Command Center Configuration Manager         28 PASS
+TOTAL                                            156 PASS
+git diff --check                                 PASS
+```
+
+La ejecución accidental de pytest global que recolectó cientos de paquetes fue inválida como gate del incremento y no se usa como evidencia.
+
+## 6. Gate real aún no demostrado
+
+No existe todavía un gate único que reúna:
+
+```text
+infra disponible
+  -> resource preparation exitoso
+  -> Web/procesos habilitados
+  -> Tool real + catálogo confirmado
+  -> Alarm Source/Projection durable
+  -> qualification vigente
+  -> READY
+  -> EFFECTIVE
+  -> Engine CURRENT
+  -> Delivery CURRENT-only
+  -> Live Projection
+  -> lectura operacional por Home
+```
+
+El segmento `resource preparation -> startup gate` tampoco está implementado de forma genérica para Command Center. No inferirlo desde la existencia de stores ni desde la creación de directorios al escribir.
+
+## 7. Siguiente frontera única
+
+**PLANNED:** debate/diseño e implementación incremental de **Resource Preparation + startup gate**.
+
+Objetivo del siguiente foco: auditar y reutilizar la infraestructura existente para resolver/asegurar recursos antes de iniciar consumidores, manteniendo la misma identidad lógica entre adapters locales y durables. Debe incluir el análisis del Tool Catalog local, porque hoy ese recurso sigue requiriendo Storage incluso en provider `local`.
+
+No mezclar en ese incremento Starter Home, Live, Management, History/Analytics, nueva UX, C3 ni C5.

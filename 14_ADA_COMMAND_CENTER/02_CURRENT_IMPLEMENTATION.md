@@ -1,19 +1,17 @@
 # ADA Command Center — Current Implementation
 
-Estado: **CURRENT — Source v3/Materialization/Runtime, C1 ownership Web y C2 identidad CLOSED; C4 Delivery CURRENT-only CLOSED en código y regresión local (2026-09-29)**. Golden Path productivo, Docker/Azure, Live y Web operacional permanecen no acreditados.
+Estado: **CURRENT — Source v3/Materialization/Runtime, C1 ownership Web, C2 identidad y C4 Delivery CURRENT-only CLOSED; Alarm Configuration projection physical naming alineado entre local y Cosmos en `atlanticus@fe606cbefb932211b8329df9285004f4933df41d`.** Golden Path productivo, Resource Preparation/startup gate, Docker/Azure, Live y Web operacional permanecen no acreditados.
 
 ## Checkpoints
 
 ```text
-atlanticus:main (C4)    45eff96d777f4711cb011f779ffc0a6c87bf0ca4
-atlanticus previo C4   18029e19ff01e58b9c9399c132ff32b5ca913f06
-atlanticus-decisions   50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-canonical base C4      2e8bbf4780cafc4cea3b18351861aa97a4fb0053
-C1 histórico           3961385aecd0eb7e373018fc25e509a71dccc409
-B2c.7 histórico        c67fcb5b105cc561c16719a8bca4ea5aa74c3fae
+atlanticus:main actual   fe606cbefb932211b8329df9285004f4933df41d
+atlanticus C4            45eff96d777f4711cb011f779ffc0a6c87bf0ca4
+atlanticus-decisions     50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+canonical previo         c2f442b523fb4429f5a8a76c1e6919687016773f
 ```
 
-Implementación y HEAD verificados mediante Git de solo lectura. Los conteos de pruebas provienen de logs aportados por el usuario y no equivalen a ejecución remota independiente.
+Implementación y HEAD fueron verificados mediante Git de solo lectura. Los conteos de pruebas de este cierre provienen de ejecución local aportada por el usuario; no equivalen a CI, Docker ni Azure.
 
 ## Componentes existentes
 
@@ -27,7 +25,7 @@ scopes/ada-command-center/
   backend/alarms/contracts/                  # CURRENT v1 / FACTS v2
   backend/processes/alarms-materialization/  # Cosmos + qualification manual + READY/BLOCKED
   backend/processes/alarms-runtime/          # adopta EFFECTIVE / CURRENT + FACTS
-  backend/processes/alarms-delivery/         # receptor de último CURRENT exclusivamente (C4)
+  backend/processes/alarms-delivery/         # receptor de último CURRENT exclusivamente
   web/alarms/configuration/
   web/alarms/persistence/
   web/alarms/projection-local/
@@ -38,46 +36,88 @@ scopes/ada-command-center/
   web/application/ada-command-center-configuration-manager/ # host temporal
 ```
 
-`backend/tools` está SUPERSEDED. Domain Tools conserva contrato transversal; los servicios usados exclusivamente por Web viven en Web. Materialization sigue importando `web/alarms/projection-cosmos`: frontera técnica OPEN no modificada en C4.
+`backend/tools` está SUPERSEDED. Domain Tools conserva contrato transversal; los servicios usados exclusivamente por Web viven en Web. Materialization sigue importando `web/alarms/projection-cosmos`: frontera técnica OPEN heredada y no modificada en este hito.
 
-## C2 preservado — identidad y configuración
+## Identidad y persistencia de Alarm Configuration — CURRENT
 
-`APPLICATION=ada-command-center` identifica los tres jobs, que conservan `job_key` y lease propios (`alarms-materialization`, `alarms-runtime`, `alarms-delivery`). `VOLUMEN_PATH` es manual, absoluta y debe referirse al mismo montaje **físico**. La ruta raíz no cambia: `VOLUMEN_PATH/ada-command-center/alarms`.
+`domain/alarms/identity.py` mantiene `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`. Web lo convierte a `SourceKey` técnico y los jobs lo consumen como texto; los documentos persistidos siguen verificando esa identidad.
 
-`domain/alarms/identity.py` define texto `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`; Web lo convierte a `SourceKey` técnico y los jobs lo consumen como texto. Se verifica la identidad registrada en los documentos, no se confía únicamente en la constante. Materialization toma physical name y partición de entrada del resource contract Web `ALARM_CONFIGURATION_PROJECTION_STORAGE_RESOURCE`; el endpoint/base/credencial Cosmos deben configurarse y verificarse físicamente frente a Web. El contenedor Blob sigue ambiental.
+El nombre físico de la proyección de Alarm Configuration quedó simplificado y compartido entre adapters:
 
-No existen despliegues previos que migrar según confirmación del usuario; sin capas legacy, aliases ni migraciones hipotéticas.
+```text
+logical_id       ada.command_center.alarms.configuration.projection
+physical_name    alarm-configuration
+Cosmos PK        /partition_key
+```
 
-## Pipeline existente: qué cambia C4
+La autoridad del nombre físico es `ALARM_CONFIGURATION_PROJECTION_PHYSICAL_NAME = 'alarm-configuration'` en `web/alarms/configuration/resources.py`. El resource contract Cosmos reutiliza esa identidad física; no repite `ada-command-center` ni `projection` porque la aplicación ya constituye su propio boundary de Cosmos.
 
-1. Source v3 congela `AlarmConfigurationSnapshot(configuration, tool_dependencies)` con referencias Rn/Cn; el Tool Catalog en Blob no se reinterpreta desde latest.
-2. Materialization obtiene ProjectionRecord y qualification manual externa; B.2 publica `runtime.json` y `delivery.json` bajo manifest READY íntegro, o diagnóstico BLOCKED sin sustituir READY.
-3. Runtime adopta pin exacto `source_key + result_id + manifest_sha256 + resolution_key` usando WAL/EFFECTIVE; READY no activa Engine por sí solo.
-4. Runtime publica snapshot completo/reemplazable `runtime/output/current/latest.json` v1 y continúa exportando FACTS v2 encadenados desde commits durables mediante su **cursor productor**.
-5. **C4 CURRENT:** `LocalAlarmDeliveryReceiver` lee únicamente el último CURRENT, valida estructura/SHA/source/timestamps, exige identidad exacta con EFFECTIVE y la pareja READY; coloca el snapshot válido en `delivery/input/current/latest.json`. Un mismatch devuelve espera y no incorpora la nueva entrada. Reinicio valida CURRENT persistido; no existe cursor consumidor FACTS nuevo.
+En local, `AdaStorageNamespace('conciencia_situacional', 'command-center')` conserva el mismo namespace lógico y la proyección se materializa en:
 
-El inbox CURRENT anterior puede permanecer físicamente si Engine ha cambiado EFFECTIVE y el último CURRENT aún no coincide. C4 **no publica Live ni despacha operacionalmente**; cualquier materializador/despachador futuro debe imponer la misma igualdad exacta antes de usarlo. No se añadió invalidación, sincronización de relojes, mecanismos de reintento especiales ni lógica especulativa.
+```text
+<base_root>/conciencia_situacional/command-center/projections/alarm-configuration/
+```
 
-## C4 — cambios limitados y evidencia
+En durable, el container Cosmos correspondiente es:
 
-La comparación de Git entre los SHAs de arriba confirmó **14 archivos modificados únicamente bajo `backend/processes/alarms-delivery`**: `receiver.py`, `job.py`, `settings.py`, `bootstrap.py`, espejos comentados, cuatro tests, `.env.detail` y `secrets.detail.json`.
+```text
+alarm-configuration
+```
 
-- Retirados `FACTS` como entrada Delivery, cursor `delivery/input/state/facts-consumption-cursor.json`, límite `ALARM_DELIVERY_MAX_FACTS_PER_ITERATION` y iteration facts derivados de FACTS.
-- Preservados pin exacto, lector READY, EFFECTIVE, checksum, estructura, tiempo UTC, prevención de retroceso/conflicto de `as_of`, lease/fence y recuperación de CURRENT.
-- `config/connections.json`, `ALARM_DELIVERY_MAX_WORKERS`, `ParallelCosmosPublisher` y gate actual del bootstrap que depende del registro Cosmos permanecieron **sin refactor**. Publisher paralelo no forma parte de la recepción CURRENT en este incremento; revisar si corresponde solo en foco futuro explícito.
-- No se cambió producción Runtime de FACTS v2, cursor exportador, WAL, contratos de Source ni Materialization.
+Este hito **no** implementó una estrategia local completa para todos los recursos de Command Center. Tool Catalog continúa usando Storage incluso cuando `ADA_MANAGER_PERSISTENCE_PROVIDER=local`.
 
-**VERIFIED por logs locales de este hito:** ZIP de 14 archivos integrado, `git diff --check`, `uv lock --check`, 29 PASS Delivery, 16 PASS publicadores Runtime, Ruff PASS en archivos C4. `uv sync --locked` inicial removió el paquete workspace Materialization y provocó cuatro errores de colección; `uv sync --locked --all-packages` restauró dependencias, import Materialization PASS y `uv run --locked --all-packages pytest` cerró con **567 PASS, 1 SKIPPED** en **Python 3.14.2**. No trasladar ese resultado a CI, Docker o Azure.
+## C2 preservado — procesos y volumen
 
-El error Ruff `SIM117` de `tests/test_parallel.py` precedía a C4 en Git y no afecta la comprobación Ruff acotada de los archivos modificados. El baseline global declarado en el Project usa Python 3.14.7 pero este workspace todavía exige 3.14.2: revisión aparte, no refactor dentro de C4.
+`APPLICATION=ada-command-center` identifica Materialization, Runtime y Delivery, que conservan `job_key` y leases propios. `VOLUMEN_PATH` continúa manual, absoluta y debe referirse al mismo montaje físico. La raíz operacional continúa `VOLUMEN_PATH/ada-command-center/alarms`.
+
+Materialization toma nombre físico y partición de entrada del resource contract `ALARM_CONFIGURATION_PROJECTION_STORAGE_RESOURCE`. Endpoint/base/credencial Cosmos deben seguir coincidiendo físicamente con el host durable; esa equivalencia E2E permanece UNVERIFIED. El contenedor Blob de Source sigue ambiental.
+
+No existen despliegues previos que migrar según confirmación del usuario; no introducir aliases, fallback ni capas legacy para el nombre anterior.
+
+## Pipeline CURRENT preservado
+
+1. Source v3 congela `AlarmConfigurationSnapshot(configuration, tool_dependencies)` con referencias Rn/Cn.
+2. Materialization obtiene ProjectionRecord y qualification manual externa; B.2 publica `runtime.json` y `delivery.json` bajo READY íntegro, o diagnóstico BLOCKED sin sustituir READY.
+3. Runtime adopta pin exacto `source_key + result_id + manifest_sha256 + resolution_key` mediante WAL/EFFECTIVE.
+4. Runtime publica CURRENT v1 completo/reemplazable y FACTS v2 durables en canal separado.
+5. Delivery consume únicamente el último CURRENT, exige igualdad exacta con EFFECTIVE y READY y persiste su inbox CURRENT. C4 no produce Live.
+
+Este hito no alteró ninguno de esos contratos.
+
+## Evidencia de este hito
+
+Commit integrado:
+
+```text
+fe606cbefb932211b8329df9285004f4933df41d
+refine alarm configuration resource naming
+```
+
+Cambios limitados a Alarm Configuration Web, Projection Cosmos y host Configuration Manager temporal, más `.env.detail` y tests/espejos correspondientes.
+
+**VERIFIED local:**
+
+```text
+Alarm Configuration Web                         123 PASS
+Alarm Projection Cosmos                           5 PASS
+ADA Command Center Configuration Manager         28 PASS
+TOTAL                                            156 PASS
+git diff --check                                 PASS
+```
+
+La ejecución global de pytest que produjo cientos de errores de collection fue descartada: había recolectado múltiples paquetes del monorepo fuera de su contexto. Las tres suites aisladas anteriores son la evidencia válida del incremento.
 
 ## OPEN separados
 
-- **C3:** productor/verificadores reales GREEN y qualification más allá del archivo manual.
-- **C5:** propietario, key y versión del contrato de evidencia técnica, y auditoría ambiental.
-- **Docker/distribución:** ruedas/entrypoints/instalación aislada, tres procesos y volumen realmente compartido; el siguiente foco recomendado se limita primero a Runtime + Delivery.
-- **Materialization ↔ Web Projection Cosmos:** dependency owner y equivalencia física cuenta/base quedan abiertos.
-- **Live:** `AlarmLiveProjection`, enriquecimiento cause, visibilidad/priority ya decidida, despacho y store final NO implementados.
-- **Separados:** Starter Web, Management Capture/Projection, History/Analytics, UI fin de turno/modal, Azure/CI/browser.
+- **Resource Preparation + startup gate:** PLANNED como siguiente foco único; no implementado en este hito.
+- **Tool Catalog local:** NOT IMPLEMENTED; el host local todavía requiere Storage para el catálogo.
+- **C3:** productor/verificadores GREEN y qualification más allá del archivo manual.
+- **C5:** owner/key/version del contrato de evidencia técnica y auditoría ambiental.
+- **Docker/distribución:** artefactos, entrypoints y recursos físicos siguen UNVERIFIED.
+- **Materialization ↔ Web Projection Cosmos:** misma cuenta/base física continúa UNVERIFIED.
+- **Live:** contrato acordado en Project, NOT IMPLEMENTED.
+- **Management Capture/Projection, History/Analytics:** PLANNED y separados.
+- **UX y END_OF_SHIFT operacional:** mantienen sus OPEN contractuales previos.
+- **Python:** Project baseline 3.14.7 frente a metadata/tooling todavía 3.14.2; OPEN fuera de este incremento.
 
-No introducir funcionalidad ni alterar código durante este cierre documental.
+No introducir funcionalidad adicional al integrar esta actualización documental.

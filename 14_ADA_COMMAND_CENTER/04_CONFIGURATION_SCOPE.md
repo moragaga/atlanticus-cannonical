@@ -1,6 +1,6 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT — Alarm Configuration Snapshot Source v3 / Tool dependencies Rn/Cn; C1 Web ownership y C2 identidad compartida implementadas. C4 Delivery CURRENT-only CLOSED en otro owner, sin alteraciones Source/Tool. Durable E2E y UX final UNVERIFIED.** Checkpoint `atlanticus@45eff96d777f4711cb011f779ffc0a6c87bf0ca4`.
+Estado: **CURRENT — Alarm Configuration Snapshot Source v3 / Tool dependencies Rn/Cn; C1 Web ownership, C2 identidad compartida y naming físico de Alarm Projection implementados. C4 Delivery CURRENT-only CLOSED en otro owner. Durable E2E y Resource Preparation/startup gate permanecen UNVERIFIED/PLANNED.** Checkpoint `atlanticus@fe606cbefb932211b8329df9285004f4933df41d`.
 
 Command Center administra Alarm Configuration reutilizando `atlanticus.web.manager` sin modificar semántica de Manager genérico.
 
@@ -17,7 +17,7 @@ AlarmConfigurationSnapshot
     schema_version: 3
 ```
 
-Definiciones Tool no se embeben en configuración Alarm editable. El workspace tiene sidecar `_confirmed_tool_catalog_revision` no miembro de `AlarmConfiguration`. Source schema v2 SUPERSEDED sin decoder legacy.
+Definiciones Tool no se embeben en configuración Alarm editable. El workspace conserva sidecar `_confirmed_tool_catalog_revision`, no miembro de `AlarmConfiguration`. Source schema v2 está SUPERSEDED sin decoder legacy.
 
 ### Flujo vigente
 
@@ -28,39 +28,108 @@ Verify     -> concurrencia de Source bajo Manager
 Publish    -> vuelve a comprobar Cn (drift guard) y congela manifest Cn
 ```
 
-El manifest incluye origins, todos los escalones de routing definidos —incluso inactivos— y visual targets de todas las Rules, incluidas inactivas. Cambios Cn posteriores no reinterpretan snapshots Rn/Cn inmutables. `VALID_AT_SAVE != READY != EFFECTIVE`.
+El manifest incluye origins, escalones de routing definidos y visual targets según contrato actual. Cambios Cn posteriores no reinterpretan snapshots Rn/Cn inmutables. `VALID_AT_SAVE != READY != EFFECTIVE`.
 
 ## C1 — Tool ownership CURRENT
 
-`web/tools/catalog` construye/persiste Confirmed Tool Catalog CURRENT en Blob; `web/tools/discovery-cosmos` inspecciona conexiones Tool Cosmos nombradas y confirma revisiones; `web/tools/catalog-manager` es dueño de UI/callbacks. Host temporal compone services; `backend/tools` SUPERSEDED. STRATEGIC puede recibir routing pero no visual target mientras no exista proyección visual acordada. El editor no reinterpreta snapshots congelados con Tool latest.
+`web/tools/catalog` construye/persiste Confirmed Tool Catalog CURRENT en Blob; `web/tools/discovery-cosmos` inspecciona conexiones Tool Cosmos nombradas y confirma revisiones; `web/tools/catalog-manager` posee UI/callbacks. Host temporal compone services; `backend/tools` está SUPERSEDED. El editor no reinterpreta snapshots congelados con Tool latest.
+
+**Límite actual:** `ADA_MANAGER_PERSISTENCE_PROVIDER=local` no convierte todavía Tool Catalog a filesystem. El host temporal sigue requiriendo Storage para Tool Catalog en ambos providers. Un adapter local de catálogo forma parte del próximo frente de Resource Preparation/persistencia local, no de este hito.
 
 ## C2 — Source Key y topología CURRENT
 
-`domain/alarms/identity.py` define el texto `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`; Web lo transforma en `SourceKey` técnico, y Materialization/Runtime/Delivery lo importan. La constante no suprime verificaciones de `source_key` en proyecciones, READY/EFFECTIVE y recepciones.
+`domain/alarms/identity.py` define `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`; Web lo transforma en `SourceKey` técnico y Materialization/Runtime/Delivery lo consumen. La constante no elimina las verificaciones de `source_key` persistido.
 
-El resource contract Cosmos existente reside en `web/alarms/projection-cosmos/storage.py`:
+La identidad física compartida de Alarm Projection reside en:
+
+```text
+web/alarms/configuration/resources.py
+ALARM_CONFIGURATION_PROJECTION_PHYSICAL_NAME = 'alarm-configuration'
+```
+
+El resource contract Cosmos en `web/alarms/projection-cosmos/storage.py` queda:
 
 ```text
 logical_id        ada.command_center.alarms.configuration.projection
-physical_name     ada-command-center-alarm-configuration-projection
+physical_name     alarm-configuration
 partition_key     /partition_key
 allowed_override  CONNECTION_REF
 ```
 
-Web lo resuelve al componer conexión. Materialization reutiliza nombre/partición, quitando env duplicada `ALARM_PROJECTION_CONTAINER`. Cuenta/base/credencial Cosmos de **entrada** Materialization siguen siendo manuales y deben coincidir físicamente con el host durable: aún UNVERIFIED.
+El nombre anterior:
 
-El contenedor Blob permanece ambiental. Las conexiones de **salida** Delivery son independientes mediante registry nombrado; C4 no modificó esa infraestructura. `APPLICATION=ada-command-center` es común; `VOLUMEN_PATH` absoluta/compartida la define el operador, no se deriva de Source.
+```text
+ada-command-center-alarm-configuration-projection
+```
 
-## Evidencia histórica y límites
+está **SUPERSEDED**. No mantener alias ni compatibilidad legacy: no existe despliegue previo que migrar para este cambio.
 
-B1d observó Confirmed Tool Catalog de dos Tool Sources/Projections controladas y Alarm Source local. C1 ownership Web CLOSED; C2 cerró divergencias de identidad/recursos contractuales. C4 comprobó por Git que sus 14 cambios están exclusivamente bajo Delivery; su regresión local 567 PASS/1 SKIPPED no certifica Alarm Source Blob + Cosmos E2E, Azure ni equivalencia física de montajes. Tampoco acredita browser final.
+Web durable resuelve conexión Cosmos por fuera del resource contract. Materialization reutiliza nombre/partición y no duplica `ALARM_PROJECTION_CONTAINER`.
+
+## Namespace Storage/local CURRENT
+
+El namespace lógico de Command Center se mantiene:
+
+```text
+application_namespace = conciencia_situacional
+tool_namespace        = command-center
+```
+
+Storage/Source utiliza ese namespace:
+
+```text
+conciencia_situacional/command-center/tool-catalog/current.json
+conciencia_situacional/command-center/sources/alarm-configuration/...
+```
+
+La proyección local ahora conserva la identidad física del recurso durable:
+
+```text
+<base_root>/conciencia_situacional/command-center/projections/alarm-configuration/...
+```
+
+El container Cosmos durable correspondiente es:
+
+```text
+alarm-configuration
+PK /partition_key
+```
+
+Esto alinea la identidad física de Alarm Projection entre filesystem y Cosmos sin acoplar el adapter local al paquete Cosmos. No generalizar este hecho a Tool Catalog u otros recursos todavía no implementados.
+
+## Configuración física todavía OPEN
+
+Cuenta/base/credencial Cosmos de entrada Materialization siguen siendo configuradas externamente y deben coincidir físicamente con el host durable: UNVERIFIED. El contenedor Blob permanece ambiental. Las conexiones Tool Cosmos siguen siendo múltiples/nombradas cuando corresponde.
+
+`APPLICATION=ada-command-center` continúa común entre los tres jobs. `VOLUMEN_PATH` absoluta/compartida la define el operador y no se deriva de Source.
+
+## Evidencia de este hito
+
+Commit:
+
+```text
+atlanticus@fe606cbefb932211b8329df9285004f4933df41d
+```
+
+Regresión local aislada reportada:
+
+```text
+Alarm Configuration Web                         123 PASS
+Alarm Projection Cosmos                           5 PASS
+ADA Command Center Configuration Manager         28 PASS
+TOTAL                                            156 PASS
+git diff --check                                 PASS
+```
+
+No certifica Source Blob + Cosmos E2E, Docker, Azure ni equivalencia física multi-host.
 
 ## OPEN y frentes distintos
 
-- **C3:** productor/verificadores GREEN de qualification reales; `ALARM_QUALIFICATIONS_FILE` manual sigue CURRENT.
-- **C4 CLOSED:** solo recepción último CURRENT con pin exacto; no altera authoring Source/Tool, qualification ni distribución física.
-- **C5:** contract key/version de technical evidence Runtime y auditoría `.env.detail`, sin inventar valores.
-- **Docker:** qualification distribuida Runtime/Delivery recomendada como próximo foco, sin alterar este aggregate.
-- **UX:** fin de turno, modal de guardado y autonomía visual frente a routing requieren decisión/validación propia.
+- **Resource Preparation + startup gate:** PLANNED / NEXT; debe reutilizar contratos existentes y asegurar recursos antes de iniciar consumidores. Diseño aún no implementado.
+- **Tool Catalog local:** NOT IMPLEMENTED; no declarar `local` totalmente filesystem hasta cerrar ese adapter.
+- **C3:** productor/verificadores GREEN reales; `ALARM_QUALIFICATIONS_FILE` manual continúa CURRENT.
+- **C5:** contract key/version de technical evidence y auditoría `.env.detail`, sin inventar valores.
+- **Docker/distribución:** UNVERIFIED.
+- **UX/END_OF_SHIFT operacional:** frente separado.
 
-No usar este cierre documental para modificar código, UI o nuevos contratos de Source.
+No utilizar este cierre documental para crear containers, variables, servicios o adapters no existentes.

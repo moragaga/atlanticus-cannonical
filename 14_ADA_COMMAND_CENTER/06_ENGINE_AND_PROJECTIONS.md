@@ -1,6 +1,6 @@
 # ADA Command Center — Engine and Projections
 
-Estado: **CURRENT — Source v3; READY local; WAL/EFFECTIVE; Runtime CURRENT v1 + FACTS v2; Delivery input exclusivamente último CURRENT tras C4. C1/C2/C4 CLOSED local; Live, Management y Analytics PLANNED.** Código auditado `atlanticus@45eff96d777f4711cb011f779ffc0a6c87bf0ca4`.
+Estado: **CURRENT — Source v3; READY local; WAL/EFFECTIVE; Runtime CURRENT v1 + FACTS v2; Delivery input exclusivamente último CURRENT; Alarm Configuration projection physical name `alarm-configuration` compartido entre local y Cosmos.** C1/C2/C4 CLOSED local; Resource Preparation/startup gate, Live, Management y Analytics siguen PLANNED. Código auditado `atlanticus@fe606cbefb932211b8329df9285004f4933df41d`.
 
 ## Source y materialización exacta
 
@@ -8,7 +8,7 @@ Estado: **CURRENT — Source v3; READY local; WAL/EFFECTIVE; Runtime CURRENT v1 
 
 ```text
 Alarm Source Rn + Tool manifest Cn
-  -> Alarm Projection Cosmos
+  -> Alarm Projection Cosmos: alarm-configuration, PK /partition_key
   -> qualification externa (JSON manual CURRENT) + resolver B.2
   -> VOLUMEN_PATH/ada-command-center/alarms/materialization/
        ready.json
@@ -17,43 +17,72 @@ Alarm Source Rn + Tool manifest Cn
        versions/<result_id>/delivery.json
 ```
 
-READY requiere pareja Runtime/Delivery íntegra, mismo pin, manifest/hash. BLOCKED deja diagnóstico sin sustituir READY. La salida monolítica previa B.2 a Cosmos es SUPERSEDED; no añadir otra vez ni adaptadores.
+READY requiere pareja Runtime/Delivery íntegra, mismo pin y manifest/hash. BLOCKED deja diagnóstico sin sustituir READY. La salida monolítica previa B.2 a Cosmos está SUPERSEDED; no reintroducir adapters legacy.
 
-## C2 preservado
+## C2 preservado — identidad física y procesos
 
-Los tres procesos usan `APPLICATION=ada-command-center` con `job_key`/leases individuales; `VOLUMEN_PATH` absoluta y manual debe apuntar al mismo volumen físico. Source Key única Domain `alarm-configuration`; Materialization deriva contenedor/partición Cosmos del resource contract existente. Los bindings físicos de Cosmos de Web/Materialization y los montajes reales siguen UNVERIFIED. No hay legado desplegado que migrar.
+Los tres procesos usan `APPLICATION=ada-command-center` con `job_key`/leases individuales; `VOLUMEN_PATH` absoluta y manual debe apuntar al mismo volumen físico. Source Key única Domain: `alarm-configuration`.
+
+El resource contract de Alarm Projection conserva:
+
+```text
+logical_id       ada.command_center.alarms.configuration.projection
+physical_name    alarm-configuration
+partition_key    /partition_key
+```
+
+El host local usa la misma identidad física bajo `AdaStorageNamespace`:
+
+```text
+<base_root>/conciencia_situacional/command-center/projections/alarm-configuration/
+```
+
+El adapter local no depende del paquete Cosmos para obtener esa identidad; ambos importan la constante compartida desde Alarm Configuration Web. Los bindings físicos cuenta/base Cosmos de Web/Materialization y los montajes reales siguen UNVERIFIED.
 
 ## Runtime y outputs CURRENT
 
-Runtime selecciona `(source_key, result_id, manifest_sha256, resolution_key)` exacto, adopta en WAL y mantiene EFFECTIVE; READY por sí solo no es EFFECTIVE. Publica CURRENT v1 completo y reemplazable en `runtime/output/current/latest.json` tras confirmar durabilidad requerida. Puede cambiar evidence sin nuevo commit de ciclo de vida. Independientemente exporta FACTS v2 inmutables y encadenados por `previous_batch` bajo `runtime/output/facts/`, con cursor **productor** `runtime/output/state/facts-export-cursor.json`.
+Runtime selecciona `(source_key, result_id, manifest_sha256, resolution_key)` exacto, adopta en WAL y mantiene EFFECTIVE; READY por sí solo no es EFFECTIVE. Publica CURRENT v1 completo/reemplazable en `runtime/output/current/latest.json` y exporta FACTS v2 inmutables encadenados bajo `runtime/output/facts/`, con cursor productor `runtime/output/state/facts-export-cursor.json`.
 
-La recepción C4 no altera estos productos, el WAL ni la semántica de recuperación del Engine. No introducir FACTS v1 adapters.
+Este hito no modificó Engine, WAL, CURRENT, FACTS ni adopción EFFECTIVE.
 
-## Delivery input — C4 CURRENT-only
+## Delivery input — CURRENT-only
 
-`processes/alarms-delivery` consume **solo el último CURRENT**. Lee la proyección EFFECTIVE y valida el snapshot recibido (SHA256, source, formato, integridad, UTC, unicidad de occurrences y evaluación). Exige igualdad de pin exacto con EFFECTIVE y resolución pareja mediante `LocalAlarmMaterializationReader.read_exact_ready`. No usa latest READY como sustituto ni consulta el WAL directamente.
+`processes/alarms-delivery` consume sólo el último CURRENT. Valida estructura/SHA/source/timestamps y exige igualdad de pin exacto con EFFECTIVE y READY. Persiste `delivery/input/current/latest.json` bajo fence cuando corresponde. No consume FACTS como backlog y no produce Live.
 
-- Si no hay EFFECTIVE: `WAITING_EFFECTIVE`; si no hay CURRENT o su pin difiere: `WAITING_CURRENT`.
-- Si se pierde igualdad durante el ciclo: `EFFECTIVE_CHANGED`; no se incorpora el snapshot no alineado.
-- Si `as_of` retrocede respecto al inbox: `STALE_SOURCE`; mismo timestamp con contenido distinto falla cerrado; igualdad exacta produce `CURRENT_UNCHANGED`.
-- Si es válido y nuevo: se reemplaza atómicamente `delivery/input/current/latest.json` bajo fence y se informa `CURRENT_STAGED`.
-- Un CURRENT válido con `alarms=[]` representa cero ocurrencias abiertas, distinto de ausencia física de CURRENT. El receptor no recorre snapshots intermedios ni espera backlog histórico.
-- `recover()` valida el CURRENT recibido previamente; desaparecieron la lectura de FACTS, su cursor consumidor y el ajuste `ALARM_DELIVERY_MAX_FACTS_PER_ITERATION`.
+Se preservan los estados y reglas C4 vigentes (`WAITING_EFFECTIVE`, `WAITING_CURRENT`, `EFFECTIVE_CHANGED`, `STALE_SOURCE`, `CURRENT_UNCHANGED`, `CURRENT_STAGED`) y la semántica de cero alarmas mediante `alarms=[]`.
 
-**Decisión C4 sobre desalineación:** si EFFECTIVE es B y el CURRENT observado corresponde a A, Delivery no acepta B hasta que el último CURRENT coincida; no agregar coordinación temporal, retries especiales ni reescritura del Runtime. El archivo de inbox A puede seguir presente durante espera, pero este receptor no realiza despacho. Una futura Live Projection debe aplicar otra vez la igualdad exacta al consumir el inbox; su implementación no está autorizada por C4.
+El bootstrap conserva `config/connections.json`, `ParallelCosmosPublisher` y `ALARM_DELIVERY_MAX_WORKERS`; no fueron refactorizados aquí.
 
-El bootstrap conserva `config/connections.json`, creación de `ParallelCosmosPublisher` y `ALARM_DELIVERY_MAX_WORKERS` sin modificar su funcionamiento. Si falta registry, el entrypoint hoy termina antes de ejecutar el job; separar la evaluación de esta dependencia de cualquier futura simplificación de infraestructura.
+## Fronteras de proyección
 
-## Fronteras independientes
+- **Alarm Configuration local projection:** CURRENT en filesystem, con root físico `.../projections/alarm-configuration/`.
+- **Alarm Configuration Cosmos projection:** CURRENT por contrato, container `alarm-configuration`, PK `/partition_key`.
+- **Engine CURRENT:** estado operacional actual con prioridad resuelta.
+- **Delivery input:** recepción/validación CURRENT y almacenamiento local; no es Live.
+- **AlarmLiveProjection:** NOT IMPLEMENTED.
+- **Management Capture/Projection:** PLANNED separado.
+- **History/Analytics:** PLANNED separado; Web no lee WAL ni deriva History del inbox CURRENT.
 
-- **Engine CURRENT:** estado operacional actual con prioridad ya resuelta.
-- **Delivery input:** recepción/validación CURRENT y almacenamiento local, no publicación Live.
-- **AlarmLiveProjection:** contrato futuro de enriquecimiento con Delivery Configuration exacta, visibilidad, causa y destino; NOT IMPLEMENTED.
-- **Management Capture/Projection:** intenciones/acciones de usuarios; servicio y proyección distintos.
-- **History/Analytics:** consumo futuro de hechos durables; Web no lee WAL ni deriva History del inbox CURRENT.
+## Resource Preparation — frontera siguiente, no implementación actual
 
-## Evidencia y siguiente frontera
+El Project acordó como dirección que los recursos no deben duplicar convenciones entre local y durable. El próximo incremento debe revisar cómo reutilizar namespaces/resource contracts y cómo ejecutar un preparation worker/startup gate antes de habilitar Web o procesos dependientes.
 
-**VERIFIED:** comparación Git entre baseline C2 y C4 (un commit, 14 cambios Delivery), 29 pruebas Delivery y 16 publicadores Runtime PASS comunicados; regresión local con workspace completo **567 PASS / 1 SKIPPED** y Ruff PASS en archivos C4. **UNVERIFIED:** CI, Docker separado y recursos físicos/multi-host; los gates históricos B2c.7 no equivalen a qualification distribuida.
+Estado de esa frontera:
 
-**PROPOSED / PLANNED siguiente foco único:** revisar y calificar **artefactos distribuidos de Runtime + Delivery en Docker como procesos independientes**, con volumen compartido y configuración exacta. Sin abrir C3/C5/Live/History durante ese gate.
+```text
+Resource Preparation + startup gate   PLANNED
+Tool Catalog filesystem local          NOT IMPLEMENTED
+ensure local roots                     UNVERIFIED / por diseñar contra código existente
+ensure Blob/Cosmos resources           existe infraestructura parcial en ADA Generic; integración CC UNVERIFIED
+startup dependency/gate                UNVERIFIED / por revisar
+```
+
+No declarar aún que `local` completo es filesystem ni que `durable` completo está provisionado automáticamente.
+
+## Evidencia de este hito
+
+**VERIFIED local:** 123 PASS Alarm Configuration Web + 5 PASS Projection Cosmos + 28 PASS Configuration Manager = **156 PASS**, además de `git diff --check` limpio.
+
+**UNVERIFIED:** CI, Docker separado, Azure, mismo Cosmos físico Web/Materialization y startup gate real.
+
+**PLANNED / único siguiente foco:** Resource Preparation + startup gate. No abrir Live, Management, History, nueva UX ni dashboard en ese incremento.
