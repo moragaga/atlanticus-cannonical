@@ -5,55 +5,54 @@ Estado: **CURRENT**
 ## Implementación auditada
 
 ```text
-moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
+moragaga/atlanticus@6fd1512afed73e76f7c344f3acb989b601c453e3
 ```
 
-## KPI Registry
+## Manager authorization
 
 ```text
 CLOSED / VERIFIED / CURRENT
 ```
 
-## KPI Definition
+Manager Core implementa `administrative_override` y `manager_access_granted`.
+
+ADA Generic compone:
 
 ```text
-CLOSED / VERIFIED / CURRENT
+managed root                         → override
+trusted local + local environment    → override
+ordinary profiles                    → no override
+bootstrap root                       → no implicit override
 ```
 
-## KPI Collector
+ADA Access no es autoridad de permisos Manager.
+
+## ADA Configuration Manager
+
+Los checks de acciones administrativas convergen con la autorización genérica del Manager.
+
+El runtime local usa override administrativo y no una lista enumerada de módulos.
+
+`MANAGER_ACCESS_KEYS` fue retirado.
+
+## KPI Registry / Definition / Collector
 
 ```text
-scopes/ada/web/kpis/collector
-ada-web-kpi-collector==0.1.0
+CURRENT capabilities
 ```
 
-Public capability incluye:
-
-```text
-AdaKpiCollector
-CosmosKpiDeliveryReader
-AdaKpiCollectorPollingRuntime
-AdaKpiCollectorWebIntegration
-attach_ada_kpi_collector
-component_kpi_store_id
-resolve_kpi_collector_browser_update
-```
-
-Defaults:
+Collector conserva:
 
 ```text
 Latest polling      10 s
 Timeseries polling 120 s
 Browser refresh     10 s
+1 ToolComponent = 1 browser store
 ```
 
-One Component Store per ToolComponent.
-
-Subcomponent no posee store propio.
+Tool Projection y KPI Delivery continúan siendo fronteras separadas.
 
 ## ADA Generic operational bootstrap
-
-CURRENT:
 
 ```text
 AdaGenericSettings
@@ -62,7 +61,7 @@ AdaGenericSettings
 → WebApplicationDefinition
 ```
 
-Tool resolution:
+Estados:
 
 ```text
 READY
@@ -71,90 +70,36 @@ UNAVAILABLE
 INVALID
 ```
 
-Estados degradados preservan Web base según contrato.
+## Tooling baseline
 
-## Collector runtime wiring
+`ToolConfiguration` mantiene configuración, sources, participación operacional, estructura y branding.
 
-Con Tool `READY` y KPI Delivery configurado:
+`ToolStructure` expone destinos KPI y estructura consumible por contratos Alarm baseline.
+
+La consolidación Tool→Tool permanece **OPEN / UNVERIFIED**; no se define aquí un schema.
+
+## Qualification de este cierre
 
 ```text
-ToolStructure
-→ AdaKpiCollector
-→ attach_ada_kpi_collector
-→ Web runtime
+ada-generic-application             288 passed
+ruff check src tests                PASS
+ada-configuration-manager tests      70 passed
+manager core tests                   85 passed
+MANAGER_ACCESS_KEYS search            0 matches
+git diff --check                     PASS
 ```
 
-Tool Projection y KPI Delivery usan settings/conexiones independientes.
+No equivale a qualification completa de Docker, Azure, Entra, multiworker o todo el monorepo.
 
-Collector no realiza polling durante composition.
-
-## Operational Render boundary
-
-CURRENT:
+## Próximo foco
 
 ```text
-OperationalRenderBinding
-→ structure only
+ADA-TOOLING-CONTRACT-REVIEW
+PLANNED / NEXT
 ```
 
-No incluye `ComponentStoreSnapshot`.
-
-Collector no depende del package `ada-web-operational-render-binding`.
-
-## Generic data delivery boundary
+Luego:
 
 ```text
-Cosmos KPI Delivery
-→ Collector
-→ worker cache
-→ dcc.Store / ToolComponent
-→ developer
-```
-
-ADA Generic no es owner del body específico de una Tool.
-
-## Qualification de cierre
-
-Observado antes del checkpoint final:
-
-```text
-operational-render-binding  7 passed
-kpis/collector              56 passed
-ada-generic-application     86 passed
-
-TOTAL                       149 passed
-
-ruff check                  PASS
-ruff format --check         PASS
-git diff --check            PASS
-```
-
-## Python
-
-Project baseline:
-
-```text
-3.14.7
-```
-
-Se mantiene el open item preexistente de metadata en packages que todavía declaren:
-
-```text
-requires-python ==3.14.2
-```
-
-Clasificación:
-
-```text
-PYTHON-METADATA-ALIGNMENT
-OPEN / SEPARATE
-```
-
-No pertenece a ADA Generic Stage 1.
-
-## Estado
-
-```text
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
+ADA-END-TO-END-GOLDEN-PATH
 ```

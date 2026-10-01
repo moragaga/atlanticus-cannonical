@@ -6,236 +6,156 @@ Estado: **CURRENT EXECUTION CHECKPOINT**
 
 ```text
 Implementation
-moragaga/atlanticus@21cfb2f11362c1606ad14ff8adc7551948eced6a
-
-Parent
-6155dae407dc784114ff34c7b3b6f93125432713
-
-Tree
-48e4115a5fb53e64d83e2ae2243a9f11d612d26f
-
-Canonical inspected before replacement
-moragaga/atlanticus-cannonical@4058aab3525a09b568b80f3f6a5265e45e4f6fea
+moragaga/atlanticus@6fd1512afed73e76f7c344f3acb989b601c453e3
 
 Historical decisions
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+
+Canonical inspected before replacement
+moragaga/atlanticus-cannonical@2b6ef68cdbea6f1278ed60b9ba65485cec136d7d
 ```
 
-Git permanece SOLO LECTURA.
+Git permanece **SOLO LECTURA** durante este cierre.
 
 ## Estado resumido
 
 ```text
-ADA-STORAGE-NAMESPACE                         CLOSED / VERIFIED / CURRENT
-TOOL-PROJECTION-PERSISTENCE                   CLOSED / VERIFIED / CURRENT
-TOOL-PERSISTENCE-RESILIENT-COMPOSITION        CLOSED / VERIFIED / CURRENT
+MANAGER-ADMINISTRATIVE-OVERRIDE                 CLOSED / VERIFIED / CURRENT
+ADA-MANAGER-AUTHORIZATION-CONVERGENCE           CLOSED / VERIFIED / CURRENT
+ADA-MANAGER-PRINCIPAL-DECOUPLING                CLOSED / VERIFIED / CURRENT
+ADA-ACCESS-AND-MANAGER-SEPARATION               CLOSED / VERIFIED / CURRENT
+ADA-GENERIC-AUTHORIZATION-QUALIFICATION          CLOSED / VERIFIED / CURRENT
 
-ADA-WEB-KPI-COLLECTOR-CAPABILITY              CLOSED / VERIFIED / CURRENT
-
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP             PLANNED / NEXT
-ADA-GENERIC-COLLECTOR-RUNTIME-WIRING          PLANNED / AFTER BOOTSTRAP
-
-PYTHON-METADATA-ALIGNMENT                     PLANNED / SEPARATE
-FULL-WORKSPACE-RUFF/CI                        UNVERIFIED / SEPARATE
+ADA-TOOLING-CONTRACT-REVIEW                     PLANNED / NEXT
+ADA-END-TO-END-GOLDEN-PATH                      PLANNED / AFTER TOOLING REVIEW
+ADA-LOGIN-DATA-BOOTSTRAP-E2E                    PLANNED / PART OF GOLDEN PATH
+ADA-TOOL-CONSOLIDATION-CONTRACT                 OPEN / UNVERIFIED
+ADA-KPI-END-TO-END-CONSUMPTION                  OPEN / UNVERIFIED
+ADA-ALARM-END-TO-END-CONSUMPTION                OPEN / SEPARATE INTEGRATION
 ```
 
-## Hito cerrado
+## Hito cerrado — autorización administrativa del Manager
 
-### Storage namespace
-
-CURRENT:
+Atlanticus Manager incorpora:
 
 ```text
-AdaStorageNamespace(
-    application_namespace,
-    tool_namespace,
-)
+ManagerPrincipal.administrative_override
+manager_access_granted(principal, access_key)
 ```
 
-Deriva:
+Contrato implementado:
 
 ```text
-application_prefix
-tool_prefix
-local_application_root(base)
-local_tool_root(base)
-local_projection_root(base)
-application_blob_name(relative)
-tool_blob_name(relative)
+access_key is None                      → DENY
+principal.administrative_override=True  → ALLOW
+access_key in principal.access_keys     → ALLOW
+otherwise                               → DENY
 ```
 
-Invariantes:
+Manager Core no infiere el override desde `profile_keys` ni desde `is_local`.
+
+`is_local=True` por sí solo no concede acceso administrativo.
+`profile_keys=('root',)` por sí solo no concede acceso administrativo.
+`access_key=None` sigue denegado incluso con override.
+
+## ADA — composición CURRENT
+
+ADA Generic dejó de derivar permisos Manager desde `AdaAccessConfiguration`.
+
+Composición vigente:
 
 ```text
-container físico != namespace lógico
-application namespace != tool namespace
-SourceKey != deployment namespace
+managed root + authenticated EffectiveUser
+→ ManagerPrincipal(administrative_override=True)
+
+trusted local identity + local environment
+→ ManagerPrincipal(administrative_override=True, is_local=True)
+
+basic / guest / custom / unknown
+→ no Manager administration
+
+bootstrap_root without managed user
+→ no implicit Manager administration
 ```
 
-Topology aceptada:
+`ManagerPrincipal.access_keys` queda vacío en estas rutas de composición.
+
+ADA Access conserva su ownership propio:
 
 ```text
-<data>/<application>/
-├── users/
-└── <tool>/
-    ├── sources/
-    └── projections/
+profile_key → operational access_keys
 ```
 
-`SourceStore` agrega `sources/`; la composición no lo agrega.
+y no se usa como autoridad de permisos administrativos del Manager.
 
-### Tool Projection durable
+El runtime local del Configuration Manager usa `administrative_override=True` y ya no mantiene una lista exhaustiva de permisos Manager.
 
-CURRENT:
-
-```text
-tool_projection_to_document
-tool_projection_from_document
-
-LocalToolProjectionStore
-CosmosToolProjectionStore
-```
-
-Local:
-
-```text
-<base>/<application>/<tool>/projections
-```
-
-Cosmos:
-
-```text
-partition_key = <application>/<tool>
-item identity = namespace + SourceKey
-```
-
-`ProjectionRecord.source_key` sigue siendo `SourceKey('tools')`.
-
-### Tool persistence composition
-
-CURRENT:
-
-```text
-ToolPersistenceSettings
-ToolPersistenceComposition
-compose_tool_persistence
-resolve_active_tool_projection
-project_current_tool_source
-```
-
-Providers:
-
-```text
-ToolSourceProvider.LOCAL | BLOB
-ToolProjectionProvider.LOCAL | COSMOS
-```
-
-Estados de resolución:
-
-```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
-```
-
-La composición es lazy respecto de I/O remoto: construirla no ejecuta health checks ni lecturas.
-
-Runtime puede leer Projection activa aunque Source no esté disponible.
+`MANAGER_ACCESS_KEYS` fue retirado; la búsqueda final sobre `scopes/ada/web/application` y `web` reportó cero coincidencias.
 
 ## Qualification observada
 
-### Storage namespace
+Sobre el working tree que luego fue publicado en `6fd1512afed73e76f7c344f3acb989b601c453e3`:
 
 ```text
-uv lock                 PASS
-pytest                   15 passed
-ruff check               PASS
-ruff format --check      PASS
-git diff --check         PASS
+ADA Generic application       288 passed
+ADA Generic ruff              PASS
+ADA Configuration Manager      70 passed
+Atlanticus Manager Core        85 passed
+MANAGER_ACCESS_KEYS search      0 matches
+git diff --check               PASS
 ```
 
-### Tool Projection persistence
+Estas cifras corresponden al cierre de este hito; no deben extrapolarse a todo el monorepo.
 
-Observado antes del commit final:
+## Tooling — estado observado, no rediseñado
+
+Código CURRENT inspeccionado:
 
 ```text
-configuration codec tests   2 passed
-projection-local tests      3 passed
-projection-cosmos tests     5 passed
-ruff check                  PASS
-git diff --check            PASS
+ToolConfiguration
+├── tool_key
+├── display_name
+├── kind
+├── source_consumption
+├── source_operational_participation
+├── structure
+└── branding
+
+ToolSourceConsumption
+└── source_keys
+
+ToolConfigurationKind
+├── integrated_operations
+├── process
+└── strategic
 ```
 
-Los archivos publicados están en `6155dae407dc784114ff34c7b3b6f93125432713`.
-No se observó en esta conversación un rerun completo posterior al último `ruff format`;
-por tanto ese rerun final permanece `UNVERIFIED`.
+`ToolStructure` ya expone destinos KPI y contratos usados por la proyección baseline de Alarm.
 
-### Tool persistence composition
-
-Sobre el contenido publicado luego en `21cfb2f11362c1606ad14ff8adc7551948eced6a`:
+No se demostró en este cierre un contrato explícito y cerrado para:
 
 ```text
-uv lock                 PASS
-ruff format             PASS
-ruff check              PASS
-ruff format --check     PASS
-pytest                  10 passed
-git diff --check        PASS
+Tool A
+→ ser consumida / consolidada por
+Tool B
 ```
 
-## Frontera aún no cerrada
+No inventar schema, dependencia o adapter para resolverlo.
 
-ADA Generic CURRENT todavía contiene:
+## Próxima frontera
+
+Foco único recomendado:
 
 ```text
-_StartupToolProjectionStore
-resolve_current_tool_projection(...)
+ADA-TOOLING-CONTRACT-REVIEW
 ```
 
-y ausencia de Tool Source current todavía produce:
+Objetivo: auditar contratos e implementación CURRENT de Tooling, decisions y canonical antes de modificar código.
+
+Después, y sólo después:
 
 ```text
-RuntimeError('Operational Tool source has no current release')
+ADA-END-TO-END-GOLDEN-PATH
 ```
 
-Eso no satisface todavía el contrato de startup resiliente de la aplicación.
-
-Además, `__main__.py` continúa arrancando mediante:
-
-```text
-create_application_runtime()
-run_web_application(runtime)
-```
-
-sin wiring de `ToolPersistenceComposition`.
-
-Clasificación:
-
-```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
-```
-
-## Regla congelada para el siguiente foco
-
-```text
-Web process must be able to exist
-with all data,
-with partial data,
-or with no persisted Tool/KPI data.
-
-Provider connection failure
-must degrade the affected capability,
-not automatically terminate the Web process.
-```
-
-No confundir:
-
-```text
-UNCONFIGURED
-UNAVAILABLE
-INVALID
-```
-
-con inexistencia del proceso Web.
+con una instancia limpia que recorra configuración, identidad, Tool, KPI, Alarm e integración/distribución según contratos realmente existentes.

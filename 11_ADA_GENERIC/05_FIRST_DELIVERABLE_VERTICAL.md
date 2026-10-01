@@ -1,74 +1,112 @@
 # ADA Generic — First Deliverable Vertical
 
-Estado: **CURRENT / GENERIC STAGE 1 CLOSED / LOCAL NAVIGATION QUALIFIED / TOOL GOLDEN PATH OPEN**
+Estado: **CURRENT / GENERIC STAGE 1 CLOSED / PRODUCT GOLDEN PATH OPEN**
 
-## Separación de entregables
-
-La base ADA Generic, la qualification de Navigation local, el artifact distribuible y la
-primera Tool real no son equivalentes.
-
-### Stage 1 — CLOSED
+## Stage 1 — CLOSED
 
 ```text
 Tool Projection durable
 → resilient Tool resolution
 → ToolStructure
-→ KPI Collector (si Tool READY y Cosmos configurado)
+→ KPI Collector when configured
 → Latest / Timeseries
 → process cache
-→ browser dcc.Store por ToolComponent
-→ developer handoff
+→ browser dcc.Store per ToolComponent
+→ consumer handoff
 ```
 
-El Collector no es un componente pendiente por crear para esta frontera. No imponer
-visualización Tool específica en ADA Generic.
+No reabrir esta frontera sin finding real.
 
-### Navigation local — CLOSED / VERIFIED MANUAL
+## Manager / Access — CLOSED en este hito
 
-Con la configuración de desarrollo, el usuario pudo guardar, publicar y proyectar Navigation
-y consumir sus enlaces desde Home. Después de corregir el callback, el menú funciona según
-la comprobación final sobre `a6061ffe`.
+ADA Generic ya compone autorización Manager sin depender de ADA Access.
 
-Esto califica ese flujo local; **no** prueba persistencia Blob/Cosmos real tras reinicio,
-identidad Entra ni distribución portable.
+Root administrado y trusted-local usan `administrative_override`.
+Perfiles ordinarios no reciben administración Manager.
 
-### Primer artifact distribuible — PLANNED / UNVERIFIED
+## Golden Path de producto — OPEN
 
-Hay tooling de procesos (`deployment/processes/bundle.py`) y validadores por frontera.
-No se ha acreditado todavía aquí que un artifact final de ADA Generic + sus dependencias
-sea portable y ejecutable fuera del checkout; tampoco se ha acreditado un pipeline de
-web distribution. Antes de agregar código, auditar las herramientas reales existentes.
+La siguiente qualification de ADA no debe ser otro conjunto de módulos aislados.
 
-### Golden Path de Tool — OPEN
-
-Una Tool concreta debe recorrer, según corresponda:
+Debe existir un recorrido reproducible, construido sólo con contratos reales:
 
 ```text
-Tool Configuration
-→ Source/Release
-→ Projection/materialization
-→ operational data
-→ KPI processes/Latest/Timeseries
-→ ADA Generic Collector + browser stores
-→ concrete Tool visualization
-→ E2E y artifact/distribution qualification
+clean runtime/infrastructure
+→ resource preparation
+→ identity/login
+→ Profiles / Users / Navigation as required
+→ Tool Configuration
+→ publish/materialize Tool Projection
+→ ADA runtime consumes Tool
+→ KPI configuration/runtime/delivery
+→ Latest + Timeseries consumed by ADA
+→ Alarm integration where the current alarm contract requires it
+→ restart/recovery checks
+→ artifact/distribution qualification
 ```
 
-Las partes Alarm/Command Center se integran sólo donde la Tool las necesite, en su frente.
-No son prerequisito universal impuesto al núcleo genérico.
+La secuencia exacta debe confirmarse contra implementación CURRENT antes de ejecutarse.
 
-## Orden de Tool congelado
+## Tool consolidation — OPEN / UNVERIFIED
+
+Requisito de producto planteado:
 
 ```text
-1. Operaciones Integradas
-2. Mina
+create Tool A
+create Tool B that consolidates/consumes A
 ```
 
-No elevar particularidades visuales de la primera Tool a arquitectura obligatoria.
+El contrato inspeccionado de `ToolSourceConsumption` sólo demuestra `source_keys`.
 
-## Siguiente frontera única
+No está permitido inventar un `tool_dependency`, un adapter o reutilizar `source_key` como dependencia Tool sin decisión previa.
 
-`ADA-GENERIC-WEB-ARTIFACT-DISTRIBUTION-QUALIFICATION`:
-identificar la vía existente de empaquetado Web, verificar dependencias, configuración,
-arranque fuera del checkout y criterios de entrega; diseñar sólo el gap demostrado.
-Los procesos KPI/backend usan su propio bundler y no se reimplementan en este frente.
+## Login/data bootstrap — OPEN / UNVERIFIED E2E
+
+La semántica de autorización Manager quedó cualificada.
+
+Permanece por cualificar como producto:
+
+```text
+empty durable state
+→ resources/data prepared
+→ first administrative identity
+→ persisted profiles/users/navigation/access
+→ subsequent login with expected effective user
+```
+
+Esto no autoriza cambios de identidad ni de Users durante el review de Tooling.
+
+## KPI — OPEN E2E, capability existente
+
+Collector y contratos Latest/Timeseries existen.
+
+Pendiente de producto:
+
+```text
+definition/registry
+→ runtime/backend
+→ delivery
+→ ADA Collector
+→ browser consumption
+```
+
+No rediseñar Collector durante Tooling review.
+
+## Alarm — integración separada
+
+ToolStructure ya participa en contratos baseline de Alarm.
+
+El Alarm Engine y Command Center tienen su propio scope.
+No duplicar ni rediseñar esos dominios dentro de ADA Generic.
+
+## Próxima frontera única
+
+```text
+ADA-TOOLING-CONTRACT-REVIEW
+```
+
+Después:
+
+```text
+ADA-END-TO-END-GOLDEN-PATH
+```

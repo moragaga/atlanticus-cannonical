@@ -13,69 +13,91 @@ clean root cutover
 no legacy adapters/shims/aliases
 no double contract
 one focus per increment
+Git read-only unless explicit authorization
 ```
 
-## Storage namespace
+## Manager authorization
 
 CURRENT / FROZEN:
 
 ```text
-physical container != application namespace != tool namespace != SourceKey
+Manager authorization != ADA Access
 ```
 
-`SourceStore` es dueño del segmento `sources/`.
+Contrato genérico:
 
-No reconstruir rutas globales mediante `../`.
+```text
+manager_access_granted(principal, access_key)
 
-## Tool Projection persistence
+access_key is None                      → DENY
+administrative_override=True            → ALLOW
+access_key in principal.access_keys     → ALLOW
+otherwise                               → DENY
+```
+
+Manager Core no interpreta perfiles de ADA, Users, Profiles ni Navigation para decidir override.
+
+`is_local` es contexto, no permiso.
+`profile_keys` son contexto, no permiso automático.
+
+Granular `access_keys` se conserva como contrato para administración delegada futura.
+
+## ADA composition of Manager principal
 
 CURRENT / FROZEN:
 
 ```text
-ProjectionRecord[ToolConfiguration]
-LocalToolProjectionStore
-CosmosToolProjectionStore
+managed root                         → administrative_override
+trusted local + local environment    → administrative_override
+basic / guest / custom               → no Manager administration
+bootstrap root                       → no implicit Manager administration
 ```
 
-Runtime activo:
+La composición ADA es responsable de decidir el override; Manager Core permanece genérico.
+
+`ManagerPrincipal.access_keys` no se rellena desde `AdaAccessConfiguration`.
+
+## ADA Access boundary
+
+CURRENT / FROZEN:
 
 ```text
-resolve_active_tool_projection()
+ADA Access
+profile_key → operational access_keys
+```
+
+No usar ADA Access como autoridad de Manager.
+
+No crear persistencia duplicada de permisos Manager para resolver root/local.
+
+Navigation, ADA Access y Manager mantienen semánticas de autorización independientes aunque una aplicación componga las tres.
+
+## Local Manager runtime
+
+CURRENT / FROZEN:
+
+```text
+local temporary principal
+→ administrative_override=True
+→ access_keys=()
+```
+
+No reconstruir listas exhaustivas de `*.manage`.
+
+La constante agregada `MANAGER_ACCESS_KEYS` queda retirada.
+
+## Tool persistence and runtime
+
+CURRENT / FROZEN:
+
+```text
+Tool runtime
 → durable Tool Projection
 ```
 
-Source participa sólo cuando un workflow necesita seleccionar/proyectar una Source release.
+Source participa en publicación/materialización, no es requisito para leer una Projection activa válida.
 
-## Provider composition
-
-CURRENT / FROZEN:
-
-```text
-Source provider      local | blob
-Projection provider  local | cosmos
-```
-
-Combinaciones independientes soportadas:
-
-```text
-local + local
-blob  + cosmos
-blob  + local
-local + cosmos
-```
-
-## Availability rule
-
-CURRENT / FROZEN:
-
-```text
-APPLICATION EXISTENCE
-!= TOOL CONFIGURATION EXISTENCE
-!= EXTERNAL INFRASTRUCTURE AVAILABILITY
-!= BUSINESS DATA AVAILABILITY
-```
-
-Tool resolution:
+Los estados de resolución siguen separados:
 
 ```text
 READY
@@ -84,32 +106,7 @@ UNAVAILABLE
 INVALID
 ```
 
-Ausencia o indisponibilidad de una capability no equivale automáticamente a caída global de Web.
-
-## ADA Generic bootstrap
-
-CURRENT / FROZEN:
-
-```text
-environment / .env
-→ provider/client settings
-→ AdaStorageNamespace
-→ ToolPersistenceComposition
-→ resolve_active_tool_projection()
-→ ADA Generic composition
-```
-
-La ruta startup in-process basada en Source fue eliminada.
-
-No reintroducir:
-
-```text
-_StartupToolProjectionStore
-resolve_current_tool_projection
-startup Source -> Projection reconstruction
-```
-
-## KPI Collector decisions
+## KPI Collector
 
 CURRENT / FROZEN:
 
@@ -123,11 +120,9 @@ Subcomponent != Store
 browser cache only
 ```
 
-Collector runtime wiring usa una conexión de consumo KPI separada de Tool Projection.
+Tool Projection y KPI Delivery pueden usar conexiones distintas.
 
-No asumir que ambas persistencias comparten Cosmos connection.
-
-## Operational render boundary
+## Operational render
 
 CURRENT / FROZEN:
 
@@ -136,115 +131,63 @@ CONFIGURATION DETERMINES STRUCTURE
 DATA DETERMINES RUNTIME STATE
 ```
 
-`OperationalRenderBinding` representa únicamente estructura:
+`OperationalRenderBinding` es estructural; no transporta estado KPI.
+
+## Tooling next boundary
+
+No existe una decisión nueva aprobada en este cierre sobre consolidación Tool→Tool.
+
+CURRENT observado:
 
 ```text
-ToolStructure
-→ OperationalComponentBinding
-→ ToolComponent
+ToolConfiguration.source_consumption
+→ source_keys
 ```
 
-No contiene:
+OPEN / UNVERIFIED:
 
 ```text
-ComponentStoreSnapshot
-KPI state
-Collector state
-browser state
+semántica de una Tool que consolida/consume otra Tool
 ```
 
-`AdaKpiCollector` no expone `operational_render_binding` y no depende del paquete
-`ada-web-operational-render-binding`.
-
-## Data delivery boundary
-
-CURRENT / FROZEN:
+Regla para el siguiente chat:
 
 ```text
-ADA Generic
-→ Tool resolution
-→ ToolStructure
-→ Collector
-→ process cache
-→ dcc.Store por ToolComponent
-→ END GENERIC DATA DELIVERY
+inspect implementation + decisions + canonical first
+do not invent a tool dependency schema
+do not encode another Tool as a source_key without an approved contract
 ```
-
-Desde esa frontera:
-
-```text
-developer / concrete Tool application
-→ conecta data operacional
-→ decide layout/render visual concreto
-```
-
-ADA Generic no posee un body universal de Tool.
-
-No crear:
-
-```text
-generic mandatory body renderer
-KPI -> render adapter
-duplicate UI store
-tool-specific layout inside generic core
-```
-
-La misma regla orientará Alarm: core entrega contrato/estado; el consumidor decide representación.
 
 ## Decisiones anteriores reemplazadas o refinadas
 
 ```text
-"Collector debe conectarse directamente desde Tool Source"
+"root/local full Manager access by enumerating every *.manage key"
 SUPERSEDED
 ```
 
-La ruta CURRENT consume Tool Projection durable.
+Ahora se usa `administrative_override`.
 
 ```text
-"in-process startup Tool Projection es la ruta operacional"
-SUPERSEDED / REMOVED
-```
-
-```text
-"Source debe estar disponible para resolver Tool runtime"
+"ADA Access determines Manager permissions"
 SUPERSEDED
 ```
 
+ADA Access y Manager authorization quedan desacoplados.
+
 ```text
-"OperationalRenderBinding empareja ToolComponent + ComponentStoreSnapshot"
-SUPERSEDED / REMOVED
+"Navigation administrative override is not a Manager permission"
+REFINED
 ```
 
-```text
-"Collector expone operational_render_binding sobre sus stores"
-SUPERSEDED / REMOVED
-```
+Navigation conserva su propia autorización, pero `ManagerPrincipal.administrative_override`
+es ahora también parte explícita del contrato genérico de autorización Manager.
+No confundir el efecto Manager con la semántica propia de Navigation.
+
+## Próxima decisión
 
 ```text
-"ADA Generic debe conectar automáticamente los KPI stores a un body genérico"
-SUPERSEDED / NOT REQUIRED
-```
-
-La frontera final es entrega de datos al desarrollador, no ownership de visualización.
-
-## Stage closure
-
-```text
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
-```
-
-No existe una etapa adicional conocida de ADA Generic antes de la entrega de datos.
-
-Nuevos increments sólo deben abrirse si una Tool concreta demuestra un finding real.
-
-## Next decision boundary
-
-```text
-ADA-COMMAND-CENTER-ALARM-CONFIGURATION
+ADA-TOOLING-CONTRACT-REVIEW
 PLANNED / NEXT
 ```
 
-Primero auditar implementación y contratos actuales.
-
-No rediseñar Alarm Engine ni inventar storage/schema sin finding.
+No abrir KPI, Alarm, Command Center o distribución como refactors paralelos durante esa revisión.

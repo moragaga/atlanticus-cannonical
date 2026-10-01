@@ -1,8 +1,8 @@
 # ADA Generic — First Tool Delivery Order
 
-Estado: **CURRENT / BASELINE 1.0**
+Estado: **CURRENT / BASELINE 1.0 / TOOLING CONTRACT REVIEW NEXT**
 
-Orden inicial congelado:
+Orden inicial conservado:
 
 ```text
 1. Operaciones Integradas
@@ -11,30 +11,52 @@ Orden inicial congelado:
 
 ## Operaciones Integradas
 
-Es la primera Tool para cerrar el Golden Path de:
+Sigue siendo la primera Tool para revelar gaps reales de:
 
 - Tool Configuration;
-- Component contracts;
-- Operational Data;
+- Tool Structure;
+- consumo de sources;
+- datos operacionales;
 - KPI;
 - Alarm;
 - ADA Generic;
 - Manager;
-- Command Center integration cuando corresponda.
+- distribución.
 
-## Mina
+## Hallazgo de cierre
 
-Se aborda inmediatamente después de estabilizar el patrón reutilizable obtenido con Operaciones Integradas.
+El contrato CURRENT inspeccionado demuestra:
+
+```text
+ToolConfiguration
+ToolSourceConsumption(source_keys)
+ToolSourceOperationalParticipation
+ToolStructure
+```
+
+No demuestra por sí solo una semántica cerrada para:
+
+```text
+Tool A → Tool B consolidated dependency
+```
+
+La necesidad de consolidar herramientas es un requisito de producto a contrastar, no un schema aprobado en este cierre.
+
+## Próximo foco
+
+Revisar Tooling antes de implementar:
+
+1. inventariar contracts y workflows existentes;
+2. contrastar `atlanticus:main`, decisions y canonical;
+3. precisar semántica de `integrated_operations`, `process` y `strategic`;
+4. precisar ownership de Source, Projection y runtime;
+5. determinar si ya existe un contrato para Tool→Tool;
+6. sólo ante gap demostrado, proponer el cambio mínimo.
 
 ## Regla
 
-No generalizar desde teoría antes de cerrar Operaciones Integradas.
+No generalizar desde teoría.
 
-La primera Tool debe revelar:
+No inventar dependencias, aliases, legacy adapters ni doble contrato.
 
-- gaps de configuration;
-- gaps de collectors/data;
-- gaps de projection;
-- gaps de render;
-- gaps de alarm integration;
-- distribución real.
+No abrir KPI/Alarm/Command Center como implementaciones paralelas durante esta revisión.
