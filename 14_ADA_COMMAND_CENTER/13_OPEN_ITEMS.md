@@ -1,118 +1,149 @@
 # ADA Command Center — Open Items
 
-Estado: **CURRENT — MANAGER CONVERGENCE CLOSED LOCALLY / GENERIC APPLICATION COMPOSITION NEXT / RESOURCE PREPARATION DEFERRED**
+Estado: **CURRENT — MANAGER ADMINISTRATION AND GENERIC APPLICATION CLOSED / DUAL-PRODUCT TOOLING-DISTRIBUTION NEXT / RESOURCE PREPARATION DEFERRED.**
 
 ## Authority checkpoint
 
 ```text
-Last confirmed Atlanticus HEAD:
-moragaga/atlanticus@36361dd570f86e8350ea4a6ee0e09bab351ba171
+Implementation CURRENT
+moragaga/atlanticus:main@736ae9820878a5d8ec7fa7f922ce483be3d3e6b3
 
-Command Center Manager convergence delta:
-VERIFIED LOCAL / PENDING FINAL GIT HEAD
+Decisions
+moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+
+Canonical base before this replacement
+moragaga/atlanticus-cannonical:main@226bcded9eb6970292c7722b23b595e93b4a9cff
 ```
 
-## CLOSED during Manager convergence
+## CLOSED in this sequence
 
 ```text
 atlanticus-web-manager==0.3.19
 → CURRENT authority
 
-ADA Navigation Manager reusable adoption
-→ CLOSED / VERIFIED
-
 Command Center Alarm Configuration Manager alignment
-→ CLOSED locally / VERIFIED
+→ CLOSED / CURRENT
 
 Command Center Tool Catalog Manager alignment
-→ CLOSED locally / VERIFIED
+→ CLOSED / CURRENT
 
-temporary Command Center Configuration Manager alignment
-→ CLOSED locally / VERIFIED
+Command Center Configuration Manager 0.1.2 administration composition
+→ CLOSED / CURRENT
+
+Users Manager adoption in Command Center administration
+→ CLOSED / CURRENT
+
+Profiles Manager adoption in Command Center administration
+→ CLOSED / CURRENT
+
+Navigation Manager adoption in Command Center administration
+→ CLOSED / CURRENT
+
+Command Center Generic Application 0.1.0
+→ CLOSED / CURRENT product composition root
 ```
 
-Local qualification of the Command Center delta:
+Qualification evidence for the two latest increments:
 
 ```text
-Alarm Configuration       124 PASS
-Tool Catalog Manager        9 PASS
-Configuration Manager host 28 PASS
-Ruff                        PASS
-git diff --check            PASS
-Manager 0.3.18 rg           EMPTY
+Configuration Manager 0.1.2
+30 PASS
+Ruff check PASS
+Ruff format check PASS
+git diff --check PASS
+
+Generic Application 0.1.0
+6 PASS
+Ruff check PASS
+Ruff format check PASS
+git diff --check PASS
+local smoke PASS reported by user
 ```
 
 ## NEXT único
 
 ```text
-ADA-COMMAND-CENTER-GENERIC-APPLICATION-COMPOSITION
+ADA-COMMAND-CENTER-DUAL-PRODUCT-TOOLING-DISTRIBUTION
 PLANNED / NEXT
 ```
 
 Reason:
 
-Command Center still has no accredited generic/final Web composition root equivalent to ADA Generic. The existing `ada-command-center-configuration-manager` is a temporary standalone Manager host.
+A real Command Center product target now exists. The previous blocker for dual-product tooling/distribution is closed.
 
-The next chat must stay in design/debate first and determine from existing code:
+The next chat must begin with design/audit against existing tooling and answer only from actual code:
 
 ```text
-product application boundary
-composition root
-runtime/entrypoint
-which current capabilities are mounted
-Manager surface integration
-whether a minimal Home is actually required
-which providers/stores are required
-what remains temporary
-qualification contract
+what artifact/distribution tooling exists
+which assumptions are hard-coded to ADA
+how product target is selected
+what each product distribution contains
+entrypoints/scripts
+package/path dependency closure
+.env.detail inclusion/validation
+artifact qualification
+whether Command Center can be distributed without unintended ADA product coupling
 ```
 
-Do not start dual-product tooling/distribution before this application exists and is qualified.
+Do not create a second tooling stack if the existing one can be safely generalized.
 
-## OPEN after NEXT
+## OPEN after this close
 
 | Element | Estado | Motivo |
 |---|---|---|
-| Final Git HEAD for the locally qualified Command Center Manager delta | OPEN | Tests are green locally but this chat did not receive a post-integration HEAD. |
-| Command Center Generic Application | PLANNED / NEXT | No accredited composition root/runtime exists yet. |
-| Dual-product tooling/distribution | PLANNED / BLOCKED | Requires a real Command Center Generic product target first. |
-| Resource Preparation + startup gate | PLANNED / DEFERRED | Important, but not the immediate next focus. |
-| Users/Profiles/Navigation integration in Command Center | PLANNED / NEED-DRIVEN | Reusable compositions exist, but current temporary host does not require them. |
-| Tool Catalog local completely filesystem | OPEN | Temporary local host still requires Storage for confirmed catalog. |
-| C3 qualification GREEN real | BLOCKED BY DESIGN | Definitive producer/verifiers not closed. |
+| Dual-product tooling/distribution | PLANNED / NEXT | Generic product target now exists; tooling has not yet been audited in this hito. |
+| Cross-product dependency audit (`scopes/ada` reused by Command Center) | OPEN / MUST OBSERVE DURING TOOLING | Existing implementation uses `AdaStorageNamespace` and `ada-web-tools`; legitimacy must be established from code before change. |
+| Manager header/branding specific to Command Center | PLANNED / DEFERRED | Current generic Manager header accepted by user; not part of tooling. |
+| Production identity / Entra binding | PLANNED / UNVERIFIED | Generic 0.1.0 launcher is local-only and fails fast in production. |
+| Operational UsersRuntime binding | OPEN / NOT IMPLEMENTED | Users Manager exists, but Generic 0.1.0 does not wire shared operational UsersRuntime. |
+| Durable Users topology | PLANNED / UNFROZEN | Local stores are in-process. |
+| Durable Profiles topology | PLANNED / UNFROZEN | Local active projection is in-process. |
+| Durable Navigation topology | PLANNED / UNFROZEN | Local active projection is in-process. |
+| Resource Preparation + startup gate | PLANNED / DEFERRED | Important but not immediate next focus. |
+| Tool Catalog fully local filesystem | OPEN | Local provider still requires Storage for confirmed catalog. |
+| C3 real GREEN qualification | BLOCKED BY DESIGN | Definitive producer/verifiers not closed. |
 | C5 technical evidence/env | PLANNED | Final owner/key/version still pending. |
-| Docker/runtime final Command Center | UNVERIFIED | No final integrated generic application artifact exists. |
-| Alarm Source/Projection physical E2E | UNVERIFIED | Existing contracts do not prove the same physical resource end-to-end. |
+| Docker/runtime final Command Center | UNVERIFIED | Local product host works; container/deployment artifact is not qualified. |
+| Alarm Source/Projection physical E2E | UNVERIFIED | Contracts do not prove identical physical resource across all hosts. |
 | Live Projection | PLANNED | Not implemented. |
-| Management Capture/Projection | PLANNED / SEPARATE | Do not mix with application composition. |
+| Management Capture/Projection | PLANNED / SEPARATE | Keep separate. |
 | History/Analytics | PLANNED / SEPARATE | Do not infer from FACTS/CURRENT. |
-| END_OF_SHIFT operational resolution | PLANNED / UNVERIFIED | Real shift-end source/consumer remains unresolved. |
-| Existing Alarm authoring UX defects | OPEN / SEPARATE | Value loss/validation/alert findings belong to another focus. |
-| Python 3.14.7 / Trixie migration | BLOCKED / DEFERRED | Reopen only with explicit authorization. |
+| Operational alarm read model/Home | PLANNED / SEPARATE | Current Home is minimal and does not render engine state. |
+| END_OF_SHIFT operational resolution | PLANNED / UNVERIFIED | Real source/consumer remains unresolved. |
+| Existing Alarm authoring UX defects | OPEN / SEPARATE | Separate focus. |
+| Python 3.14.7 / Trixie migration | BLOCKED / DEFERRED | Current packages still declare 3.14.2; migration not opened. |
 
 ## SUPERSEDED / refined sequencing
 
-The sequence:
+SUPERSEDED:
 
 ```text
-Manager convergence
-→ immediately dual-product tooling/distribution
+Command Center Generic Application
+→ NEXT
 ```
 
-is **SUPERSEDED** because Command Center has no final generic application to distribute.
+It is now CURRENT.
+
+SUPERSEDED as sequencing guidance:
+
+```text
+Resource Preparation + startup gate
+→ ÚNICO PRÓXIMO FOCO
+```
+
+Resource Preparation remains open but is no longer the next focus.
 
 CURRENT sequence:
 
 ```text
-Manager convergence                               CLOSED
-ADA Generic adoption                              CLOSED
-Command Center existing Manager component alignment CLOSED locally
-Command Center Generic Application                NEXT
-dual-product tooling/distribution                  AFTER
-Resource Preparation / startup gate                LATER
+Manager convergence                                  CLOSED
+Command Center administration composition            CLOSED
+Command Center Generic Application                   CLOSED / CURRENT
+dual-product tooling/distribution                    PLANNED / NEXT
+Resource Preparation / startup gate                  PLANNED / DEFERRED
 ```
 
-The old file generated outside Git:
+The old external file:
 
 ```text
 ada_command_center_foundation_increment.zip
@@ -132,8 +163,10 @@ Analytics
 History
 Management Capture
 Alarm Engine redesign
-new identity system
+Manager branding
+production identity implementation
+durable Users/Profiles/Navigation implementation
 Python/Trixie migration
 new compatibility aliases
-new configuration contracts without an observed need
+new configuration contracts without observed need
 ```

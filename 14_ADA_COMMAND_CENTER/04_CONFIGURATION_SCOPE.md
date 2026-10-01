@@ -1,20 +1,20 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT — Alarm Configuration Snapshot Source v3 / Tool dependencies Rn/Cn / MANAGER WORKSPACE CORE CONVERGED LOCALLY; Durable E2E and Resource Preparation remain UNVERIFIED/PLANNED.**
+Estado: **CURRENT — Alarm Configuration Snapshot Source v3 / Tool dependencies Rn/Cn / Manager workspace converged / Command Center administration composition 0.1.2 CURRENT; durable E2E and Resource Preparation remain UNVERIFIED/PLANNED.**
 
 ## Authority of this close
 
 ```text
-Last confirmed Atlanticus HEAD:
-moragaga/atlanticus@36361dd570f86e8350ea4a6ee0e09bab351ba171
+Implementation CURRENT
+moragaga/atlanticus:main@736ae9820878a5d8ec7fa7f922ce483be3d3e6b3
 
-Alarm Configuration Manager convergence delta:
-VERIFIED LOCAL / PENDING FINAL GIT HEAD
+Administration composition commit
+moragaga/atlanticus@2ccc2dffd792d55ae68aee3d64ed73eef408bbf8
 ```
 
-Command Center administra Alarm Configuration reutilizando `atlanticus.web.manager` sin modificar semántica de Manager genérico.
+Command Center administers Alarm Configuration by reusing `atlanticus.web.manager` without modifying generic Manager semantics.
 
-## Aggregate y publicación CURRENT
+## Aggregate and publication — CURRENT
 
 ```text
 AlarmConfiguration
@@ -27,44 +27,44 @@ AlarmConfigurationSnapshot
     schema_version: 3
 ```
 
-Definiciones Tool no se embeben en configuración Alarm editable.
+Tool definitions are not embedded in editable Alarm configuration.
 
-El workspace conserva sidecar `_confirmed_tool_catalog_revision`, no miembro de `AlarmConfiguration`.
+The workspace preserves sidecar `_confirmed_tool_catalog_revision`, not a member of `AlarmConfiguration`.
 
-Source schema v2 está SUPERSEDED sin decoder legacy.
+Source schema v2 is SUPERSEDED without a legacy decoder.
 
-### Flujo vigente
+### Current flow
 
 ```text
-Save Draft -> consulta Confirmed Tool Catalog y fija Cn en workspace
-Validate   -> revisa configuración/Cn actual y referencias Tool
-Verify     -> concurrencia de Source bajo Manager
-Publish    -> vuelve a comprobar Cn (drift guard) y congela manifest Cn
+Save Draft -> reads Confirmed Tool Catalog and pins Cn in workspace
+Validate   -> checks configuration/current Cn and Tool references
+Verify     -> Source concurrency under Manager
+Publish    -> checks Cn again and freezes manifest Cn
 ```
 
-El manifest incluye origins, escalones de routing definidos y visual targets según contrato actual. Cambios Cn posteriores no reinterpretan snapshots Rn/Cn inmutables.
+Later Tool Catalog changes do not reinterpret immutable Rn/Cn snapshots.
 
 ```text
 VALID_AT_SAVE != READY != EFFECTIVE
 ```
 
-## Manager workspace convergence — CURRENT locally
+## Manager workspace convergence — CURRENT
 
-Package:
+Packages:
 
 ```text
 ada-command-center-web-alarm-configuration==0.1.1
 atlanticus-web-manager==0.3.19
 ```
 
-`AlarmConfigurationManagerWorkspaceBinding` conserva sólo la regla de dominio que le pertenece:
+`AlarmConfigurationManagerWorkspaceBinding` retains only its real domain rule:
 
 ```text
 Confirmed Tool Catalog required
 → pin current catalog revision into payload
 ```
 
-Después delega al core:
+Generic workspace behavior belongs to:
 
 ```text
 ManagerWorkspaceBinding
@@ -75,11 +75,9 @@ ManagerWorkspaceBinding
 → payload copy/update
 ```
 
-No existe shim para mensajes, schemas o comportamiento del binding anterior.
+No compatibility shim is retained.
 
-La excepción genérica de workspace inválido pertenece al Manager core.
-
-Qualification local del paquete:
+Historical qualification preserved:
 
 ```text
 124 PASS
@@ -88,37 +86,97 @@ Ruff PASS
 
 ## C1 — Tool ownership CURRENT
 
-`web/tools/catalog` construye/persiste Confirmed Tool Catalog CURRENT en Blob; `web/tools/discovery-cosmos` inspecciona conexiones Tool Cosmos nombradas y confirma revisiones; `web/tools/catalog-manager` posee UI/callbacks. Host temporal compone services; `backend/tools` está SUPERSEDED. El editor no reinterpreta snapshots congelados con Tool latest.
+`web/tools/catalog` builds/persists Confirmed Tool Catalog in Blob; `web/tools/discovery-cosmos` inspects named Tool Cosmos connections and confirms revisions; `web/tools/catalog-manager` owns UI/callbacks.
 
-Tool Catalog Manager local convergence:
+`backend/tools` remains SUPERSEDED.
+
+Tool Catalog Manager:
 
 ```text
 ada-command-center-web-tool-catalog-manager==0.1.1
 atlanticus-web-manager==0.3.19
+```
+
+Historical local qualification:
+
+```text
 9 PASS
 Ruff PASS
 ```
 
-**Límite actual:** `ADA_MANAGER_PERSISTENCE_PROVIDER=local` no convierte todavía Tool Catalog a filesystem. El host temporal sigue requiriendo Storage para Tool Catalog en ambos providers.
+**Current limit:** local Manager provider still requires Storage for Tool Catalog. Tool Catalog local filesystem is not implemented.
 
-## C2 — Source Key y topología CURRENT
+## Command Center administration composition — CURRENT
 
-`domain/alarms/identity.py` define:
+Package:
+
+```text
+ada-command-center-configuration-manager==0.1.2
+```
+
+The package now composes:
+
+```text
+Administration
+├── Users
+├── Profiles
+└── Navigation
+
+Configuration
+├── Tool Catalog
+└── Alarm Configuration
+```
+
+Access keys:
+
+```text
+users.manage
+profiles.manage
+navigation.manage
+alarms.manage
+```
+
+Navigation configuration SourceKey:
+
+```text
+navigation
+```
+
+Profiles options for Navigation are projected through neutral `NavigationProfileOption` values. Navigation does not import Profiles directly.
+
+Local administration topology currently implemented:
+
+```text
+Profiles Source       LocalSourceStore
+Navigation Source     LocalSourceStore
+Profiles Projection   in-process
+Navigation Projection in-process
+Users Registry        in-process
+Users Promoted        in-process
+```
+
+Do not infer durable resource names, containers or restart persistence for these stores.
+
+Qualification of 0.1.2:
+
+```text
+30 PASS
+Ruff check PASS
+Ruff format check PASS
+git diff --check PASS
+```
+
+## C2 — Source Key and topology CURRENT
+
+Domain defines:
 
 ```text
 ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'
 ```
 
-Web lo transforma en `SourceKey` técnico y Materialization/Runtime/Delivery lo consumen. La constante no elimina verificaciones del `source_key` persistido.
+Web creates the technical `SourceKey`; Materialization/Runtime/Delivery consume the same logical identity.
 
-Identidad física compartida:
-
-```text
-web/alarms/configuration/resources.py
-ALARM_CONFIGURATION_PROJECTION_PHYSICAL_NAME = 'alarm-configuration'
-```
-
-Resource contract Cosmos:
+Physical Alarm Projection identity remains:
 
 ```text
 logical_id        ada.command_center.alarms.configuration.projection
@@ -127,15 +185,15 @@ partition_key     /partition_key
 allowed_override  CONNECTION_REF
 ```
 
-El nombre anterior:
+SUPERSEDED physical name:
 
 ```text
 ada-command-center-alarm-configuration-projection
 ```
 
-está **SUPERSEDED**. No mantener alias ni compatibilidad legacy.
+No alias or compatibility layer is retained.
 
-## Namespace Storage/local CURRENT
+## Storage/local namespace CURRENT
 
 ```text
 application_namespace = conciencia_situacional
@@ -149,84 +207,70 @@ conciencia_situacional/command-center/tool-catalog/current.json
 conciencia_situacional/command-center/sources/alarm-configuration/...
 ```
 
-Projection local:
+Alarm Projection local:
 
 ```text
 <base_root>/conciencia_situacional/command-center/projections/alarm-configuration/...
 ```
 
-Cosmos:
+Alarm Cosmos:
 
 ```text
 alarm-configuration
 PK /partition_key
 ```
 
-No generalizar esta identidad a recursos no implementados.
+Do not generalize this identity to resources that have no frozen contract.
 
-## Temporary host CURRENT
-
-```text
-ada-command-center-configuration-manager==0.1.1
-atlanticus-web-manager==0.3.19
-```
-
-El host sigue siendo temporal y standalone para desarrollo/qualification.
-
-Qualification local:
+## Configuration Manager application — CURRENT / SEPARATE
 
 ```text
-28 PASS
-Ruff PASS
+ada-command-center-configuration-manager==0.1.2
 ```
 
-No equivale al futuro Command Center Generic Application.
+This is a standalone development/testing/qualification application.
 
-## Configuración física todavía OPEN
+It is not the product root and is not intended to be executed as a nested host by Generic.
 
-Cuenta/base/credencial Cosmos de entrada Materialization siguen siendo configuradas externamente y deben coincidir físicamente con el host durable: UNVERIFIED.
+Its composition/contracts are legitimately reused by the product application.
 
-El contenedor Blob permanece ambiental.
-
-Las conexiones Tool Cosmos siguen siendo múltiples/nombradas cuando corresponde.
-
-`APPLICATION=ada-command-center` continúa común entre los tres jobs.
-
-`VOLUMEN_PATH` absoluta/compartida la define el operador y no se deriva de Source.
-
-## Evidencia preservada de hitos anteriores
-
-El cierre de naming físico anterior reportó:
+## Generic Application relationship — CURRENT
 
 ```text
-Alarm Configuration Web                         123 PASS
-Alarm Projection Cosmos                           5 PASS
-ADA Command Center Configuration Manager         28 PASS
-TOTAL                                            156 PASS
-git diff --check                                 PASS
+ada-command-center-generic-application==0.1.0
+→ depends on configuration-manager==0.1.2
+→ reuses ConfigurationManagerDependencies
+→ reuses build_configuration_manager_surface(...)
+→ consumes administration.navigation_projection_store
 ```
 
-La convergencia Manager posterior reportó:
+This establishes one composition authority rather than duplicating Manager modules.
 
-```text
-Alarm Configuration Web                         124 PASS
-Tool Catalog Manager                              9 PASS
-ADA Command Center Configuration Manager         28 PASS
-Ruff                                             PASS
-git diff --check                                 PASS
-atlanticus-web-manager==0.3.18 under CC Web      NONE
-```
+## Physical configuration still OPEN
 
-Estas evidencias no certifican Source Blob + Cosmos E2E, Docker, Azure ni equivalencia física multi-host.
+- Materialization durable Cosmos account/database/credential must match the physical resource used by the Web host: UNVERIFIED.
+- Blob container remains environment-supplied.
+- Tool Cosmos connections remain multiple/named where applicable.
+- `APPLICATION=ada-command-center` remains common among the three jobs.
+- `VOLUMEN_PATH` remains operator-managed and absolute.
+- Durable Users/Profiles/Navigation topology is not frozen.
+- Production identity binding for Generic 0.1.0 is not implemented.
+- Tool Catalog local filesystem is not implemented.
 
-## OPEN y frentes distintos
+## Existing cross-product dependency to audit
 
-- **Command Center Generic Application:** PLANNED / NEXT; no implementada.
-- **Resource Preparation + startup gate:** PLANNED / DEFERRED hasta cerrar application composition.
-- **Tool Catalog local:** NOT IMPLEMENTED; no declarar `local` totalmente filesystem.
-- **C3:** productor/verificadores GREEN reales; `ALARM_QUALIFICATIONS_FILE` manual continúa CURRENT.
-- **C5:** contract key/version de technical evidence y auditoría `.env.detail`.
-- **Docker/distribución:** UNVERIFIED.
-- **UX/END_OF_SHIFT operacional:** frente separado.
+Current configuration code still reuses packages under `scopes/ada`, including the storage namespace implementation and `ada-web-tools`.
 
-No utilizar este cierre documental para crear containers, variables, servicios o adapters no existentes.
+This is implementation reality, not a new contract.
+
+Do not remove, alias or relocate it in this documentation close. The next tooling/distribution audit must expose whether it prevents an independent Command Center artifact and then propose the smallest root fix if required.
+
+## OPEN separate fronts
+
+- Dual-product tooling/distribution: PLANNED / NEXT.
+- Resource Preparation + startup gate: PLANNED / DEFERRED.
+- C3: real GREEN producer/verifiers remain unresolved; current manual qualification mechanism stays authoritative.
+- C5: technical evidence key/version and environment audit remain open.
+- Docker/Azure: UNVERIFIED.
+- UX/END_OF_SHIFT: separate.
+- Manager product header/branding: PLANNED / DEFERRED.

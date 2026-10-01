@@ -1,51 +1,58 @@
 # ADA Command Center — Identity, Users, Profiles, Navigation and Manager
 
-Estado: **CURRENT DIRECTION / MANAGER AUTHORITY CONVERGED / USERS-PROFILES-NAVIGATION NOT YET REQUIRED BY CURRENT HOST**
+Estado: **CURRENT — GENERIC APPLICATION ADOPTS IDENTITY + USERS/PROFILES/NAVIGATION ADMINISTRATION + PROJECTED OPERATIONAL NAVIGATION; PRODUCTION IDENTITY AND DURABLE ADMINISTRATION TOPOLOGY REMAIN OPEN.**
 
 ## Authority of this close
 
 ```text
-Last confirmed Atlanticus HEAD:
-moragaga/atlanticus@36361dd570f86e8350ea4a6ee0e09bab351ba171
+Implementation CURRENT
+moragaga/atlanticus:main@736ae9820878a5d8ec7fa7f922ce483be3d3e6b3
 
-Command Center Manager 0.3.19 delta:
-VERIFIED LOCAL / PENDING FINAL GIT HEAD
+Administration integration
+moragaga/atlanticus@2ccc2dffd792d55ae68aee3d64ed73eef408bbf8
+
+Generic Application
+moragaga/atlanticus@736ae9820878a5d8ec7fa7f922ce483be3d3e6b3
 ```
 
 ## Identity
 
-Producción usa Microsoft Entra ID mediante la capability transversal Atlanticus.
+Identity remains a transversal Atlanticus capability.
 
-No crear autenticación paralela.
+Do not create authentication parallel to Atlanticus.
 
-La identidad autenticada, Users, Profiles, Navigation y Manager son contratos separados.
+Project target for production remains Microsoft Entra ID, but Generic 0.1.0 currently wires only `LocalIdentityProvider`. Production startup fails fast until a production identity provider and durable runtime composition are explicitly injected.
 
-## Users
+Identity, Users, Profiles, Navigation and Manager remain separate contracts.
 
-Users es generic Atlanticus.
+## Users — CURRENT administrative integration
 
-Ownership:
+Users is generic Atlanticus.
+
+Ownership remains:
 
 ```text
 user → profile_key
 ```
 
-No contiene ADA-specific access state.
+Users does not contain ADA-specific access state.
 
-`local` permanece un perfil/identidad especial de runtime local, no una asignación managed que deba sembrarse para poblar UI.
-
-Users Manager composition:
+Current Command Center integration:
 
 ```text
 web/compositions/users-manager
-CURRENT / VERIFIED
+→ Users Manager entry
+→ composed by ada-command-center-configuration-manager==0.1.2
+→ surfaced inside Command Center Generic Manager
 ```
 
-Command Center CURRENT no la consume todavía.
+Current local Users stores are in-process.
 
-## Profiles
+Generic 0.1.0 does not register a shared operational `UsersRuntime`; do not equate Users Manager with an operational user runtime contract.
 
-Profiles es generic Atlanticus.
+## Profiles — CURRENT administrative integration
+
+Profiles remains generic Atlanticus.
 
 Ownership:
 
@@ -56,30 +63,32 @@ Source
 Projection
 ```
 
-Profiles Manager composition:
+Current Command Center integration:
 
 ```text
 web/compositions/profiles-manager
-CURRENT / VERIFIED
+→ Profiles Manager module
+→ Source LocalSourceStore in local runtime
+→ active Projection in-process in local runtime
 ```
 
-No agregar permisos de producto a Profiles.
+Do not add product permissions to Profiles.
 
-Command Center CURRENT no la consume todavía.
+Durable Profiles topology is not frozen.
 
-## Navigation
+## Navigation — CURRENT administrative + operational integration
 
-Navigation es generic Atlanticus.
+Navigation remains generic Atlanticus.
 
-Durable:
+Durable contract remains:
 
 ```text
 allowed_profiles = profile keys
 ```
 
-Navigation no depende de Users ni de ADA Access.
+Navigation does not depend on Users or ADA Access.
 
-Cuando un producto necesite validar perfiles:
+Profile options remain connected only through composition:
 
 ```text
 ProfileCatalog
@@ -89,7 +98,7 @@ NavigationProfileOption
 Navigation Configuration
 ```
 
-Congelado:
+Frozen:
 
 ```text
 Navigation Configuration package → Profiles package
@@ -99,42 +108,39 @@ Product composition → Profiles + Navigation contracts
 ALLOWED
 ```
 
-No persistir copias de `ProfileDefinition` dentro de Navigation.
+No `ProfileDefinition` copies are persisted inside Navigation.
 
-## Navigation Manager reusable — CURRENT
+### Navigation Manager reusable
 
 Authority:
 
 ```text
-web/compositions/navigation-manager
 atlanticus-web-composition-navigation-manager==0.3.0
-CURRENT / CONVERGED
+CURRENT
 ```
 
-Las divergencias históricas quedaron resueltas:
+Current Command Center composition configures:
 
 ```text
-authorization       → can_view(...)
-service lifecycle   → WebModule.register_services
-source_key          → configurable
-runtime labels      → configurable
-workspace           → ManagerWorkspaceBinding
-profile validation  → neutral NavigationProfileOption provider
+source_key = 'navigation'
+access_key = 'navigation.manage'
 ```
 
-ADA ya consume esta composition.
+The Generic product application consumes the same administration navigation projection store through `create_projected_navigation_module(...)`.
 
-Command Center no debe adoptarla sólo para igualar a ADA. El host actual no tiene shell operacional/navigation que la requiera. Su necesidad se decide dentro del futuro `ada-command-center-generic-application`.
+A product binding converts `ManagerPrincipal` to neutral `NavigationPrincipal`.
 
-## Manager authorization
+No ADA Access dependency is introduced.
 
-Manager Core CURRENT:
+## Manager authorization — FROZEN
+
+Manager Core:
 
 ```text
 atlanticus-web-manager==0.3.19
 ```
 
-Contrato:
+Authorization contract:
 
 ```text
 access_key=None                  → DENY
@@ -143,47 +149,54 @@ matching granular access_key     → ALLOW
 otherwise                        → DENY
 ```
 
-`ManagerPrincipal.administrative_override` es Manager authority real.
+`ManagerPrincipal.administrative_override` remains Manager authority.
 
-La product composition decide cuándo emitir override.
+Do not derive it from ADA Access.
 
-No derivarlo desde ADA Access.
+## Command Center local principal — CURRENT
 
-Command Center no incorpora ADA Access.
-
-## Command Center Manager CURRENT
-
-Capabilities administrativas existentes:
+Generic 0.1.0 local runtime creates one principal aligned with local identity:
 
 ```text
-Alarm Configuration Manager
-Tool Catalog Manager
-temporary Configuration Manager host
+subject_id=<same local identity subject>
+display_name='Administrador local'
+profile_keys=('local',)
+administrative_override=True
+is_local=True
 ```
 
-La convergencia local cerró:
+This is local-runtime behavior only.
+
+Do not infer production roles or permissions from it.
+
+## Command Center Manager — CURRENT
+
+Current administrative surface:
 
 ```text
-ada-command-center-web-alarm-configuration 0.1.1
-ada-command-center-web-tool-catalog-manager 0.1.1
-ada-command-center-configuration-manager 0.1.1
-atlanticus-web-manager 0.3.19
+Administration
+├── Users
+├── Profiles
+└── Navigation
+
+Configurations
+├── Tool Catalog
+└── Alarm Configuration
 ```
 
-`AlarmConfigurationManagerWorkspaceBinding` conserva únicamente especialización de dominio:
+Relevant packages:
 
 ```text
-Save Draft
-→ require Confirmed Tool Catalog
-→ pin current catalog revision
-→ delegate workspace mechanics to ManagerWorkspaceBinding
+ada-command-center-configuration-manager==0.1.2
+atlanticus-web-manager==0.3.19
+atlanticus-web-composition-users-manager==0.1.1
+atlanticus-web-composition-profiles-manager==0.2.0
+atlanticus-web-composition-navigation-manager==0.3.0
 ```
 
-Ownership, SourceKey, snapshot y serialización de workspace pertenecen al Manager core.
+## Bindings legitimate vs legacy adapters — FROZEN
 
-## Bindings legítimos vs adapters legacy
-
-Permitido:
+Allowed:
 
 ```text
 ManagerPrincipal
@@ -191,7 +204,7 @@ ManagerPrincipal
 NavigationPrincipal
 ```
 
-Permitido:
+Allowed:
 
 ```text
 ProfileCatalog
@@ -199,7 +212,7 @@ ProfileCatalog
 NavigationProfileOption
 ```
 
-Prohibido:
+Forbidden:
 
 ```text
 old contract
@@ -207,17 +220,33 @@ old contract
 new contract
 ```
 
-No mantener dos autoridades después de una convergencia.
+No parallel authority after a convergence.
 
-## NEXT
+## Decision refined in this close
 
-No agregar Users/Profiles/Navigation en aislamiento.
+Earlier guidance said Command Center should not adopt Users/Profiles/Navigation merely because reusable compositions existed.
 
-El próximo foco único es:
+That guidance was need-driven, not a prohibition.
+
+It is now SUPERSEDED by the explicit product decision and implementation that the real Command Center Generic composition includes these capabilities.
+
+The frozen exclusion remains:
 
 ```text
-ADA-COMMAND-CENTER-GENERIC-APPLICATION-COMPOSITION
-PLANNED / NEXT
+ADA Access
 ```
 
-Ese diseño debe determinar qué capabilities necesita realmente el composition root final de Command Center.
+and no ADA-specific authorization state is introduced.
+
+## OPEN
+
+```text
+Production Entra provider binding for Generic        PLANNED / UNVERIFIED
+Durable Users topology                               PLANNED / UNFROZEN
+Durable Profiles topology                            PLANNED / UNFROZEN
+Durable Navigation topology                          PLANNED / UNFROZEN
+Operational shared UsersRuntime                      NOT IMPLEMENTED
+Manager product-specific header/branding             PLANNED / DEFERRED
+```
+
+Do not solve these inside dual-product tooling unless an existing artifact contract proves one is a hard blocker.
