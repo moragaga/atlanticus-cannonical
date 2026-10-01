@@ -1,29 +1,36 @@
-# Web Platform — Users / Profiles / Access / Navigation / Manager Capability Boundary
+# Web Platform — Users / Profiles / Navigation / Manager Capability Boundary
 
-Estado: **CURRENT / MANAGER AUTHORIZATION REFINED 2026-10-01**
+Estado: **CURRENT / MANAGER AUTHORIZATION CLOSED / NAVIGATION MANAGER CONVERGENCE BLOCKED**
 
-Implementation checkpoint:
-
-```text
-moragaga/atlanticus@6fd1512afed73e76f7c344f3acb989b601c453e3
-```
-
-## Propósito y ownership
+Implementation:
 
 ```text
-Atlanticus Global Users         identity + lifecycle + user → profile_key
-Atlanticus Generic Profiles    definition + catalog + Source + Projection
-ADA Access                      profile_key → operational access_keys
-Atlanticus Generic Navigation  route structure + profile visibility
-Atlanticus Manager             administrative shell + administrative authorization
-ADA Generic                     explicit composition/consumer
+moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
 ```
 
-Atlanticus Core no depende de ADA.
+## Ownership
 
-## Users / Profiles
+```text
+Atlanticus Users
+identity/lifecycle + user → profile_key
 
-System profiles continúan:
+Atlanticus Profiles
+profile definitions + catalog + Source + Projection
+
+Atlanticus Navigation
+route structure + allowed_profiles + operational authorization
+
+Atlanticus Manager
+administrative shell + administrative authorization
+
+ADA Access
+ADA-only profile_key → operational access_keys
+
+ADA Generic / Command Center
+product composition
+```
+
+## System profiles
 
 ```text
 basic
@@ -32,111 +39,154 @@ guest
 local
 ```
 
-Users conserva `profile_key`.
-Profiles conserva catálogo y definición.
-Este hito no cambia sus persistencias ni workflows.
+`local` es runtime local especial.
 
-## ADA Access CURRENT
+No sembrar Users managed sólo para representar identidades locales.
+
+## Manager authorization
+
+Contrato CURRENT:
+
+```text
+access_key is None                    → DENY
+administrative_override=True          → ALLOW
+access_key in principal.access_keys   → ALLOW
+otherwise                             → DENY
+```
+
+Product composition:
+
+```text
+managed root
+→ override
+
+trusted local + local environment
+→ override
+
+basic / guest / custom
+→ no Manager administration
+
+bootstrap root
+→ no implicit Manager administration
+```
+
+Manager Core no infiere override desde profile/is_local.
+
+## ADA Access
+
+ADA Access es exclusivamente operacional ADA.
 
 ```text
 profile_key → access_keys
 ```
 
-Es un contrato ADA específico para accesos operacionales.
+No se proyecta a Manager.
 
-No se proyecta a `ManagerPrincipal.access_keys`.
+No existe en Command Center.
 
-No crear persistencia `user → Manager access_keys` para reemplazar esta separación.
+## Navigation + Profiles
 
-## Manager authorization CURRENT
+Navigation no importa Profiles.
 
-Contrato genérico:
-
-```text
-access_key is None                      → DENY
-principal.administrative_override       → ALLOW
-access_key in principal.access_keys     → ALLOW
-otherwise                               → DENY
-```
-
-Manager Core no infiere override desde profiles ni `is_local`.
-
-La composición ADA decide:
+La product composition adapta únicamente los datos que Navigation necesita:
 
 ```text
-managed root                         → administrative_override
-trusted local + local environment    → administrative_override
-basic / guest / custom               → no Manager administration
-bootstrap root                       → no implicit Manager administration
+ProfileCatalog
+    ↓
+NavigationProfileOption(key, label)
 ```
 
-Granular `access_keys` se conserva para administración delegada futura.
-
-## Navigation CURRENT
-
-Navigation mantiene su propia autorización de rutas y visibilidad.
-
-Navigation no obtiene permisos Manager desde ADA Access.
-
-El uso de un contexto administrativo puede producir comportamiento especial de Navigation según su contrato propio, pero esa semántica no reemplaza la policy del Manager.
-
-## Refinamiento respecto de canonical anterior
-
-La formulación histórica:
+Congelado:
 
 ```text
-administrative_override is only a Navigation recovery exception
-and does not grant Manager access
+Navigation Configuration → Profiles package
+FORBIDDEN
+
+Product composition → Profiles contract
+ALLOWED
+
+Product composition → Navigation neutral option contract
+ALLOWED
 ```
 
-queda **SUPERSEDED** por implementation CURRENT.
+## Navigation Manager composition
 
-`ManagerPrincipal.administrative_override` participa ahora directamente en `manager_access_granted()`.
-
-Esto no fusiona Navigation y Manager: siguen siendo capabilities independientes con policies distintas.
-
-## Local runtime
-
-El principal local temporal usa:
+Estado auditado:
 
 ```text
-profile_keys=('local',)
-access_keys=()
-administrative_override=True
-is_local=True
+web/compositions/navigation-manager
+BLOCKED
 ```
 
-No mantener una enumeración exhaustiva `*.manage`.
+No es CURRENT authority para consumidores nuevos.
 
-## Qualification
+Findings VERIFIED:
+
+1. ADA no la consume.
+2. Llama `ManagerAuthorizationPolicy.can_access(...)`; CURRENT expone `can_view(...)`.
+3. Registra Source/Projection/Validation services directamente sobre un `ServiceRegistry` externo.
+4. Profiles/Alarm compositions registran esos services mediante `WebModule.register_services`.
+5. Workflow generic añade validadores y checks que no son idénticos al workflow ADA.
+6. Default source key generic: `navigation-configuration`.
+7. ADA source key: `navigation`.
+8. No introducir alias para esconder esta diferencia.
+9. Runtime source/projection labels generic no están alineados con la variación que otros compositions ya exponen.
+
+Antes de modificar, decidir explícitamente:
 
 ```text
-ADA Generic application       288 passed
-ADA Generic ruff              PASS
-ADA Configuration Manager      70 passed
-Atlanticus Manager Core        85 passed
-MANAGER_ACCESS_KEYS search      0 matches
+source_key authority
+workflow validation/concurrency authority
+workspace semantics
+authorization call
+service lifecycle
+runtime labels/provider API
 ```
+
+Luego reemplazar limpiamente el wiring anterior.
+
+## Authority/version
+
+Manager package owner:
+
+```text
+atlanticus-web-manager==0.3.18
+web/capabilities/manager
+```
+
+El próximo frente debe terminar con una única versión/authority consumida por ADA, Command Center y tooling/distribution.
 
 ## Reglas congeladas
 
 ```text
-Atlanticus generic core → ADA dependency          FORBIDDEN
-Users → profile_key                               CURRENT
-ADA Access ownership                              ADA-SPECIFIC
-ADA Access → Manager permissions                  FORBIDDEN
-Manager override inference inside Core            FORBIDDEN
-is_local alone → Manager administration           FORBIDDEN
-root profile alone inside Core → administration   FORBIDDEN
-composition-owned override decision               CURRENT
-granular Manager access_keys                      CURRENT
-access_key=None                                   DENY
-legacy shims / aliases / duplicate contracts      FORBIDDEN
+Atlanticus generic core → ADA-specific dependency     FORBIDDEN
+Users → profile_key                                  CURRENT
+ADA Access → Manager permissions                     FORBIDDEN
+Navigation → Users                                   FORBIDDEN
+Navigation → ADA Access                              FORBIDDEN
+Navigation Configuration → Profiles package          FORBIDDEN
+composition neutral profile binding                  CURRENT
+is_local alone → Manager administration              FORBIDDEN
+root profile alone inside Manager Core               FORBIDDEN
+composition-owned administrative_override            CURRENT
+granular Manager access_keys                         CURRENT
+access_key=None                                      DENY
+legacy shims / aliases / duplicate contracts         FORBIDDEN
+parallel Manager versions                            FORBIDDEN
 ```
 
-## OPEN separado
+## NEXT
 
-- Production Entra and physical identity qualification.
-- Durable login/bootstrap-data E2E.
-- Global CI/Ruff.
-- Tooling contract review and product Golden Path.
+```text
+MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
+```
+
+Same chat:
+
+```text
+generic convergence
+→ ADA Generic
+→ Command Center
+→ tooling/distribution both
+→ qualification
+```

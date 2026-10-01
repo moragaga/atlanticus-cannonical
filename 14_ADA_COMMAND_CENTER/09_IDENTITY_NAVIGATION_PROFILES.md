@@ -1,147 +1,61 @@
-# ADA Command Center — Identity, Users, Profiles, Access, Navigation and Activity
+# ADA Command Center — Identity, Users, Profiles, Navigation and Manager
 
-Estado: **CURRENT DIRECTION / REFINED AFTER USERS-PROFILES, ADA ACCESS PERSISTENCE AND PROFILES MANAGER INTEGRATION**
+Estado: **CURRENT DIRECTION / MANAGER AUTHORIZATION CONVERGED / NAVIGATION COMPOSITION BLOCKED**
 
 ## Identity
 
-Producción usa Microsoft Entra ID mediante capability transversal Atlanticus.
+Producción usa Microsoft Entra ID mediante la capability transversal Atlanticus.
 
 No crear autenticación paralela.
 
-## Entrada a la aplicación
-
-La identidad autenticada puede entrar aunque todavía no exista un `UserRecord` promovido.
-
-```text
-valid authenticated identity + no promoted UserRecord
-→ READY
-→ deterministic user_id
-→ no UsersRuntime EffectiveUser
-
-promoted + enabled=True
-→ READY
-→ EffectiveUser available
-
-promoted + enabled=False
-→ USER_DISABLED
-→ 403
-```
-
-## Capability graph CURRENT
-
-```text
-Profiles
-   ├──> Users
-   ├──> Navigation Configuration
-   └──> ADA Access
-```
-
-Esto representa consumo de contracts generic, no fusión de ownership.
-
-No establecer:
-
-```text
-Navigation -> Users
-Navigation -> ADA Access
-Atlanticus Profiles -> ADA Access
-```
+La identidad autenticada, Users, Profiles, Navigation y Manager son contratos separados.
 
 ## Users
 
 Users es generic Atlanticus.
 
-CURRENT:
+Ownership:
 
 ```text
-UserRecord.profile_key
-EffectiveUser.profile_key
-UsersAdministrationService
+user → profile_key
 ```
 
-Users posee:
+No contiene ADA-specific access state.
+
+`local` permanece un perfil/identidad especial de runtime local, no una asignación managed que deba sembrarse para poblar UI.
+
+Users Manager composition:
 
 ```text
-user -> profile_key
-```
-
-No contiene ADA-specific access keys ni Navigation configuration.
-
-Managed users consumen `ProfileCatalog`.
-
-`local` es runtime-only y no managed assignment.
-
-SUPERSEDED / REMOVED:
-
-```text
-authority_key
-basic|root authority mini-contract
+web/compositions/users-manager
+CURRENT / VERIFIED
 ```
 
 ## Profiles
 
-Profiles es capability generic Atlanticus first-class.
-
-CURRENT:
-
-```text
-ProfileDefinition
-ProfileCatalog
-ProfilesConfiguration
-Profiles Source lifecycle
-Profiles Projection
-Profiles Configuration Web surface
-Profiles Manager composition
-Profiles integration in ADA Configuration Manager
-```
-
-No agregar permisos ADA al modelo generic Profiles.
-
-## ADA Access
-
-ADA Access es application-specific bajo:
-
-```text
-scopes/ada/web/access/core
-scopes/ada/web/access/configuration
-```
-
-CURRENT:
-
-```text
-ProfileAccessGrant
-EffectiveAdaAccess
-AdaAccessConfiguration
-AdaAccessSourceService
-AdaAccessProjectionBuilder
-durable ProjectionRecord serialization
-local Projection persistence
-Cosmos Projection persistence
-```
+Profiles es generic Atlanticus.
 
 Ownership:
 
 ```text
-profile_key -> ADA access_keys
+profile definitions
+ProfileCatalog
+Source
+Projection
 ```
 
-REMOVED:
+Profiles Manager composition:
 
 ```text
-UserProfileAssignment
-user_id -> profile_keys
+web/compositions/profiles-manager
+CURRENT / VERIFIED
 ```
 
-ADA Access Projection depende exactamente de Profiles Projection y valida sus referencias
-contra el `ProfileCatalog` de esa dependencia.
-
-La persistencia durable conserva el `ProjectionTarget` y dependencies exactas.
-No reconstruir provenance desde la Profiles Projection CURRENT tras restart.
-
-La UI/composition administrativa de ADA Access sigue PLANNED.
+No agregar permisos de producto a Profiles.
 
 ## Navigation
 
-Navigation es generic y permanece independiente de Users y ADA Access.
+Navigation es generic Atlanticus.
 
 Durable:
 
@@ -149,89 +63,113 @@ Durable:
 allowed_profiles = profile keys
 ```
 
-Navigation Configuration consume `ProfileCatalog` desde Profiles core.
+Navigation no depende de Users ni de ADA Access.
 
-No persiste copias de `ProfileDefinition`.
+La validación contra perfiles debe ocurrir mediante un contrato neutral provisto por la product composition:
 
-### Runtime fallback pendiente
+```text
+ProfileCatalog
+    ↓ product composition
+NavigationProfileOption
+    ↓
+Navigation Configuration
+```
 
-La materialización exacta del principal de Navigation para identidad autenticada no
-promovida sigue separada.
+Por tanto queda congelado:
 
-No crear Global User ficticio ni dependencias Navigation -> Users/ADA Access.
+```text
+Navigation Configuration package → Profiles package
+FORBIDDEN
+
+Product composition → Profiles + Navigation contracts
+ALLOWED / CURRENT DIRECTION
+```
+
+No persistir copias de `ProfileDefinition` dentro de Navigation.
+
+## Navigation Manager reusable — finding CURRENT
+
+Existe:
+
+```text
+web/compositions/navigation-manager
+```
+
+pero ADA no lo consume hoy.
+
+Estado:
+
+```text
+BLOCKED / CONVERGENCE REQUIRED
+```
+
+Findings VERIFIED:
+
+- usa `ManagerAuthorizationPolicy.can_access(...)` aunque el contrato CURRENT expone `can_view(...)`;
+- registra servicios sobre un `ServiceRegistry` recibido por la composition;
+- ADA usa wiring/workflows propios;
+- workflows generic y ADA difieren en validación/concurrencia/workspace;
+- generic default `SourceKey` es `navigation-configuration`;
+- ADA usa `navigation`;
+- providers generic no exponen hoy toda esa variación de forma equivalente;
+- labels runtime generic están fijados.
+
+No migrar ADA ni Command Center hasta decidir el contrato único.
+
+No introducir alias entre `navigation` y `navigation-configuration`.
 
 ## Manager authorization
 
-Core CURRENT:
+Manager Core CURRENT:
 
 ```text
-ManagerAuthorizationPolicy.can_view(...)
+access_key=None                  → DENY
+administrative_override=True     → ALLOW
+matching granular access_key     → ALLOW
+otherwise                        → DENY
 ```
 
-Profiles Manager usa esta semántica.
+`ManagerPrincipal.administrative_override` es Manager authority real.
 
-Permanece un consumer standalone desalineado en `navigation-manager`.
+La product composition decide cuándo emitir override.
 
-No introducir alias.
+No derivarlo desde ADA Access.
 
-## User Activity
+Command Center no debe incorporar ADA Access.
 
-User Activity sigue opcional e integrable.
+## Bindings legítimos vs adapters legacy
 
-No es requisito para Alarm Engine ni Analytics.
-
-## Reglas congeladas
+Permitido:
 
 ```text
-Entra valid identity without promotion
-ACCESS ALLOWED
-
-promoted disabled User
-ACCESS BLOCKED
-
-Users -> profile_key
-CURRENT
-
-Users -> ADA-specific access state
-FORBIDDEN
-
-Navigation -> Users
-FORBIDDEN
-
-Navigation -> ADA Access
-FORBIDDEN
-
-Navigation Configuration -> Profiles core
-CURRENT
-
-ADA Access
-APPLICATION-SPECIFIC
-
-ADA Access user_id -> profile_keys
-REMOVED
-
-Profiles
-GENERIC ATLANTICUS
-
-Navigation durable profile references
-PROFILE KEYS
-
-ADAPTERS / SHIMS / ALIASES
-FORBIDDEN
+ManagerPrincipal
+    ↓ product composition
+NavigationPrincipal
 ```
 
-## Pendientes separados
+Permitido:
 
 ```text
-Users Administration Manager integration
-PLANNED / NEXT MANAGER FRONT
-
-ADA Access Configuration Manager integration
-PLANNED / AFTER USERS
-
-ADA Access runtime composition
-PLANNED / SEPARATE
-
-Navigation operational authorization alignment
-PLANNED / SEPARATE
+ProfileCatalog
+    ↓ product composition
+NavigationProfileOption
 ```
+
+Prohibido:
+
+```text
+old contract
+    ↓ compatibility shim/alias
+new contract
+```
+
+No mantener dos autoridades después de una convergencia.
+
+## Próximo frente
+
+```text
+MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
+NEXT
+```
+
+Primero converger Navigation/Manager reusable; luego ADA Generic; luego Command Center; luego tooling/distribution de ambos.

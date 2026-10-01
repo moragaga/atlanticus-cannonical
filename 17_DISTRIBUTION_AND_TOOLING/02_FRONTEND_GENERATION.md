@@ -1,54 +1,109 @@
 # Frontend Generation
 
-Estado: **CURRENT / SOURCE_SMOKE + PORTABLE CLOSED / DISTRIBUTION INTEGRATION OPEN**
+Estado: **CURRENT / ADA DISTRIBUTION TOOLING CLOSED FOR a7546574 / MANAGER ALIGNMENT NEXT**
 
-Inspección de implementación: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`.
-Resultados de ejecución proporcionados por el usuario el 2026-09-26; no son tests ejecutados por el asistente sobre su equipo.
-
-## Objetivo y frontera
-
-Atlanticus genera un Starter Web **editable y reusable**; no un nuevo framework ni una Tool ADA definitiva. La base `generic` no depende de ADA. El overlay `ada` reutiliza `ada-generic-application`, su bootstrap operacional y su composición externa. El consumidor externo implementa la aplicación concreta.
+Implementation:
 
 ```text
-WebModule / page_packages / AssetLayer / register_callbacks
-             ↓
-tooling/distribution/web/generate_starter.py
-             ├── generic → distribution/generic-web-starter
-             └── ada     → distribution/ada-web-starter
-             ↓
-Editable application → locked wheelhouse → qualification → distribution input
+moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
 ```
 
-`distribution/` es una salida generada ignorada por Git; el código fuente canónico de generación reside en `tooling/distribution/web/`. El generador no sobrescribe un destino preexistente. `manifest.json` registra los archivos y hashes SHA256.
+## Frontera
 
-## CURRENT implementado
+Atlanticus genera Starters/artifacts editables y reutilizables.
 
-- Base: `src/application`, `pages/home.py`, módulo externo de ejemplo con `module.py`, `callbacks.py`, `pages/overview.py` y CSS registrado por `AssetLayer`.
-- Overlay ADA: `create_composition(binding)` delega en `create_local_operational_composition()` y agrega el módulo externo; arranca mediante `run_operational_application(composition_factory=...)`. No duplica bootstrap ni Collector.
-- Python operativo: **3.14.2** para los dos Starters; migración a 3.14.7 **PLANNED / DEFERRED** por decisión expresa.
-- `build_wheelhouse.py`: exporta locks, construye wheels internos, descarga/valida wheels externos compatibles para runtime y build, registra versiones/hashes en manifest. Los wheels de terceros son archivos separados: no están incrustados en nuestros wheels.
-- `qualify_starter.py` y `probe_starter.py`: SOURCE_SMOKE y PORTABLE offline, con checks de health, Home, ejemplo, layout, registro de página, callback HTTP y CSS HTTP.
-- Dockerfile existente: multistage y offline, Python 3.14.2, usuario no privilegiado, healthcheck, puerto interno **8050**, `python -m application` y rechazo explícito de producción. El cambio a Gunicorn/8000 NO está implementado.
-- ADA Generic resuelve publicaciones en un directorio externo mediante `APPLICATION_PUBLICATIONS_ROOT`.
+No debe copiar una segunda implementación completa del runtime, Manager o project tooling dentro de cada aplicación.
 
-## Evidencia y límites
+```text
+capabilities/packages
+        ↓
+product composition
+        ↓
+generation/distribution tooling
+        ↓
+generated application/artifact
+```
 
-**VERIFIED / CLOSED por terminal del usuario:** SOURCE_SMOKE PASS de Generic y ADA; 36 wheels Generic y 108 ADA; PORTABLE PASS de los dos en Python 3.14.2 mediante instalación offline y nueve checks. Las ejecuciones específicas del tooling informaron `11`, `8`, `16` y `18` tests aprobados durante sus incrementos.
+## ADA CURRENT
 
-**VERIFIED MANUAL / CONTAINER PARTIAL:** 5 tests del template Docker, 2 de publications root ADA; imágenes Generic y ADA construidas; ambas respondieron a `/health/live`; Generic entregó HTML `/example` con CSS referenciado.
+El perfil ADA usa ADA Generic como composition/runtime authority.
 
-**FINDING / OPEN:** Docker ADA respondió con HTML **Acceso denegado** a `/example`. El probe sintético no simulaba suficientemente solicitudes `Accept: text/html` propias de un navegador. Una prueba de página registrada no prueba autorización real de Navigation.
+La Tool generada conserva sus propias:
 
-**OPEN — Manager visible y estilo real:** durante la qualification y en el contenedor ADA se configuró `ADA_MANAGER_PERSISTENCE_PROVIDER=disabled`. No se verificó Manager Home/header/sidebar, ni publicación/proyección/consumo de Navigation desde el Starter, ni recorrido visual completo de la identidad Atlanticus. El usuario identificó esta brecha. Ello no demuestra que Manager se haya eliminado del core: existe una composición opcional distinta.
+```text
+application.pages
+application.modules
+Home
+host/deployment surfaces
+```
 
-## Fronteras posteriores separadas
+El project tooling reusable vive en:
 
-- **PROPOSED / PLANNED:** un único Dockerfile local/productivo con Gunicorn y puerto interno `8000`; requiere un punto WSGI que conserve bootstrap, Collector e identidad/autorización correctos. Docker 8050 actual sigue CURRENT.
-- **PLANNED:** plantillas inactivas y sin secretos `secrets.json`, `dev.mapping-env.csv`, `uat.mapping-env.csv`, `prd.mapping-env.csv`; el consumidor elige archivos activos y cualquier mapeo de variables debe quedar explícito.
-- **PLANNED / UNVERIFIED:** Compose local Cosmos/Azurite, provisionamiento y recovery durable; host Entra productivo, CI y Azure deployment.
+```text
+tooling/distribution/web/ada/project-tooling
+```
 
-## Contratos congelados
+y se distribuye como:
 
-No framework adicional al existente, Generic independiente de ADA, Manager/Navigation con sus ownership, permisos sin bypass, no fallback Source al leer Tool Projection runtime, Collector único, `distribution/` como output, Python 3.14.2 CURRENT. Atlanticus produce artifact/distribution input; DevOps externo posee el pipeline.
+```text
+ada-project-tooling==0.1.0
+```
 
-**Próximo foco propuesto, no implementado en este cierre:** recorrido integrado Manager–Navigation–visual qualification en el Starter apropiado, preservando shells separados.
+## Manager authority in generated artifacts
+
+La generación no debe fijar una versión Manager diferente de la autoridad del package owner.
+
+CURRENT package owner:
+
+```text
+web/capabilities/manager
+atlanticus-web-manager==0.3.18
+```
+
+El próximo frente debe revisar todos los pins/locks/manifests/wheels que materialicen Manager.
+
+Si el package owner aumenta de versión durante la convergencia, el tooling debe regenerar y calificar los artifacts con esa misma versión.
+
+No mantener artifacts ADA y Command Center con autoridades Manager divergentes.
+
+## Command Center tooling
+
+Command Center todavía no posee una aplicación generic/distribución final acreditada.
+
+No inventar un segundo framework de generación.
+
+Después de integrar el Manager convergido en Command Center, el mismo frente debe alinear su generación/distribución usando los contratos de tooling ya existentes donde correspondan.
+
+La implementación exacta se deriva del código existente en ese momento; no crear adapters o scripts duplicados por adelantado.
+
+## Python / image freeze
+
+Python CURRENT:
+
+```text
+3.14.2
+```
+
+Migración 3.14.7 / Trixie:
+
+```text
+BLOCKED / DEFERRED UNTIL EXPLICIT USER AUTHORIZATION
+```
+
+No cambiarla como parte de Manager/tooling alignment.
+
+## Próximo foco
+
+Tooling no es el primer paso independiente.
+
+Secuencia obligatoria:
+
+```text
+Manager composition/version convergence
+→ ADA Generic integration
+→ Command Center integration
+→ tooling/distribution alignment of both
+→ qualification
+```
+
+Todo pertenece al mismo siguiente frente para evitar que artifacts y aplicaciones vuelvan a divergir.

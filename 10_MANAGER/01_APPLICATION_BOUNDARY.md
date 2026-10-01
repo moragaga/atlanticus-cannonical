@@ -1,168 +1,191 @@
 # Manager — Application Boundary
 
-Estado: **CURRENT**
+Estado: **CURRENT / COMPOSITION CONVERGENCE PLANNED NEXT**
+
+Implementation inspeccionada:
+
+```text
+moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
+```
 
 ## Decisión
 
-Manager tiene una frontera de aplicación propia.
+Manager es una capability genérica de Atlanticus.
 
-No es una variante del shell operacional de ADA ni debe reutilizar el header operacional de
-ADA como si fueran la misma superficie.
+Manager posee:
 
-## Implementación CURRENT
+```text
+surface
+registry
+authorization
+Home
+sidebar/navigation administrativa
+workflow común
+routing
+callbacks/assets transversales
+```
 
-ADA Configuration Manager crea un `ManagerSurface` y lo monta como aplicación independiente.
+La presentación y reglas específicas de configuración permanecen en la capability que las posee.
 
-La capability genérica `atlanticus.web.manager` posee:
+Manager no es una variante del shell operacional de ADA ni del shell futuro de Command Center.
 
-- surface;
-- registry;
-- authorization;
-- lifecycle;
-- coordinator Source/Projection;
-- Home;
-- layout;
-- callbacks;
-- assets.
-
-## Items administrativos CURRENT
+## Items administrativos
 
 ```text
 ManagerModule
 ManagerEntry
 ```
 
-`ManagerModule` representa capabilities con Source/Projection.
+`ManagerModule` se usa cuando la capability posee un lifecycle Source/Projection real.
 
-`ManagerEntry` representa capabilities administrativas que necesitan el mismo shell, routing,
-authorization y WebModule lifecycle sin inventar Source/Projection.
+`ManagerEntry` se usa cuando una capability administrativa necesita shell, routing, autorización y lifecycle Web sin inventar Source/Projection.
 
-## Regla canónica
-
-- ADA operacional → header/shell ADA.
-- Manager → header/shell Manager.
-- Pueden compartir primitives, tokens, branding o comportamiento transversal real.
-- No comparten ownership de navegación ni header.
-- La presentación específica permanece en la capability que la posee.
-
-## Reusabilidad
-
-Manager sigue siendo capability generic Atlanticus.
-
-ADA Configuration Manager compone capabilities generic y ADA-specific sobre Manager.
-
-CURRENT:
-
-```text
-ManagerModule:
-- Profiles / título ADA: Perfiles
-- Accesos
-- Navigation
-- Tools
-- KPI Configuration
-- KPI Definition
-
-ManagerEntry:
-- Users
-```
-
-Access es application-specific ADA.
-
-Profiles, Users y Navigation son generic Atlanticus.
-
-La composition ADA puede localizar títulos, descripciones y nombres de runtime visibles sin
-cambiar los defaults generic de la capability.
-
-## Profiles configuration boundary
-
-La UI/configuration de Profiles pertenece a Profiles.
-
-Manager provee shell/workflow/composition, no ownership de la presentación específica de
-Profiles.
-
-El cierre visual de `df5b995...` permanece capability-local:
-
-```text
-Profiles UI
-owns cards / profile previews / modal / pagination presentation
-
-profiles-manager composition
-owns runtime metadata injection
-
-ADA local composition
-owns localized title/description and local runtime labels
-```
-
-No se añadió estado visual al dominio durable Profiles.
-
-## Navigation configuration boundary
-
-La UI/configuration de Navigation pertenece a Navigation.
-
-Manager provee shell/workflow/composition, no ownership de la presentación específica de
-Navigation.
-
-Navigation Configuration no depende de Profiles; la adaptación de profile options ocurre en
-la application/composition que conoce ambas capabilities.
-
-## Access configuration boundary
-
-La UI/configuration de ADA Access pertenece a Access.
-
-Manager provee shell/workflow/composition, no ownership de la presentación específica de
-Access.
-
-Access puede consumir `ProfileCatalog` porque esa dependencia pertenece a su contrato de
-dominio. Esto no autoriza mover Profiles dentro de Manager ni crear una dependencia inversa
-desde Profiles hacia ADA Access.
-
-## Users administration boundary
-
-Users permanece `ManagerEntry`.
-
-Su lifecycle CURRENT es `UsersAdministrationService`, no Source/Projection Manager.
-
-El siguiente review puede corregir presentación de Users, pero no debe fabricar
-`ManagerModule`, Source ni Projection para obtener simetría visual.
-
-## UI qualification boundary
-
-```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
-```
-
-Slices ya cerrados:
-
-```text
-Navigation
-Accesos
-Perfiles
-```
-
-Siguiente slice:
+CURRENT observado:
 
 ```text
 Users
+→ ManagerEntry
+
+Tool Catalog de Command Center
+→ ManagerEntry
+
+Profiles
+→ ManagerModule
+
+Alarm Configuration de Command Center
+→ ManagerModule
 ```
 
-`Herramienta` permanece `OPEN / DEFERRED`.
+No crear `ManagerModule` por simetría cuando el dominio no posee Source/Projection.
 
-Corregir shared Manager CSS sólo cuando el problema sea realmente transversal.
-
-No mover CSS capability-local a Manager por simetría.
-
-El usuario prevé cerrar el alcance actual del Manager después de Users; cualquier frente
-diferido debe seguir documentado como tal.
-
-## Bootstrap boundary
+## Tres niveles que deben mantenerse separados
 
 ```text
-Bootstrap/System Surface
-        ↓
-Manager readiness
-        ↓
-Manager Shell
+CAPABILITY
+    ↓
+MANAGER COMPOSITION
+    ↓
+PRODUCT COMPOSITION
+    ↓
+HOST APPLICATION
 ```
 
-Bootstrap no comparte ownership con el shell Manager.
+Una aplicación standalone puede existir para desarrollo/qualification sin convertirse en el contrato que consume el producto final.
+
+El consumidor integrado debe reutilizar la misma composition, no ejecutar otro host ni duplicar su implementación.
+
+## ADA Configuration Manager CURRENT
+
+`ada-configuration-manager` contiene hoy:
+
+```text
+composition/dependencies/wiring/workflows
++
+application/local_runtime/__main__
+```
+
+Por tanto cumple dos roles físicos:
+
+1. composition reusable del Manager ADA;
+2. host standalone para desarrollo/qualification.
+
+ADA Generic no ejecuta ese host. Importa `build_configuration_manager_surface(...)` y monta el `ManagerSurface` dentro de su propia `WebApplicationDefinition`.
+
+El dual-role del package es **CURRENT** y puede considerarse deuda de naming/boundary, pero no autoriza un split incidental.
+
+## Command Center Configuration Manager CURRENT
+
+`ada-command-center-configuration-manager` es un host temporal que reutiliza:
+
+```text
+compose_alarm_configuration_manager(...)
+create_tool_catalog_manager_entry(...)
+```
+
+No duplica Alarm Configuration ni Tool Catalog.
+
+La composition que hoy produce su `ManagerSurfaceDefinition` debe ser el punto de integración administrativa de Command Center; el futuro host integrado no debe reconstruir Alarm/Tool Catalog por su cuenta.
+
+## Compositions reusable — estado auditado
+
+```text
+users-manager
+CURRENT / VERIFIED / consumed by ADA
+
+profiles-manager
+CURRENT / VERIFIED / consumed by ADA
+
+navigation-manager
+BLOCKED / reusable extraction incomplete / not consumed by ADA
+
+Command Center alarm configuration manager composition
+CURRENT / VERIFIED
+
+Command Center tool catalog manager composition
+CURRENT / VERIFIED
+```
+
+### Users
+
+Users permanece `ManagerEntry`.
+
+`UsersAdministrationService` es su lifecycle administrativo.
+
+### Profiles
+
+Profiles posee Source/Projection y usa `ManagerModule`.
+
+Su composition registra servicios mediante su `WebModule`.
+
+### Navigation
+
+Navigation es la divergencia transversal que debe resolverse antes de que un segundo producto la consuma.
+
+Finding VERIFIED en a7546574:
+
+- ADA no depende de `atlanticus-web-composition-navigation-manager`;
+- ADA mantiene su wiring/workflows de Navigation dentro de `ada-configuration-manager`;
+- la composition reusable llama `ManagerAuthorizationPolicy.can_access(...)`, método que no existe en el contrato CURRENT, cuyo método es `can_view(...)`;
+- la composition reusable registra servicios inmediatamente sobre un `ServiceRegistry` recibido por parámetro, distinto del patrón CURRENT de Profiles/Alarm;
+- su workflow no es idéntico al workflow ADA: agrega validadores, validación de definición y controles adicionales de source/workspace/concurrencia;
+- su `source_key` default es `navigation-configuration`, mientras ADA usa `navigation`;
+- sus labels de Source/Projection están fijados en la composition reusable.
+
+No corregir estos puntos por inferencia ni migrar ADA mecánicamente.
+
+Primero se decide cuál comportamiento representa el contrato reusable correcto; luego se reemplaza limpiamente la solución anterior.
+
+## Regla de composición entre capabilities
+
+Una product composition puede traducir contratos neutrales entre capabilities independientes.
+
+Ejemplo permitido:
+
+```text
+ProfileCatalog
+    ↓ product composition
+NavigationProfileOption
+```
+
+Esto no es un shim legacy.
+
+Está prohibido mantener simultáneamente contratos viejos/nuevos mediante aliases o adapters de compatibilidad.
+
+## Próximo frente
+
+```text
+MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
+PLANNED / NEXT
+```
+
+El frente debe terminar con:
+
+```text
+one Manager package/version authority
+one reusable Manager composition contract
+ADA Generic integrated
+ADA Command Center integrated
+tooling/distribution of both aligned
+```
+
+No abrir Resource Preparation, Live, Analytics, nueva UX ni migración Python/Trixie durante este frente.

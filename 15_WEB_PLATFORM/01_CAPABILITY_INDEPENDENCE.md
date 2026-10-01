@@ -1,218 +1,216 @@
 # Web Platform — Capability Independence
 
-Estado: **CURRENT / REFINED AFTER USERS MANAGER INTEGRATION**
+Estado: **CURRENT / COMPOSITION BOUNDARIES RECONCILED**
 
 ## Regla
-
-Independencia técnica no significa ausencia total de dependencias de dominio.
 
 Separar:
 
 ```text
-generic domain dependency
-```
-
-de:
-
-```text
+domain/core dependency
 application-specific dependency
-```
-
-y de:
-
-```text
 composition-only integration
 ```
+
+No crear dependencias por simetría.
+
+No usar adapters legacy para ocultar una frontera mal definida.
 
 ## Users
 
 Users es generic Atlanticus.
 
-CURRENT dependency:
+Ownership:
 
 ```text
-Users -> Profiles core
+user → profile_key
 ```
 
-porque Users posee:
+Users puede validar managed profile keys mediante contratos de Profiles cuando esa responsabilidad pertenezca al servicio de administración.
 
-```text
-user -> profile_key
-```
-
-y valida managed profile keys contra `ProfileCatalog`.
-
-Users no depende de:
+Users no posee:
 
 ```text
 ADA Access
 Navigation
-Tools
+Tool configuration
 KPI
+Manager authorization
 ```
 
-Global User no contiene ADA-specific access keys ni configuration de una aplicación.
-
-Strong identity:
-
-```text
-issuer + subject_id
-```
-
-La Web surface administrativa Users permanece dentro de Users.
-
-La integración al shell Manager ocurre mediante:
+Manager integration:
 
 ```text
 web/compositions/users-manager
 → ManagerEntry
 ```
 
-Esto es composition-only; no convierte Users en Source/Projection.
+Estado:
+
+```text
+CURRENT / VERIFIED / consumed by ADA
+```
 
 ## Profiles
 
-Profiles es first-class generic Atlanticus capability.
+Profiles es generic Atlanticus.
 
-CURRENT:
+Ownership:
 
 ```text
-profiles/core
-profiles/configuration
-profiles/projection-local
-profiles/projection-cosmos
-web/compositions/profiles-manager
+ProfileDefinition
+ProfileCatalog
+Source
+Projection
 ```
 
-Profiles posee definiciones/catálogo; no posee ADA access permissions.
+Manager integration:
+
+```text
+web/compositions/profiles-manager
+→ ManagerModule
+```
+
+Estado:
+
+```text
+CURRENT / VERIFIED / consumed by ADA
+```
+
+Profiles no contiene permisos ADA ni Manager.
 
 ## ADA Access
 
-ADA Access es application-specific.
+ADA Access es application-specific ADA.
 
-CURRENT dependency:
-
-```text
-ADA Access -> Profiles core / Profiles Projection
-```
-
-para validar referencias exactas.
-
-Ownership CURRENT:
+Ownership:
 
 ```text
-profile_key -> access_keys
+profile_key → ADA operational access_keys
 ```
 
-No posee user-to-profile assignment.
+No posee `user → profile_key`.
 
-No convertir ADA Access en dependency de Navigation.
+No alimenta `ManagerPrincipal.access_keys`.
 
-CURRENT packages:
-
-```text
-scopes/ada/web/access/core
-scopes/ada/web/access/configuration
-scopes/ada/web/access/projection-local
-scopes/ada/web/access/projection-cosmos
-```
-
-No existe Web surface ADA Access CURRENT.
-
-CURRENT tampoco define un catálogo independiente de accesos: `access_keys` son strings
-normalizadas almacenadas en grants por profile.
-
-La necesidad de definir/crear accesos y producir un identificador estable consumible por
-desarrolladores es una frontera de diseño futura, no un contract ya implementado.
+Command Center no depende de ADA Access.
 
 ## Navigation
 
-Navigation continúa generic.
+Navigation es generic Atlanticus.
 
-CURRENT:
-
-```text
-Navigation Configuration -> Profiles core
-Navigation -> Users FORBIDDEN
-Navigation -> ADA Access FORBIDDEN
-Navigation Configuration -> Profiles Configuration FORBIDDEN
-```
-
-Durable:
+Ownership:
 
 ```text
-allowed_profiles = profile keys
+route structure
+allowed_profiles
+NavigationPrincipal
+operational route authorization
 ```
 
-## Runtime authorization composition
+Prohibido:
 
-La composición exacta de Navigation para identidad autenticada no promovida sigue OPEN /
-SEPARATE.
+```text
+Navigation → Users
+Navigation → ADA Access
+Navigation Configuration package → Profiles package
+```
 
-No resolver agregando dependencias directas Navigation -> Users/ADA Access.
+La integración de perfiles ocurre en product composition mediante un contrato neutral:
 
-## User Activity
+```text
+ProfileCatalog
+    ↓ composition
+NavigationProfileOption
+```
 
-User Activity conserva independencia funcional.
+Esto es `composition-only integration`, no dependencia de Navigation sobre Profiles.
 
 ## Manager
 
-Manager registra items administrativos disponibles en composition:
+Manager es generic Atlanticus.
+
+Ownership:
 
 ```text
-ManagerModule
-ManagerEntry
+administrative shell
+registry
+ManagerModule / ManagerEntry
+administrative authorization
+common workflow
 ```
 
-Users usa `ManagerEntry`.
+Manager authorization no se deriva de ADA Access ni Navigation.
 
-Profiles usa `ManagerModule` porque posee Source/Projection reales.
-
-La aplicación final administrativa no debe considerarse completa hasta integrar ADA Access
-y cerrar explícitamente la composition final.
-
-## Invariante estructural
-
-Usar una dependencia core sólo cuando la responsabilidad real la requiere.
-
-No crear fronteras por simetría.
-
-CURRENT:
+Package/version authority CURRENT:
 
 ```text
-Users -> Profiles core
-JUSTIFIED BY user.profile_key
-
-Navigation Configuration -> Profiles core
-JUSTIFIED BY allowed_profiles
-
-ADA Access -> Profiles
-JUSTIFIED BY profile grants
-
-Navigation -> Users/ADA Access
-FORBIDDEN
+web/capabilities/manager
+atlanticus-web-manager==0.3.18
 ```
 
-## Estado de implementación
+## Manager compositions auditadas
 
 ```text
-moragaga/atlanticus@783d3578da52aeb5cf831999a7717dc8b79f2fb0
+users-manager
+CURRENT / VERIFIED
+
+profiles-manager
+CURRENT / VERIFIED
+
+navigation-manager
+BLOCKED / incomplete convergence
 ```
 
-CLOSED / VERIFIED / CURRENT:
+Navigation Manager reusable no es consumida por ADA actualmente.
+
+No puede tratarse como autoridad final hasta resolver:
 
 ```text
-PROFILES-MANAGER-COMPOSITION
-USERS-PROFILES-CONTRACT-REALIGNMENT
-USERS-ADMINISTRATION-MANAGER-INTEGRATION
-ADA-ACCESS-PROFILE-OWNERSHIP-REALIGNMENT
-ADA-ACCESS-PROJECTION-CONTRACT
-ADA-ACCESS-PROJECTION-PERSISTENCE
+can_access vs can_view
+ServiceRegistry lifecycle
+workflow behavior
+source_key
+provider/runtime labels
 ```
 
-Siguiente gap recomendado:
+## Product composition
+
+Una product composition puede conocer varias capabilities y conectar sus contratos explícitos.
+
+Ejemplos válidos:
 
 ```text
-ADA-ACCESS-CONFIGURATION-MANAGER-INTEGRATION
-PLANNED / NEXT / DESIGN FIRST
+Profiles → neutral options → Navigation
+ManagerPrincipal → binding → NavigationPrincipal
 ```
+
+Eso no autoriza imports inversos dentro de las capabilities.
+
+## No legacy
+
+Después de una convergencia:
+
+```text
+one owner
+one contract
+one version authority
+```
+
+No mantener:
+
+```text
+old implementation + adapter + new implementation
+duplicate access semantics
+aliases for renamed Source keys
+parallel Manager versions
+```
+
+## Próximo foco
+
+```text
+MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
+PLANNED / NEXT
+```
+
+El mismo frente termina en ADA Generic + Command Center + tooling/distribution de ambos.

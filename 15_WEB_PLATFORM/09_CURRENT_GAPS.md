@@ -1,36 +1,114 @@
 # Web Platform — Current Gaps
 
-Estado: **CURRENT / WEB STARTER PORTABLE CLOSED / MANAGER STARTER + PRODUCTION OPEN**
+Estado: **CURRENT / MANAGER COMPOSITION CONVERGENCE NEXT**
 
-Checkpoint de implementación Web inspeccionado: `moragaga/atlanticus@c2bf25e353b890dc8fd8553ad375745d23ec7154`. El resto de capacidades conserva sus checkpoints históricos, sin requalification integral en este hito.
+Implementation checkpoint:
 
-## Core CLOSED en alcance previo
+```text
+moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
+```
 
-ADA Storage Namespace, Tool Projection Persistence, bootstrap resiliente, Collector runtime wiring, Manager local/durable composition, recursos parciales del Manager, Navigation core/publish/project/consume local. No reabrirlos sin finding y no extender sus GREEN históricos a infraestructura real del Starter.
+## CLOSED / CURRENT
 
-## Nuevo cierre VERIFIED MANUAL
+```text
+Manager Core authorization convergence
+Users Manager composition
+Profiles Manager composition
+ADA Generic Manager override semantics
+Command Center local Manager override semantics
+Command Center Tool Catalog Manager authorization convergence
+Command Center Alarm Configuration Manager composition
+ADA Starter project-tooling extraction
+ADA distribution build/precheck at a7546574
+```
 
-- Starter editable Generic y overlay ADA, `distribution/` con manifests y Python **3.14.2**.
-- SOURCE_SMOKE y PORTABLE PASS en ambos perfiles offline con wheelhouses Generic **36** y ADA **108**; no confundir wheels internos con dependencias externas empaquetadas físicamente dentro de ellos.
-- Docker local: imágenes construidas en ambos perfiles y respuesta positiva de `/health/live`. Generic entregó `/example`. ADA soporta `APPLICATION_PUBLICATIONS_ROOT` externo (tests reportados).
+## Principal gap transversal
 
-## Gaps OPEN / PLANNED
+```text
+NAVIGATION-MANAGER-COMPOSITION
+BLOCKED
+```
 
-| Elemento | Estado | Evidencia / motivo |
-|---|---|---|
-| Manager Home/header/sidebar desde Starter | OPEN / NEXT | Qualification y contenedor ADA usan Manager disabled; no se comprobó administración visible. |
-| Navigation browser de `/example` | OPEN / FINDING | ADA devolvió Acceso denegado; prueba anterior no reprodujo `Accept: text/html`. |
-| Apariencia completa Atlanticus | OPEN | No se probó visualmente Manager, Navigation y operacional integrados desde Starter. |
-| Dockerfile unificado local/productivo Gunicorn/8000 | PROPOSED / PLANNED | Docker CURRENT es local-only, 8050 y servidor de desarrollo. |
-| Identidad productiva Entra | PLANNED / UNVERIFIED | CLI productivo no debe inventar LocalIdentityProvider. |
-| Plantillas inactivas de secretos y mapping DEV/UAT/PRD | PLANNED | Falta definición/validación de selección de plantilla por consumidor; sin datos sensibles en repo. |
-| Cosmos/Azurite local, persistencia durable y restart | PLANNED / UNVERIFIED | No probado con emuladores en este frente. |
-| Global ApplicationResourcePlan/readiness | OPEN / OTHER SCOPE | Plan del Manager no equivale al inventario global. |
-| AccessRuntime Identity/Manager histórico | UNVERIFIED | Observación estática previa de dos instancias; impacto real no probado en Starter. |
-| Azure, CI remoto, full monorepo pytest/Ruff | UNVERIFIED | Fuera de evidencia aportada. |
+La composition generic existe pero ADA no la consume.
 
-## Desfase documental refinado
+Findings:
 
-Canonical anterior describía toda portabilidad Web como UNVERIFIED; queda **SUPERSEDED sólo para PORTABLE offline probado**, no para Docker productivo ni Manager visual. Python 3.14.7 se difiere como migración futura; 3.14.2 es CURRENT. Manager/Navigation del core existentes no contradicen su ausencia de la qualification: se deshabilitó Manager en ese escenario.
+```text
+authorization calls obsolete can_access
+services registered eagerly in caller registry
+generic/ADA workflows differ
+generic default source_key != ADA source_key
+provider/runtime label contract differs
+```
 
-Siguiente foco único **PROPOSED**: `WEB-STARTER-MANAGER-NAVIGATION-VISUAL-INTEGRATION-QUALIFICATION`. Primero diseño/consenso y después implementación aislada. No mezclar Gunicorn, secretos, emuladores, Backend o Command Center.
+Mientras esto no se cierre, no usar esa composition como si fuera la autoridad final de un segundo producto.
+
+## Manager version authority
+
+CURRENT:
+
+```text
+atlanticus-web-manager==0.3.18
+owner: web/capabilities/manager/pyproject.toml
+```
+
+OPEN:
+
+```text
+prove all ADA + Command Center + starter/tooling consumers converge on one authority
+```
+
+Si se necesita bump durante el próximo frente, propagar desde el owner.
+
+## Product integration gaps
+
+| Elemento | Estado |
+|---|---|
+| ADA Generic using common Users/Profiles compositions | CURRENT |
+| ADA Generic using common Navigation Manager composition | OPEN / BLOCKED |
+| Command Center using common Users/Profiles/Navigation Manager composition | PLANNED |
+| Command Center integrated generic host | NOT IMPLEMENTED |
+| Tooling/distribution of both consuming same converged Manager | PLANNED / SAME NEXT FRONT |
+| Resource Preparation Command Center | PLANNED / AFTER MANAGER CONVERGENCE |
+| Azure/Entra productivo | UNVERIFIED |
+| Global CI/full monorepo qualification | UNVERIFIED |
+
+## Python / base image
+
+CURRENT package/distribution baseline observed:
+
+```text
+Python 3.14.2
+```
+
+Historical target:
+
+```text
+3.14.7 / python:3.14.7-slim-trixie
+```
+
+Migration state:
+
+```text
+BLOCKED / DEFERRED UNTIL EXPLICIT USER AUTHORIZATION
+```
+
+No usar esta diferencia como NEXT, gate o finding repetitivo en otros incrementos.
+
+## Próximo foco único
+
+```text
+MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
+```
+
+Orden interno del mismo frente:
+
+```text
+1. converge Manager compositions
+2. ADA Generic adoption
+3. Command Center adoption
+4. tooling/distribution alignment for both
+5. qualification
+```
+
+No mezclar Resource Preparation, Gunicorn, secretos, Alarm Engine, Live, Analytics ni Python/Trixie migration.

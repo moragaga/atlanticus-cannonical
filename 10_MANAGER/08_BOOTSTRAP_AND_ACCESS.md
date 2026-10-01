@@ -1,29 +1,30 @@
 # Manager — Bootstrap and Access
 
-Estado: **CURRENT — MANAGER AUTHORIZATION CONVERGED / ADA ACCESS DECOUPLED**
+Estado: **CURRENT — MANAGER AUTHORIZATION CONVERGED / DUAL-PRODUCT ADOPTION NEXT**
 
 Implementation checkpoint:
 
 ```text
-moragaga/atlanticus@6fd1512afed73e76f7c344f3acb989b601c453e3
+moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
 ```
 
-Historical decisions inspected:
+Decisions inspeccionado:
 
 ```text
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-## Manager e Identity CURRENT
+## Contratos separados
 
 ```text
 BOOTSTRAP ACCESS != MANAGER ACCESS
 ADA ACCESS != MANAGER ACCESS
+NAVIGATION AUTHORIZATION != MANAGER AUTHORIZATION
 ```
 
 La autenticación crea contexto de identidad. No concede por sí misma administración Manager.
 
-`ManagerPrincipal` mantiene:
+## ManagerPrincipal CURRENT
 
 ```text
 subject_id
@@ -34,7 +35,7 @@ is_local
 administrative_override
 ```
 
-La autorización genérica CURRENT es:
+La regla genérica única es:
 
 ```text
 access_key is None                      → DENY
@@ -43,15 +44,22 @@ access_key in principal.access_keys     → ALLOW
 otherwise                               → DENY
 ```
 
-`DefaultManagerAuthorizationPolicy` delega esta decisión a `manager_access_granted()`.
+Autoridad:
 
-La misma regla es consumida por los `can_manage` de ADA Configuration Manager que antes consultaban `principal.access_keys` directamente.
+```text
+manager_access_granted(...)
+DefaultManagerAuthorizationPolicy.can_view(...)
+```
 
-Manager Core no importa ni interpreta ADA Access, Profiles, Users o Navigation para decidir override.
+`is_local=True` por sí solo no concede administración.
 
-## Composición ADA CURRENT
+Un profile key por sí solo tampoco concede administración dentro de Manager Core.
 
-ADA Generic resuelve el principal administrativo desde `AccessSnapshot` + `EffectiveUser`.
+La composition del producto decide cuándo emitir `administrative_override=True`.
+
+## ADA Generic CURRENT
+
+ADA resuelve el principal Manager desde identidad + Users.
 
 ```text
 managed root
@@ -60,6 +68,8 @@ managed root
 trusted local identity
 + local environment
 → administrative_override=True
+→ profile_keys=('local',)
+→ access_keys=()
 → is_local=True
 
 basic / guest / custom
@@ -69,34 +79,13 @@ bootstrap root without managed user
 → administrative_override=False
 ```
 
-Un usuario deshabilitado se rechaza.
-La identidad autenticada y el `EffectiveUser` deben referir al mismo subject.
+Usuario promovido deshabilitado se rechaza.
 
-La ruta trusted-local requiere identidad local canónica y entorno local.
-`is_local=True` por sí solo no concede administración.
+ADA Access no participa en esta decisión.
 
-## ADA Access queda separado
+## Command Center CURRENT
 
-La composición Manager ya no recibe:
-
-```text
-AdaAccessConfiguration
-ProfileCatalog
-```
-
-para calcular permisos Manager.
-
-ADA Access conserva su contrato operacional:
-
-```text
-profile_key → access_keys
-```
-
-pero esos `access_keys` no se proyectan a `ManagerPrincipal.access_keys`.
-
-## Runtime local
-
-El principal temporal del Configuration Manager local usa:
+El host temporal local quedó convergido en:
 
 ```text
 profile_keys=('local',)
@@ -105,38 +94,84 @@ administrative_override=True
 is_local=True
 ```
 
-No existe una lista exhaustiva de permisos para simular full access.
+Tool Catalog usa `manager_access_granted(...)`.
 
-`MANAGER_ACCESS_KEYS` fue eliminado del código revisado.
+Alarm Configuration usa `DefaultManagerAuthorizationPolicy.can_view(...)`.
 
-## Users y Master — fronteras conservadas
-
-Users continúa con su ownership y recovery propios.
-Master externo continúa siendo una superficie separada y no se convierte en `ManagerPrincipal`.
-
-Este hito no cambia los contratos de Users recovery, Master material, preview/apply ni sus controles.
-
-## Qualification del hito
+Qualification reportada para el incremento integrado en `fd26a731...`, preservado por a7546574:
 
 ```text
-ADA Generic application       288 passed
-ADA Generic ruff              PASS
-ADA Configuration Manager      70 passed
-Atlanticus Manager Core        85 passed
-MANAGER_ACCESS_KEYS search      0 matches
-git diff --check               PASS
+Tool Catalog Manager                      9 passed
+Command Center Configuration Manager     28 passed
+Ruff ambos scopes                        PASS
 ```
 
-No convertir estas pruebas en una qualification global del monorepo ni en evidencia Entra/Azure.
+## Manager access key vs ADA Access
 
-## OPEN separado
+Un `ManagerModule.access_key` / `ManagerEntry.access_key` como:
 
 ```text
-production Entra
-physical login/bootstrap data E2E
-durable restart/recovery E2E
+users.manage
+profiles.manage
+navigation.manage
+tools.manage
+alarms.manage
+```
+
+es una capacidad administrativa del Manager.
+
+`ManagerPrincipal.access_keys` contiene únicamente permisos administrativos Manager ya resueltos.
+
+ADA Access posee otro contrato:
+
+```text
+profile_key → operational access_keys
+```
+
+No proyectar ADA Access sobre `ManagerPrincipal.access_keys`.
+
+No usar visibilidad de Navigation como sustituto de Manager authorization.
+
+## Autoridad de versión
+
+Package owner:
+
+```text
+atlanticus-web-manager
+web/capabilities/manager
+CURRENT version at a7546574: 0.3.18
+```
+
+El siguiente frente debe eliminar divergencias de consumo y asegurar que ADA, Command Center, Starters y tooling resuelvan una sola autoridad de versión.
+
+No fijar una segunda versión local.
+
+Si la convergencia requiere un bump, se realiza en el owner y después se propaga.
+
+## OPEN del próximo frente
+
+La policy genérica está CLOSED.
+
+Lo que permanece OPEN no es rediseñar autorización, sino **adoptar de forma consistente la misma composition/versión**.
+
+Principal finding:
+
+```text
+atlanticus-web-composition-navigation-manager
+BLOCKED
+```
+
+porque aún usa una API de autorización anterior y no es el camino consumido por ADA.
+
+El siguiente frente debe converger esa composition antes de integrarla en ADA y Command Center.
+
+## Fuera de alcance
+
+```text
+production Entra physical qualification
+durable login/recovery E2E
 multiworker qualification
-global workspace CI/Ruff
+Python 3.14.7 / Trixie migration
 ```
 
-No reabrir autorización Manager para resolver estos frentes.
+La migración Python/Trixie está **BLOCKED / DEFERRED** hasta autorización explícita del usuario.
