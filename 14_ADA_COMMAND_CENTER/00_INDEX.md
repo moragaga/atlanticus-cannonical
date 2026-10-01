@@ -1,59 +1,109 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT TRACKING — C1/C2/C4 CURRENT/CLOSED según sus gates; UX-01/UX-02 CLOSED en editor y aceptación funcional local básica; Starter propio con runtime/Home PLANNED; Golden Path completo y aceptación productiva UNVERIFIED**. Reemplazo UX/Starter preparado: 2026-09-29.
+Estado: **CURRENT TRACKING — C1/C2/C4 preserved; Manager 0.3.19 convergence CLOSED locally; final Command Center Generic Application PLANNED / NEXT; Golden Path complete and production acceptance UNVERIFIED.**
 
-## 1. Autoridad y alcance del corte
+## 1. Authority and scope
 
 ```text
-Implementation inspeccionada   moragaga/atlanticus:main@2e7500a6b8b4d5bbdad26d807abfa57936db99d5
-Decisions inspeccionadas      moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical remoto previo       moragaga/atlanticus-cannonical:main@2e8bbf4780cafc4cea3b18351861aa97a4fb0053
+Last confirmed Atlanticus HEAD in this chat:
+moragaga/atlanticus@36361dd570f86e8350ea4a6ee0e09bab351ba171
+
+Command Center Manager convergence delta:
+VERIFIED LOCAL / PENDING FINAL GIT HEAD
 ```
 
-La autoridad de implementación es `atlanticus:main`; las decisiones frozen siguen siendo intención contractual y sus discrepancias no se corrigen silenciosamente. Canonical aún **no** refleja completamente C4 ni UX-01/UX-02. Reconsultar HEAD y comparar diff antes de integrar: existieron **11 reemplazos C4 preparados en otro cierre**, pero su integración Git es **UNVERIFIED**. Este paquete UX sólo sustituye **seis** páginas de alcance, sin alterar el detalle histórico de páginas C4 restantes. Git SOLO LECTURA.
+Git remains read-only for this documentation close.
 
-## 2. Navegación documental
+Do not invent a final commit for the local delta. Once integrated, update the checkpoint with the real HEAD.
 
-| Documento | Propósito / estado conocido |
+## 2. Document navigation
+
+| Documento | Propósito / estado |
 |---|---|
-| `01_PRODUCT_SCOPE.md` | Producto independiente, transversal y distinto de ADA Generic. Sin modificación en este paquete. |
-| `02_CURRENT_IMPLEMENTATION.md` | Componentes reales C1/C2/C4; **reconciliar con reemplazo C4 anterior**, no sobrescribir con baseline pre-C4. |
-| `03_WEB_APPLICATION.md` | Host temporal, local aislado de prueba, UX y próximo Starter genérico con Home mínima. **REEMPLAZO UX/STARTER DE ESTE PAQUETE**. |
-| `04_CONFIGURATION_SCOPE.md` | Source v3, manifest Cn, contratos estáticos actuales. **Reconciliar C4 anterior + UX-02**; no incluido para no perder trabajo histórico. |
-| `05_TOOL_TO_ALARM_CONFIGURATION.md` | Tool Manifest exacto/Rn-Cn y routing. Preservado, no modificado. |
-| `06_ENGINE_AND_PROJECTIONS.md` | Materialization, Engine y C4 receptor CURRENT-only. **Reconciliar reemplazo C4 anterior**, sin gate físico nuevo en UX. |
-| `07_ANALYTICS_AND_STORYTELLING.md` | Analytics independiente. No modificado. |
-| `08_INITIAL_DASHBOARD.md` | Dashboard conceptual futuro, fuera de Starter inicial. No modificado. |
-| `09_IDENTITY_NAVIGATION_PROFILES.md` | Identidad, navegación y perfiles fuera del primer Starter. No modificado. |
-| `10_INITIAL_OUT_OF_SCOPE.md` | No objetivos de producto, preservar sin añadir features por inferencia. |
-| `11_GOLDEN_PATH.md` | Gate end-to-end real frente a pruebas parciales, C4 y próximo Starter. **REEMPLAZO UX/STARTER DE ESTE PAQUETE**. |
-| `12_SOURCE_LEDGER.md` | Historia de implementación/qualification; **reconciliar C4 anterior y anexar evidencia UX**. No se entrega reemplazo unilateral del ledger histórico. |
-| `13_OPEN_ITEMS.md` | Estados consolidados, findings UX, discrepancia Decisions/Git, siguiente frontera. **REEMPLAZO UX/STARTER DE ESTE PAQUETE**. |
-| `14_TOOL_CATALOG.md` | Owner Web C1 y catálogo durable; sin modificación de contrato. |
-| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Source v3, UX-01/UX-02 y conflicto B.1 `1..12` vs Git `1..11|END_OF_SHIFT`. **REEMPLAZO UX DE ESTE PAQUETE**. |
-| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Contrato conceptual de Live; **reconciliar C4 anterior**, NO confundir receiver CURRENT-only con Live implementado. |
-| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | Domain/Tool/Web/Backend ownership; **reconciliar C4 anterior**. No refactor en este cierre. |
-| `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md` | UX aceptada básica, defectos OPEN, visuales futuros intactos. **REEMPLAZO UX/STARTER DE ESTE PAQUETE**. |
+| `01_PRODUCT_SCOPE.md` | Producto independiente, transversal y distinto de ADA Generic. | CURRENT |
+| `02_CURRENT_IMPLEMENTATION.md` | Componentes reales y estado de Manager convergence / Generic Application. | REPLACE WITH THIS CLOSE |
+| `03_WEB_APPLICATION.md` | Temporary Manager host and next Generic Application composition boundary. | REPLACE WITH THIS CLOSE |
+| `04_CONFIGURATION_SCOPE.md` | Source v3, Tool manifest and Manager workspace convergence. | REPLACE WITH THIS CLOSE |
+| `05_TOOL_TO_ALARM_CONFIGURATION.md` | Tool Manifest exacto/Rn-Cn y routing. | PRESERVE |
+| `06_ENGINE_AND_PROJECTIONS.md` | Materialization, Engine and Delivery CURRENT-only. | PRESERVE |
+| `07_ANALYTICS_AND_STORYTELLING.md` | Analytics independent. | PRESERVE |
+| `08_INITIAL_DASHBOARD.md` | Future dashboard concept. | PRESERVE |
+| `09_IDENTITY_NAVIGATION_PROFILES.md` | Identity/Users/Profiles/Navigation/Manager boundary after reusable convergence. | REPLACE WITH THIS CLOSE |
+| `10_INITIAL_OUT_OF_SCOPE.md` | Product non-goals. | PRESERVE |
+| `11_GOLDEN_PATH.md` | End-to-end real gate. | PRESERVE |
+| `12_SOURCE_LEDGER.md` | Historical checkpoints. | HISTORICAL / APPEND LATER, DO NOT REWRITE HERE |
+| `13_OPEN_ITEMS.md` | Consolidated OPEN and single next focus. | REPLACE WITH THIS CLOSE |
+| `14_TOOL_CATALOG.md` | C1 Web Tool Catalog ownership. | PRESERVE |
+| `15_ALARM_CONFIGURATION_AUTHORING_MODEL.md` | Source v3 / authoring contract. | PRESERVE |
+| `16_ALARM_LIVE_DELIVERY_CONTRACT.md` | Conceptual Live contract. | PRESERVE |
+| `17_DOMAIN_OWNERSHIP_AND_MIGRATION.md` | Domain/Web/Backend ownership. | PRESERVE |
+| `18_ALARM_AUTHORING_UX_AND_VISUAL_PRESENTATION.md` | UX state. | PRESERVE |
 
-Los documentos raíz `00_AUTHORITY.md` y `01_CURRENT_STATE.md` incluyen baselines anteriores de otros frentes del Project. Su actualización es un **refresh global separado**, no una sustitución implícita con este paquete. Decisions conserva B.1 DESIGN FROZEN hasta revisión humana de la discrepancia UX-02.
+Root authority documents are not modified by this focused close.
 
-## 3. Corte UX — evidencia VERIFIED y alcance CLOSED
+## 3. Manager convergence close
 
-- UX-01 (Save Draft de modal): cierre tras éxito, no tras error; test Web anterior **122 PASS** reportado por el usuario.
-- UX-02 (Rule default y Message override): `1..11` horas o `END_OF_SHIFT`; Domain, codec, Materialization y UI modificados en 20 archivos; Git commit remoto `2e7500a...` **VERIFIED**.
-- Regresión UX-02 reportada por el usuario: Domain **59 PASS**, Materialization **64 PASS**, Configuration Web **123 PASS**, total **246 PASS**; `git diff --check` limpio.
-- Prueba local aislada sin Azurite/Cosmos con host real y UNA Tool Process de fixture en catálogo archivo: usuario confirmó carga y pudo crear familias, alarmas y mensajes, asignarlos y guardar. **CLOSED** exclusivamente como aceptación básica de esas operaciones.
+Current shared authority:
 
-**OPEN observados:** pérdida de algunos valores, validaciones que desaparecen y alertas pegadas. Aceptación visual exhaustiva, reinicio/recovery y `END_OF_SHIFT` operacional **UNVERIFIED**. La opción estática no aporta `effective_until` UTC real por sí sola.
+```text
+atlanticus-web-manager==0.3.19
+```
 
-## 4. Baseline operacional ajeno al hito UX
+Command Center local qualified versions:
 
-C1 Web Tool ownership y C2 identidad/Source Key están cerrados bajo sus gates previos. C4 Delivery CURRENT-only está implementado en Git: recibe el último CURRENT validado, sin consumir FACTS; Runtime mantiene FACTS v2 para trazabilidad futura. Materialization READY/Engine EFFECTIVE exactos existen con qualification manual controlada. Esto **no** certifica infraestructura real, Docker independiente, enlace físico Blob/Cosmos ni `AlarmLiveProjection`.
+```text
+ada-command-center-web-alarm-configuration==0.1.1
+ada-command-center-web-tool-catalog-manager==0.1.1
+ada-command-center-configuration-manager==0.1.1
+```
 
-**Conflicto explícito Decisions:** B.1 frozen sección 11 describe `max_duration_hours` entero `1..12` y shift end pendiente; Git UX-02 implementa `1..11 | END_OF_SHIFT` bajo el mismo campo y conserva Source v3. La resolución formal/versionado y consumidor operacional son OPEN. No agregar legacy ni cambiar código sólo para normalizar documentos.
+Qualification:
 
-## 5. Frontera exclusiva siguiente — PLANNED
+```text
+Alarm Configuration       124 PASS
+Tool Catalog Manager        9 PASS
+Configuration Manager host 28 PASS
+Ruff                        PASS
+git diff --check            PASS
+Manager 0.3.18 rg           EMPTY
+```
 
-**Diseño del Starter genérico propio de ADA Command Center con runtime y página de inicio mínima**, orientado a demostrar un flujo reproducible que ejecute alarmas con contratos existentes. Sin Navigation, Users, Profiles, dashboard complejo, History/Analytics ni nuevo frente UX. Auditar primero implementación y decisiones: composición Web/host, distribución, providers, Tool Catalog real, Alarm Source/Projection, qualification manual permitida, READY, Runtime CURRENT y Delivery CURRENT-only. Si el gate exige ver alarmas operacionales resueltas en Home, documentar que Live materializer/AlarmLiveProjection está **NO IMPLEMENTED**; diseñar contrato antes de consumidor, no simularlo.
+The temporary host remains temporary.
 
-**Límites:** contratos antes que consumidores; backend antes de frontend; no paquetes monolíticos, shims, datos inventados, tests CSS o cambios remotos sin autorización explícita.
+## 4. Existing product state preserved
+
+C1 Web Tool ownership, C2 Source identity and C4 Delivery CURRENT-only remain under their existing contracts.
+
+Manager convergence does not certify:
+
+```text
+Docker
+Azure
+physical Blob/Cosmos E2E
+final Command Center Web application
+Live
+History/Analytics
+```
+
+Existing UX and END_OF_SHIFT open items remain separate.
+
+## 5. Exclusive next boundary
+
+```text
+ADA-COMMAND-CENTER-GENERIC-APPLICATION-COMPOSITION
+PLANNED / NEXT
+```
+
+The next chat must begin with debate/design against authoritative code. It must define the real Command Center composition root before tooling/distribution.
+
+Do not assume Users, Profiles or Navigation are required just because reusable compositions exist.
+
+Do not create a second identity system, Live contract, dashboard, History/Analytics, Resource Preparation or Python migration inside this focus.
+
+After the Generic Application exists and is qualified:
+
+```text
+dual-product tooling/distribution
+```
+
+may resume.

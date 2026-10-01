@@ -1,31 +1,32 @@
 # ADA Command Center — Current Implementation
 
-Estado: **CURRENT — Source v3/Materialization/Runtime, C1 ownership Web, C2 identidad y C4 Delivery CURRENT-only CLOSED; Alarm Configuration projection physical naming alineado entre local y Cosmos en `atlanticus@fe606cbefb932211b8329df9285004f4933df41d`.** Golden Path productivo, Resource Preparation/startup gate, Docker/Azure, Live y Web operacional permanecen no acreditados.
+Estado: **CURRENT — Source v3/Materialization/Runtime, C1 ownership Web, C2 identity and C4 Delivery CURRENT-only preserved; Manager 0.3.19 convergence CLOSED locally; final Generic Web application still NOT IMPLEMENTED.**
 
-## Checkpoints
+## Authority checkpoints
 
 ```text
-atlanticus:main actual   fe606cbefb932211b8329df9285004f4933df41d
-atlanticus C4            45eff96d777f4711cb011f779ffc0a6c87bf0ca4
-atlanticus-decisions     50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-canonical previo         c2f442b523fb4429f5a8a76c1e6919687016773f
+Last confirmed Atlanticus HEAD in this chat:
+36361dd570f86e8350ea4a6ee0e09bab351ba171
+
+Command Center Manager convergence delta:
+VERIFIED LOCAL / PENDING FINAL GIT HEAD
 ```
 
-Implementación y HEAD fueron verificados mediante Git de solo lectura. Los conteos de pruebas de este cierre provienen de ejecución local aportada por el usuario; no equivalen a CI, Docker ni Azure.
+Historical checkpoints for C1/C2/C4 retain their own evidence and are not rewritten by this Manager close.
 
 ## Componentes existentes
 
 ```text
 scopes/ada-command-center/
-  domain/alarms/                             # Snapshot v3 y Source Key única
-  domain/tools/                              # ToolDependencyManifest
-  backend/alarms/core/                       # Engine puro
-  backend/alarms/materialization/            # resolver B.2 / READY exacto
-  backend/alarms/persistence/                # WAL / fencing / EFFECTIVE
-  backend/alarms/contracts/                  # CURRENT v1 / FACTS v2
-  backend/processes/alarms-materialization/  # Cosmos + qualification manual + READY/BLOCKED
-  backend/processes/alarms-runtime/          # adopta EFFECTIVE / CURRENT + FACTS
-  backend/processes/alarms-delivery/         # receptor de último CURRENT exclusivamente
+  domain/alarms/
+  domain/tools/
+  backend/alarms/core/
+  backend/alarms/materialization/
+  backend/alarms/persistence/
+  backend/alarms/contracts/
+  backend/processes/alarms-materialization/
+  backend/processes/alarms-runtime/
+  backend/processes/alarms-delivery/
   web/alarms/configuration/
   web/alarms/persistence/
   web/alarms/projection-local/
@@ -33,16 +34,76 @@ scopes/ada-command-center/
   web/tools/catalog/
   web/tools/discovery-cosmos/
   web/tools/catalog-manager/
-  web/application/ada-command-center-configuration-manager/ # host temporal
+  web/application/ada-command-center-configuration-manager/
 ```
 
-`backend/tools` está SUPERSEDED. Domain Tools conserva contrato transversal; los servicios usados exclusivamente por Web viven en Web. Materialization sigue importando `web/alarms/projection-cosmos`: frontera técnica OPEN heredada y no modificada en este hito.
+Not implemented:
+
+```text
+ada-command-center-generic-application
+final integrated Command Center Web composition root
+```
+
+`backend/tools` está SUPERSEDED. Domain Tools conserva contrato transversal; los servicios usados exclusivamente por Web viven en Web.
+
+Materialization sigue importando `web/alarms/projection-cosmos`: frontera técnica OPEN heredada y no modificada en este hito.
+
+## Manager convergence CURRENT locally
+
+Single Manager authority:
+
+```text
+atlanticus-web-manager==0.3.19
+```
+
+Command Center packages aligned locally:
+
+```text
+ada-command-center-web-alarm-configuration==0.1.1
+ada-command-center-web-tool-catalog-manager==0.1.1
+ada-command-center-configuration-manager==0.1.1
+```
+
+Qualification:
+
+```text
+Alarm Configuration       124 PASS
+Tool Catalog Manager        9 PASS
+Configuration Manager host 28 PASS
+Ruff                        PASS
+git diff --check            PASS
+Manager 0.3.18 rg           EMPTY
+```
+
+The final Git HEAD for this local delta was not supplied in this chat. Do not invent one.
+
+## Alarm Configuration workspace CURRENT
+
+Alarm-specific responsibility remains:
+
+```text
+Save Draft
+→ Confirmed Tool Catalog required
+→ current catalog revision pinned into workspace payload
+```
+
+Generic workspace responsibility is delegated to:
+
+```text
+ManagerWorkspaceBinding
+```
+
+This removes duplicated owner/source/snapshot/document mechanics while preserving the Command Center domain rule.
+
+No legacy wrapper or compatibility alias remains.
 
 ## Identidad y persistencia de Alarm Configuration — CURRENT
 
-`domain/alarms/identity.py` mantiene `ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'`. Web lo convierte a `SourceKey` técnico y los jobs lo consumen como texto; los documentos persistidos siguen verificando esa identidad.
+```text
+ALARM_CONFIGURATION_SOURCE_KEY = 'alarm-configuration'
+```
 
-El nombre físico de la proyección de Alarm Configuration quedó simplificado y compartido entre adapters:
+Physical projection identity:
 
 ```text
 logical_id       ada.command_center.alarms.configuration.projection
@@ -50,74 +111,74 @@ physical_name    alarm-configuration
 Cosmos PK        /partition_key
 ```
 
-La autoridad del nombre físico es `ALARM_CONFIGURATION_PROJECTION_PHYSICAL_NAME = 'alarm-configuration'` en `web/alarms/configuration/resources.py`. El resource contract Cosmos reutiliza esa identidad física; no repite `ada-command-center` ni `projection` porque la aplicación ya constituye su propio boundary de Cosmos.
-
-En local, `AdaStorageNamespace('conciencia_situacional', 'command-center')` conserva el mismo namespace lógico y la proyección se materializa en:
+Local projection:
 
 ```text
 <base_root>/conciencia_situacional/command-center/projections/alarm-configuration/
 ```
 
-En durable, el container Cosmos correspondiente es:
+Durable Cosmos container:
 
 ```text
 alarm-configuration
 ```
 
-Este hito **no** implementó una estrategia local completa para todos los recursos de Command Center. Tool Catalog continúa usando Storage incluso cuando `ADA_MANAGER_PERSISTENCE_PROVIDER=local`.
+Tool Catalog continues to use Storage even under the local Manager provider.
 
 ## C2 preservado — procesos y volumen
 
-`APPLICATION=ada-command-center` identifica Materialization, Runtime y Delivery, que conservan `job_key` y leases propios. `VOLUMEN_PATH` continúa manual, absoluta y debe referirse al mismo montaje físico. La raíz operacional continúa `VOLUMEN_PATH/ada-command-center/alarms`.
+`APPLICATION=ada-command-center` identifica Materialization, Runtime y Delivery, que conservan `job_key` y leases propios.
 
-Materialization toma nombre físico y partición de entrada del resource contract `ALARM_CONFIGURATION_PROJECTION_STORAGE_RESOURCE`. Endpoint/base/credencial Cosmos deben seguir coincidiendo físicamente con el host durable; esa equivalencia E2E permanece UNVERIFIED. El contenedor Blob de Source sigue ambiental.
+`VOLUMEN_PATH` continúa manual, absoluta y debe referirse al mismo montaje físico.
 
-No existen despliegues previos que migrar según confirmación del usuario; no introducir aliases, fallback ni capas legacy para el nombre anterior.
+La raíz operacional continúa:
+
+```text
+VOLUMEN_PATH/ada-command-center/alarms
+```
+
+Endpoint/base/credential Cosmos must still match the durable host physically. That E2E equivalence remains UNVERIFIED.
 
 ## Pipeline CURRENT preservado
 
 1. Source v3 congela `AlarmConfigurationSnapshot(configuration, tool_dependencies)` con referencias Rn/Cn.
-2. Materialization obtiene ProjectionRecord y qualification manual externa; B.2 publica `runtime.json` y `delivery.json` bajo READY íntegro, o diagnóstico BLOCKED sin sustituir READY.
-3. Runtime adopta pin exacto `source_key + result_id + manifest_sha256 + resolution_key` mediante WAL/EFFECTIVE.
-4. Runtime publica CURRENT v1 completo/reemplazable y FACTS v2 durables en canal separado.
-5. Delivery consume únicamente el último CURRENT, exige igualdad exacta con EFFECTIVE y READY y persiste su inbox CURRENT. C4 no produce Live.
+2. Materialization obtiene ProjectionRecord y qualification manual externa; publica READY íntegro o diagnóstico BLOCKED.
+3. Runtime adopta pin exacto mediante WAL/EFFECTIVE.
+4. Runtime publica CURRENT v1 y FACTS v2 por canales separados.
+5. Delivery consume sólo el último CURRENT y exige alineación con EFFECTIVE/READY.
 
-Este hito no alteró ninguno de esos contratos.
+Manager convergence did not change these contracts.
 
-## Evidencia de este hito
+## Web application boundary
 
-Commit integrado:
-
-```text
-fe606cbefb932211b8329df9285004f4933df41d
-refine alarm configuration resource naming
-```
-
-Cambios limitados a Alarm Configuration Web, Projection Cosmos y host Configuration Manager temporal, más `.env.detail` y tests/espejos correspondientes.
-
-**VERIFIED local:**
+CURRENT:
 
 ```text
-Alarm Configuration Web                         123 PASS
-Alarm Projection Cosmos                           5 PASS
-ADA Command Center Configuration Manager         28 PASS
-TOTAL                                            156 PASS
-git diff --check                                 PASS
+ada-command-center-configuration-manager
+→ temporary standalone Manager host
 ```
 
-La ejecución global de pytest que produjo cientos de errores de collection fue descartada: había recolectado múltiples paquetes del monorepo fuera de su contexto. Las tres suites aisladas anteriores son la evidencia válida del incremento.
+NOT CURRENT:
+
+```text
+ada-command-center-generic-application
+→ not implemented
+```
+
+Therefore dual-product distribution cannot be closed yet.
 
 ## OPEN separados
 
-- **Resource Preparation + startup gate:** PLANNED como siguiente foco único; no implementado en este hito.
-- **Tool Catalog local:** NOT IMPLEMENTED; el host local todavía requiere Storage para el catálogo.
-- **C3:** productor/verificadores GREEN y qualification más allá del archivo manual.
-- **C5:** owner/key/version del contrato de evidencia técnica y auditoría ambiental.
-- **Docker/distribución:** artefactos, entrypoints y recursos físicos siguen UNVERIFIED.
-- **Materialization ↔ Web Projection Cosmos:** misma cuenta/base física continúa UNVERIFIED.
-- **Live:** contrato acordado en Project, NOT IMPLEMENTED.
-- **Management Capture/Projection, History/Analytics:** PLANNED y separados.
-- **UX y END_OF_SHIFT operacional:** mantienen sus OPEN contractuales previos.
-- **Python:** Project baseline 3.14.7 frente a metadata/tooling todavía 3.14.2; OPEN fuera de este incremento.
+- **Command Center Generic Application composition:** PLANNED / NEXT.
+- **Dual-product tooling/distribution:** PLANNED / BLOCKED until Generic Application exists.
+- **Resource Preparation + startup gate:** PLANNED / DEFERRED.
+- **Tool Catalog local filesystem:** NOT IMPLEMENTED.
+- **C3/C5 qualification/evidence:** OPEN according to their owners.
+- **Docker/Azure final runtime:** UNVERIFIED.
+- **Materialization ↔ Web Projection Cosmos physical E2E:** UNVERIFIED.
+- **Live:** NOT IMPLEMENTED.
+- **Management Capture/Projection, History/Analytics:** PLANNED / SEPARATE.
+- **UX and END_OF_SHIFT operational work:** OPEN / SEPARATE.
+- **Python migration:** BLOCKED / DEFERRED.
 
-No introducir funcionalidad adicional al integrar esta actualización documental.
+No new functionality is authorized by this documentation update.

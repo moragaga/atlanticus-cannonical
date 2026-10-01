@@ -1,14 +1,20 @@
 # Web Platform — Users / Profiles / Navigation / Manager Capability Boundary
 
-Estado: **CURRENT / MANAGER AUTHORIZATION CLOSED / NAVIGATION MANAGER CONVERGENCE BLOCKED**
+Estado: **CURRENT / MANAGER AUTHORIZATION CLOSED / NAVIGATION MANAGER CONVERGENCE CLOSED**
 
-Implementation:
+## Autoridad de este cierre
 
 ```text
-moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
+Último HEAD Atlanticus confirmado en este chat:
+moragaga/atlanticus@36361dd570f86e8350ea4a6ee0e09bab351ba171
+
+Delta posterior Command Center:
+VERIFIED LOCAL / PENDING FINAL GIT HEAD
 ```
 
-## Ownership
+La delta local posterior al HEAD confirmado no cambia el contrato transversal de esta página; alinea Command Center con la misma autoridad `atlanticus-web-manager==0.3.19`.
+
+## Ownership CURRENT
 
 ```text
 Atlanticus Users
@@ -109,52 +115,82 @@ Product composition → Navigation neutral option contract
 ALLOWED
 ```
 
-## Navigation Manager composition
+## Navigation Manager composition — CLOSED / CURRENT
 
-Estado auditado:
+Autoridad reusable:
 
 ```text
 web/compositions/navigation-manager
-BLOCKED
+atlanticus-web-composition-navigation-manager==0.3.0
 ```
 
-No es CURRENT authority para consumidores nuevos.
-
-Findings VERIFIED:
-
-1. ADA no la consume.
-2. Llama `ManagerAuthorizationPolicy.can_access(...)`; CURRENT expone `can_view(...)`.
-3. Registra Source/Projection/Validation services directamente sobre un `ServiceRegistry` externo.
-4. Profiles/Alarm compositions registran esos services mediante `WebModule.register_services`.
-5. Workflow generic añade validadores y checks que no son idénticos al workflow ADA.
-6. Default source key generic: `navigation-configuration`.
-7. ADA source key: `navigation`.
-8. No introducir alias para esconder esta diferencia.
-9. Runtime source/projection labels generic no están alineados con la variación que otros compositions ya exponen.
-
-Antes de modificar, decidir explícitamente:
+La convergencia resolvió las divergencias previamente auditadas:
 
 ```text
-source_key authority
-workflow validation/concurrency authority
-workspace semantics
-authorization call
-service lifecycle
-runtime labels/provider API
+authorization call          → ManagerAuthorizationPolicy.can_view(...)
+service lifecycle           → WebModule.register_services
+source_key                  → configurable; ADA injecta SourceKey('navigation')
+runtime labels              → source_name / projection_name configurables
+workspace mechanics         → ManagerWorkspaceBinding
+profile validation          → NavigationProfileOption provider neutral
 ```
 
-Luego reemplazar limpiamente el wiring anterior.
+ADA consume la composition reusable. El wiring/workflows bespoke de Navigation que vivía en ADA Configuration Manager quedó reemplazado limpiamente; no se conservaron aliases ni service IDs ADA antiguos.
 
-## Authority/version
+La composición reusable conserva su default genérico `navigation-configuration`; ADA inyecta explícitamente `navigation`. No existe alias entre ambas identidades.
 
-Manager package owner:
+## Manager authority/version
+
+Package owner:
 
 ```text
-atlanticus-web-manager==0.3.18
 web/capabilities/manager
+atlanticus-web-manager==0.3.19
 ```
 
-El próximo frente debe terminar con una única versión/authority consumida por ADA, Command Center y tooling/distribution.
+Estado:
+
+```text
+Manager 0.3.18                         SUPERSEDED
+Manager 0.3.19                         CURRENT
+
+Navigation Manager composition 0.2.0   SUPERSEDED
+Navigation Manager composition 0.3.0   CURRENT / CLOSED
+```
+
+ADA quedó integrado con esta autoridad. Command Center quedó localmente calificado con la misma versión; falta únicamente registrar el HEAD Git final de esa delta si todavía no fue integrado.
+
+## Product-specific state
+
+### ADA
+
+```text
+Users Manager       CURRENT / consumed
+Profiles Manager    CURRENT / consumed
+Navigation Manager  CURRENT / consumed
+Manager Core 0.3.19 CURRENT
+```
+
+ADA conserva separadas:
+
+```text
+administrative Navigation composition
+operational Navigation projection consumption
+```
+
+`ConfigurationManagerDependencies.navigation_projection_store` es dependencia operacional real de ADA Generic; no es compatibilidad legacy.
+
+### ADA Command Center
+
+Command Center actualmente sólo compone las capabilities administrativas que existen:
+
+```text
+Alarm Configuration Manager
+Tool Catalog Manager
+temporary Configuration Manager host
+```
+
+Users, Profiles y Navigation no se agregan por simetría con ADA. Su integración queda sujeta a una necesidad real del futuro composition root de Command Center.
 
 ## Reglas congeladas
 
@@ -177,16 +213,13 @@ parallel Manager versions                            FORBIDDEN
 
 ## NEXT
 
-```text
-MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
-```
+La convergencia de Manager ya no es el siguiente trabajo.
 
-Same chat:
+El siguiente foco de producto es:
 
 ```text
-generic convergence
-→ ADA Generic
-→ Command Center
-→ tooling/distribution both
-→ qualification
+ADA-COMMAND-CENTER-GENERIC-APPLICATION-COMPOSITION
+PLANNED / NEXT
 ```
+
+Primero definir el composition root real de Command Center. Sólo después de existir y quedar calificado un producto Command Center integrable corresponde retomar alineación dual de tooling/distribution.

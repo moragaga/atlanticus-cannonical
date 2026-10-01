@@ -1,6 +1,16 @@
 # ADA Command Center — Identity, Users, Profiles, Navigation and Manager
 
-Estado: **CURRENT DIRECTION / MANAGER AUTHORIZATION CONVERGED / NAVIGATION COMPOSITION BLOCKED**
+Estado: **CURRENT DIRECTION / MANAGER AUTHORITY CONVERGED / USERS-PROFILES-NAVIGATION NOT YET REQUIRED BY CURRENT HOST**
+
+## Authority of this close
+
+```text
+Last confirmed Atlanticus HEAD:
+moragaga/atlanticus@36361dd570f86e8350ea4a6ee0e09bab351ba171
+
+Command Center Manager 0.3.19 delta:
+VERIFIED LOCAL / PENDING FINAL GIT HEAD
+```
 
 ## Identity
 
@@ -31,6 +41,8 @@ web/compositions/users-manager
 CURRENT / VERIFIED
 ```
 
+Command Center CURRENT no la consume todavía.
+
 ## Profiles
 
 Profiles es generic Atlanticus.
@@ -53,6 +65,8 @@ CURRENT / VERIFIED
 
 No agregar permisos de producto a Profiles.
 
+Command Center CURRENT no la consume todavía.
+
 ## Navigation
 
 Navigation es generic Atlanticus.
@@ -65,7 +79,7 @@ allowed_profiles = profile keys
 
 Navigation no depende de Users ni de ADA Access.
 
-La validación contra perfiles debe ocurrir mediante un contrato neutral provisto por la product composition:
+Cuando un producto necesite validar perfiles:
 
 ```text
 ProfileCatalog
@@ -75,52 +89,52 @@ NavigationProfileOption
 Navigation Configuration
 ```
 
-Por tanto queda congelado:
+Congelado:
 
 ```text
 Navigation Configuration package → Profiles package
 FORBIDDEN
 
 Product composition → Profiles + Navigation contracts
-ALLOWED / CURRENT DIRECTION
+ALLOWED
 ```
 
 No persistir copias de `ProfileDefinition` dentro de Navigation.
 
-## Navigation Manager reusable — finding CURRENT
+## Navigation Manager reusable — CURRENT
 
-Existe:
+Authority:
 
 ```text
 web/compositions/navigation-manager
+atlanticus-web-composition-navigation-manager==0.3.0
+CURRENT / CONVERGED
 ```
 
-pero ADA no lo consume hoy.
-
-Estado:
+Las divergencias históricas quedaron resueltas:
 
 ```text
-BLOCKED / CONVERGENCE REQUIRED
+authorization       → can_view(...)
+service lifecycle   → WebModule.register_services
+source_key          → configurable
+runtime labels      → configurable
+workspace           → ManagerWorkspaceBinding
+profile validation  → neutral NavigationProfileOption provider
 ```
 
-Findings VERIFIED:
+ADA ya consume esta composition.
 
-- usa `ManagerAuthorizationPolicy.can_access(...)` aunque el contrato CURRENT expone `can_view(...)`;
-- registra servicios sobre un `ServiceRegistry` recibido por la composition;
-- ADA usa wiring/workflows propios;
-- workflows generic y ADA difieren en validación/concurrencia/workspace;
-- generic default `SourceKey` es `navigation-configuration`;
-- ADA usa `navigation`;
-- providers generic no exponen hoy toda esa variación de forma equivalente;
-- labels runtime generic están fijados.
-
-No migrar ADA ni Command Center hasta decidir el contrato único.
-
-No introducir alias entre `navigation` y `navigation-configuration`.
+Command Center no debe adoptarla sólo para igualar a ADA. El host actual no tiene shell operacional/navigation que la requiera. Su necesidad se decide dentro del futuro `ada-command-center-generic-application`.
 
 ## Manager authorization
 
 Manager Core CURRENT:
+
+```text
+atlanticus-web-manager==0.3.19
+```
+
+Contrato:
 
 ```text
 access_key=None                  → DENY
@@ -135,7 +149,37 @@ La product composition decide cuándo emitir override.
 
 No derivarlo desde ADA Access.
 
-Command Center no debe incorporar ADA Access.
+Command Center no incorpora ADA Access.
+
+## Command Center Manager CURRENT
+
+Capabilities administrativas existentes:
+
+```text
+Alarm Configuration Manager
+Tool Catalog Manager
+temporary Configuration Manager host
+```
+
+La convergencia local cerró:
+
+```text
+ada-command-center-web-alarm-configuration 0.1.1
+ada-command-center-web-tool-catalog-manager 0.1.1
+ada-command-center-configuration-manager 0.1.1
+atlanticus-web-manager 0.3.19
+```
+
+`AlarmConfigurationManagerWorkspaceBinding` conserva únicamente especialización de dominio:
+
+```text
+Save Draft
+→ require Confirmed Tool Catalog
+→ pin current catalog revision
+→ delegate workspace mechanics to ManagerWorkspaceBinding
+```
+
+Ownership, SourceKey, snapshot y serialización de workspace pertenecen al Manager core.
 
 ## Bindings legítimos vs adapters legacy
 
@@ -165,11 +209,15 @@ new contract
 
 No mantener dos autoridades después de una convergencia.
 
-## Próximo frente
+## NEXT
+
+No agregar Users/Profiles/Navigation en aislamiento.
+
+El próximo foco único es:
 
 ```text
-MANAGER-COMPOSITION-CONVERGENCE-AND-DUAL-PRODUCT-INTEGRATION
-NEXT
+ADA-COMMAND-CENTER-GENERIC-APPLICATION-COMPOSITION
+PLANNED / NEXT
 ```
 
-Primero converger Navigation/Manager reusable; luego ADA Generic; luego Command Center; luego tooling/distribution de ambos.
+Ese diseño debe determinar qué capabilities necesita realmente el composition root final de Command Center.
