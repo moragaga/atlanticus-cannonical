@@ -1,83 +1,271 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT — ADA STARTER + MASTER 001A–001D.2 IMPLEMENTADOS; 001D.3 DOCKER NAVIGATION LOCAL CLOSED; 001D.4 SYNC CORRECTIVO CLOSED**.  
-Corte de correctivo y distribución limpia: `atlanticus@9c6daffd04b9c249f75a55b6cdb9b44e6d92a795` (2026-09-28). Para la prueba funcional Docker de Master usar **su propio** corte `atlanticus@ca3ee5084542e393c105b49e98b3c282da56f7fb`. Canonical base: `0f2fff3ec0e71903b5703e03dd6050765d9722ff`. Ningún artifact se declara cualificado por herencia de otro SHA.
+Estado: **CURRENT — ADA WEB STARTER THINNING CLOSED / DISTRIBUTION PRECHECK CLOSED / RUNTIME E2E OPEN**.  
+Corte implementado y trazable: `atlanticus@a75465745e188da4765e803595b17acaa55d9306` (2026-10-01).  
+Decisions inspeccionado: `atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`.  
+Canonical base inspeccionado antes de este reemplazo: `atlanticus-cannonical@e5f22298b9a8d62182cf9dc5bcad46c971faf261`.
 
-## Frontera y ownership
+Ningún resultado histórico recalifica automáticamente este corte. El artifact final de este hito declara `source_git_head=a75465745e188da4765e803595b17acaa55d9306`, coincidente con `atlanticus:main` remoto verificado al cierre.
 
-```text
-SOURCE → ARTIFACT → DISTRIBUTION INPUT
-```
-
-Atlanticus produce artifacts y contrato de distribución; el host/DevOps es dueño de infraestructura, pipeline y secretos productivos. No confundir `deployment/local/generate_compose.py` de procesos backend con Starter Web, ni mezclar cualificaciones de wheelhouses históricos con las 67 ruedas de esta distribución ADA. `distribution/` es salida generada.
-
-## Starter Web, Docker y qualification histórica conservada
-
-`tooling/distribution/web/generate_starter.py` genera Starters editables Generic/ADA. Para ADA, `tooling/distribution/web/ada/build_distribution.py` genera wheelhouse/requirements/manifests; `qualify_distribution.py` realiza precheck de integridad y requisitos, **no** sustituye pruebas Docker/producción. Starter ADA usa Gunicorn, Dockerfile y Compose `infra.yaml`, `web.yaml`, `full.yaml`. `production.py` exige identidad productiva suministrada por host, no fabrica Entra.
-
-Histórico independiente: SOURCE_SMOKE/PORTABLE Generic 36 y ADA 108 wheels con Python 3.14.2 y Docker 008 anteriores. Esos resultados **no** caracterizan la distribución actual de 67 wheels.
-
-## Resource Preparation 001 — historial CURRENT/CLOSED local
-
-Commit `da75752e87036b8318f38f8d405c55e8cb18717d`: job local espera Cosmos `/ready` y Azurite; prepara contenedor Blob, base Cosmos y seis contenedores físicos. `full.yaml` no hace depender la Web del éxito de `resources`; CLI vigente `ada-generic-manager-resources prepare|validate`, nunca `ensure-local`. En producción no crear automáticamente recursos Blob y la base Cosmos se gestiona externamente.
-
-**VERIFIED USER-REPORTED de su checkpoint:** suite ADA Generic/tooling acotada, Ruff y diff check; distribución de 67 wheels, imagen local; ocho recursos creados/READY, reejecución idempotente, reinicio, diagnóstico parcial y recuperación de Cosmos. **OPEN histórico:** cold start con Cosmos ya detenido no produjo `/health/live` dentro de diez segundos; el mismo contenedor sí respondió tras recuperación, pero readiness integral/Home no quedó cualificada.
-
-## Master 001C — hallazgos históricos preservados
-
-El smoke artifact inicial de 001C (67 wheels, `BUILT_UNQUALIFIED`) respondió HTTP 500 en `/master-projection`: Navigation requería un `AccessSnapshot` Identity para una ruta que Master excluía. El middleware Master se registró antes de Identity/Navigation y la excepción se limitó a dos rutas exactas; el fallo anterior está **SUPERSEDED** por ese correctivo. El smoke v2 del período 001C observó `SYNCED`, HTTP 200 con/sin material y login informado, pero su manifest declaraba `source_git_head=efe231d61c9d5a6f4eca1e3f22a201a9b3c1861b` mientras el build había usado cambios locales previos al commit; no certificarlo como un artifact bit a bit del SHA anunciado.
-
-El constructor requiere CPython 3.14.2 y `packaging`; en este hito se usó `uv run --no-project --python 3.14.2 --with packaging==25.0` tras observar un `ModuleNotFoundError` sin dicha librería. No se introdujo por ello una dependencia runtime adicional. Las pruebas 001C reportadas (38/38, 39/39, 3/3, 6/6, 2/2 en momentos diferentes) son **históricas, seleccionadas y solapadas**; no sumarlas ni atribuirlas a un único HEAD.
-
-## Master 001A–001D.3 — material y ejecución
-
-El Starter ADA contiene:
+## Frontera y ownership CURRENT
 
 ```text
-tooling/distribution/web/starter/ada/tooling/master_projection.py
-tooling/distribution/web/starter/ada/src/application/master_projection/{material,reader}.py
-tooling/distribution/web/starter/ada/src/application/runtime.py
-scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/master_projection/{plan,composition,apply,web}.py
+SOURCE
+  ↓
+GENERATION / DISTRIBUTION TOOLING
+  ↓
+GENERATED ADA TOOL PROJECT
+  ↓
+DISTRIBUTION ARTIFACT
+  ↓
+HOST / DEVOPS / RUNTIME
 ```
 
-El generador usa material externo ZIP AES-256/scrypt y prompts interactivos; no admite contraseñas en argumentos. En runtime, `ADA_MASTER_PROJECTION_MATERIAL_PATH` es la **única** ruta opcional Master; ausencia/presencia/invalidez se controlan explícitamente. El ZIP declara preview/apply/users.replace, pero **solo preview y apply individual de seis proyecciones ordinarias** tienen controlador Master; Users REPLACE sigue no ejecutable.
+Atlanticus produce artifacts, contratos de generación/distribución y runtime reutilizable. El host/DevOps es dueño de infraestructura, pipeline, secretos productivos y operación productiva.
 
-**VERIFIED USER-REPORTED Docker 001D.3, distribución `ca3ee508`:** checkout/base manifest con ese SHA, **67 internal wheels**, `BUILT_UNQUALIFIED`, `PRECHECK_PASS`, `SYNCED`; material nuevo generado externamente con `service_user=master-service`, montado read-only en la Web Docker; login real en `/master-projection` y vista inicial de seis `SOURCE_MISSING`. Después de modificar/publicar Navigation, el operador ejecutó prepare/confirm desde Master y observó en Manager, tras recargar, estado **proyectado y sincronizado**. No se hizo prueba equivalente de los cinco dominios restantes, rollback, fallos parciales o operación Azure. El generador del checkpoint anterior requirió el workaround `PYTHONPATH=$PWD/src` en el host, retirado por 001D.4.
+La aplicación ADA generada no debe contener una segunda implementación completa del runtime o del tooling reusable por conveniencia. El código reusable pertenece a paquetes Atlanticus/ADA o al tooling compartido; la Tool generada conserva únicamente sus superficies de extensión, host/configuración/deployment y los entrypoints del proyecto que correspondan.
 
-## 001D.4 — corrección de sincronización CURRENT/CLOSED
+`distribution/` continúa siendo salida generada.
 
-Implementación confirmada en `atlanticus@9c6daffd04b9c249f75a55b6cdb9b44e6d92a795`:
+## ADA Web Starter CURRENT
+
+`tooling/distribution/web/generate_starter.py` conserva perfiles `generic` y `ada`.
+
+Para perfil ADA, el generador ya no hereda del starter base:
+
+```text
+docker/
+src/application/modules/
+src/application/pages/
+```
+
+En consecuencia, ADA no copia el demo Generic `modules/example`, no copia el Home Generic y no copia el probe Docker Generic. El overlay ADA entrega sus propias superficies de aplicación.
+
+La Tool ADA generada contiene como contrato explícito de extensión:
+
+```text
+src/application/pages/home.py
+src/application/pages/__init__.py
+src/application/modules/__init__.py
+```
+
+`src/application/composition.py` parte de `create_local_operational_composition()` y:
+
+- conserva los módulos y layout de ADA Generic;
+- agrega `create_application_modules()`;
+- reemplaza `page_packages` por `('application.pages',)`.
+
+El Home generado registra `/` y es código editable de la Tool concreta. No es un demo Generic ni un reemplazo del shell ADA.
+
+## Ownership ADA Generic vs Tool generada
+
+ADA Generic continúa siendo dueño de las capacidades reutilizables de aplicación, incluyendo la composición operacional, shell/header, Navigation, branding, runtime experience y la integración de Manager cuando existen sus dependencias/stores.
+
+La Tool generada es dueña de su contenido específico:
+
+```text
+Home
+pages adicionales
+módulos/callbacks propios
+assets y presentación específica
+integraciones particulares del host cuando correspondan
+```
+
+No se introdujo contrato legacy ni adaptador temporal para conservar el demo anterior.
+
+## Project tooling CURRENT
+
+La implementación pesada que antes vivía copiada en:
 
 ```text
 tooling/distribution/web/starter/ada/tooling/project.py
-tooling/distribution/web/starter/ada/commented/tooling/project.py
-tooling/tests/distribution/web/ada/test_project_tool.py
 ```
 
-Antes, `project.py sync` instalaba los wheels internos, pero **no** instalaba el paquete propio del Starter en `.venv`; ejecutar `application.master_projection.material` sin añadir `src` a `PYTHONPATH` podía fallar. El correctivo instala también un wheel del Starter usando el build requirements congelado que ya se distribuía, sin añadir parámetros ni nuevas variables de entorno. La huella de sincronización incluye digest del código Starter y revisión del esquema de instalación; si falla la construcción, no queda un stamp de sincronización válida. Se mantiene el contrato existente de `project.py run` en este incremento; no se reabre su modo editable ni se añaden wrappers legacy.
+fue extraída a un paquete reusable de distribución:
 
-**VERIFIED USER-REPORTED TESTS:** Ruff PASS tras retirar cuatro imports sin uso, diff check PASS y **24/24 tests** de project tooling + Master tooling. El commit publicado `9c6daffd` contiene el correctivo separado del frente concurrente `kpi-runtime`.
+```text
+tooling/distribution/web/ada/project-tooling/
+  pyproject.toml
+  src/ada_project_tooling/cli.py
+```
 
-**VERIFIED USER-REPORTED DISTRIBUCIÓN LIMPIA:** `git worktree` detached de `9c6daffd`, generado nuevo Starter, `BUILT_UNQUALIFIED` **67 wheels** y `source_git_head=9c6daffd`, `PRECHECK_PASS`, `project.py sync=SYNCED`, import real de `application.master_projection.material` **sin `PYTHONPATH`** (`STARTER_IMPORT_OK`), `tooling/master_projection.py --help` sin `PYTHONPATH`, segundo `sync=ALREADY_SYNCED`.
+Paquete:
 
-Este conjunto **cierra 001D.4 para sincronización local**. El help verifica invocación/import, **no** genera material nuevo ni autentica de nuevo sobre esa distribución.
+```text
+ada-project-tooling==0.1.0
+```
+
+El `project.py` distribuido es ahora un bootstrap delgado. En checkout de desarrollo puede cargar la implementación reusable desde el repositorio; en una distribución carga `ada_project_tooling/cli.py` desde el wheel interno y valida previamente identidad y SHA256 contra `wheelhouse/manifest.json`.
+
+Si el wheel falta, es ambiguo, tiene identidad inválida, no coincide con el SHA256 o no puede leerse, el bootstrap falla cerrado.
+
+Esta extracción reemplaza como CURRENT la descripción anterior del `project.py` pesado copiado íntegramente a cada Tool. El comportamiento histórico de 001D.4 se conserva como antecedente, pero su ownership ya no describe el estado actual.
+
+## Human command surface CURRENT
+
+Para comandos de tooling Web destinados a ejecución humana, la interfaz soportada es multiplataforma:
+
+```text
+<command>.py   implementación
+<command>.sh   launcher Linux/macOS
+<command>.cmd  launcher Windows
+```
+
+Actualmente este contrato está aplicado a:
+
+```text
+tooling/distribution/web/generate_starter
+tooling/distribution/web/build_wheelhouse
+tooling/distribution/web/qualify_starter
+tooling/distribution/web/ada/build_distribution
+tooling/distribution/web/ada/qualify_distribution
+```
+
+La Tool ADA generada conserva además:
+
+```text
+tooling/project.py
+tooling/project.sh
+tooling/project.cmd
+
+tooling/master_projection.py
+tooling/master_projection.sh
+tooling/master_projection.cmd
+```
+
+Los `.sh` y `.cmd` son launchers mínimos; la lógica no se duplica en ellos.
+
+Scripts Python internos que no son interfaz humana, como probes/verificadores o módulos runtime, no requieren launcher por este contrato.
+
+## Build de distribución CURRENT
+
+`tooling/distribution/web/ada/build_distribution.py`:
+
+- construye los wheels internos declarados por el runtime ADA;
+- construye adicionalmente `ada-project-tooling`;
+- exige wheels internos portables `py3-none-any`;
+- mantiene requirements externos/host/build con hashes;
+- genera `wheelhouse/manifest.json`;
+- registra `source_git_head`;
+- genera `requirements/project.lock.json`.
+
+El artifact trazable reportado para `atlanticus@a75465745e188da4765e803595b17acaa55d9306` produjo:
+
+```text
+status: BUILT_UNQUALIFIED
+profile: ada
+delivery_strategy: internal-wheels-external-image-build
+internal_wheels: 69
+source_git_head: a75465745e188da4765e803595b17acaa55d9306
+```
+
+`qualify_distribution` reportó:
+
+```text
+status: PRECHECK_PASS
+internal_wheels: 69
+image_build: UNVERIFIED
+runtime: UNVERIFIED
+```
+
+`PRECHECK_PASS` valida la frontera implementada por ese precheck; no equivale a qualification Docker, runtime Web ni producción.
+
+## Qualification de este hito
+
+VERIFIED por ejecución local reportada por el usuario sobre el incremento integrado:
+
+```text
+33 tests seleccionados: PASS
+Ruff del scope del incremento: PASS
+sh -n de los launchers Web/ADA: PASS
+generate_starter.sh: PASS
+build_distribution.sh: BUILT_UNQUALIFIED
+qualify_distribution.sh: PRECHECK_PASS
+project.sh --help sobre artifact final trazable: PASS
+source_git_head == atlanticus:main: PASS
+```
+
+Los `.cmd` existen y están cubiertos por el contrato/test estático, pero no fueron ejecutados físicamente en Windows en este hito.
+
+Un smoke anterior al commit final observó `project.sh init --copy-env = SYNCED` y `master_projection.sh --help`, pero ese resultado no se usa para recalificar el artifact final por herencia. Debe repetirse cuando la qualification runtime lo requiera.
+
+## Historial preservado — Resource Preparation y Master
+
+Los resultados históricos de Resource Preparation 001 y Master 001A–001D siguen siendo evidencia de sus respectivos cortes y no se eliminan por este cambio.
+
+La distribución histórica de 67 wheels, los cortes `9c6daffd...` y `ca3ee508...`, y sus resultados Docker/Manager/Master permanecen como evidencia histórica. No describen la distribución CURRENT de 69 wheels ni califican automáticamente `a7546574`.
+
+El Starter ADA CURRENT todavía contiene responsabilidades de runtime/host y Master, entre ellas:
+
+```text
+src/application/local_resources.py
+src/application/master_projection/material.py
+src/application/master_projection/provision.py
+src/application/master_projection/reader.py
+src/application/runtime.py
+src/application/production.py
+src/application/wsgi.py
+```
+
+Este hito no decidió moverlas ni eliminarlas. Su ownership adicional queda fuera de este cierre; no removerlas por inferencia.
 
 ## Gates actuales
 
 | Frontera | Estado real |
 |---|---|
-| Resource Preparation 001 Docker local | CLOSED en su alcance; Home cold start sigue OPEN |
-| Material 001A, planner 001B, HTTP 001C, apply 001D.1/001D.2 | CURRENT / IMPLEMENTED |
-| 001D.3 Master→Navigation→Manager en Docker | CLOSED / VERIFIED USER-REPORTED LOCAL para Navigation |
-| 001D.4 sincronización del Starter desde checkout limpio | CLOSED / VERIFIED USER-REPORTED LOCAL |
-| Distribución `9c6daffd` | BUILT_UNQUALIFIED + PRECHECK_PASS + SYNCED, **image_build/runtime UNVERIFIED** para esa nueva distribución |
-| Los otros cinco dominios Master en Docker | UNVERIFIED |
-| Users REPLACE desde Master | BLOCKED; fuera de 001D |
-| ZIP productivo, Key Vault/warmup/rotación, Entra/Azure | OPEN / UNVERIFIED |
-| CI monorepo, múltiples workers y qualify end-to-end | UNVERIFIED |
+| ADA starter thin: exclusión de demo/pages/docker Generic | CLOSED / VERIFIED |
+| Home/pages/modules específicos de la Tool | CLOSED / VERIFIED |
+| Extracción de project tooling reusable | CLOSED / VERIFIED |
+| Launchers `.sh` para comandos humanos Web/ADA | CLOSED / VERIFIED |
+| Contrato `.cmd` presente | CURRENT / UNVERIFIED físicamente en Windows |
+| Build distribución `a7546574` | CLOSED para build: `BUILT_UNQUALIFIED`, 69 wheels |
+| Precheck distribución `a7546574` | CLOSED para precheck: `PRECHECK_PASS` |
+| Trazabilidad `source_git_head` | CLOSED / VERIFIED |
+| `project.sh --help` artifact final | CLOSED / VERIFIED |
+| `project init/sync` sobre artifact final trazable | UNVERIFIED |
+| Docker image de `a7546574` | UNVERIFIED |
+| Runtime Web de `a7546574` | UNVERIFIED |
+| Home/header/Navigation/Manager E2E | UNVERIFIED |
+| Cosmos + Azurite sobre artifact final | UNVERIFIED |
+| Windows `.cmd` execution | UNVERIFIED |
+| Azure/Entra productivo | UNVERIFIED |
 
-## Python, secretos y foco siguiente
+## Python, imagen y secretos
 
-Baseline objetivo Project Python **3.14.7** e imagen **`python:3.14.7-slim-trixie`**. ADA Generic/Starter/distribución aquí verificados siguen fijados en **3.14.2**; **OPEN / SEPARATE**, no migrar por efecto lateral. `.env.detail` es documental, sin secretos; no añadir variables/rutas redundantes. El material Master real nunca se entrega dentro de artifacts ni en repositorios.
+Baseline objetivo del Project:
 
-**NEXT TÉCNICO PROPUESTO:** después de la integración humana de este ajuste documental, calificar en Docker la distribución `9c6daffd`: arranque del Starter sincronizado como paquete, material Master externo, login y repetición del flujo Navigation → Master prepare/confirm → Manager recargado. No atribuirle automáticamente el resultado de `ca3ee508`. La validación de los otros cinco dominios, Users REPLACE, ADA Operational Identification y Azure siguen siendo incrementos separados.
+```text
+Python 3.14.7
+python:3.14.7-slim-trixie
+```
+
+ADA Generic/Starter/distribución CURRENT continúan fijados en Python `3.14.2`; la imagen histórica/current asociada sigue fuera del baseline objetivo. La migración 3.14.2 → 3.14.7 y slim-bookworm → slim-trixie permanece **OPEN / SEPARATE** y no debe realizarse por efecto lateral.
+
+`.env.detail` sigue siendo contrato documental/configurable y no debe exponer secretos. Este hito no completó la auditoría global de `.env.detail` ni decidió todos los valores que puede asignar el sistema.
+
+## Estado y siguiente frontera
+
+CLOSED en este hito:
+
+```text
+ADA starter thinning
+Tool-specific Home/pages/modules
+project tooling extraction
+human .sh/.cmd command contract
+distribution build precheck
+source traceability
+```
+
+OPEN para la siguiente etapa:
+
+```text
+canonical reconciliation de este documento
+.env.detail audit/configuration
+Cosmos/Azurite local
+project init/sync sobre artifact final
+Web runtime
+Home → header → Navigation → Manager E2E
+Docker qualification
+```
+
+**NEXT TÉCNICO:** levantar y configurar el artifact trazable `a75465745e188da4765e803595b17acaa55d9306`, sin rediseñar nuevamente el generador. Primero auditar/completar `.env.detail`, luego preparar infraestructura local y finalmente verificar funcionalmente Home, shell/header, Navigation y Manager.
