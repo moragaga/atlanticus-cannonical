@@ -1,302 +1,274 @@
 # Alarm Engine — Domain Model
 
-Estado: **CURRENT / CORE PREREQUISITES IMPLEMENTED / B.2 CONTRACT TYPES IMPLEMENTED / TARGET CLEANUPS OPEN**
+Estado: **DESIGN FROZEN para el modelo de negocio / OWNERSHIP Y MATERIALIZATION BOUNDARY OPEN**
 
-Realidad implementada auditada:
+Fuente principal histórica:
+`alarm_decisions/R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md`
 
-```text
-moragaga/atlanticus:main
-cd08bd8d2c25bd89eb39fa15cbda209c8e9be617
-```
+## 1. Estado y alcance
 
-Canonical base:
+El modelo de dominio de Alarmas permanece congelado en sus conceptos e invariantes principales.
 
-```text
-moragaga/atlanticus-cannonical:main
-56943d94889719544f426322ded4a877245dfaee
-```
+Lo que está abierto no es la semántica de Rule/Occurrence/Episode, sino:
 
-Decisions consultado:
+- ownership físico del Engine;
+- dirección de dependencias entre Engine, Command Center y Web;
+- frontera exacta entre Resolution y Materialization;
+- contrato físico publicado en Cosmos que alimentará Materialization.
 
-```text
-moragaga/atlanticus-decisions:main
-50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
+No reabrir el modelo de negocio para resolver estos puntos de arquitectura.
 
-## Ownership
+## 2. Ownership
 
-Authored Alarm domain:
+### Histórico
 
-```text
-scopes/ada-command-center/domain/alarms
-```
+Owner histórico del contrato:
+`ada-command-center-alarms-core==1.0.0`.
 
-Runtime Engine:
+La decisión frozen histórica ubica físicamente Alarm Engine bajo `scopes/ada-command-center/backend/`.
 
-```text
-scopes/ada-command-center/backend/alarms/core
-```
+### Estado actual
 
-Pure B.2 materialization contracts:
+`VERIFIED / CURRENT`
 
-```text
-scopes/ada-command-center/backend/alarms/materialization
-```
+La implementación ya contiene responsabilidades de engine diferenciadas:
 
-Core no conoce Cosmos, SharePoint, Dash/Flask, Tool Catalog acquisition, Message catalog resolution
-ni editable Alarm Configuration.
+- alarms/core;
+- alarms/materialization;
+- alarms/persistence;
+- alarms-runtime;
+- alarms-materialization process;
+- alarms-delivery process.
 
-## AlarmIdentity
+### Dirección propuesta
 
-```text
-AlarmIdentity(family_key, alarm_key)
-```
+`PROPOSED / PLANNED`
 
-No introducir `rule_key` paralelo.
+Alarm Engine debe evaluarse como engine autónomo del ecosistema ADA, consumido por ADA Command Center, en vez de ser propiedad arquitectónica de la Web o del backend específico de Command Center.
 
-Family y `priority_group` son conceptos distintos.
+La extracción física no debe hacerse antes de cerrar la frontera de Materialization y eliminar dependencias invertidas hacia Web.
 
-## AlarmResolutionKey CURRENT
+## 3. Regla de dependencias
 
-Implementado en Alarm Core:
+Core/domain del Engine no debe conocer:
 
-```text
-AlarmResolutionKey
-    alarm_configuration_revision
-    confirmed_tool_catalog_revision
-```
+- Dash o Flask;
+- geometría UI;
+- callbacks;
+- sesiones web;
+- módulos de Configuration Manager;
+- implementaciones de proyección Web;
+- `ada.web.tools` como dependencia necesaria del Engine;
+- clientes de Cosmos/SharePoint/Key Vault dentro del dominio puro;
+- WAL/leases/persistencia física dentro del dominio puro;
+- detalles CSS o tokens visuales.
 
-Es VO operacional compartido.
+Una key utilizada para direccionamiento (`tool_key`, `component_key`, `subcomponent_key`) es dato contractual y no convierte al Engine en consumidor de la implementación Web que conoce esa key.
 
-No agregar `evaluator_registry_revision` sin contrato real.
+## 4. Conceptos de dominio congelados
 
-## PlannedAlarm CURRENT
+- Rule: alarma configurada.
+- AlarmDefinition: definición editable canónica de una Rule.
+- PlannedAlarm: forma operacional resuelta para ejecución.
+- Occurrence: activación concreta de una Rule.
+- Episode: lifecycle compartido dentro de un `priority_group`.
 
-CURRENT no contiene visibility:
+## 5. Identidad
 
-```text
-identity
-kind
-criticality
-priority_group
-priority_order
-evaluator_key
-alarm_configuration_revision
-tool_registry_revision
-routing
-deactivation_policy
-reappearance_after_seconds
-reappearance_special_conditions
-```
-
-`reappearance_after_seconds`:
-
-```text
-None
-or
-int > 0
-```
-
-`bool`, cero y negativos son inválidos.
-
-Removido:
-
-```text
-delivery_enabled
-```
-
-`PriorityDisposition` CURRENT:
-
-```text
-PREDOMINANT
-ECLIPSED
-CASCADE_SUPPRESSED
-DEACTIVATED
-```
-
-Removido:
-
-```text
-SHADOW
-```
-
-Por tanto:
-
-```text
-TRACE_ONLY != Runtime flag
-TRACE_ONLY != SHADOW
-```
-
-## Visibility CURRENT
-
-Authored:
-
-```text
-VISIBLE
-TRACE_ONLY
-```
-
-Runtime:
-- evalúa normalmente;
-- lifecycle normal;
-- routing normal;
-- priority normal;
-- management/deactivation suppression normal;
-- no filtra por visibility.
-
-Delivery:
-- conserva `visibility_mode`;
-- decide publicación visible después de priority Runtime.
-
-Una Rule TRACE_ONLY predominante no promueve una visible eclipsada.
-
-## Priority CURRENT
-
-```text
-priority_order > 0
-priority_order único dentro del priority_group
-menor priority_order = mayor prioridad
-```
-
-La suppression CURRENT se gobierna por `priority_order` e ignora visibility.
-
-## DeactivationEffect CURRENT
-
-```text
-DeactivationEffect
-    effect_id
-    source_occurrence_id
-    effective_from
-    effective_until
-```
-
-La provenance de la occurrence fuente se conserva aunque la occurrence cierre.
-
-Una deactivation vigente es una barrera operacional independiente de Management:
-
-```text
-source -> DEACTIVATED
-
-target activo
-AND mismo priority_group
-AND target.priority_order > source.priority_order
--> CASCADE_SUPPRESSED
-```
-
-`CascadeSuppression` conserva exactamente una causa:
-
-```text
-management_effect_id XOR deactivation_effect_id
-```
-
-Si ambos efectos están vigentes, la causa atribuida es deactivation.
-
-Pending approval no equivale a effect vigente.
-
-## RuntimeAlarmConfiguration CURRENT
-
-Implementado en Materialization:
-
-```text
-RuntimeAlarmConfiguration
-    resolution_key
-    defined_alarm_identities
-    planned_alarms
-    parameters_by_alarm
-```
+`AlarmIdentity(family_key, alarm_key)`
 
 Invariantes:
-- active executable: definida + `PlannedAlarm`;
-- disabled: definida sin `PlannedAlarm`;
-- removed: ausente;
-- plans únicos;
-- parameters sólo para planned alarms;
-- revisions históricas CURRENT del `PlannedAlarm` deben coincidir con `resolution_key`.
 
-No contiene evaluator callable, `DataRequirement`, `DataLoadPlan` ni `AlarmExecutionSession`.
+- `alarm_key` es estable;
+- no reintroducir `rule_key` como identidad paralela;
+- `rule_name` es editable y único dentro de family;
+- `display_name` es requerido;
+- `title` es estático;
+- `cause_template` admite materialización dinámica.
 
-## Runtime provenance cleanup OPEN
+## 6. Configuración de negocio
 
-Aunque `AlarmResolutionKey` ya existe, `PlannedAlarm` y occurrence provenance CURRENT todavía usan
-pares históricos:
+- kind: `RISK | IMPACT`;
+- criticality: `C1 | C2 | C3`;
+- categorías: Ecology / Productivity / Safety / Costs;
+- áreas: Mine / Plant, una o más;
+- color semántico: `RED | YELLOW`;
+- evaluator: `evaluator_key` + parámetros simples `str | float | bool`;
+- no código/listas/nested/None en parámetros;
+- enteros numéricos expresados como float.
 
-```text
-alarm_configuration_revision
-tool_registry_revision
-```
+## 7. Estado de configuración
 
-TARGET:
+Una Rule `inactive` sigue definida, pero sale de la ejecución activa.
 
-```text
-resolution_key
-resolution_key_at_start
-```
+Si existía una occurrence abierta, el Runtime debe reconciliarla conforme al contrato de configuración deshabilitada sin resetear toda la family o el priority group.
 
-No implementar aliases permanentes ni doble provenance.
+## 8. Visibilidad
 
-## Deactivation ownership cleanup OPEN
+- `VISIBLE`
+- `TRACE_ONLY`
 
-`PlannedAlarm.deactivation_policy` todavía existe en Core CURRENT.
+`TRACE_ONLY` se evalúa y deja trazabilidad, pero no se publica como alarma operacional visible.
 
-El target acordado sigue siendo resolver deactivation contextualmente en Delivery/Management Capture
-y no convertir Message semantics en lifecycle Core.
+## 9. Priority y Special Condition
 
-Este cleanup está separado de las semánticas de deactivation ya implementadas y probadas.
+- `priority_group`;
+- `priority_order` positivo y único dentro del grupo.
 
-## Reappearance CURRENT y OPEN
+Una Special Condition es una Rule normal con flag especializado. Su efecto especial opera dentro de la misma family + priority_group conforme al contrato frozen.
 
-Authored Domain:
+## 10. Reappearance
 
-```text
-ReappearanceDefinition
-    after_minutes: int | None
-    special_conditions: tuple[AlarmIdentity, ...]
-```
+`Reappearance(after_minutes, special_conditions)`
 
-Runtime Core CURRENT:
+Reaparece si:
 
-```text
-PlannedAlarm.reappearance_after_seconds: int | None
-PlannedAlarm.reappearance_special_conditions: tuple[AlarmIdentity, ...]
-```
+- la condición principal sigue activa y vence el timer; o
+- se activa una Special Condition referenciada conforme al contrato.
 
-El pure B.2 resolver debe materializar:
+Un cambio de `after_minutes` recalcula el vencimiento. No confundir reappearance de una Special Condition deactivated con reappearance residual de una Rule normal.
 
-```text
-after_minutes is None -> reappearance_after_seconds = None
-after_minutes = M     -> reappearance_after_seconds = M * 60
-```
+## 11. Frontera Resolution → Materialization
 
-La reconciliación de timer/special conditions sobre hot state durante Runtime Adoption sigue OPEN.
+`OPEN / CONFLICT WITH RECORDED DECISION`
 
-Special Condition Runtime reappearance ya está implementada y no se reabre por conveniencia.
+La decisión histórica B.2 hace que Alarm Materialization participe en adquisición de candidato, Confirmed Tool Catalog y resolución cross-tool.
 
-## Conflict con B.1 historical
-
-B.1 Special Cascade:
+La dirección acordada en el Project para el siguiente hito es más estricta:
 
 ```text
-managed predominant Special Condition
--> suppress all other active Rules in group
+ADA Command Center Configuration
+    authoring
+    + Tool catalog
+    + cross-tool validation
+    + destination resolution
+        ↓
+Resolved Alarm Configuration
+        ↓ publish
+Cosmos
+        ↓
+Alarm Engine Materialization
 ```
 
-difiere de CURRENT:
+Bajo esta dirección, Alarm Materialization no vuelve a descubrir Tools ni re-resuelve relaciones ya publicadas.
+
+Este cambio requiere una decisión formal que reemplace/refine B.2 antes de considerarse frozen en `atlanticus-decisions`.
+
+## 12. Responsabilidad propuesta de Alarm Materialization
+
+`PROPOSED / PLANNED`
+
+Materialization debe:
+
+1. leer una configuración operacional de alarmas ya resuelta y publicada;
+2. validar el contrato de entrada propio del Engine;
+3. producir dos artefactos coherentes con la misma revisión/resolution key;
+4. no depender de implementación Web para interpretar el documento.
+
+Salida conceptual:
 
 ```text
-Management/deactivation suppression
--> sólo targets activos de prioridad numéricamente menor
-   (priority_order mayor)
+Resolved Alarm Configuration
+        ↓
+Alarm Materialization
+        ├── runtime.json
+        └── delivery.json
 ```
 
-La deactivation como fuente independiente de cascade suppression es un refinamiento posterior no
-expresado por B.1.
+## 13. runtime.json
 
-Estado:
+Debe contener solo lo necesario para ejecución del Engine, por ejemplo:
+
+- resolution/revision identity;
+- alarm identities definidas;
+- planned alarms;
+- evaluator keys;
+- parameters;
+- priority/lifecycle inputs;
+- routing operacional requerido por Runtime;
+- reappearance/deactivation inputs de ejecución.
+
+Runtime no debe necesitar Configuration Manager ni Web para adoptar esta configuración.
+
+## 14. delivery.json
+
+Debe contener solo lo necesario para enriquecer y despachar los hechos producidos por Runtime, por ejemplo:
+
+- identity;
+- display name;
+- title/cause contract;
+- kind/criticality/category/areas;
+- color semántico;
+- messages/capabilities de delivery;
+- visual targets ya resueltos mediante keys estables;
+- `tool_key`;
+- `component_key` / `component_keys`;
+- `subcomponent_key` y owner cuando corresponda;
+- modos de proyección solo si alteran el comportamiento real de Delivery.
+
+No debe transportar geometría UI ni estilos.
+
+## 15. Tool kinds y routing
+
+`OPEN`
+
+Si `ToolConfigurationKind` solo participa en validación de direccionalidad durante authoring/resolution, no debe formar parte del contrato necesario del Engine después de publicada la configuración resuelta.
+
+Debe verificarse en el próximo hito si existe alguna semántica Runtime/Delivery que realmente dependa de `tool_kind`. Si no existe, se elimina de la frontera del Engine y queda solo la key de destino.
+
+## 16. Diferencia estructural con KPI
+
+No copiar el patrón de KPI Collector de forma literal.
+
+### KPI
+
+KPI Delivery distribuye datos por destinos/componentes y la Web mantiene stores por componente.
+
+### Alarm
+
+Alarm Delivery publica un conjunto operacional global de alarmas con visual targets. La Web debe combinar ese conjunto con su `ToolStructure` y construir un layout completo desde un único store/modelo global de alarmas.
 
 ```text
-IMPLEMENTATION CURRENT / VALIDATED
-PROJECT REFINEMENT CURRENT
-DECISIONS REPOSITORY HISTORICAL / NOT RECONCILED
+Alarm Live Projection
+        +
+ToolStructure
+        ↓
+Web Alarm Layout Resolver
+        ↓
+UN store/modelo global
+        ↓
+layout completo
 ```
 
-No resolver silenciosamente.
+El Engine determina **qué elemento lógico debe afectarse** mediante keys y semántica de negocio.
+
+La Web determina **dónde está físicamente ese elemento y cómo se representa**.
+
+## 17. Color
+
+Engine entrega color semántico:
+
+- `RED`
+- `YELLOW`
+
+Web resuelve representación visual concreta:
+
+- CSS;
+- theme token;
+- borde;
+- background;
+- opacity;
+- animación.
+
+No mover estilos al Engine.
+
+## 18. Open items
+
+- contrato exacto del documento Cosmos `Resolved Alarm Configuration`;
+- ownership del publicador de ese documento;
+- reconciliación formal con B.2 registrada;
+- eliminación de dependencias backend → `web`;
+- necesidad real o no de `ToolConfigurationKind` dentro de Engine;
+- naming/namespace final de un posible `ada-alarm-engine`;
+- extracción física fuera de `ada-command-center`;
+- read model History/Analytics posterior.
