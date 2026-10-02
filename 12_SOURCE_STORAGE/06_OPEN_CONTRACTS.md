@@ -1,97 +1,75 @@
 # Source Storage — Open Contracts
 
-Estado: **IN PROGRESS — POST MANAGER GENERIC CUTOVER**
+Estado: **CURRENT — CORE CLOSED / NAMESPACE-COMPOSITION OPEN**
 
-## Core Source — CLOSED
+## Core Source — CLOSED / FROZEN
 
-Congelado:
-
-1. `SourceKey`.
-2. `SourceReleaseId`.
-3. `SourceReleaseRef`.
-4. release id separado de content hash.
-5. immutable releases.
-6. manifest commit point.
-7. `basis_release`.
-8. `SourceStore`.
-9. `ConcurrencyToken`.
-10. CAS/current promotion.
-11. History con cursor opaco.
-12. exact reads.
-13. integrity.
-14. same-content republish puede crear nueva release.
-
-## Projection Handoff — CLOSED
-
-Congelado:
-
-- `ProjectionTarget = SourceKey + SourceReleaseRef`;
-- `project(target)` no relee current;
-- exact release provenance;
-- CURRENT/OUTDATED por release identity;
-- retry mismo target;
-- failure no revierte Source;
-- `ProjectionStore.get_active/replace_active`.
-
-## Manager generic consumer boundary — CLOSED
-
-Manager usa:
+Frozen:
 
 ```text
-DraftValidationWorkflow
-SourceReaderWorkflow
-SourcePublicationWorkflow
-SourceHistoryWorkflow
-ProjectionStatus
-ProjectionTarget
-ProjectionExecutionResult
+SourceKey
+SourceReleaseId
+SourceReleaseRef
+immutable releases
+manifest commit point
+basis_release
+SourceStore
+ConcurrencyToken
+CAS/current promotion
+History opaque cursor
+exact reads
+integrity
+same-content republish may create a new release
 ```
 
-No usa:
+## Projection handoff — CLOSED / FROZEN
 
 ```text
-ConfigurationLifecycleWorkflow
-ExactSourceReaderWorkflow
-ExactSourcePublicationWorkflow
-ExactSourceHistoryWorkflow
-ExactProjectionWorkflow
-expected_source_revision
+ProjectionTarget = SourceKey + SourceReleaseRef
+project(target) does not reread current
+exact provenance
+retry same target
+failure does not rollback Source
+ProjectionStore.get_active/replace_active
 ```
 
-`ManagerModule` no posee campos legacy/exact alternativos.
+## OPEN / NEXT — namespace and composition ownership
 
-## OPEN — Manager consumers
-
-Cada uno debe migrarse directamente al contrato genérico:
+Implementation currently contains:
 
 ```text
-Navigation        PLANNED / NEXT
-Tools             PLANNED
-KPI Configuration PLANNED
-KPI Definition    PLANNED
+scopes/ada/web/storage/namespace
+    AdaStorageNamespace
+
+scopes/ada-command-center/...
+    imports AdaStorageNamespace
 ```
 
-No crear compatibilidad en Manager para acelerar estos consumers.
+This is a cross-product ownership leak.
 
-## BLOCKED — global qualification
+NEXT must determine:
 
 ```text
-MANAGER-CONSUMER-GLOBAL-QUALIFICATION
-BLOCKED
+generic namespace fields
+product-specific namespace values
+application versus sub-scope semantics
+local root derivation
+Blob prefix derivation
+interaction with existing storage topology
 ```
 
-hasta cerrar los consumers y ejecutar suites integradas.
+Do not rename `tool_namespace` or create a new abstraction before consumer inventory proves the
+required shape.
 
-## UNVERIFIED
+## UNVERIFIED / AFTER NEXT
 
-- full Web suite en `59fcd3e...`;
-- full ADA suite en `59fcd3e...`;
-- consumer integration;
-- Docker E2E;
-- CI remoto;
-- Python 3.14.7 qualification global;
-- scan global de legacy fuera de Manager.
+```text
+dual-app real durable Source smoke
+restart/readback against selected Storage target
+Command Center explicit resource preparation
+current-head artifact qualification
+```
 
-## Otros open contracts
+## Separate
 
-Los contratos abiertos de Users runtime, resource topology, retention y otros dominios permanecen en sus documentos especializados. Este cierre no los revalida ni modifica.
+Retention, cleanup/GC, Azure production, Entra and KPI/Collector remain outside this increment.

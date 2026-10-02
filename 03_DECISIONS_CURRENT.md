@@ -2,7 +2,7 @@
 
 Estado: **CURRENT**
 
-## Baseline global
+## Baseline global — FROZEN
 
 ```text
 uv, no pip normal
@@ -14,120 +14,129 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-Python target histórico 3.14.7/Trixie permanece diferido; el Web runtime CURRENT de este hito usa 3.14.2.
+Web CURRENT usa Python 3.14.2.
+Python 3.14.7/Trixie permanece `PLANNED / DEFERRED`.
 
-## Distribution ownership — FROZEN
-
-```text
-tooling/distribution/web
-= shared engine only
-```
-
-Product-specific starter/runtime/distribution behavior pertenece a su scope.
-
-No reintroducir:
+## Environment and persistence axes — FROZEN
 
 ```text
-tooling/distribution/web/ada
-tooling/distribution/web/starter/ada
-tooling/distribution/web/starter/command-center
+ATLANTICUS_ENVIRONMENT = local | production
 ```
 
-## ADA runtime ownership — FROZEN
+controla host/runtime behavior.
+
+Cada producto puede tener un selector de persistencia:
 
 ```text
-ada-generic-application
-owns ADA runtime lifecycle
-owns Master Projection runtime
-owns local resource preparation
+local | durable
 ```
 
-Starter ADA:
+que controla filesystem/in-process versus stores durables.
+
+No introducir:
 
 ```text
-may customize host/composition
-must not rebuild ADA runtime lifecycle
+storage=local|azure
+cosmos=local|azure
 ```
 
-Master Projection es extensión/runtime capability, no aplicación ni distribución tooling.
+Emulator y Azure son destinos de conexión.
 
-## Command Center application role — FROZEN
+## Dual-app lockstep — FROZEN
+
+ADA Generic y ADA Command Center Generic participan del mismo checkpoint de madurez para
+fronteras compartidas.
+
+Un producto no se declara adelantado en un checkpoint dual hasta que ambos pasen la misma clase
+aplicable de validación.
+
+## Master Projection ownership — REFINED / FROZEN
+
+SUPERSEDED:
 
 ```text
-ada-command-center-generic-application
-= real product composition root
-
-ada-command-center-configuration-manager
-= separate development/testing/qualification application
+ADA Generic owns the reusable Master Projection engine
+Command Center still needs its own implementation
 ```
 
-Command Center Starter delega al product root; no recompone la aplicación.
-
-## Wheelhouse artifact policy — FROZEN
+CURRENT:
 
 ```text
-compatible SHA256-locked wheel
-→ preferred
+atlanticus-web-master-projection
+    owns reusable engine
 
-otherwise SHA256-locked sdist
-→ build platform wheel under hash-constrained build dependencies
+ADA Generic
+    owns ADA projection-domain composition + provisioning
+
+Command Center Generic
+    owns Command Center projection-domain composition + provisioning
 ```
 
-Final wheelhouse contiene wheels, no sdist suelto.
+No duplicar el motor.
 
-Manifest debe preservar trazabilidad de origen y hash del wheel final.
+## Command Center runtime — REFINED / FROZEN
 
-## Distribution qualification semantics — FROZEN
+SUPERSEDED:
 
 ```text
-generic
-→ PASS
-→ portable runtime probe
-
-ada
-→ PRECHECK_PASS
-→ image/runtime UNVERIFIED unless qualified separately
-
-command-center
-→ PRECHECK_PASS
-→ portable artifact/dependency qualification
-→ runtime UNVERIFIED
+Command Center Generic is local-manager-only
 ```
 
-No promover `PRECHECK_PASS` a runtime verification.
-
-## Próxima decisión/foco
-
-Acordado como siguiente frente:
+CURRENT:
 
 ```text
-ADA + COMMAND CENTER .env.detail
-→ configuration contract
-→ Storage final/durable + Cosmos local
-→ Master Projection contract for both products
+local Web host
++
+local or durable Manager persistence
 ```
 
-Después:
+Production identity remains separate and unimplemented in Generic.
+
+## Source boundary — FROZEN CORE / NEXT CONVERGENCE
+
+`SourceStore` + Local/Blob providers continúan genéricos y frozen.
+
+NEXT no debe reescribir Source Core.
+
+El siguiente incremento debe resolver ownership/composición compartidos por ADA y Command Center,
+incluyendo el actual acoplamiento:
 
 ```text
-lift both applications
-→ then Command Center exits scope
-→ ADA KPI/data/Collector E2E
-→ ADA UI reconstruction
+ada-command-center -> ada.web.storage.namespace
 ```
 
-## UI authoring — CURRENT fact, not yet distributed env contract
+No congelar todavía el nombre/path final de una nueva capability hasta inspeccionar todos los
+consumidores reales.
 
-ADA ya implementa:
+## Tooling ownership — DECIDED DIRECTION / PLANNED
+
+Regla de arquitectura:
 
 ```text
-ContentStatePresentationMode.AUTHORING
+/scopes/<owner>/tooling
+    product/scope-specific build, distribution and qualification composition
+
+/tooling
+    reusable mechanisms and cross-scope orchestration
 ```
 
-que suprime overlays degradados visualmente.
+ADA y Command Center ya siguen parcialmente esta regla.
 
-Aún no está congelada una variable `.env.detail` que seleccione ese modo.
+Normalizar Operational Data y futuros backend toolings queda:
 
-La propuesta de exponerlo como configuración local-only queda **PROPOSED**, no implementada.
+```text
+PLANNED / DEFERRED
+```
 
-Tampoco existe un estado explícito `NO_DATA`; cualquier contrato nuevo debe decidirse con el flujo Collector/UI real.
+No es blocker para levantar las aplicaciones.
+
+## Próximo orden — FROZEN
+
+```text
+1. Source namespace/composition convergence
+2. lift ADA Generic + Command Center Generic
+   using LOCAL HOST + DURABLE PERSISTENCE
+3. validate real durable runtime / Master Projection
+4. then continue ADA KPI/Collector/UI
+5. tooling topology normalization later
+```

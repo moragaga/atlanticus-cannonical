@@ -1,77 +1,57 @@
 # Frontend Generation
 
-Estado: **CURRENT — SHARED ENGINE CLEAN / PRODUCT OWNERSHIP EXPLICIT**
+Estado: **CURRENT — SHARED MECHANISMS / PRODUCT-SCOPE COMPOSITION**
 
 ## Shared engine
 
 ```text
-tooling/distribution/web/
+tooling/distribution/web
 ```
 
-owns:
+owns reusable mechanisms:
 
 ```text
-products.toml
-generate_starter
-build_wheelhouse
-qualify_starter
-probe_starter
-distribute
-starter/base
+products catalog
+starter generation
+wheelhouse build
+qualification/probe primitives
+distribution orchestration
+base starter
 ```
-
-It does not own ADA runtime, Command Center runtime or product-specific starter subtrees.
-
-## Generic Starter
-
-The base Starter is a minimal Atlanticus Web application.
-
-It may contain the minimum composition/runtime needed to demonstrate the generic framework contract.
-
-The previous `example` demo module/callback/assets were removed from the base.
 
 ## ADA
 
-Product-specific generation support:
-
 ```text
-scopes/ada/tooling/distribution/web/
+scopes/ada/tooling/distribution/web
 ```
 
-ADA Starter remains editable host/deployment surface but delegates runtime behavior to `ada-generic-application`.
+owns ADA-specific distribution behavior.
 
-Project tooling also belongs to the ADA scope.
-
-Master Projection and local resources are **not** Starter code.
+Runtime authority remains `ada-generic-application`.
 
 ## Command Center
 
-Starter:
-
 ```text
-scopes/ada-command-center/tooling/distribution/web/starter
+scopes/ada-command-center/tooling/distribution/web
 ```
 
-is intentionally minimal and delegates to:
+owns Command Center-specific starter behavior.
+
+Runtime authority remains `ada-command-center-generic-application`.
+
+## Master Projection
+
+Master Projection engine is not tooling:
 
 ```text
-ada-command-center-generic-application
+web/capabilities/master-projection
 ```
 
-## Product catalog
+Product tooling may package/invoke a product command, but must not reimplement reader/planner/
+executor/runtime behavior.
 
-Current profiles:
+## Planned topology refinement
 
-```text
-generic
-ada
-command-center
-```
+Same scope ownership model should later extend to backend/process distribution.
 
-Shared engine selects strategies/handlers from product catalog instead of hardcoding ADA internals.
-
-## Rule
-
-A product runtime change should normally require a product package change, not a mirrored implementation change in distribution tooling.
-
-Generated artifacts may pin/version the product dependency, but do not become a second runtime authority.
+No relocation is required before the next application smoke.

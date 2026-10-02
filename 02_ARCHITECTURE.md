@@ -6,35 +6,93 @@ Estado: **CURRENT**
 
 Atlanticus es una plataforma modular reusable.
 
-ADA y ADA Command Center consumen Atlanticus.
+ADA y ADA Command Center son productos/scopes consumidores.
 
 El núcleo genérico de Atlanticus no depende de ADA ni de ADA Command Center.
 
-## Ownership de Web distribution
+## Web capabilities
+
+Una capability reusable demostrada entre productos pertenece al área genérica Web.
+
+CURRENT:
 
 ```text
-tooling/distribution/web
-    shared distribution engine
-    product catalog
-    base starter
-
-scopes/ada/tooling/distribution/web
-    ADA distribution support
-    ADA project tooling
-    ADA starter overlay
-
-scopes/ada-command-center/tooling/distribution/web
-    Command Center starter overlay
+web/capabilities/master-projection
+    material
+    reader
+    planner
+    executor
+    independent Web surface
 ```
 
-Invariante:
+Product composition:
 
 ```text
-shared tooling
--X-> product runtime internals
+ADA Generic
+    -> product projection domains
+    -> product provisioning/location policy
+
+ADA Command Center Generic
+    -> product projection domains
+    -> product provisioning/location policy
 ```
 
-Los productos pueden usar el motor compartido mediante contratos declarativos/handlers.
+No duplicar el motor Master Projection dentro de cada producto.
+
+## Source
+
+`SourceStore` y providers Local/Blob son genéricos:
+
+```text
+web/capabilities/source/core
+web/capabilities/source/local
+web/capabilities/source/blob
+```
+
+El contrato Core permanece frozen.
+
+CURRENT gap de ownership:
+
+```text
+ada-command-center
+    -> ada.web.storage.namespace
+```
+
+`AdaStorageNamespace` expresa actualmente:
+
+```text
+application namespace
+sub-scope/tool namespace
+local roots
+Blob prefixes
+```
+
+Command Center lo reutiliza tratando `command-center` como segundo segmento.
+
+Siguiente diseño debe determinar la forma genérica mínima de ese contrato sin reescribir
+`SourceStore` ni hacer que Command Center dependa de ADA.
+
+## Environment versus persistence
+
+Congelado:
+
+```text
+ATLANTICUS_ENVIRONMENT
+    local | production
+    host/runtime behavior
+
+persistence selector
+    local | durable
+    persistence topology
+```
+
+Emulator/Azure no son modos de arquitectura.
+
+```text
+LOCAL HOST + DURABLE PERSISTENCE
+```
+
+es una topología válida.
 
 ## Application ownership
 
@@ -42,11 +100,11 @@ Los productos pueden usar el motor compartido mediante contratos declarativos/ha
 
 ```text
 ada-generic-application
-    composition root
-    runtime host/lifecycle
+    product composition root
+    host/lifecycle
     Manager integration
     Tool Projection
-    Master Projection
+    product Master Projection composition/provisioning
     KPI Collector attachment
 ```
 
@@ -54,83 +112,59 @@ ada-generic-application
 
 ```text
 ada-command-center-generic-application
-    composition root
+    product composition root
+    local host
+    local/durable Manager selection
+    product Master Projection composition/provisioning
 
 ada-command-center-configuration-manager
-    reusable configuration/administration composition
+    configuration/administration composition
     separate qualification/development application
 ```
 
-No convertir Configuration Manager en servicio remoto ni en product root.
+Configuration Manager no es un servicio remoto ni product root.
 
-## Master Projection
+## Tooling topology
 
-Master Projection es una **extensión/runtime capability**, no una aplicación independiente y no tooling de distribución.
-
-CURRENT ADA ownership:
+CURRENT:
 
 ```text
-scopes/ada/web/application/ada-generic-application/
-    .../generic/master_projection/
+/tooling
+    generic/transversal mechanisms and orchestration
+
+/scopes/ada/tooling
+    ADA-specific distribution behavior
+
+/scopes/ada-command-center/tooling
+    Command Center-specific distribution behavior
 ```
 
-El Starter puede invocar contratos del product runtime, pero no duplicar reader/provisioning/lifecycle.
-
-Command Center también requiere Master Projection por decisión de producto, pero esa integración aún está **PLANNED / NOT IMPLEMENTED**.
-
-Si una capacidad resulta realmente reusable entre ADA y Command Center, extraer sólo el contrato genérico necesario; no hacer que Command Center dependa de `ada-generic-application`.
-
-## Starter boundary
-
-Un Starter existe para entregar un host editable/consumible.
+PROPOSED / PLANNED, no implementado en este hito:
 
 ```text
-base starter
-    minimal generic Atlanticus Web application
-
-ADA starter
-    host customization / composition extension / deployment surface
-
-Command Center starter
-    thin delegation to real product composition root
+/scopes/operational-data/tooling
+/scopes/ada/tooling/distribution/backend
+/scopes/ada-command-center/tooling/distribution/backend
 ```
 
-Un Starter no debe convertirse en una segunda implementación del runtime del producto.
-
-## Wheelhouse portability
-
-El wheelhouse compartido produce artefactos binarios instalables offline.
+Regla objetivo:
 
 ```text
-locked compatible wheel
-    → use directly
+scope tooling
+    owns scope-specific build/distribution/qualification composition
 
-locked sdist when no compatible wheel exists
-    → verify source SHA256
-    → build wheel for current platform
-    → hash-constrained build dependencies
-    → record source + output hashes
+root tooling
+    owns reusable mechanisms + cross-scope orchestration
 ```
 
-No relajar hashes para resolver portabilidad.
-
-## Application availability boundary
-
-```text
-APPLICATION EXISTENCE
-!= CONFIGURATION EXISTENCE
-!= INFRASTRUCTURE AVAILABILITY
-!= DATA AVAILABILITY
-```
-
-La UI no debe asumir que ausencia inicial de datos equivale necesariamente a error.
+No mover lógica de producto al root y no usar Operational Data como contenedor genérico de tooling.
 
 ## Python
 
-CURRENT Web/distribution baseline:
+CURRENT Web:
 
 ```text
 Python 3.14.2
 ```
 
-Target histórico 3.14.7/Trixie permanece diferido.
+Python 3.14.7/Trixie permanece diferido.

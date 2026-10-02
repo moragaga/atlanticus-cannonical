@@ -1,48 +1,65 @@
 # Distribution and Tooling — Canonical Index
 
-Estado: **CURRENT — WEB DISTRIBUTION CLEANUP CLOSED AT 2dc5862f**
-
-| Archivo | Alcance | Estado |
-|---|---|---|
-| `01_BACKEND_GENERATION.md` | Artifacts backend | CURRENT / OTHER FOCUS |
-| `02_FRONTEND_GENERATION.md` | Shared Web engine + product-owned starters | CURRENT |
-| `03_ARTIFACT_DISTRIBUTION.md` | Generic/ADA/Command Center qualification contracts | CURRENT |
-| `04_SCRIPTS_VALIDATION.md` | Validation gates | CURRENT |
-| `05_SUPPORT_SERVICES.md` | Cosmos/Storage support | CURRENT DIRECTION |
-| `06_ENV_DETAIL.md` | Configuration documentation contract | **PLANNED / NEXT AUDIT** |
-| `07_READMES.md` | README policy | CURRENT |
-| `08_LOADERS.md` | Loader contracts | CURRENT / OPEN BY FOCUS |
-| `09_SOURCE_LEDGER.md` | Distribution/tooling evidence ledger | CURRENT |
+Estado: **CURRENT — ROOT ORCHESTRATION + SCOPE OWNERSHIP; NORMALIZATION DEFERRED**
 
 ## CURRENT layout
 
 ```text
-tooling/distribution/web/
-    shared engine
-    products.toml
-    starter/base
+/tooling/distribution/web
+    reusable Web distribution mechanisms
+    product catalog
+    base starter
 
-scopes/ada/tooling/distribution/web/
-    ADA-specific support/starter/project tooling
+/scopes/ada/tooling
+    ADA-specific distribution composition
 
-scopes/ada-command-center/tooling/distribution/web/
-    Command Center starter
+/scopes/ada-command-center/tooling
+    Command Center-specific distribution composition
 ```
 
-## Qualification CURRENT
+Operational Data already owns its processes under `scopes/operational-data`, while some
+Operational Data gate/orchestration logic remains under root tooling.
+
+## Architecture direction
+
+```text
+/scopes/<owner>/tooling
+    owner-specific build/distribution/qualification composition
+
+/tooling
+    reusable mechanisms + cross-scope orchestration
+```
+
+Planned future normalization:
+
+```text
+scopes/operational-data/tooling
+scopes/ada/tooling/distribution/backend
+scopes/ada-command-center/tooling/distribution/backend
+```
+
+No implementation in this hito.
+
+## Artifact state
+
+Historical:
 
 ```text
 generic         PASS
-ada             PRECHECK_PASS
-command-center  PRECHECK_PASS
+ADA             PRECHECK_PASS
+Command Center  PRECHECK_PASS
 ```
 
-## NEXT
+Current package versions changed after those artifacts.
 
-No más refactor de tooling sin finding real.
-
-Siguiente foco:
+Therefore current-head artifact qualification is:
 
 ```text
-ADA + Command Center .env.detail contract
+UNVERIFIED
 ```
+
+## Priority
+
+Tooling normalization is `PLANNED / DEFERRED`.
+
+NEXT project focus is Source namespace/composition convergence, then lifting both apps.

@@ -1,99 +1,59 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT — THREE WEB PROFILES QUALIFIED TO THEIR DECLARED CONTRACTS**
+Estado: **CURRENT CONTRACT / CURRENT-HEAD ARTIFACTS UNVERIFIED**
 
-Implementation:
+## Historical qualified artifacts
 
-```text
-moragaga/atlanticus@2dc5862f634eb0bf8fe72d771d56605d1c7f32cf
-```
-
-## Profiles
-
-### Generic
+Before the current runtime/Master changes:
 
 ```text
-starter               PASS
-wheelhouse packages   36
-qualification         PORTABLE / PASS
-readiness             ready
+generic         PASS
+ADA             PRECHECK_PASS
+Command Center  PRECHECK_PASS
 ```
 
-### ADA
+Those results remain historical evidence only.
+
+## Current source package changes
+
+CURRENT now includes:
 
 ```text
-starter               PASS
-internal wheels       71
-distribution          BUILT_UNQUALIFIED
-qualification         PRECHECK_PASS
-runtime               UNVERIFIED
-image_build           UNVERIFIED
+ada-generic-application==0.2.22
+ada-command-center-generic-application==0.1.1
+atlanticus-web-master-projection==0.1.0
 ```
 
-### Command Center
+Artifacts have not been regenerated and requalified from this current package state in this hito.
+
+Therefore:
 
 ```text
-starter               PASS
-wheelhouse packages   85
-dependency_check      PASS
-qualification         PORTABLE / PRECHECK_PASS
-runtime               UNVERIFIED
+CURRENT-HEAD-ADA-ARTIFACT              UNVERIFIED
+CURRENT-HEAD-COMMAND-CENTER-ARTIFACT   UNVERIFIED
 ```
 
-## Shared boundary
+## Boundary
 
 ```text
 SOURCE PACKAGES
     ↓
 PRODUCT COMPOSITION
     ↓
-SHARED GENERATION / DISTRIBUTION ENGINE
+SCOPE TOOLING
     ↓
-PRODUCT-OWNED STARTER OVERLAY
+REUSABLE ROOT DISTRIBUTION MECHANISMS
     ↓
 ARTIFACT
     ↓
 HOST / DEVOPS / RUNTIME
 ```
 
-## Wheelhouse portability
-
-The shared builder prefers a compatible locked wheel.
-
-If no compatible wheel exists:
-
-```text
-SHA256-locked sdist
-→ verify source integrity
-→ PEP 517 wheel build
-→ build dependencies constrained by version + SHA256 hashes
-→ record source hash and final wheel hash
-```
-
-This path was verified on macOS for the dependency case that blocked `rcssmin==1.2.2`.
-
 ## Qualification semantics
 
-`PASS` and `PRECHECK_PASS` are not interchangeable.
+Do not promote `PRECHECK_PASS` to runtime verification.
 
-```text
-PASS
-→ declared runtime/portable probe completed
+## Priority
 
-PRECHECK_PASS
-→ artifact/dependency/build preconditions completed
-→ runtime may remain UNVERIFIED
-```
-
-## Git traceability
-
-Final deliverable artifacts should be regenerated after the implementing commit is published so `source_git_head` matches the authoritative commit.
-
-## OPEN
-
-```text
-ADA runtime/image qualification
-Command Center runtime qualification
-dual application Storage-final + Cosmos-local smoke
-Azure/Entra
-```
+Regeneration is deferred until after the immediate Source convergence/runtime-smoke needs are
+clear. Tooling architecture normalization is a separate future increment.

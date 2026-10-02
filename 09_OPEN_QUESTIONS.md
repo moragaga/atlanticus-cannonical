@@ -1,128 +1,93 @@
 # Atlanticus — Open Questions
 
-Estado: **OPEN ITEMS BY FRONT — POST WEB TOOLING CLEANUP**
+Estado: **CURRENT — SOURCE CONVERGENCE NEXT**
 
 ## CLOSED
 
 ```text
-shared Web distribution cleanup
-ADA starter runtime thinning
-ADA Master Projection ownership migration
-Command Center distribution profile
-cross-platform locked-sdist wheelhouse fallback
+dual .env.detail alignment
+Command Center durable Manager composition
+shared Master Projection extraction
+ADA Master Projection adoption
+Command Center Master Projection adoption
 ```
 
-No reabrirlos sin finding real.
+No reabrir sin finding real.
 
-## OPEN / NEXT — `.env.detail` ADA + Command Center
+## OPEN / NEXT — Source namespace and composition
 
-### ADA
-
-Verificar y congelar:
+VERIFIED implementation gap:
 
 ```text
-ATLANTICUS_ENVIRONMENT
-ADA_PERSISTENCE_MODE
-ADA_APPLICATION_NAMESPACE
-ADA_TOOL_NAMESPACE
-Blob credential mode
-Blob container
-Tool Projection Cosmos endpoint/key/database
-KPI Delivery Cosmos optional connection
-Master Projection derived identity
+ada-command-center
+    imports
+ada.web.storage.namespace.AdaStorageNamespace
 ```
 
-Target operativo siguiente:
+Preguntas a resolver en el siguiente incremento:
 
 ```text
-environment=local
-persistence=durable
-Storage=final/durable
-Cosmos=local
+1. ¿Cuál es la responsabilidad reusable mínima del namespace?
+2. ¿Debe vivir como capability Atlanticus Storage/Source o integrarse en topology existente?
+3. ¿Cómo representar application namespace + optional sub-scope sin llamar "tool" a Command Center?
+4. ¿Qué rutas/prefixes deben seguir siendo product-specific?
+5. ¿Qué consumidores actuales dependen de AdaStorageNamespace?
+6. ¿Puede eliminarse la asimetría location/settings sin crear otra capa innecesaria?
 ```
 
-Debe verificarse qué valores pueden derivarse y cuáles deben ser manuales.
-
-### Command Center
-
-Current runtime es local-only.
-
-OPEN:
+Frozen:
 
 ```text
-persistence contract replacement/alignment
-durable Manager configuration
-Storage final contract
-Cosmos local contract
-Master Projection integration
-production identity remains separate
+SourceStore Core
+Source Local
+Source Blob
+release/concurrency/integrity semantics
 ```
 
-No declarar `ADA_COMMAND_CENTER_COSMOS_*` operativo sólo porque aparece documentado; el launcher CURRENT no activa durable Manager.
+No modificar esos contratos sin finding específico.
 
-## OPEN — Master Projection Command Center
+## OPEN — dual application runtime smoke
 
-Requirement agreed:
+Después de Source convergence:
 
 ```text
-Command Center also needs Master Projection
+ADA Generic + Command Center Generic
+LOCAL HOST + DURABLE PERSISTENCE
 ```
-
-Implementation:
-
-```text
-NOT IMPLEMENTED
-```
-
-No copiar la implementación ADA dentro del Starter ni hacer Command Center dependiente de `ada-generic-application`.
-
-## OPEN — ADA UI without data
-
-VERIFIED:
-
-```text
-ContentStatePresentationMode.AUTHORING
-```
-
-suprime overlays visuales degradados.
 
 UNVERIFIED:
 
 ```text
-all components can render with no KPI/data
+real current-head Storage/Cosmos connectivity
+Command Center explicit resource preparation
+Master material end-to-end in both apps
+runtime restart/recovery
 ```
 
-No existe `ContentState.NO_DATA`.
+## OPEN / DEFERRED — tooling topology
 
-OPEN para el frente Collector/UI:
-
-- distinguir ausencia inicial de observación de error real;
-- decidir si hace falta `NO_DATA` / `WAITING` u otro estado;
-- no inventarlo antes de probar Collector y consumidores reales.
-
-## OPEN — ADA KPI/Collector operational E2E
-
-PLANNED después de levantar ambas aplicaciones.
-
-Validar:
+Dirección acordada:
 
 ```text
-KPI data
-→ delivery
-→ collector
-→ Latest / Timeseries stores
-→ UI consumption
+scope-specific tooling -> /scopes/<scope>/tooling
+cross-scope orchestration -> /tooling
 ```
 
-Este frente será exclusivamente ADA.
+Pendiente futuro:
+
+```text
+Operational Data scope tooling normalization
+ADA backend distribution tooling
+Command Center backend distribution tooling
+```
+
+No abrir ahora.
 
 ## Separate
 
 ```text
-Python 3.14.7 / Trixie migration
-Entra production identity
-Azure production
-Alarm Engine / Analytics
+production Entra/Azure
+Python 3.14.7/Trixie
+current-head artifact regeneration/qualification
+KPI/Collector/UI
 ```
-
-No mezclar con el próximo `.env.detail` focus.

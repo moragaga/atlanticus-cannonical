@@ -1,84 +1,71 @@
 # Backend Generation
 
-Estado: **CURRENT DIRECTION**
+Estado: **CURRENT DIRECTION / SCOPE TOOLING MODEL PLANNED**
 
-## Objetivo
+## Boundary
 
-Existe una diferencia entre:
-
-1. crear/validar el contrato de un proceso;
-2. materializar el proceso productivo;
-3. generar un artifact listo para que otra plataforma lo distribuya.
-
-No mezclar esas responsabilidades.
-
-## Flujo
+Separate:
 
 ```text
-Process Contract
-      ↓
-Test/Qualification Process
-      ↓
-GREEN
-      ↓
-Final Process Materialization
-      ↓
-Artifact
-      ↓
-Distribution Input
+backend/process implementation
+scope-specific distribution composition
+generic distribution mechanisms
+external DevOps pipeline
 ```
 
-## Test/Qualification Process
+## Ownership direction
 
-Permite probar aisladamente:
+For a distributable scope:
 
-- contract;
-- inputs/outputs;
-- runtime policy;
-- external services;
-- configuration;
-- failure modes;
-- observability;
-- health/readiness.
+```text
+scopes/<scope>/backend
+    backend packages/processes
 
-No debe ser una implementación paralela que luego se abandona.
+scopes/<scope>/tooling/distribution/backend
+    scope-specific artifact composition/qualification
+```
 
-La misma definición aprobada alimenta el proceso final.
+Root:
 
-## Final Process
+```text
+/tooling
+    reusable distribution mechanics
+    cross-scope orchestration
+```
 
-Debe materializar todo lo necesario para ejecución/distribución, por ejemplo según el proceso:
+Operational Data follows the same ownership principle even though its primary distributables are
+processes rather than Web applications.
 
-- package/entrypoint;
-- dependency lock;
-- runtime metadata;
-- env/detail contract;
-- secrets references;
-- Docker build contract;
-- support service requirements;
-- health/readiness;
-- run-once/continuous semantics;
-- commented mirror donde aplique;
-- tests/gates requeridos.
+## CURRENT
+
+ADA and Command Center already have backend trees.
+
+Backend distribution tooling normalization is not implemented as part of the current Web/runtime
+hito.
+
+## PLANNED / DEFERRED
+
+When backend artifacts become the active focus:
+
+```text
+ADA backend tooling
+Command Center backend tooling
+Operational Data scope tooling normalization
+root orchestration contract
+```
+
+Define contracts before moving paths.
 
 ## DevOps boundary
 
-Atlanticus **NO es owner del pipeline corporativo**.
-
-No congelar:
-
-- stages corporativos;
-- naming de pipelines;
-- service connections;
-- approvals;
-- release strategy externa.
-
-Atlanticus sí debe producir un **pipeline-ready distribution artifact** cuyo contrato sea claro para DevOps.
+Atlanticus owns:
 
 ```text
-Atlanticus owns:
-Artifact + distribution contract
+artifact + distribution contract
+```
 
-DevOps owns:
-Pipeline implementation/execution
+External DevOps owns:
+
+```text
+pipeline implementation/execution
 ```

@@ -1,18 +1,18 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT EXECUTION CHECKPOINT — WEB DISTRIBUTION TOOLING CLEANUP CLOSED**
+Estado: **CURRENT — DUAL APP DURABLE + MASTER PROJECTION CLOSED; SOURCE CONVERGENCE NEXT**
 
 ## Autoridad
 
 ```text
-Implementation
-moragaga/atlanticus@2dc5862f634eb0bf8fe72d771d56605d1c7f32cf
+Implementation evidence checkpoint
+moragaga/atlanticus@7bd11afdf2af82c56fb100f4aa5336c039d9bd22
 
-Historical decisions
+Decisions
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 
 Canonical inspected before replacement
-moragaga/atlanticus-cannonical@852e031d020edd4fdd5ab0187e95fbf6f443083b
+moragaga/atlanticus-cannonical@cedbe3156bc384add0de58cda27f2b77628c133d
 ```
 
 Git permanece **SOLO LECTURA**.
@@ -20,160 +20,134 @@ Git permanece **SOLO LECTURA**.
 ## Estado resumido
 
 ```text
-WEB-DISTRIBUTION-SHARED-ENGINE-CLEANUP          CLOSED / VERIFIED / CURRENT
-ADA-STARTER-RUNTIME-THINNING                    CLOSED / VERIFIED / CURRENT
-ADA-MASTER-PROJECTION-RUNTIME-OWNERSHIP         CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-DISTRIBUTION-PROFILE             CLOSED / VERIFIED / CURRENT
-CROSS-PLATFORM-WHEELHOUSE-SDIST-FALLBACK        CLOSED / VERIFIED / CURRENT
+WEB-DISTRIBUTION-SHARED-ENGINE-CLEANUP          CLOSED / CURRENT
+DUAL-APP-ENV-DETAIL-CONTRACT                    CLOSED / CURRENT
+COMMAND-CENTER-DURABLE-RUNTIME-COMPOSITION      CLOSED / VERIFIED
+ATLANTICUS-WEB-MASTER-PROJECTION                CLOSED / VERIFIED / CURRENT
+DUAL-APP-MASTER-PROJECTION-CONVERGENCE          CLOSED / VERIFIED
 
-GENERIC-WEB-DISTRIBUTION                        PASS / VERIFIED
-ADA-WEB-DISTRIBUTION                            PRECHECK_PASS / VERIFIED
-COMMAND-CENTER-WEB-DISTRIBUTION                 PRECHECK_PASS / VERIFIED
-
-ADA-AND-COMMAND-CENTER-ENV-DETAIL-CONTRACT      PLANNED / NEXT
-DUAL-APP-STORAGE-FINAL-COSMOS-LOCAL-SMOKE       PLANNED / AFTER ENV CONTRACT
-ADA-KPI-COLLECTOR-OPERATIONAL-E2E               PLANNED / AFTER DUAL-APP SMOKE
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE    PLANNED / NEXT
+DUAL-APP-DURABLE-RUNTIME-SMOKE                  PLANNED / AFTER SOURCE
+SCOPE-TOOLING-TOPOLOGY-NORMALIZATION            PLANNED / DEFERRED
+ADA-KPI-COLLECTOR-OPERATIONAL-E2E               PLANNED / AFTER APP SMOKE
 ADA-UI-RECONSTRUCTION                           PLANNED / AFTER COLLECTOR
 ```
 
-## Shared Web distribution — CURRENT
+## Master Projection — CURRENT
+
+Motor reusable:
 
 ```text
-tooling/distribution/web/
-├── build_wheelhouse.py
-├── distribute.py
-├── generate_starter.py
-├── probe_starter.py
-├── qualify_starter.py
-├── products.toml
-└── starter/base/
+atlanticus-web-master-projection==0.1.0
+web/capabilities/master-projection
 ```
 
-No contiene subárbol `ada/`, starter ADA ni starter Command Center.
-
-Product-specific ownership:
+Responsabilidades del motor:
 
 ```text
-scopes/ada/tooling/distribution/web/
-scopes/ada-command-center/tooling/distribution/web/
+material
+reader
+plan
+apply
+independent Web surface
 ```
+
+ADA y Command Center conservan sólo composición/provisioning de producto.
 
 ## ADA Generic — CURRENT
 
-`ada-generic-application==0.2.21` posee:
-
 ```text
-runtime host/lifecycle
-local/durable persistence composition
-Master Projection runtime
-Master material reader/provisioning
-local resource preparation
+ada-generic-application==0.2.22
+Python == 3.14.2
 ```
 
-El Starter ADA no posee una segunda implementación de esas responsabilidades.
+ADA Generic consume `atlanticus-web-master-projection==0.1.0`.
 
-Master Projection tiene identidad derivada:
-
-```text
-master-projection/material.zip
-```
-
-En local se resuelve bajo el namespace de aplicación.
-En durable se resuelve como Blob bajo el namespace de aplicación.
-
-## Command Center — CURRENT
-
-`ada-command-center-generic-application==0.1.0` existe como composition root real y dispone de distribución propia.
-
-Runtime CURRENT:
+Master material continúa derivado del namespace de aplicación:
 
 ```text
-local-only Manager host
-Storage real requerido por Tool Catalog incluso en local
-production identity/durable host no implementados
-Command Center Master Projection no integrado
+<application-namespace>/master-projection/material.zip
 ```
 
-Su `.env.detail` todavía refleja el contrato local actual; no declarar durable Command Center como implementado.
+## ADA Command Center — CURRENT
+
+```text
+ada-command-center-generic-application==0.1.1
+ada-command-center-configuration-manager==0.1.2
+```
+
+El host local admite:
+
+```text
+ADA_MANAGER_PERSISTENCE_PROVIDER=local
+ADA_MANAGER_PERSISTENCE_PROVIDER=durable
+```
+
+`ATLANTICUS_ENVIRONMENT=local` controla host/identity behavior.
+El provider controla persistencia. Emulator versus Azure es configuración de conexión, no modo
+arquitectónico.
+
+Durable Command Center compone:
+
+```text
+Blob Source
+Cosmos Alarm Configuration Projection
+Cosmos Profiles Projection
+Cosmos Navigation Projection
+Blob Users Registry
+Cosmos Users Runtime
+```
+
+Master Projection Command Center usa el motor genérico y sus dominios:
+
+```text
+Profiles
+Navigation
+Alarm Configuration
+```
+
+Material derivado:
+
+```text
+conciencia_situacional/command-center/master-projection/material.zip
+```
+
+## Gap transversal CURRENT
+
+Command Center aún importa:
+
+```text
+ada.web.storage.namespace.AdaStorageNamespace
+```
+
+Eso hace que un producto dependa de una capability ubicada bajo el scope ADA para resolver un
+contrato que ya es reutilizado por ambos productos.
+
+El próximo incremento no reescribe `SourceStore`; corrige esta frontera de namespace/composición
+y alinea el consumo de Source entre ADA y Command Center.
 
 ## Qualification de este cierre
 
-Evidencia local reportada por el usuario:
+Evidencia local reportada:
 
 ```text
-tooling/tests/distribution/web                     125 passed, 3 skipped
-compose integration subset                         10 passed, 3 skipped
-Ruff / format                                      PASS
-git diff --check                                   PASS
+Command Center Configuration Manager     31 passed
+Command Center Generic                   10 passed
+ADA Generic                              249 passed
+atlanticus-web-master-projection         56 passed
 
-generic distribution
-  starter                                          PASS
-  wheelhouse packages                              36
-  qualification                                    PORTABLE / PASS
-  readiness                                        ready
-
-ada distribution
-  starter                                          PASS
-  internal wheels                                  71
-  qualification                                    PRECHECK_PASS
-  runtime/image                                    UNVERIFIED
-
-command-center distribution
-  starter                                          PASS
-  wheelhouse packages                              85
-  dependency_check                                 PASS
-  qualification                                    PORTABLE / PRECHECK_PASS
-  runtime                                          UNVERIFIED
+Ruff / format en los tres paquetes del cierre    PASS
+ADA commented host AST mirror                    PASS
+git diff --check                                  PASS
 ```
 
-## Cross-platform wheelhouse — CURRENT
-
-Registry dependency selection:
+## UNVERIFIED
 
 ```text
-compatible SHA256-locked wheel
-→ preferred
-
-no compatible wheel
-+ SHA256-locked sdist
-→ build platform wheel locally
-→ hash-constrained PEP 517 build dependencies
-→ distribute wheel only
-```
-
-El manifest registra el hash del sdist de origen y del wheel construido.
-
-Esta corrección fue validada en macOS con Generic y Command Center.
-
-## ADA UI / no-data observation
-
-CURRENT verificado:
-
-```text
-ContentState:
-READY
-STALE
-SOURCE_ERROR
-CONSTRUCTION
-
-ContentStatePresentationMode:
-NORMAL
-AUTHORING
-```
-
-`AUTHORING` suprime visualmente el overlay degradado, pero no altera el estado real.
-
-No existe un estado explícito `NO_DATA` / `WAITING`.
-
-Por tanto:
-
-- diseño visual sin watermark es posible mediante el contrato authoring;
-- que todos los componentes puedan renderizar sin datos reales sigue **UNVERIFIED**;
-- no clasificar automáticamente ausencia inicial de datos como error sin revisar el contrato Collector/UI.
-
-## Próxima frontera
-
-```text
-ADA-AND-COMMAND-CENTER-ENV-DETAIL-CONTRACT
-PLANNED / NEXT
+actual dual-app durable connection smoke
+resource preparation parity for Command Center
+current-head Web distribution artifacts
+Docker/image runtime from current packages
+Azure/Entra production
+KPI/Collector/UI E2E
 ```

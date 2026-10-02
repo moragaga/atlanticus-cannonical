@@ -1,13 +1,13 @@
 # Atlanticus — Authority
 
-Estado: **CURRENT — cierre Distribution/Web Tooling 2026-10-02**
+Estado: **CURRENT — cierre Dual App Durable + Master Projection 2026-10-02**
 
 ## Referencias verificadas para este cierre
 
 ```text
-Implementation
+Implementation evidence checkpoint
 moragaga/atlanticus:main
-2dc5862f634eb0bf8fe72d771d56605d1c7f32cf
+7bd11afdf2af82c56fb100f4aa5336c039d9bd22
 
 Decisions
 moragaga/atlanticus-decisions:main
@@ -15,18 +15,24 @@ moragaga/atlanticus-decisions:main
 
 Canonical leído antes de estos reemplazos
 moragaga/atlanticus-cannonical:main
-852e031d020edd4fdd5ab0187e95fbf6f443083b
+cedbe3156bc384add0de58cda27f2b77628c133d
 ```
+
+El SHA de implementación es evidencia del estado validado en este hito, no un freeze global:
+`main` puede avanzar por frentes paralelos. Revalidar únicamente rutas, contratos y dependencias
+que intersecten el siguiente incremento.
 
 ## Jerarquía
 
 1. `moragaga/atlanticus:main` es la realidad implementada.
-2. Una decisión explícitamente vigente/frozen en `moragaga/atlanticus-decisions:main` define intención contractual. Si contradice implementación, registrar `CONFLICT`.
-3. `moragaga/atlanticus-cannonical:main` describe el estado vigente y debe mantenerse sincronizado con implementación y decisions.
+2. Una decisión explícitamente vigente/frozen en `moragaga/atlanticus-decisions:main` define
+   intención contractual. Si contradice implementación, registrar `CONFLICT`.
+3. `moragaga/atlanticus-cannonical:main` describe el estado vigente y debe mantenerse
+   sincronizado con implementación y decisiones.
 4. Qualification/tests/logs sólo acreditan el alcance realmente ejecutado.
 5. Historial conversacional es pista de búsqueda, nunca autoridad suficiente.
 
-No resolver silenciosamente contradicciones.
+No resolver contradicciones silenciosamente.
 
 Usar:
 
@@ -53,13 +59,13 @@ No crear commits, push, ramas, PR, issues ni mutaciones remotas sin autorizació
 
 ## Python / imagen base
 
-Estado CURRENT observado en Web distribution:
+Web CURRENT:
 
 ```text
 Python == 3.14.2
 ```
 
-Objetivo histórico del Project:
+Objetivo histórico:
 
 ```text
 Python 3.14.7
@@ -69,52 +75,31 @@ python:3.14.7-slim-trixie
 La migración permanece:
 
 ```text
-BLOCKED / DEFERRED UNTIL EXPLICIT USER AUTHORIZATION
+PLANNED / DEFERRED
 ```
 
-No mezclarla con configuración, Master Projection, Collector o UI.
-
-## Frontera Distribution/Web Tooling CURRENT
-
-El motor compartido vive en:
-
-```text
-tooling/distribution/web/
-```
-
-y contiene sólo responsabilidades genéricas de:
-
-```text
-product catalog
-starter generation
-wheelhouse build
-qualification/probe
-distribution orchestration
-base starter
-```
-
-Las superficies específicas de producto pertenecen a sus scopes:
-
-```text
-scopes/ada/tooling/distribution/web/
-scopes/ada-command-center/tooling/distribution/web/
-```
-
-El runtime ADA y Master Projection no pertenecen al tooling.
+No es blocker para Source, runtime dual, Master Projection ni distribución actual.
 
 ## Siguiente frontera única
 
 ```text
-ADA-AND-COMMAND-CENTER-ENV-DETAIL-CONTRACT
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
 PLANNED / NEXT
 ```
 
-Objetivo del siguiente chat:
+El objetivo es conservar `SourceStore` y sus providers genéricos y corregir ownership/composición
+consumida por ADA y ADA Command Center, comenzando por el acoplamiento actual:
 
-1. auditar los `.env.detail` de ADA Generic y ADA Command Center;
-2. definir valores manuales, derivados, secretos, locales y productivos;
-3. congelar el contrato para `Storage durable/final + Cosmos local`;
-4. congelar el contrato de Master Projection para ambas aplicaciones;
-5. no levantar aún KPI/Collector/UI dentro del mismo incremento.
+```text
+ada-command-center
+    -> ada.web.storage.namespace
+```
 
-Después de cerrar este contrato se levantarán ambas aplicaciones. Luego el foco cambia exclusivamente a ADA para KPI/Collector/UI.
+No abrir durante ese incremento:
+
+```text
+tooling topology reorganization
+KPI / Collector / UI
+production Entra
+Python/Trixie migration
+```

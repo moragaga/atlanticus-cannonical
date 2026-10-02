@@ -1,19 +1,18 @@
 # ADA Generic — Current Composition
 
-Estado: **CURRENT — PRODUCT RUNTIME AUTHORITY + MASTER PROJECTION OWNERSHIP**
+Estado: **CURRENT — PRODUCT COMPOSITION ROOT / SHARED MASTER PROJECTION**
 
 ## Version CURRENT
 
 ```text
-ada-generic-application==0.2.21
+ada-generic-application==0.2.22
+atlanticus-web-master-projection==0.1.0
 Python == 3.14.2
 ```
 
 ## Composition root
 
-ADA Generic es el host integrado de ADA.
-
-Posee:
+ADA Generic posee:
 
 ```text
 settings
@@ -21,79 +20,73 @@ local/durable Manager composition
 identity binding
 Tool Projection resolution
 operational render binding
-Master Projection
+ADA Master Projection composition/provisioning
 KPI Collector attachment
 Web runtime lifecycle
 ```
 
-El standalone Configuration Manager permanece como aplicación separada de desarrollo/qualification; no es un servicio remoto requerido.
+## Master Projection
 
-## Host boundary
-
-El runtime reusable vive en el product package.
-
-El Starter ADA sólo delega y aporta extensiones explícitas de host/composition.
-
-Invariante:
+Reusable engine:
 
 ```text
-starter
--X-> duplicate persistence selection
--X-> duplicate Manager lifecycle
--X-> duplicate Master Projection reader
--X-> duplicate worker lifecycle
+web/capabilities/master-projection
+atlanticus.web.master_projection
 ```
 
-## Master Projection — CURRENT
-
-Runtime ownership:
+ADA-specific ownership retained:
 
 ```text
-ada.web.application.generic.master_projection
+ada.web.application.generic.master_projection.composition
+ada.web.application.generic.master_projection.provision
 ```
 
-Incluye material/reader/provisioning más plan/composition/apply/web.
+SUPERSEDED:
 
-Local resource preparation también pertenece a ADA Generic.
+```text
+ADA-local copies of:
+apply
+material
+plan
+reader
+web
+```
 
-Master Projection es una extensión/runtime capability, no una aplicación ni tooling.
+No recrearlas.
 
 ## Persistence modes
 
 ```text
 ADA_PERSISTENCE_MODE=local
 → local Source / Projection / Manager
-→ local Master Projection path
+→ local Master material
 
 ADA_PERSISTENCE_MODE=durable
-→ Blob Source / Manager / Master Projection
+→ Blob Source / Manager / Master material
 → Cosmos Projection / Manager
 ```
 
-El entorno puede seguir siendo `local` mientras persistence es `durable`, permitiendo Storage real con Cosmos local/emulado.
+`ATLANTICUS_ENVIRONMENT=local` puede combinarse con durable persistence.
 
-## Content State authoring
+## Current Source/namespace dependency
 
-La application definition soporta:
-
-```text
-ContentStatePresentationMode.NORMAL
-ContentStatePresentationMode.AUTHORING
-```
-
-`AUTHORING` suprime overlays visuales degradados pero no falsifica el estado runtime.
-
-No hay aún una variable `.env.detail` congelada para seleccionarlo.
-
-## Distribution
-
-ADA distribution:
+ADA sigue consumiendo:
 
 ```text
-starter            PASS
-internal wheels    71
-qualification      PRECHECK_PASS
-runtime/image      UNVERIFIED
+ada-web-storage-namespace
+AdaStorageNamespace(application_namespace, tool_namespace)
 ```
 
-No promover este resultado a runtime qualification.
+El próximo frente decidirá si esa capability debe extraerse a Atlanticus para consumo común con
+Command Center.
+
+No cambiar el contrato Source Core por ese motivo.
+
+## Qualification
+
+```text
+pytest   249 passed
+Ruff     PASS
+format   PASS
+AST mirror host PASS
+```

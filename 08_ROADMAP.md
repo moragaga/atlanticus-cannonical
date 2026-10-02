@@ -1,101 +1,87 @@
 # Atlanticus — Roadmap
 
-Estado: **CURRENT ROADMAP BY FRONT — DISTRIBUTION TOOLING CLOSED**
+Estado: **CURRENT ROADMAP — SOURCE CONVERGENCE NEXT**
 
-## CLOSED — Web distribution/tooling
+## CLOSED / CURRENT
 
 ```text
 WEB-DISTRIBUTION-SHARED-ENGINE-CLEANUP          CLOSED
-ADA-STARTER-RUNTIME-THINNING                    CLOSED
-ADA-MASTER-PROJECTION-RUNTIME-OWNERSHIP         CLOSED
-COMMAND-CENTER-DISTRIBUTION-PROFILE             CLOSED
-CROSS-PLATFORM-WHEELHOUSE-SDIST-FALLBACK        CLOSED
-```
-
-Current distribution outcomes:
-
-```text
-generic         PASS
-ada             PRECHECK_PASS
-command-center  PRECHECK_PASS
+DUAL-APP-ENV-DETAIL-CONTRACT                    CLOSED
+COMMAND-CENTER-DURABLE-RUNTIME-COMPOSITION      CLOSED
+ATLANTICUS-WEB-MASTER-PROJECTION                CLOSED
+DUAL-APP-MASTER-PROJECTION-CONVERGENCE          CLOSED
 ```
 
 ## NEXT único
 
 ```text
-ADA-AND-COMMAND-CENTER-ENV-DETAIL-CONTRACT
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
 PLANNED / NEXT
 ```
 
 Objetivo:
 
 ```text
-ADA .env.detail
-Command Center .env.detail
-    ↓
-manual vs derived values
-secret vs non-secret
-local vs production
-Storage final/durable
-Cosmos local
-Master Projection
+preserve SourceStore Core
+preserve Local/Blob provider semantics
+inspect current ADA + Command Center Source composition
+remove Command Center dependency on ADA-owned namespace contract
+define reusable namespace/composition boundary
+keep product-specific naming in product composition
 ```
 
-No mezclar todavía KPI Collector ni rediseño UI.
+No mezclar tooling reorganization, KPI/Collector/UI, Entra o Python migration.
 
 ## AFTER NEXT
 
-Una vez congelado el contrato de configuración:
-
 ```text
-DUAL-APP-STORAGE-FINAL-COSMOS-LOCAL-SMOKE
+DUAL-APP-DURABLE-RUNTIME-SMOKE
 PLANNED
 ```
 
-Levantar:
+Levantar desde source:
 
 ```text
 ADA Generic
-ADA Command Center
+ADA Command Center Generic
 ```
 
-con Storage final y Cosmos local para validar transición/reconstrucción mediante Master Projection.
-
-Command Center requiere antes completar su integración de Master Projection y cualquier runtime/configuration gap revelado por el contrato.
-
-## THEN — ADA only
-
-Después del smoke dual:
+con:
 
 ```text
-ADA-KPI-COLLECTOR-OPERATIONAL-E2E
-PLANNED
-
-ADA-UI-RECONSTRUCTION
-PLANNED
+ATLANTICUS_ENVIRONMENT=local
+persistence=durable
 ```
 
-Objetivo KPI:
+y conexiones configuradas a los destinos elegidos. Emulator/Azure no cambian el contrato.
+
+Validar:
 
 ```text
-real Tool/KPI data
+resource availability
+application startup
+Master Projection material provisioning/read
+projection planning/apply where applicable
+restart/readback as needed
+```
+
+## THEN — ADA
+
+```text
+ADA KPI/data
 → KPI Delivery Latest/Timeseries
 → Collector
 → browser stores
 → UI
 ```
 
-No reabrir Command Center dentro de ese incremento.
-
-## UI design constraint
-
-ADA dispone de modo `AUTHORING` para suprimir overlays degradados mientras se diseña.
-
-OPEN posterior:
+## DEFERRED — tooling topology normalization
 
 ```text
-absence of first observation
-!= necessarily source error
+scopes/operational-data/tooling
+scopes/ada/tooling/distribution/backend
+scopes/ada-command-center/tooling/distribution/backend
+root tooling as cross-scope orchestrator
 ```
 
-El modelo actual no tiene `NO_DATA`; resolver semántica después de observar el flujo Collector real.
+La dirección está decidida, pero no es blocker para levantar las apps.

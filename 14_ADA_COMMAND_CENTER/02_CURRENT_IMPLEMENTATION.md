@@ -1,11 +1,11 @@
 # ADA Command Center — Current Implementation
 
-Estado: **CURRENT — PRODUCT HOST + PORTABLE DISTRIBUTION AVAILABLE**
+Estado: **CURRENT — PRODUCT HOST + DURABLE LOCAL COMPOSITION + MASTER PROJECTION**
 
 ## Generic Application
 
 ```text
-ada-command-center-generic-application==0.1.0
+ada-command-center-generic-application==0.1.1
 ```
 
 Role:
@@ -22,79 +22,82 @@ Identity
 Projected Navigation
 Navigation authorization
 Manager surface/modules
+Master Projection independent surface
 Command Center pages
 Manager pages
 ```
 
 ## Runtime CURRENT
 
-Launcher uses:
+Local Web host rejects production identity mode but accepts:
 
 ```text
-ManagerConfigurationReader
-open_local_application(...)
-LocalIdentityProvider
-local Manager provider
+ADA_MANAGER_PERSISTENCE_PROVIDER=local
+ADA_MANAGER_PERSISTENCE_PROVIDER=durable
 ```
 
-Production or durable Manager host is not implemented in Generic 0.1.0.
+Identity remains local in this host.
 
-Current local Manager state includes in-process Users/Profiles/Navigation projections/administration where already documented.
+Durable Manager composition is delegated to
+`ada-command-center-configuration-manager==0.1.2`.
 
-Tool Catalog uses Storage even under local Manager provider.
-
-## Configuration Manager relationship
+## Durable stores CURRENT
 
 ```text
-ada-command-center-configuration-manager==0.1.2
+Blob Source
+Cosmos Alarm Configuration Projection
+Cosmos Profiles Projection
+Cosmos Navigation Projection
+Blob Users Registry
+Cosmos Users Runtime
 ```
 
-remains a separate development/testing/qualification application.
+Tool Catalog uses Storage.
 
-Generic reuses its contracts/composition; it does not execute it as a nested service.
+## Master Projection CURRENT
 
-## Distribution CURRENT
-
-Starter ownership:
+Shared engine:
 
 ```text
-scopes/ada-command-center/tooling/distribution/web/starter
+atlanticus-web-master-projection==0.1.0
 ```
 
-The Starter is intentionally thin and delegates to the real Generic Application.
-
-Qualification:
+Product composition domains:
 
 ```text
-starter             PASS
-wheelhouse packages 85
-dependency_check    PASS
-status              PRECHECK_PASS
-runtime             UNVERIFIED
+Profiles
+Navigation
+Alarm Configuration
 ```
 
-## Master Projection
-
-Requirement:
+Product provisioning command:
 
 ```text
-Command Center needs Master Projection
+uv run ada-command-center-master-projection generate --user <service-user>
 ```
 
-Implementation:
+Derived material identity:
 
 ```text
-NOT IMPLEMENTED
+conciencia_situacional/command-center/master-projection/material.zip
 ```
 
-Do not place it in distribution tooling and do not depend on ADA Generic to obtain it.
+## Current ownership gap
 
-## Next
-
-Audit/freeze `.env.detail` and identify the smallest runtime/configuration change required for:
+Command Center configuration currently imports:
 
 ```text
-Storage final
-Cosmos local
-Master Projection
+ada.web.storage.namespace.AdaStorageNamespace
 ```
+
+That dependency is the next architecture cleanup.
+
+## Qualification
+
+```text
+Generic pytest     10 passed
+Ruff               PASS
+format             PASS
+```
+
+Actual external durable runtime smoke remains UNVERIFIED.

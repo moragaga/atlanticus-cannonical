@@ -1,69 +1,50 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **ÍNDICE POR ÁMBITO — checkpoints históricos preservados + delta focal Manager M01 CLOSED / ADA M02 PLANNED (2026-09-29)**. Las fechas y SHAs de cada apartado identifican **su propio corte**, no un HEAD global intercambiable.
+Estado: **CURRENT — Dual App Durable + Master Projection cerrado; Source convergence NEXT (2026-10-02)**
 
-## Autoridades de este delta focal
+## Autoridades del cierre
 
 ```text
-Implementación CURRENT inspeccionada: moragaga/atlanticus:main@9cc2cebe595ef1341830374ad2bb3c61baf6f5a2
-M01 parent:                         2e7500a6b8b4d5bbdad26d807abfa57936db99d5
-Decisiones:                         moragaga/atlanticus-decisions:main@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical leído antes de entrega:   moragaga/atlanticus-cannonical:main@2e8bbf4780cafc4cea3b18351861aa97a4fb0053
+Implementation evidence checkpoint  moragaga/atlanticus@7bd11afdf2af82c56fb100f4aa5336c039d9bd22
+Decisions                           moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical pre-replacement           moragaga/atlanticus-cannonical@cedbe3156bc384add0de58cda27f2b77628c133d
 ```
 
-**Verificación adicional al finalizar:** canonical avanzó a `77874b70f2d1fa2a3b8df988a2b59d7e9200dee8`; la comparación con el corte leído muestra 12 archivos cambiados exclusivamente bajo `14_ADA_COMMAND_CENTER/`, sin solapamiento con los siete reemplazos de este paquete. No se recalifica ese otro frente.
+El SHA de implementación es evidencia del hito, no baseline rígido para cambios paralelos.
 
-Git es SOLO LECTURA para el asistente. Los documentos de este paquete son **reemplazos candidatos**: su creación local no significa incorporación al repositorio canonical. Revalidar HEAD antes de integrarlos.
+## Estado por frente
 
-## Índice por frente, sin recalificar otros ámbitos
-
-| Ubicación | Contratos / estado |
+| Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Checkpoints de Storage/Tool/ADA Generic existentes; SHAs históricos pertenecen a su propio corte. |
-| `02_ARCHITECTURE.md` | Ownership, fronteras y composiciones genéricas; no alteradas por M01. |
-| `03_DECISIONS_CURRENT.md` | Reglas globales y decisiones por frente; leer junto a `atlanticus-decisions`, nunca usar memoria como autoridad. |
-| `04_ALARM_ENGINE/` | Alarm Engine y sus gates propios; M01 no los califica. |
-| `05_ENGINEERING_BASELINE.md`, `06_OPERATING_MODEL.md` | Python/uv, Git read-only, diseño incremental, mirrors y pruebas. |
-| `07_VALIDATION_BASELINE.md` | Evidencia de otros cortes; para los gates específicos M01 consultar `10_MANAGER/03_WORKFLOW_AND_SESSION.md`. |
-| `08_ROADMAP.md`, `09_OPEN_QUESTIONS.md` | Roadmaps y abiertos por frente. No interpretar un NEXT de otro dominio como orden universal. |
-| `10_MANAGER/` | **ACTUALIZADO EN ESTE PAQUETE**: M01 genérico cerrado; M02 ADA operacional siguiente diseño; demás áreas no reabiertas. |
-| `11_ADA_GENERIC/`, `12_SOURCE_STORAGE/`, `13_ADA_WEB/` | Sus propios checkpoints conservados. |
-| `14_ADA_COMMAND_CENTER/`, `15_WEB_PLATFORM/` | Frentes paralelos; sesión/warmup operacional aún pendiente. |
-| `16_KPI_BACKEND_RECOVERY/`, `17_DISTRIBUTION_AND_TOOLING/`, `18_UNIVERSITY/` | Frentes autónomos; no modificados por M01. |
+| `01_CURRENT_STATE.md` | Estado ejecutivo vigente del hito dual y siguiente frontera Source. |
+| `02_ARCHITECTURE.md` | Master Projection genérico, product composition, Source ownership y tooling boundaries. |
+| `03_DECISIONS_CURRENT.md` | Decisiones congeladas/refinadas de este cierre. |
+| `04_ALARM_ENGINE/` | No revalidado ni modificado por este hito. |
+| `05_ENGINEERING_BASELINE.md`, `06_OPERATING_MODEL.md` | Baseline general; Python Web 3.14.2 continúa CURRENT. |
+| `07_VALIDATION_BASELINE.md` | Evidencia local del durable runtime composition y Master Projection convergence. |
+| `08_ROADMAP.md`, `09_OPEN_QUESTIONS.md` | Source convergence NEXT; runtime smoke después; tooling reorg diferido. |
+| `10_MANAGER/` | No reabierto en este hito. |
+| `11_ADA_GENERIC/` | ADA Generic 0.2.22 consume Master Projection genérico. |
+| `12_SOURCE_STORAGE/` | Source Core permanece frozen; namespace/composition consumer convergence es NEXT. |
+| `13_ADA_WEB/` | No reabierto. |
+| `14_ADA_COMMAND_CENTER/` | Generic 0.1.1: durable local host + Master Projection implementados. |
+| `15_WEB_PLATFORM/` | Gap transversal principal: Source/namespace ownership y dual-app runtime smoke posterior. |
+| `16_KPI_BACKEND_RECOVERY/` | Conservado; no reabierto. |
+| `17_DISTRIBUTION_AND_TOOLING/` | Root tooling genérico + tooling por scope; normalización futura diferida. |
+| `18_UNIVERSITY/` | No revalidado. |
 
-## Checkpoint KPI histórico — conservar su propio NEXT
+## Checkpoints del hito
 
 ```text
-KPI-REGISTRY-CAPABILITY-CUTOVER                 CLOSED / checkpoint anterior
-KPI-DEFINITION-CAPABILITY-CUTOVER               CLOSED / checkpoint anterior
-KPI-RUNTIME-REPROCESS-CURRENT                   CLOSED / checkpoint anterior
-KPI-DELIVERY-REGISTRY-CONSUMPTION               CLOSED / checkpoint anterior
-KPI-TIMESERIES-REGISTRY-CONSUMPTION             CLOSED / checkpoint anterior
-KPI-HISTORIAN-REPROCESS-CURRENT                 CLOSED / checkpoint anterior
-ATLANTICUS-WEB-OBSERVABILITY-SERVICE            CLOSED / checkpoint anterior
-ADA-WEB-KPI-COLLECTOR-CAPABILITY                CLOSED / checkpoint anterior
-KPI-COLLECTOR-DEFINITION-ATTACHMENT             CLOSED / checkpoint anterior
-KPI-COLLECTOR-REAL-WEB-SMOKE                    CLOSED / checkpoint anterior
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION   PLANNED / NEXT DEL FRENTE KPI
+DUAL-APP-ENV-DETAIL-CONTRACT                     CLOSED / CURRENT
+COMMAND-CENTER-DURABLE-RUNTIME-COMPOSITION       CLOSED / VERIFIED
+DUAL-APP-MASTER-PROJECTION-CONVERGENCE            CLOSED / VERIFIED
+ATLANTICUS-WEB-MASTER-PROJECTION-EXTRACTION       CLOSED / VERIFIED
+
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE      PLANNED / NEXT
+DUAL-APP-DURABLE-RUNTIME-SMOKE                    PLANNED / AFTER SOURCE
+SCOPE-TOOLING-TOPOLOGY-NORMALIZATION              PLANNED / DEFERRED
 ```
 
-En su checkpoint anterior, la implementación publicada se identificó como `moragaga/atlanticus@d484569cbe0290f38f239481cde81b13a23deecf`, parent `dde1e3a114a04b22cc2118c347a7ed907852c06b`, tree `4c7c8209f2d0c670d3c6e8b5185b5af12172e591`. Es **HISTORICAL para M01/M02**; no vuelve a calificarse aquí.
-
-## Delta anterior: ADA Datos operacionales — preservado y refinado
-
-El corte focal anterior se basó en `atlanticus:main@caced5d7711cf059d36ec61aecc9b3e9629bd41f`; confirmó dominio operacional implementado, Sources separados, Cosmos projections y una interfaz Manager anterior. Las 25 pruebas operacionales y 13 Manager comunicadas pertenecen a aquel gate. Permanecen pendientes snapshot consolidado, sesión Entra y warmup; ninguno se ha implementado como consecuencia de M01. El esquema y recovery técnico del snapshot siguen OPEN.
-
-La UI antigua y sus nombres/orden de pestañas permanecen en el código ADA actual, hasta M02. Una revisión documental anterior acordaba «Datos operacionales» / «Asignación», mientras que el diseño posterior para M02 propone «Asignaciones» / «Catálogo de cargos». Es **CONFLICT DOCUMENTAL** a reconciliar, no cambio ya implementado.
-
-## Nuevo delta: M01 Manager Companion View — CLOSED / CURRENT
-
-`atlanticus:main@9cc2cebe` publica la extensión genérica `ManagerCompanionView`, opcional en `ManagerModule`; solo el módulo principal conserva su workflow administrativo. El usuario ejecutó **82 pruebas Manager PASS** y `git diff --check` PASS en entorno local; tras corregir dos imports nuevos en producción y espejo quedaron **seis** incidencias Ruff preexistentes, no Ruff PASS general. Se comprobó posteriormente que `origin/main` ya contiene el commit y exactamente los 12 archivos del hito. No se ejecutó CI remoto ni prueba visual ADA M02.
-
-**Foco exclusivo del chat siguiente para este frente: M02 — diseño e integración de Datos operacionales ADA con M01**, sin modificaciones de backend no autorizadas y después de formalizar el orden de vistas. Referencias operativas:
-
-- `10_MANAGER/00_INDEX.md`
-- `10_MANAGER/03_WORKFLOW_AND_SESSION.md`
-- `10_MANAGER/10_ADA_OPERATIONAL_IDENTIFICATION_BOUNDARY.md`
-- `10_MANAGER/11_ADA_OPERATIONAL_DATA_ROADMAP.md`
-
-No declarar M02 CLOSED antes de reconfigurar ADA, probar publicaciones/reintentos y completar la validación visual.
+Los PRECHECK de distribución anteriores pertenecen a artifacts generados antes de este hito.
+No tratarlos como qualification de los paquetes actuales hasta regenerarlos.

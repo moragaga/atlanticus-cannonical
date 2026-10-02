@@ -1,6 +1,6 @@
 # env.detail Contract
 
-Estado: **CURRENT POLICY / ADA + COMMAND CENTER AUDIT NEXT**
+Estado: **CURRENT — DUAL APP CONTRACT AUDIT CLOSED**
 
 ## Purpose
 
@@ -13,107 +13,91 @@ Each variable should make clear:
 ```text
 purpose
 required/optional
-accepted values or format
+accepted values/format
 secret/non-secret
-local/production applicability
 manual/derived/default
 owner/consumer
-expected infrastructure source
 ```
+
+## Frozen architecture rule
+
+```text
+environment
+!=
+persistence provider
+!=
+connection target
+```
+
+Local host may use durable persistence.
+
+Azure and emulators use the same application contract.
 
 ## ADA CURRENT
 
-Current `ada-generic-application/.env.detail` documents:
+Key axes:
 
 ```text
 ATLANTICUS_ENVIRONMENT
 ADA_PERSISTENCE_MODE
 ADA_APPLICATION_NAMESPACE
 ADA_TOOL_NAMESPACE
-ADA_TOOL_SOURCE_BLOB_CONTAINER_NAME
-ADA_TOOL_SOURCE_BLOB_CONNECTION_STRING
-optional Blob account URL + SAS
-ADA_TOOL_PROJECTION_COSMOS_ENDPOINT
-ADA_TOOL_PROJECTION_COSMOS_KEY
-ADA_TOOL_PROJECTION_COSMOS_DATABASE_NAME
-optional KPI Delivery Cosmos variables
 ```
 
-Master Projection identity is derived:
+Durable:
 
 ```text
-master-projection/material.zip
+Blob container + connection string
+OR account URL + SAS
+
+Tool Projection Cosmos endpoint/key/database
 ```
 
-No manual Master material path variable is part of the current runtime contract.
+Master material location is derived.
 
-Historical:
+Provision command:
 
 ```text
-ADA_MASTER_PROJECTION_MATERIAL_PATH
+uv run ada-generic-master-projection generate --user <service-user>
 ```
-
-is **SUPERSEDED**.
 
 ## Command Center CURRENT
 
-Current `.env.detail` documents:
+Key axes:
 
 ```text
 ATLANTICUS_ENVIRONMENT
 ADA_MANAGER_PERSISTENCE_PROVIDER
-ATLANTICUS_LOCAL_IDENTITY_SUBJECT_ID optional
+```
+
+Durable:
+
+```text
 ADA_COMMAND_CENTER_STORAGE_CONNECTION_STRING
 ADA_COMMAND_CENTER_STORAGE_CONTAINER_NAME
 ADA_COMMAND_CENTER_COSMOS_ENDPOINT
 ADA_COMMAND_CENTER_COSMOS_DATABASE_NAME
 ADA_COMMAND_CENTER_COSMOS_KEY
-dynamic external Tool Cosmos variables
-APPLICATION_PUBLICATIONS_ROOT optional
 ```
 
-Important:
+External named Tool Cosmos connections remain separate.
+
+Master material is derived:
 
 ```text
-documented Cosmos values
-!= durable Command Center runtime implemented
+conciencia_situacional/command-center/master-projection/material.zip
 ```
 
-Generic 0.1.0 currently requires local Manager.
-
-## NEXT audit target
-
-Target operational topology agreed for the next stage:
+Provision command:
 
 ```text
-Web environment    local
-Storage            final/durable
-Cosmos             local
-Master Projection  available to both products
+uv run ada-command-center-master-projection generate --user <service-user>
 ```
 
-The audit must decide which variables are:
+## OPEN
 
-```text
-manual
-derived
-secret
-defaulted
-DEV/UAT/PRD specific
-```
+No configuration-contract redesign is NEXT.
 
-Do not invent a new key simply to make documentation symmetrical.
+The next focus is Source/namespace ownership.
 
-## ADA authoring proposal
-
-ADA already supports `ContentStatePresentationMode.AUTHORING`.
-
-Exposing a local-only environment selector for that mode is **PROPOSED / NOT FROZEN**.
-
-The next `.env.detail` audit may decide whether such a variable belongs in the distributed contract.
-
-## Production
-
-Secrets remain external to Git and `.env.detail`.
-
-Key Vault/App Settings mapping is PLANNED and should be derived only after variable ownership is frozen.
+Production Key Vault/App Settings mapping remains separate.

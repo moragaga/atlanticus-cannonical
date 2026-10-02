@@ -1,111 +1,99 @@
 # Atlanticus — Validation Baseline
 
-Estado: **CURRENT — WEB DISTRIBUTION TOOLING CLEANUP / CROSS-PLATFORM QUALIFICATION 2026-10-02**
+Estado: **CURRENT — DUAL APP DURABLE COMPOSITION + MASTER PROJECTION CONVERGENCE 2026-10-02**
 
 ## Autoridad
 
 ```text
-Implementation
-moragaga/atlanticus@2dc5862f634eb0bf8fe72d771d56605d1c7f32cf
+Implementation evidence checkpoint
+moragaga/atlanticus@7bd11afdf2af82c56fb100f4aa5336c039d9bd22
 
 Decisions
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-La evidencia corresponde a ejecuciones locales reportadas por el usuario. No equivale a CI, Azure o infraestructura productiva.
+La evidencia siguiente es local/user-reported. No equivale a CI, Docker actual, Azure ni producción.
 
-## Tooling Web — VERIFIED
+## Durable runtime convergence — VERIFIED
+
+Command Center Configuration Manager:
 
 ```text
-tooling/tests/distribution/web
-125 passed, 3 skipped
-
-compose integration focused gate
-10 passed, 3 skipped
-
-Ruff check
-PASS
-
-Ruff format --check
-PASS
-
-git diff --check
-PASS
+uv lock     PASS
+pytest      31 passed
+Ruff        PASS
+format      PASS
 ```
 
-Los 3 skips corresponden a checks de Docker Compose cuando el runtime Docker no está disponible; no tratarlos como PASS de Docker.
-
-## Generic Web distribution — VERIFIED
+Command Center Generic después de Master Projection:
 
 ```text
-starter               PASS
-wheelhouse packages   36
-qualification         PORTABLE / PASS
-health.live            PASS
-health.ready           ready
-home.http              PASS
-dash.layout            PASS
+pytest      10 passed
+Ruff        PASS
+format      PASS
 ```
 
-El runtime portable fue ejecutado durante qualification.
-
-## ADA Web distribution — VERIFIED PRECHECK
+ADA Generic después de extracción Master Projection:
 
 ```text
-starter               PASS
-internal wheels       71
-distribution          BUILT_UNQUALIFIED
-qualification         PRECHECK_PASS
-image_build           UNVERIFIED
-runtime               UNVERIFIED
+pytest      249 passed
+Ruff        PASS
+format      PASS
+commented host AST mirror PASS
 ```
 
-No declarar Docker/runtime ADA verificado por este resultado.
-
-## Command Center Web distribution — VERIFIED PRECHECK
+Shared Master Projection:
 
 ```text
-starter               PASS
-wheelhouse packages   85
-dependency_check      PASS
-qualification         PORTABLE / PRECHECK_PASS
-runtime               UNVERIFIED
+atlanticus-web-master-projection==0.1.0
+pytest      56 passed
+Ruff        PASS
+format      PASS
 ```
 
-No declarar Storage runtime/Command Center startup verificado por este artifact precheck.
-
-## macOS wheelhouse portability — VERIFIED
-
-Generic y Command Center inicialmente bloquearon por:
+Repository:
 
 ```text
-rcssmin==1.2.2
-No SHA256-locked compatible wheel
+git diff --check PASS
 ```
 
-El builder compartido fue corregido para usar un sdist SHA256-locked cuando no existe wheel compatible y construir un wheel de plataforma con build dependencies hash-constrained.
+## Qué acredita
 
-Después del cambio:
+VERIFIED:
 
 ```text
-test_build_wheelhouse.py    12 passed
-tooling suite               125 passed, 3 skipped
-generic distribution        PASS
-command-center              PRECHECK_PASS
+shared Master Projection engine compiles/tests independently
+ADA consumes shared engine without duplicate engine files
+Command Center consumes shared engine
+Command Center local host can select durable Manager composition
+.env.detail contracts were aligned with environment/persistence separation
 ```
 
-## Límites
+## Qué NO acredita
 
-UNVERIFIED en este cierre:
+UNVERIFIED:
 
 ```text
-ADA Docker image/runtime
-Command Center runtime con Storage
-Command Center durable Manager
-Command Center Master Projection
+real Storage/Cosmos connectivity for both applications in this hito
+Command Center resource preparation automation/parity
+Master material generation + login in both current product builds
+Docker/image runtime from current packages
+regenerated current-head Web distribution artifacts
 Azure/Entra
-production secrets/Key Vault
-dual application Storage-final + Cosmos-local smoke
-ADA KPI Collector against real delivery data
-UI rendering with no data across all components
+production Key Vault/secrets
+KPI/Collector/UI E2E
 ```
+
+## Historical distribution evidence
+
+Earlier artifacts reached:
+
+```text
+generic         PASS
+ADA             PRECHECK_PASS
+Command Center  PRECHECK_PASS
+```
+
+Those artifacts precede the current package/version changes.
+
+Do not reuse those statuses as current-head artifact qualification without regeneration.

@@ -1,88 +1,50 @@
 # Source Storage — Implementation Order
 
-Estado: **CURRENT PLAN**
+Estado: **CURRENT PLAN — GENERIC CORE CLOSED / CROSS-PRODUCT CONSUMER CONVERGENCE NEXT**
 
-## Checkpoint
-
-```text
-SOURCE-1A.1                         Core + Local                  CLOSED / VERIFIED
-SOURCE-1A.2                         Blob                          CLOSED / VERIFIED
-Projection                          Exact-release Core            CLOSED / VERIFIED
-USERS-CANONICAL-PROJECTION-2        Users/Cosmos provider         CLOSED / VERIFIED
-MANAGER-GENERIC-SOURCE-PROJECTION   Generic Manager handoff       CLOSED / VERIFIED
-```
-
-## Orden cerrado relevante
-
-1. Source Core.
-2. Local provider.
-3. Blob provider.
-4. Projection exact-release Core.
-5. Domain providers cerrados en sus propios hitos.
-6. Manager generic Source/Projection handoff.
-
-## Manager generic handoff
-
-CURRENT:
+## Closed foundation
 
 ```text
-validate          generic
-read Source       generic
-publish Source    generic
-status            projection/core
-project           ProjectionTarget
-history           source/core
-workspace         SourceSnapshot BASE
-legacy route      NONE
-exact route       NONE
+1. Source Core
+2. Local provider
+3. Blob provider
+4. Projection exact-release Core
+5. Manager generic Source/Projection handoff
 ```
 
-No existe dual contract.
+Do not reopen these contracts without a concrete failing consumer.
 
-## Próximas fronteras
-
-Cada consumer en incremento independiente:
+## NEXT increment
 
 ```text
-Step N+1  Navigation Manager consumer
-Step N+2  Tools Manager consumer
-Step N+3  KPI Configuration Manager consumer
-Step N+4  KPI Definition Manager consumer
-Step N+5  Other real consumers discovered in atlanticus:main
-Step N+6  Global consumer qualification
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
 ```
 
-## Regla por consumer
-
-Entregar:
+Order:
 
 ```text
-DELETE
-KEEP
-MODIFY/REPLACE
-GATES AFTER DELETE
+1. inventory AdaStorageNamespace consumers
+2. inventory Source composition paths in ADA and Command Center
+3. separate generic namespace responsibility from product-specific naming
+4. define the minimal reusable contract
+5. replace cross-product imports cleanly
+6. qualify ADA + Command Center affected suites
+7. confirm Source Core behavior remains unchanged
 ```
 
-y demostrar:
+## Explicit non-goals
 
-- implementación real localizada;
-- contrato genérico directo;
-- cero adapters/shims/aliases;
-- tests scoped GREEN.
+```text
+no SourceStore API change
+no release/concurrency redesign
+no retention/GC work
+no tooling topology reorganization
+no KPI/Collector/UI
+no production identity
+```
 
-## Legacy retirement
+## After close
 
-No borrar contratos de otros dominios por inferencia.
-
-Retirar únicamente cuando el consumer correspondiente esté localizado y cerrado.
-
-## Regla de chat/checkpoint
-
-Cuando un step queda CLOSED / VERIFIED:
-
-1. actualizar canonical;
-2. validar;
-3. cerrar el foco;
-4. abrir chat nuevo para el siguiente consumer.
-
-No mezclar varios consumers en el mismo chat.
+```text
+DUAL-APP-DURABLE-RUNTIME-SMOKE
+```

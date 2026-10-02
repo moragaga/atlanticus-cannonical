@@ -1,84 +1,56 @@
 # Configuration Source Storage — Index
 
-Estado: **CURRENT**
+Estado: **CURRENT — CORE FROZEN / CROSS-PRODUCT NAMESPACE-COMPOSITION CONVERGENCE NEXT**
 
-Checkpoint relevante:
-
-```text
-SOURCE-1A.1                         Core + Local                  CLOSED / VERIFIED
-SOURCE-1A.2                         Blob                          CLOSED / VERIFIED
-Projection                          Exact-release Core            CLOSED / VERIFIED
-MANAGER-GENERIC-SOURCE-PROJECTION   Generic Manager handoff       CLOSED / VERIFIED
-ADA-STORAGE-NAMESPACE               Logical namespace             CLOSED / VERIFIED
-TOOL-PROJECTION-PERSISTENCE         Local + Cosmos                CLOSED / VERIFIED
-TOOL-PERSISTENCE-COMPOSITION        Provider composition          CLOSED / VERIFIED
-```
-
-| Archivo | Contenido | Estado |
-|---|---|---|
-| `01_RELEASE_MODEL.md` | Semántica de releases/versiones. | CURRENT / FROZEN |
-| `02_SOURCE_STORE_CONTRACT.md` | Contrato común Local/Blob. | CURRENT / FROZEN |
-| `03_CONCURRENCY.md` | Concurrencia y promoción de current. | CURRENT / FROZEN |
-| `04_PROJECTION_HANDOFF.md` | Source exacta hacia Projection y durable Tool read. | CURRENT / FROZEN |
-| `05_IMPLEMENTATION_ORDER.md` | Orden/checkpoints históricos. | HISTORICAL PLAN |
-| `06_OPEN_CONTRACTS.md` | Contratos abiertos no cerrados aquí. | CURRENT OPEN ITEMS |
-
-## Provider axes CURRENT
+## Closed contracts
 
 ```text
-Source     Local | Blob
-Projection Local | Cosmos
+SOURCE CORE                         CLOSED / VERIFIED
+SOURCE LOCAL                        CLOSED / VERIFIED
+SOURCE BLOB                         CLOSED / VERIFIED
+PROJECTION EXACT-RELEASE CORE       CLOSED / VERIFIED
+MANAGER GENERIC HANDOFF             CLOSED / VERIFIED
+TOOL PROJECTION PERSISTENCE         CLOSED / VERIFIED
 ```
 
-No asumir acoplamiento obligatorio:
+## Packages CURRENT
 
 ```text
-Local Source -> Local Projection only
-Blob Source  -> Cosmos Projection only
+atlanticus-web-source
+atlanticus-web-source-local
+atlanticus-web-source-blob
 ```
 
-Las combinaciones son independientes cuando el consumer lo soporta.
+These remain generic Atlanticus capabilities.
 
-## Namespace
+## Current namespace state
+
+Existing helper:
 
 ```text
-physical container
-application namespace
-tool namespace
-SourceKey
+scopes/ada/web/storage/namespace
+ada-web-storage-namespace
+AdaStorageNamespace
 ```
 
-son identidades distintas.
+is consumed by both ADA and Command Center.
 
-Source Tool root:
+Command Center imports it directly from the ADA scope.
+
+That ownership is the next gap; Source Core is not the gap.
+
+## NEXT
 
 ```text
-<application>/<tool>
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
 ```
 
-`SourceStore` agrega `sources/<SourceKey>`.
-
-Tool Projection local:
+Required outcome:
 
 ```text
-<base>/<application>/<tool>/projections
+one reusable namespace/composition contract where reuse is real
+ADA product-specific naming remains in ADA
+Command Center product-specific naming remains in Command Center
+no Command Center dependency on ADA-owned generic-looking infrastructure
+no SourceStore rewrite
 ```
-
-Tool Projection Cosmos:
-
-```text
-partition_key = <application>/<tool>
-```
-
-## Current gap
-
-La infraestructura/provider composition está cerrada.
-
-Lo abierto es el consumer ADA Generic real:
-
-```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
-```
-
-No reabrir Projection Core para resolverlo.

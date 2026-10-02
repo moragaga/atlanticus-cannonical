@@ -1,6 +1,6 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT — CONFIGURATION CONTRACT IMPLEMENTED; ENV.DETAIL AUDIT NEXT**
+Estado: **CURRENT — ENVIRONMENT/PERSISTENCE CONTRACT FROZEN FOR CURRENT RUNTIME**
 
 ## Primary settings
 
@@ -22,36 +22,21 @@ COSMOS_CONSUMPTION_KEY
 COSMOS_CONSUMPTION_DATABASE_NAME
 ```
 
-## Persistence selection
+## Axes
 
 ```text
-local
-→ Local Tool Source
-→ Local Tool Projection
-→ local Manager stores
-→ local Master Projection path
+ATLANTICUS_ENVIRONMENT
+→ host/runtime behavior
 
-durable
-→ Blob Tool Source
-→ Cosmos Tool Projection
-→ durable Manager
-→ Blob Master Projection
+ADA_PERSISTENCE_MODE
+→ local | durable persistence
 ```
 
-Durable settings can be used under local Web environment.
-
-This is the intended basis for the next smoke:
-
-```text
-ATLANTICUS_ENVIRONMENT=local
-ADA_PERSISTENCE_MODE=durable
-Storage=final
-Cosmos=local
-```
+Emulator/Azure are connection targets, not extra architecture modes.
 
 ## Storage credentials
 
-Supported contract:
+Supported:
 
 ```text
 connection string
@@ -63,44 +48,38 @@ Do not configure both simultaneously.
 
 ## Master Projection identity
 
-No manual material path is required by the current runtime.
+No manual path variable.
 
-Logical relative identity:
+Relative identity:
 
 ```text
 master-projection/material.zip
 ```
 
-Local path and Blob name are derived from `AdaStorageNamespace` and application namespace.
+Provision command:
 
-Historical `ADA_MASTER_PROJECTION_MATERIAL_PATH` contract is SUPERSEDED.
+```text
+uv run ada-generic-master-projection generate --user <service-user>
+```
+
+Local and Blob paths are derived from application namespace.
+
+## Source namespace
+
+Current ADA-specific helper:
+
+```text
+AdaStorageNamespace(
+    application_namespace,
+    tool_namespace,
+)
+```
+
+NEXT shared front must inspect whether this is actually a generic namespace capability and remove
+cross-product dependency without changing `SourceStore`.
 
 ## KPI Delivery
 
-KPI Delivery Cosmos is optional and independent from Tool Projection Cosmos.
+Optional and separate from Tool Projection Cosmos.
 
-If any KPI Delivery Cosmos setting is supplied, endpoint/key/database must be complete.
-
-Collector attachment occurs only when:
-
-```text
-Tool Projection resolution == READY
-and
-KPI Delivery Cosmos configured
-```
-
-## NEXT
-
-Audit `.env.detail` to document:
-
-```text
-manual
-derived
-optional
-secret
-local
-production
-DEV/UAT/PRD mapping
-```
-
-Do not add new variables merely for documentation convenience.
+Not part of the next Source increment.

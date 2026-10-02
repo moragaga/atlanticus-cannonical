@@ -1,10 +1,10 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT IMPLEMENTATION + CONFIGURATION CONTRACT REVIEW NEXT**
+Estado: **CURRENT — LOCAL/DURABLE PERSISTENCE CONTRACT IMPLEMENTED**
 
 ## Existing configuration reader
 
-`ManagerConfigurationReader` currently resolves:
+`ManagerConfigurationReader` resolves:
 
 ```text
 ATLANTICUS_ENVIRONMENT
@@ -17,61 +17,69 @@ ADA_COMMAND_CENTER_COSMOS_KEY
 dynamic named Tool Cosmos connections
 ```
 
-## Current runtime reality
-
-Generic 0.1.0 requires:
+## Selector semantics
 
 ```text
-environment != production
-manager_provider == local
+ATLANTICUS_ENVIRONMENT
+→ host/runtime behavior
+
+ADA_MANAGER_PERSISTENCE_PROVIDER
+→ local | durable persistence
 ```
 
-Storage is required for Tool Catalog.
+Do not introduce Azure/emulator provider modes.
 
-Own Command Center Cosmos is reserved/configurable but not activated by the local product launcher as a durable Manager host.
+## Durable CURRENT
 
-## `.env.detail` status
-
-The current file is **NOT YET FROZEN** for the next deployment target.
-
-The next audit must decide:
+One Command Center Storage connection/container supports:
 
 ```text
-which persistence selector is canonical
-which values are manual vs derived
-which values are secrets
-Storage final contract
-Cosmos local contract
-DEV/UAT/PRD mapping
-Master Projection identity/configuration
+Tool Catalog
+Source
+Users Registry
+Master material
 ```
 
-Do not rename/remove `ADA_MANAGER_PERSISTENCE_PROVIDER` before the contract and implementation change are agreed; it is still CURRENT implementation.
+One own Command Center Cosmos connection/database supports:
+
+```text
+Alarm Configuration
+Profiles
+Navigation
+Users Runtime
+```
+
+External Tool Cosmos connections remain independently named.
 
 ## Master Projection
 
-Requirement agreed for Command Center.
+No manual location variable.
 
-No current Master Projection implementation exists in the product runtime.
-
-Target rule:
+Derived identity:
 
 ```text
-Master Projection
-→ product runtime capability
--X-> distribution tooling
+conciencia_situacional/command-center/master-projection/material.zip
 ```
 
-If common implementation is extracted, it must be generic/reusable rather than importing ADA Generic runtime.
-
-## Open production contracts
+Command:
 
 ```text
-production identity
-durable Users/Profiles/Navigation topology
-durable Manager host
-resource preparation/startup gate
-Azure/Entra
+uv run ada-command-center-master-projection generate --user <service-user>
 ```
 
-These remain separate from the immediate `.env.detail` audit unless required to define a configuration key correctly.
+## Production
+
+Production identity remains separate and UNVERIFIED.
+
+## NEXT ownership cleanup
+
+Current reader defines:
+
+```text
+COMMAND_CENTER_NAMESPACE = AdaStorageNamespace('conciencia_situacional', 'command-center')
+```
+
+using a class owned by the ADA scope.
+
+The next Source/namespace convergence must remove this product-to-product dependency without
+changing connection semantics.
