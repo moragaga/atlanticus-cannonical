@@ -1,37 +1,51 @@
-# KPI Backend Recovery / Registry Consumption — Index
+# KPI Backend Recovery / Materialization / Delivery — Index
 
-Estado: **CLOSED / VERIFIED / CURRENT**
+Estado: **CURRENT — MATERIALIZATION + LATEST CLOSED; HISTORIAN ROLLING + TIMESERIES NEXT**
 
-Autoridad implementada para este dominio:
-
-```text
-moragaga/atlanticus@3ca8c833df916a4e0812c76eaba84ee5fde8a1cc
-```
-
-Los contracts backend cerrados aquí permanecen vigentes en el checkpoint global
-`d484569cbe0290f38f239481cde81b13a23deecf`.
-
-| Archivo | Contenido | Estado |
-|---|---|---|
-| `01_PROBLEM.md` | Problema que motivó recovery y cutover. | CLOSED / HISTORICAL CONTEXT |
-| `02_REPROCESS_CONTRACT.md` | Semántica implementada de reprocess autorizado. | CURRENT |
-| `03_KPI_RUNTIME.md` | Runtime forced-current. | CLOSED / VERIFIED / CURRENT |
-| `04_LATEST_DELIVERY.md` | Registry consumer + owned output. | CLOSED / VERIFIED / CURRENT |
-| `05_HISTORIAN.md` | Historian full replay CURRENT. | CLOSED / VERIFIED / CURRENT |
-| `06_TIMESERIES_DELIVERY.md` | Registry consumer + owned output. | CLOSED / VERIFIED / CURRENT |
-| `07_SAFETY_RULES.md` | Gates preservados. | CURRENT |
-| `08_CONFIGURATION.md` | Flags/ENV/container ownership. | CURRENT |
-| `09_TESTING.md` | Qualification observada. | VERIFIED |
-| `10_SOURCE_LEDGER.md` | Código CURRENT inspeccionado. | AUDIT LEDGER |
-
-La frontera siguiente ya no es cerrar Collector como capability; eso quedó completado en
-`d484569...`.
-
-Siguiente frontera:
+## Autoridad de este cierre
 
 ```text
-ADA-GENERIC-COLLECTOR-OPERATIONAL-INTEGRATION
-PLANNED / NEXT
+Implementation
+moragaga/atlanticus@a521e807d22451a9a4f86f11f07bcde7632b1a33
+
+Decisions
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+
+Canonical inspected before replacement
+moragaga/atlanticus-cannonical@f0de87407c59181527a22737220d14f8e0d1e309
 ```
 
-El backend KPI no debe modificarse para resolver ese wiring salvo conflicto nuevo demostrado.
+Git permanece **SOLO LECTURA**.
+
+## Estado por capability
+
+| Archivo | Estado |
+|---|---|
+| `02_REPROCESS_CONTRACT.md` | CURRENT; no reabierto en este hito. |
+| `03_KPI_RUNTIME.md` | CLOSED / VERIFIED / CURRENT; no reabierto. |
+| `04_LATEST_DELIVERY.md` | CLOSED / VERIFIED / CURRENT; reemplaza el diseño antiguo de Registry directo. |
+| `05_HISTORIAN.md` | Durable history CURRENT; rolling read model 24 h / 30 s PLANNED. |
+| `06_TIMESERIES_DELIVERY.md` | Implementación antigua CURRENT pero PLANNED REPLACEMENT. |
+| `07_SAFETY_RULES.md` | CURRENT. |
+| `08_CONFIGURATION.md` | CURRENT para named connections + readiness; Timeseries aún pendiente de migración. |
+| `09_TESTING.md` | VERIFIED para Materialization + Latest; política de tests refinada. |
+| `10_SOURCE_LEDGER.md` | CURRENT audit ledger de este hito. |
+| `11_MATERIALIZATION.md` | NEW / CLOSED / VERIFIED / CURRENT. |
+
+## Checkpoints
+
+```text
+KPI-NAMED-CONNECTIONS                    CLOSED / VERIFIED / CURRENT
+KPI-REGISTRY-MATERIALIZATION             CLOSED / VERIFIED / CURRENT
+KPI-LATEST-MULTI-TOOL-DELIVERY           CLOSED / VERIFIED / CURRENT
+KPI-READINESS-HARDENING                  CLOSED / VERIFIED / CURRENT
+
+KPI-HISTORIAN-ROLLING-READ-MODEL         PLANNED / NEXT
+KPI-TIMESERIES-MULTI-TOOL-DELIVERY       PLANNED / AFTER HISTORIAN ROLLING
+```
+
+## Siguiente frontera única
+
+Cerrar contrato e implementar **Historian rolling read model** antes de modificar Timeseries Delivery.
+
+No reabrir Latest Delivery salvo finding real de contradicción con el contrato compartido.
