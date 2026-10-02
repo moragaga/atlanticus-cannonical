@@ -5,189 +5,129 @@ Estado: **CURRENT**
 ## Baseline global
 
 ```text
-Python 3.14.7
 uv, no pip normal
 contracts before consumers
 backend before frontend
 clean root cutover
 no legacy adapters/shims/aliases
-no double contract
 one focus per increment
 Git read-only unless explicit authorization
 ```
 
-## Manager authorization
+Python target histórico 3.14.7/Trixie permanece diferido; el Web runtime CURRENT de este hito usa 3.14.2.
 
-CURRENT / FROZEN:
-
-```text
-Manager authorization != ADA Access
-```
-
-Contrato genérico:
+## Distribution ownership — FROZEN
 
 ```text
-manager_access_granted(principal, access_key)
-
-access_key is None                      → DENY
-administrative_override=True            → ALLOW
-access_key in principal.access_keys     → ALLOW
-otherwise                               → DENY
+tooling/distribution/web
+= shared engine only
 ```
 
-Manager Core no interpreta perfiles de ADA, Users, Profiles ni Navigation para decidir override.
+Product-specific starter/runtime/distribution behavior pertenece a su scope.
 
-`is_local` es contexto, no permiso.
-`profile_keys` son contexto, no permiso automático.
-
-Granular `access_keys` se conserva como contrato para administración delegada futura.
-
-## ADA composition of Manager principal
-
-CURRENT / FROZEN:
+No reintroducir:
 
 ```text
-managed root                         → administrative_override
-trusted local + local environment    → administrative_override
-basic / guest / custom               → no Manager administration
-bootstrap root                       → no implicit Manager administration
+tooling/distribution/web/ada
+tooling/distribution/web/starter/ada
+tooling/distribution/web/starter/command-center
 ```
 
-La composición ADA es responsable de decidir el override; Manager Core permanece genérico.
-
-`ManagerPrincipal.access_keys` no se rellena desde `AdaAccessConfiguration`.
-
-## ADA Access boundary
-
-CURRENT / FROZEN:
+## ADA runtime ownership — FROZEN
 
 ```text
-ADA Access
-profile_key → operational access_keys
+ada-generic-application
+owns ADA runtime lifecycle
+owns Master Projection runtime
+owns local resource preparation
 ```
 
-No usar ADA Access como autoridad de Manager.
-
-No crear persistencia duplicada de permisos Manager para resolver root/local.
-
-Navigation, ADA Access y Manager mantienen semánticas de autorización independientes aunque una aplicación componga las tres.
-
-## Local Manager runtime
-
-CURRENT / FROZEN:
+Starter ADA:
 
 ```text
-local temporary principal
-→ administrative_override=True
-→ access_keys=()
+may customize host/composition
+must not rebuild ADA runtime lifecycle
 ```
 
-No reconstruir listas exhaustivas de `*.manage`.
+Master Projection es extensión/runtime capability, no aplicación ni distribución tooling.
 
-La constante agregada `MANAGER_ACCESS_KEYS` queda retirada.
-
-## Tool persistence and runtime
-
-CURRENT / FROZEN:
+## Command Center application role — FROZEN
 
 ```text
-Tool runtime
-→ durable Tool Projection
+ada-command-center-generic-application
+= real product composition root
+
+ada-command-center-configuration-manager
+= separate development/testing/qualification application
 ```
 
-Source participa en publicación/materialización, no es requisito para leer una Projection activa válida.
+Command Center Starter delega al product root; no recompone la aplicación.
 
-Los estados de resolución siguen separados:
+## Wheelhouse artifact policy — FROZEN
 
 ```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
+compatible SHA256-locked wheel
+→ preferred
+
+otherwise SHA256-locked sdist
+→ build platform wheel under hash-constrained build dependencies
 ```
 
-## KPI Collector
+Final wheelhouse contiene wheels, no sdist suelto.
 
-CURRENT / FROZEN:
+Manifest debe preservar trazabilidad de origen y hash del wheel final.
+
+## Distribution qualification semantics — FROZEN
 
 ```text
-Latest polling      10 s default
-Timeseries polling 120 s default
-Browser refresh     10 s default
-Latest priority
-1 ToolComponent = 1 logical/browser store
-Subcomponent != Store
-browser cache only
+generic
+→ PASS
+→ portable runtime probe
+
+ada
+→ PRECHECK_PASS
+→ image/runtime UNVERIFIED unless qualified separately
+
+command-center
+→ PRECHECK_PASS
+→ portable artifact/dependency qualification
+→ runtime UNVERIFIED
 ```
 
-Tool Projection y KPI Delivery pueden usar conexiones distintas.
+No promover `PRECHECK_PASS` a runtime verification.
 
-## Operational render
+## Próxima decisión/foco
 
-CURRENT / FROZEN:
+Acordado como siguiente frente:
 
 ```text
-CONFIGURATION DETERMINES STRUCTURE
-DATA DETERMINES RUNTIME STATE
+ADA + COMMAND CENTER .env.detail
+→ configuration contract
+→ Storage final/durable + Cosmos local
+→ Master Projection contract for both products
 ```
 
-`OperationalRenderBinding` es estructural; no transporta estado KPI.
-
-## Tooling next boundary
-
-No existe una decisión nueva aprobada en este cierre sobre consolidación Tool→Tool.
-
-CURRENT observado:
+Después:
 
 ```text
-ToolConfiguration.source_consumption
-→ source_keys
+lift both applications
+→ then Command Center exits scope
+→ ADA KPI/data/Collector E2E
+→ ADA UI reconstruction
 ```
 
-OPEN / UNVERIFIED:
+## UI authoring — CURRENT fact, not yet distributed env contract
+
+ADA ya implementa:
 
 ```text
-semántica de una Tool que consolida/consume otra Tool
+ContentStatePresentationMode.AUTHORING
 ```
 
-Regla para el siguiente chat:
+que suprime overlays degradados visualmente.
 
-```text
-inspect implementation + decisions + canonical first
-do not invent a tool dependency schema
-do not encode another Tool as a source_key without an approved contract
-```
+Aún no está congelada una variable `.env.detail` que seleccione ese modo.
 
-## Decisiones anteriores reemplazadas o refinadas
+La propuesta de exponerlo como configuración local-only queda **PROPOSED**, no implementada.
 
-```text
-"root/local full Manager access by enumerating every *.manage key"
-SUPERSEDED
-```
-
-Ahora se usa `administrative_override`.
-
-```text
-"ADA Access determines Manager permissions"
-SUPERSEDED
-```
-
-ADA Access y Manager authorization quedan desacoplados.
-
-```text
-"Navigation administrative override is not a Manager permission"
-REFINED
-```
-
-Navigation conserva su propia autorización, pero `ManagerPrincipal.administrative_override`
-es ahora también parte explícita del contrato genérico de autorización Manager.
-No confundir el efecto Manager con la semántica propia de Navigation.
-
-## Próxima decisión
-
-```text
-ADA-TOOLING-CONTRACT-REVIEW
-PLANNED / NEXT
-```
-
-No abrir KPI, Alarm, Command Center o distribución como refactors paralelos durante esa revisión.
+Tampoco existe un estado explícito `NO_DATA`; cualquier contrato nuevo debe decidirse con el flujo Collector/UI real.

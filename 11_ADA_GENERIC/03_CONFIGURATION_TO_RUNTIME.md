@@ -1,141 +1,106 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT / STAGE 1 CLOSED**
+Estado: **CURRENT — CONFIGURATION CONTRACT IMPLEMENTED; ENV.DETAIL AUDIT NEXT**
 
-## Configuration chain
-
-```text
-Tool Source
-    ↓ exact ProjectionTarget during materialization workflow
-Tool Projection durable
-```
-
-Tool Projection dispone de:
+## Primary settings
 
 ```text
-LocalToolProjectionStore
-CosmosToolProjectionStore
+ATLANTICUS_ENVIRONMENT
+ADA_PERSISTENCE_MODE
+ADA_APPLICATION_NAMESPACE
+ADA_TOOL_NAMESPACE
+ADA_TOOL_LOCAL_BASE_ROOT
+ADA_TOOL_SOURCE_BLOB_CONTAINER_NAME
+ADA_TOOL_SOURCE_BLOB_CONNECTION_STRING
+ADA_TOOL_SOURCE_BLOB_ACCOUNT_URL
+ADA_TOOL_SOURCE_BLOB_SAS_TOKEN
+ADA_TOOL_PROJECTION_COSMOS_ENDPOINT
+ADA_TOOL_PROJECTION_COSMOS_KEY
+ADA_TOOL_PROJECTION_COSMOS_DATABASE_NAME
+COSMOS_CONSUMPTION_ENDPOINT
+COSMOS_CONSUMPTION_KEY
+COSMOS_CONSUMPTION_DATABASE_NAME
 ```
 
-Providers:
+## Persistence selection
 
 ```text
-Source      local | blob
-Projection  local | cosmos
+local
+→ Local Tool Source
+→ Local Tool Projection
+→ local Manager stores
+→ local Master Projection path
+
+durable
+→ Blob Tool Source
+→ Cosmos Tool Projection
+→ durable Manager
+→ Blob Master Projection
 ```
 
-## Runtime Tool read
+Durable settings can be used under local Web environment.
 
-CURRENT / FROZEN:
+This is the intended basis for the next smoke:
 
 ```text
-runtime
-→ resolve_active_tool_projection()
-→ durable Tool Projection
+ATLANTICUS_ENVIRONMENT=local
+ADA_PERSISTENCE_MODE=durable
+Storage=final
+Cosmos=local
 ```
 
-No requiere Source disponible cuando ya existe Projection válida.
+## Storage credentials
 
-Materialization workflow separado:
+Supported contract:
 
 ```text
-project_current_tool_source()
-→ Source current
-→ exact target
-→ durable Tool Projection
+connection string
+OR
+account URL + SAS token
 ```
 
-No mezclar runtime read y materialization.
+Do not configure both simultaneously.
 
-## Regla maestra
+## Master Projection identity
+
+No manual material path is required by the current runtime.
+
+Logical relative identity:
 
 ```text
-CONFIGURATION DETERMINES EXISTENCE / STRUCTURE
-DATA DETERMINES RUNTIME STATE
-PERSISTED BUSINESS DATA DOES NOT DETERMINE WEB PROCESS EXISTENCE
+master-projection/material.zip
 ```
 
-## Tool resolution states
+Local path and Blob name are derived from `AdaStorageNamespace` and application namespace.
+
+Historical `ADA_MASTER_PROJECTION_MATERIAL_PATH` contract is SUPERSEDED.
+
+## KPI Delivery
+
+KPI Delivery Cosmos is optional and independent from Tool Projection Cosmos.
+
+If any KPI Delivery Cosmos setting is supplied, endpoint/key/database must be complete.
+
+Collector attachment occurs only when:
 
 ```text
-READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
+Tool Projection resolution == READY
+and
+KPI Delivery Cosmos configured
 ```
 
-Estos estados no se transforman automáticamente en caída global de Web.
+## NEXT
 
-## Operational data chain CURRENT
-
-Con Tool `READY` y Collector configurado:
+Audit `.env.detail` to document:
 
 ```text
-ToolStructure
-    ↓
-KPI Latest Delivery
-KPI Timeseries Delivery
-    ↓
-AdaKpiCollector
-    ↓
-process cache
-    ↓
-Component KPI browser stores
+manual
+derived
+optional
+secret
+local
+production
+DEV/UAT/PRD mapping
 ```
 
-Collector defaults:
-
-```text
-Latest poll       10 s
-Timeseries poll  120 s
-Browser refresh   10 s
-```
-
-Latest tiene prioridad cuando ambos reads están due.
-
-One logical/browser KPI store per ToolComponent.
-
-Subcomponents no crean stores.
-
-## Render boundary
-
-Estructura:
-
-```text
-ToolStructure
-→ OperationalRenderBinding
-```
-
-Datos:
-
-```text
-Collector
-→ dcc.Store / ToolComponent
-```
-
-Son fronteras distintas.
-
-`OperationalRenderBinding` no transporta KPI state.
-
-## Handoff al desarrollador
-
-Stage 1 termina en:
-
-```text
-ToolStructure
-+
-existing browser stores
-→ developer-owned concrete visualization
-```
-
-ADA Generic no impone un layout/body universal.
-
-No requiere un incremento adicional de store-to-render wiring para declarar cerrada la entrega
-genérica de datos.
-
-## Estado
-
-```text
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
-```
+Do not add new variables merely for documentation convenience.

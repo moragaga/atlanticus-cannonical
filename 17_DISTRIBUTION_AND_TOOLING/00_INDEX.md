@@ -1,44 +1,48 @@
-# Distribution and Tooling — Index
+# Distribution and Tooling — Canonical Index
 
-Estado: **CURRENT — RESOURCE PREPARATION 001 LOCAL CLOSED; MASTER 001A–001D.2 IMPLEMENTADO; 001D.3 NAVIGATION DOCKER LOCAL CLOSED; 001D.4 SYNC LOCAL CLOSED**.  
-Master/distribución nueva contrastados en `atlanticus@9c6daffd04b9c249f75a55b6cdb9b44e6d92a795`; Docker Master 001D.3 en `ca3ee5084542e393c105b49e98b3c282da56f7fb`. Canonical base `0f2fff3ec0e71903b5703e03dd6050765d9722ff`. Las pruebas se atribuyen a sus propias versiones, no al HEAD más nuevo por proximidad.
+Estado: **CURRENT — WEB DISTRIBUTION CLEANUP CLOSED AT 2dc5862f**
 
 | Archivo | Alcance | Estado |
 |---|---|---|
-| `01_BACKEND_GENERATION.md` | Artifacts de procesos backend | CURRENT / OTHER FOCUS |
-| `02_FRONTEND_GENERATION.md` | Starters y wheelhouses Web, historial de qualifications | CURRENT / HISTORICAL |
-| `03_ARTIFACT_DISTRIBUTION.md` | Starter ADA, Resource Preparation, Master 001A–001D.4, evidencias Docker/local sync y gates | **CURRENT — INTEGRATED IN CANONICAL 571f9c09** |
-| `04_SCRIPTS_VALIDATION.md` | Gates de integridad por frontera | CURRENT DIRECTION |
-| `05_SUPPORT_SERVICES.md` | Cosmos/Storage y entornos local/productivo | CURRENT DIRECTION |
-| `06_ENV_DETAIL.md` | Documentación de variables sin secretos y **única ruta opcional Master** | CURRENT DIRECTION; sin variables nuevas por 001D.4 |
-| `07_READMES.md` | README al cierre integral, no durante incrementos parciales | CURRENT POLICY |
-| `08_LOADERS.md` | Contratos generales; warmup/upload productivo Master no cualificado | OPEN GATE |
-| `09_SOURCE_LEDGER.md` | Historial versionado de verificaciones de tooling | HISTORICAL; no certifica nuevas imágenes |
+| `01_BACKEND_GENERATION.md` | Artifacts backend | CURRENT / OTHER FOCUS |
+| `02_FRONTEND_GENERATION.md` | Shared Web engine + product-owned starters | CURRENT |
+| `03_ARTIFACT_DISTRIBUTION.md` | Generic/ADA/Command Center qualification contracts | CURRENT |
+| `04_SCRIPTS_VALIDATION.md` | Validation gates | CURRENT |
+| `05_SUPPORT_SERVICES.md` | Cosmos/Storage support | CURRENT DIRECTION |
+| `06_ENV_DETAIL.md` | Configuration documentation contract | **PLANNED / NEXT AUDIT** |
+| `07_READMES.md` | README policy | CURRENT |
+| `08_LOADERS.md` | Loader contracts | CURRENT / OPEN BY FOCUS |
+| `09_SOURCE_LEDGER.md` | Distribution/tooling evidence ledger | CURRENT |
 
-## Implementación vigente Master distribuido
+## CURRENT layout
 
 ```text
-tooling/distribution/web/generate_starter.py
-tooling/distribution/web/ada/{build_distribution,qualify_distribution}.py
-tooling/distribution/web/starter/ada/tooling/{project,master_projection}.py
-tooling/distribution/web/starter/ada/src/application/master_projection/{material,reader}.py
-tooling/distribution/web/starter/ada/src/application/runtime.py
-scopes/ada/web/application/ada-generic-application/src/ada/web/application/generic/master_projection/{plan,composition,apply,web}.py
+tooling/distribution/web/
+    shared engine
+    products.toml
+    starter/base
+
+scopes/ada/tooling/distribution/web/
+    ADA-specific support/starter/project tooling
+
+scopes/ada-command-center/tooling/distribution/web/
+    Command Center starter
 ```
 
-`tooling/master_projection.py` existe **dentro del Starter generado**, no en la raíz de `atlanticus`. Se invoca con Python y solicita contraseña interactivamente; genera el material fuera de la distribución, nunca lo empaqueta ni publica en Git. `ADA_MASTER_PROJECTION_MATERIAL_PATH` sigue siendo la ruta **opcional, absoluta y externa**; su uso no demuestra un uploader/warmup productivo.
+## Qualification CURRENT
 
-## Cortes de qualification sin extrapolación
+```text
+generic         PASS
+ada             PRECHECK_PASS
+command-center  PRECHECK_PASS
+```
 
-- **Resource Preparation 001 histórico:** ocho recursos locales preparados/READY, repetición idempotente y recuperación desde fallo parcial según logs de usuario. Home cold start no quedó cerrado.
-- **Master 001D.3 Docker (`ca3ee508`):** distribución 67 wheels + precheck + sync; material externo y login reales; prepare/confirm de Navigation y Manager recargado proyectado/sincronizado. Cinco dominios pendientes de E2E.
-- **Master 001D.4 distribución limpia (`9c6daffd`):** tres archivos corregidos (tooling productivo, espejo, tests); 24 pruebas PASS, Ruff/diff PASS; 67 wheels, `BUILT_UNQUALIFIED`, `PRECHECK_PASS`, `SYNCED`, import y ayuda del generador Master **sin `PYTHONPATH`**, segundo `sync=ALREADY_SYNCED`. No hay nueva imagen Docker calificada para este SHA: `image_build/runtime: UNVERIFIED`.
-- **Histórico Starter** Generic 36/ADA 108 ruedas en versiones anteriores: conservar en los documentos históricos sin transferir resultado al build actual.
+## NEXT
 
-## Contratos y continuidad
+No más refactor de tooling sin finding real.
 
-Master no es Manager; preview del plan es read-only, Apply individual requiere acción `projection.apply` y confirmación con target exacto revalidado. Users REPLACE desde Master permanece no ejecutable/bloqueado. No ampliar la excepción exacta de rutas de Master a un prefijo completo. No crear nueva variable, adaptación temporal, proceso de coordinación ni una segunda autoridad de Source.
+Siguiente foco:
 
-Python de la distribución vigente: **3.14.2**. Baseline Project objetivo: **3.14.7 / `python:3.14.7-slim-trixie`**. Discrepancia **OPEN / OTHER FOCUS**.
-
-**NEXT TÉCNICO PROPUESTO, TRAS INTEGRAR EL AJUSTE DOCUMENTAL:** calificación Docker propia de la distribución Master `9c6daffd`. El recorrido positivo de Navigation en `ca3ee508` y el sync local en `9c6daffd` son evidencias distintas; no declarar Docker de la nueva distribución validado por herencia. ADA Operational Identification se diseña en otro incremento.
+```text
+ADA + Command Center .env.detail contract
+```

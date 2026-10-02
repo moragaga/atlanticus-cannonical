@@ -1,105 +1,72 @@
 # ADA Web — Current Baseline
 
-Estado: **CURRENT**
+Estado: **CURRENT — UI CAPABILITIES AVAILABLE; DATA E2E STILL OPEN**
 
-## Implementación auditada
+## Application
 
-```text
-moragaga/atlanticus@6fd1512afed73e76f7c344f3acb989b601c453e3
-```
+ADA Generic is the product composition root.
 
-## Manager authorization
+The distribution/runtime ownership cleanup does not move ADA UI capabilities into tooling.
 
-```text
-CLOSED / VERIFIED / CURRENT
-```
+## Content State
 
-Manager Core implementa `administrative_override` y `manager_access_granted`.
-
-ADA Generic compone:
-
-```text
-managed root                         → override
-trusted local + local environment    → override
-ordinary profiles                    → no override
-bootstrap root                       → no implicit override
-```
-
-ADA Access no es autoridad de permisos Manager.
-
-## ADA Configuration Manager
-
-Los checks de acciones administrativas convergen con la autorización genérica del Manager.
-
-El runtime local usa override administrativo y no una lista enumerada de módulos.
-
-`MANAGER_ACCESS_KEYS` fue retirado.
-
-## KPI Registry / Definition / Collector
-
-```text
-CURRENT capabilities
-```
-
-Collector conserva:
-
-```text
-Latest polling      10 s
-Timeseries polling 120 s
-Browser refresh     10 s
-1 ToolComponent = 1 browser store
-```
-
-Tool Projection y KPI Delivery continúan siendo fronteras separadas.
-
-## ADA Generic operational bootstrap
-
-```text
-AdaGenericSettings
-→ ToolPersistenceComposition
-→ durable Tool Projection resolution
-→ WebApplicationDefinition
-```
-
-Estados:
+Current domain states:
 
 ```text
 READY
-UNCONFIGURED
-UNAVAILABLE
-INVALID
+STALE
+SOURCE_ERROR
+CONSTRUCTION
 ```
 
-## Tooling baseline
-
-`ToolConfiguration` mantiene configuración, sources, participación operacional, estructura y branding.
-
-`ToolStructure` expone destinos KPI y estructura consumible por contratos Alarm baseline.
-
-La consolidación Tool→Tool permanece **OPEN / UNVERIFIED**; no se define aquí un schema.
-
-## Qualification de este cierre
+Freshness mapping:
 
 ```text
-ada-generic-application             288 passed
-ruff check src tests                PASS
-ada-configuration-manager tests      70 passed
-manager core tests                   85 passed
-MANAGER_ACCESS_KEYS search            0 matches
-git diff --check                     PASS
+FRESH       → READY
+PREVENTIVE  → READY
+HARD_STALE  → STALE
+DATA_ERROR  → SOURCE_ERROR
 ```
 
-No equivale a qualification completa de Docker, Azure, Entra, multiworker o todo el monorepo.
+No explicit `NO_DATA` or `WAITING` state exists.
 
-## Próximo foco
+## Presentation modes
 
 ```text
-ADA-TOOLING-CONTRACT-REVIEW
-PLANNED / NEXT
+NORMAL
+AUTHORING
 ```
 
-Luego:
+`AUTHORING` suppresses degraded overlay visibility while preserving the real content state.
+
+This provides a presentation mechanism for UI authoring, but does **not** prove that every component can render without data.
+
+## Current UI risk before Collector E2E
+
+OPEN / UNVERIFIED:
 
 ```text
-ADA-END-TO-END-GOLDEN-PATH
+application starts without KPI observations
+→ component-level behavior across all UI surfaces
 ```
+
+Do not equate:
+
+```text
+no first observation
+=
+source failure
+```
+
+until the Collector/UI integration is exercised.
+
+## Planned sequence
+
+```text
+env.detail contracts
+→ dual application smoke
+→ ADA KPI/Collector E2E
+→ UI reconstruction
+```
+
+UI design can reuse existing capabilities/components; avoid redesigning generic contracts until a concrete consumer finding requires it.

@@ -1,140 +1,99 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT — ADA BUILD/PRECHECK CLOSED AT a7546574 / DUAL-PRODUCT MANAGER ALIGNMENT NEXT**
+Estado: **CURRENT — THREE WEB PROFILES QUALIFIED TO THEIR DECLARED CONTRACTS**
 
 Implementation:
 
 ```text
-moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
+moragaga/atlanticus@2dc5862f634eb0bf8fe72d771d56605d1c7f32cf
 ```
 
-Decisions:
+## Profiles
+
+### Generic
 
 ```text
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+starter               PASS
+wheelhouse packages   36
+qualification         PORTABLE / PASS
+readiness             ready
 ```
 
-## CURRENT preservado de a7546574
-
-El cierre de tooling anterior permanece válido:
+### ADA
 
 ```text
-ADA starter thinning                    CLOSED
-Tool-specific Home/pages/modules         CLOSED
-project tooling extraction               CLOSED
-.sh/.cmd human launcher contract          CLOSED
-distribution build                       BUILT_UNQUALIFIED
-internal wheels                          69
-distribution precheck                    PRECHECK_PASS
-source_git_head                          a75465745e188da4765e803595b17acaa55d9306
-project.sh --help final artifact         PASS
+starter               PASS
+internal wheels       71
+distribution          BUILT_UNQUALIFIED
+qualification         PRECHECK_PASS
+runtime               UNVERIFIED
+image_build           UNVERIFIED
 ```
 
-No extender esos resultados a Docker/runtime/Azure que no fueron calificados.
+### Command Center
 
-## Frontera
+```text
+starter               PASS
+wheelhouse packages   85
+dependency_check      PASS
+qualification         PORTABLE / PRECHECK_PASS
+runtime               UNVERIFIED
+```
+
+## Shared boundary
 
 ```text
 SOURCE PACKAGES
     ↓
 PRODUCT COMPOSITION
     ↓
-GENERATION / DISTRIBUTION TOOLING
+SHARED GENERATION / DISTRIBUTION ENGINE
+    ↓
+PRODUCT-OWNED STARTER OVERLAY
     ↓
 ARTIFACT
     ↓
 HOST / DEVOPS / RUNTIME
 ```
 
-Generated code no posee una segunda implementación de Manager.
+## Wheelhouse portability
 
-## Manager authority
+The shared builder prefers a compatible locked wheel.
 
-CURRENT source authority:
-
-```text
-package: atlanticus-web-manager
-owner: web/capabilities/manager
-version at a7546574: 0.3.18
-```
-
-No declarar como autoridad un pin copiado en:
+If no compatible wheel exists:
 
 ```text
-ADA Generic
-Command Center
-Starter
-lock
-manifest
-wheelhouse
+SHA256-locked sdist
+→ verify source integrity
+→ PEP 517 wheel build
+→ build dependencies constrained by version + SHA256 hashes
+→ record source hash and final wheel hash
 ```
 
-Esos son consumidores/materializaciones.
+This path was verified on macOS for the dependency case that blocked `rcssmin==1.2.2`.
 
-El próximo frente debe revisar y alinear todos ellos contra el package owner.
+## Qualification semantics
 
-Si el contrato Manager necesita bump, primero se cambia el owner y después se regeneran consumers/artifacts.
-
-## Dual-product convergence requirement
-
-Antes de continuar qualification productiva de artifacts:
+`PASS` and `PRECHECK_PASS` are not interchangeable.
 
 ```text
-1. converge reusable Manager compositions
-2. ADA Generic consumes them
-3. Command Center consumes them
-4. ADA tooling/distribution aligns
-5. Command Center tooling/distribution aligns
-6. qualify both
+PASS
+→ declared runtime/portable probe completed
+
+PRECHECK_PASS
+→ artifact/dependency/build preconditions completed
+→ runtime may remain UNVERIFIED
 ```
 
-El mismo chat ejecuta esta secuencia para evitar un período en que aplicaciones y artifacts tengan autoridades distintas.
+## Git traceability
 
-## Command Center
+Final deliverable artifacts should be regenerated after the implementing commit is published so `source_git_head` matches the authoritative commit.
 
-No existe artifact final de Command Center generic acreditado.
-
-No promover el host temporal Configuration Manager a Starter por conveniencia.
-
-No utilizar el ZIP `ada_command_center_foundation_increment.zip`; quedó `SUPERSEDED / DO NOT APPLY`.
-
-La futura distribución debe construirse a partir de la composición integrada real, no de un fixture ni de una composition paralela.
-
-## Python e imagen
-
-CURRENT observado:
+## OPEN
 
 ```text
-Python == 3.14.2
+ADA runtime/image qualification
+Command Center runtime qualification
+dual application Storage-final + Cosmos-local smoke
+Azure/Entra
 ```
-
-Target histórico:
-
-```text
-Python 3.14.7
-python:3.14.7-slim-trixie
-```
-
-Estado de migración:
-
-```text
-BLOCKED / DEFERRED UNTIL EXPLICIT USER AUTHORIZATION
-```
-
-No modificar Python/base image durante Manager convergence o tooling alignment.
-
-No usar esa diferencia como gate para bloquear el frente.
-
-## OPEN posterior
-
-Después de cerrar Manager dual-product:
-
-```text
-Command Center Resource Preparation/startup gate
-final local runtime qualification
-Docker qualification
-Cosmos/Azurite physical integration
-Entra/Azure production
-```
-
-No abrir esos frentes antes del cierre del contrato Manager compartido.

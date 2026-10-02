@@ -4,148 +4,117 @@ Estado: **CURRENT**
 
 ## Regla principal
 
-Atlanticus es plataforma modular reusable.
+Atlanticus es una plataforma modular reusable.
 
-ADA consume Atlanticus.
+ADA y ADA Command Center consumen Atlanticus.
 
-El núcleo genérico de Atlanticus no depende de ADA.
+El núcleo genérico de Atlanticus no depende de ADA ni de ADA Command Center.
 
-## ADA Command Center layers
-
-CURRENT:
+## Ownership de Web distribution
 
 ```text
-scopes/ada-command-center/
-├── domain/
-├── backend/
-└── web/
+tooling/distribution/web
+    shared distribution engine
+    product catalog
+    base starter
+
+scopes/ada/tooling/distribution/web
+    ADA distribution support
+    ADA project tooling
+    ADA starter overlay
+
+scopes/ada-command-center/tooling/distribution/web
+    Command Center starter overlay
 ```
-
-`domain/` contiene contratos funcionales puros con consumidores independientes en Web y Backend.
-
-Authority authored de Alarm Configuration:
-
-```text
-scopes/ada-command-center/domain/alarms
-ada_command_center.domain.alarms
-```
-
-Reglas:
-
-```text
-Web -> Domain
-Backend -> Domain
-Domain -X-> Web
-Domain -X-> Runtime/Persistence/Infrastructure
-```
-
-No usar `shared` como cajón genérico.
-
-No duplicar DTOs equivalentes entre Web y Backend.
-
-La extracción fue root replacement:
-- `backend/alarms/core/definition.py` removido;
-- `web/alarms/configuration/models.py` removido;
-- sin aliases legacy.
-
-## Alarm backend boundaries CURRENT
-
-```text
-backend/alarms/core
-    Runtime/lifecycle/priority/management/deactivation contracts
-
-backend/alarms/persistence
-    durable Engine persistence/recovery
-
-backend/alarms/materialization
-    pure B.2 contracts and qualification inputs
-
-backend/processes/alarms-runtime
-    Runtime orchestration/execution
-
-backend/processes/alarms-materialization
-    PLANNED / not implemented
-```
-
-### Shared operational identity
-
-`AlarmResolutionKey` vive en Alarm Core:
-
-```text
-alarm_configuration_revision
-confirmed_tool_catalog_revision
-```
-
-Es compartido por Materialization y futuras superficies Runtime Adoption/Delivery sin hacer que Core dependa de Materialization.
-
-No pertenece al authored Domain.
-
-## Visibility boundary CURRENT
-
-```text
-Authored Domain:
-VISIBLE | TRACE_ONLY
-
-Runtime Core:
-no visibility flag
-no SHADOW disposition
-
-Delivery:
-visibility_mode
-```
-
-`TRACE_ONLY` participa de Runtime normal; Delivery decide publicación visible.
-
-## Materialization contracts CURRENT
-
-`backend/alarms/materialization` implementa contratos puros:
-
-```text
-AlarmConfigurationResolution
-RuntimeAlarmConfiguration
-DeliveryAlarmConfiguration
-ResolvedDeliveryAlarm
-ResolvedDeliveryMessage
-ResolvedDeactivationPolicy
-ResolvedVisualTarget
-ResolvedVisualSubcomponentTarget
-```
-
-No contiene:
-- resolver B.2 completo;
-- I/O;
-- stores;
-- scheduler;
-- process orchestration;
-- Runtime Adoption;
-- Live Delivery.
-
-Qualification inputs implementados:
-
-```text
-ToolReconciliationQualification(green_tool_keys)
-EvaluatorQualificationKey(family_key, evaluator_key)
-EvaluatorQualificationCatalog(qualified_keys)
-```
-
-No copiar estados internos de Tool reconciliation ni evaluator runtime machinery.
-
-## Configuration / Administration
-
-Manager administra Source/Projection sólo para dominios que realmente son Configuration Sources.
-
-```text
-Source      = Local | Blob
-Projection  = Local | Cosmos
-```
-
-Providers independientes.
-
-Projection representa un release exacto; no reconstruir targets desde revision textual y no mantener contratos paralelos para transición.
-
-## Application availability boundary
 
 Invariante:
+
+```text
+shared tooling
+-X-> product runtime internals
+```
+
+Los productos pueden usar el motor compartido mediante contratos declarativos/handlers.
+
+## Application ownership
+
+### ADA
+
+```text
+ada-generic-application
+    composition root
+    runtime host/lifecycle
+    Manager integration
+    Tool Projection
+    Master Projection
+    KPI Collector attachment
+```
+
+### ADA Command Center
+
+```text
+ada-command-center-generic-application
+    composition root
+
+ada-command-center-configuration-manager
+    reusable configuration/administration composition
+    separate qualification/development application
+```
+
+No convertir Configuration Manager en servicio remoto ni en product root.
+
+## Master Projection
+
+Master Projection es una **extensión/runtime capability**, no una aplicación independiente y no tooling de distribución.
+
+CURRENT ADA ownership:
+
+```text
+scopes/ada/web/application/ada-generic-application/
+    .../generic/master_projection/
+```
+
+El Starter puede invocar contratos del product runtime, pero no duplicar reader/provisioning/lifecycle.
+
+Command Center también requiere Master Projection por decisión de producto, pero esa integración aún está **PLANNED / NOT IMPLEMENTED**.
+
+Si una capacidad resulta realmente reusable entre ADA y Command Center, extraer sólo el contrato genérico necesario; no hacer que Command Center dependa de `ada-generic-application`.
+
+## Starter boundary
+
+Un Starter existe para entregar un host editable/consumible.
+
+```text
+base starter
+    minimal generic Atlanticus Web application
+
+ADA starter
+    host customization / composition extension / deployment surface
+
+Command Center starter
+    thin delegation to real product composition root
+```
+
+Un Starter no debe convertirse en una segunda implementación del runtime del producto.
+
+## Wheelhouse portability
+
+El wheelhouse compartido produce artefactos binarios instalables offline.
+
+```text
+locked compatible wheel
+    → use directly
+
+locked sdist when no compatible wheel exists
+    → verify source SHA256
+    → build wheel for current platform
+    → hash-constrained build dependencies
+    → record source + output hashes
+```
+
+No relajar hashes para resolver portabilidad.
+
+## Application availability boundary
 
 ```text
 APPLICATION EXISTENCE
@@ -154,26 +123,14 @@ APPLICATION EXISTENCE
 != DATA AVAILABILITY
 ```
 
-Ausencia de Source/Projection/data puede ser estado funcional válido.
+La UI no debe asumir que ausencia inicial de datos equivale necesariamente a error.
 
-Errores contractuales deben permanecer diagnosticables.
+## Python
 
-## Command Center — próxima frontera
-
-Después de cerrar Materialization Contracts + Qualification Inputs:
+CURRENT Web/distribution baseline:
 
 ```text
-PURE B.2 ALARM CONFIGURATION RESOLVER
-PLANNED / NEXT
+Python 3.14.2
 ```
 
-El incremento debe permanecer pure backend:
-
-```text
-explicit inputs
--> deterministic validation/materialization
--> AlarmConfigurationResolution
-```
-
-No mezclar con acquisition, stores, Runtime Adoption, Live Delivery, Management Capture,
-provenance migration ni process orchestration.
+Target histórico 3.14.7/Trixie permanece diferido.

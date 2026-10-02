@@ -1,161 +1,179 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT EXECUTION CHECKPOINT**
+Estado: **CURRENT EXECUTION CHECKPOINT — WEB DISTRIBUTION TOOLING CLEANUP CLOSED**
 
 ## Autoridad
 
 ```text
 Implementation
-moragaga/atlanticus@6fd1512afed73e76f7c344f3acb989b601c453e3
+moragaga/atlanticus@2dc5862f634eb0bf8fe72d771d56605d1c7f32cf
 
 Historical decisions
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 
 Canonical inspected before replacement
-moragaga/atlanticus-cannonical@2b6ef68cdbea6f1278ed60b9ba65485cec136d7d
+moragaga/atlanticus-cannonical@852e031d020edd4fdd5ab0187e95fbf6f443083b
 ```
 
-Git permanece **SOLO LECTURA** durante este cierre.
+Git permanece **SOLO LECTURA**.
 
 ## Estado resumido
 
 ```text
-MANAGER-ADMINISTRATIVE-OVERRIDE                 CLOSED / VERIFIED / CURRENT
-ADA-MANAGER-AUTHORIZATION-CONVERGENCE           CLOSED / VERIFIED / CURRENT
-ADA-MANAGER-PRINCIPAL-DECOUPLING                CLOSED / VERIFIED / CURRENT
-ADA-ACCESS-AND-MANAGER-SEPARATION               CLOSED / VERIFIED / CURRENT
-ADA-GENERIC-AUTHORIZATION-QUALIFICATION          CLOSED / VERIFIED / CURRENT
+WEB-DISTRIBUTION-SHARED-ENGINE-CLEANUP          CLOSED / VERIFIED / CURRENT
+ADA-STARTER-RUNTIME-THINNING                    CLOSED / VERIFIED / CURRENT
+ADA-MASTER-PROJECTION-RUNTIME-OWNERSHIP         CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-DISTRIBUTION-PROFILE             CLOSED / VERIFIED / CURRENT
+CROSS-PLATFORM-WHEELHOUSE-SDIST-FALLBACK        CLOSED / VERIFIED / CURRENT
 
-ADA-TOOLING-CONTRACT-REVIEW                     PLANNED / NEXT
-ADA-END-TO-END-GOLDEN-PATH                      PLANNED / AFTER TOOLING REVIEW
-ADA-LOGIN-DATA-BOOTSTRAP-E2E                    PLANNED / PART OF GOLDEN PATH
-ADA-TOOL-CONSOLIDATION-CONTRACT                 OPEN / UNVERIFIED
-ADA-KPI-END-TO-END-CONSUMPTION                  OPEN / UNVERIFIED
-ADA-ALARM-END-TO-END-CONSUMPTION                OPEN / SEPARATE INTEGRATION
+GENERIC-WEB-DISTRIBUTION                        PASS / VERIFIED
+ADA-WEB-DISTRIBUTION                            PRECHECK_PASS / VERIFIED
+COMMAND-CENTER-WEB-DISTRIBUTION                 PRECHECK_PASS / VERIFIED
+
+ADA-AND-COMMAND-CENTER-ENV-DETAIL-CONTRACT      PLANNED / NEXT
+DUAL-APP-STORAGE-FINAL-COSMOS-LOCAL-SMOKE       PLANNED / AFTER ENV CONTRACT
+ADA-KPI-COLLECTOR-OPERATIONAL-E2E               PLANNED / AFTER DUAL-APP SMOKE
+ADA-UI-RECONSTRUCTION                           PLANNED / AFTER COLLECTOR
 ```
 
-## Hito cerrado — autorización administrativa del Manager
-
-Atlanticus Manager incorpora:
+## Shared Web distribution — CURRENT
 
 ```text
-ManagerPrincipal.administrative_override
-manager_access_granted(principal, access_key)
+tooling/distribution/web/
+├── build_wheelhouse.py
+├── distribute.py
+├── generate_starter.py
+├── probe_starter.py
+├── qualify_starter.py
+├── products.toml
+└── starter/base/
 ```
 
-Contrato implementado:
+No contiene subárbol `ada/`, starter ADA ni starter Command Center.
+
+Product-specific ownership:
 
 ```text
-access_key is None                      → DENY
-principal.administrative_override=True  → ALLOW
-access_key in principal.access_keys     → ALLOW
-otherwise                               → DENY
+scopes/ada/tooling/distribution/web/
+scopes/ada-command-center/tooling/distribution/web/
 ```
 
-Manager Core no infiere el override desde `profile_keys` ni desde `is_local`.
+## ADA Generic — CURRENT
 
-`is_local=True` por sí solo no concede acceso administrativo.
-`profile_keys=('root',)` por sí solo no concede acceso administrativo.
-`access_key=None` sigue denegado incluso con override.
-
-## ADA — composición CURRENT
-
-ADA Generic dejó de derivar permisos Manager desde `AdaAccessConfiguration`.
-
-Composición vigente:
+`ada-generic-application==0.2.21` posee:
 
 ```text
-managed root + authenticated EffectiveUser
-→ ManagerPrincipal(administrative_override=True)
-
-trusted local identity + local environment
-→ ManagerPrincipal(administrative_override=True, is_local=True)
-
-basic / guest / custom / unknown
-→ no Manager administration
-
-bootstrap_root without managed user
-→ no implicit Manager administration
+runtime host/lifecycle
+local/durable persistence composition
+Master Projection runtime
+Master material reader/provisioning
+local resource preparation
 ```
 
-`ManagerPrincipal.access_keys` queda vacío en estas rutas de composición.
+El Starter ADA no posee una segunda implementación de esas responsabilidades.
 
-ADA Access conserva su ownership propio:
+Master Projection tiene identidad derivada:
 
 ```text
-profile_key → operational access_keys
+master-projection/material.zip
 ```
 
-y no se usa como autoridad de permisos administrativos del Manager.
+En local se resuelve bajo el namespace de aplicación.
+En durable se resuelve como Blob bajo el namespace de aplicación.
 
-El runtime local del Configuration Manager usa `administrative_override=True` y ya no mantiene una lista exhaustiva de permisos Manager.
+## Command Center — CURRENT
 
-`MANAGER_ACCESS_KEYS` fue retirado; la búsqueda final sobre `scopes/ada/web/application` y `web` reportó cero coincidencias.
+`ada-command-center-generic-application==0.1.0` existe como composition root real y dispone de distribución propia.
 
-## Qualification observada
-
-Sobre el working tree que luego fue publicado en `6fd1512afed73e76f7c344f3acb989b601c453e3`:
+Runtime CURRENT:
 
 ```text
-ADA Generic application       288 passed
-ADA Generic ruff              PASS
-ADA Configuration Manager      70 passed
-Atlanticus Manager Core        85 passed
-MANAGER_ACCESS_KEYS search      0 matches
-git diff --check               PASS
+local-only Manager host
+Storage real requerido por Tool Catalog incluso en local
+production identity/durable host no implementados
+Command Center Master Projection no integrado
 ```
 
-Estas cifras corresponden al cierre de este hito; no deben extrapolarse a todo el monorepo.
+Su `.env.detail` todavía refleja el contrato local actual; no declarar durable Command Center como implementado.
 
-## Tooling — estado observado, no rediseñado
+## Qualification de este cierre
 
-Código CURRENT inspeccionado:
+Evidencia local reportada por el usuario:
 
 ```text
-ToolConfiguration
-├── tool_key
-├── display_name
-├── kind
-├── source_consumption
-├── source_operational_participation
-├── structure
-└── branding
+tooling/tests/distribution/web                     125 passed, 3 skipped
+compose integration subset                         10 passed, 3 skipped
+Ruff / format                                      PASS
+git diff --check                                   PASS
 
-ToolSourceConsumption
-└── source_keys
+generic distribution
+  starter                                          PASS
+  wheelhouse packages                              36
+  qualification                                    PORTABLE / PASS
+  readiness                                        ready
 
-ToolConfigurationKind
-├── integrated_operations
-├── process
-└── strategic
+ada distribution
+  starter                                          PASS
+  internal wheels                                  71
+  qualification                                    PRECHECK_PASS
+  runtime/image                                    UNVERIFIED
+
+command-center distribution
+  starter                                          PASS
+  wheelhouse packages                              85
+  dependency_check                                 PASS
+  qualification                                    PORTABLE / PRECHECK_PASS
+  runtime                                          UNVERIFIED
 ```
 
-`ToolStructure` ya expone destinos KPI y contratos usados por la proyección baseline de Alarm.
+## Cross-platform wheelhouse — CURRENT
 
-No se demostró en este cierre un contrato explícito y cerrado para:
+Registry dependency selection:
 
 ```text
-Tool A
-→ ser consumida / consolidada por
-Tool B
+compatible SHA256-locked wheel
+→ preferred
+
+no compatible wheel
++ SHA256-locked sdist
+→ build platform wheel locally
+→ hash-constrained PEP 517 build dependencies
+→ distribute wheel only
 ```
 
-No inventar schema, dependencia o adapter para resolverlo.
+El manifest registra el hash del sdist de origen y del wheel construido.
+
+Esta corrección fue validada en macOS con Generic y Command Center.
+
+## ADA UI / no-data observation
+
+CURRENT verificado:
+
+```text
+ContentState:
+READY
+STALE
+SOURCE_ERROR
+CONSTRUCTION
+
+ContentStatePresentationMode:
+NORMAL
+AUTHORING
+```
+
+`AUTHORING` suprime visualmente el overlay degradado, pero no altera el estado real.
+
+No existe un estado explícito `NO_DATA` / `WAITING`.
+
+Por tanto:
+
+- diseño visual sin watermark es posible mediante el contrato authoring;
+- que todos los componentes puedan renderizar sin datos reales sigue **UNVERIFIED**;
+- no clasificar automáticamente ausencia inicial de datos como error sin revisar el contrato Collector/UI.
 
 ## Próxima frontera
 
-Foco único recomendado:
-
 ```text
-ADA-TOOLING-CONTRACT-REVIEW
+ADA-AND-COMMAND-CENTER-ENV-DETAIL-CONTRACT
+PLANNED / NEXT
 ```
-
-Objetivo: auditar contratos e implementación CURRENT de Tooling, decisions y canonical antes de modificar código.
-
-Después, y sólo después:
-
-```text
-ADA-END-TO-END-GOLDEN-PATH
-```
-
-con una instancia limpia que recorra configuración, identidad, Tool, KPI, Alarm e integración/distribución según contratos realmente existentes.

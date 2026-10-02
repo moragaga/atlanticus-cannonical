@@ -1,74 +1,119 @@
 # env.detail Contract
 
-Estado: **CURRENT DIRECTION / MASTER VARIABLE IMPLEMENTADA; OTROS ARCHIVOS env.detail NO AUDITADOS GLOBALMENTE**  
-Master contrastado en `moragaga/atlanticus@94f26213ca28b550baf53d8ee34e34da7538ad17`. La política documental general de `env.detail` no se convierte en certificación de todos los proyectos.
+Estado: **CURRENT POLICY / ADA + COMMAND CENTER AUDIT NEXT**
 
-## Problema actual
+## Purpose
 
-`env.detail` existe, pero muchos archivos contienen únicamente:
+`.env.detail` is a human-readable configuration contract.
 
-```text
-KEY=value
-```
+It must not contain real secrets.
 
-sin explicar qué significa, por qué existe, valores permitidos, si es sensible o quién lo consume. Esto continúa como deuda documental de productización fuera de Master.
-
-## Objetivo
-
-Cada proceso/aplicación estable debe tener un `env.detail` verdaderamente documental. Debe permitir entender cada variable sin leer el código.
-
-## Información mínima por variable
-
-Para cada entrada documentar:
-
-- `key`;
-- `purpose`;
-- `required` / `optional`;
-- `accepted values` / formato;
-- ejemplo no sensible;
-- `sensitive` yes/no;
-- fuente esperada;
-- razón arquitectónica;
-- `owner/consumer`.
-
-El formato final puede seguir siendo sencillo y humano; no convertirlo en un schema innecesariamente complejo.
-
-## Producción
-
-`env.detail` **NO** contiene secretos. Es referencia/contrato. El runtime productivo continúa usando mecanismos acordados de configuración y resolución de secretos. No incluir un ZIP protegido real, contraseña, token o credencial en el repositorio, Starter ni archivo de ejemplo.
-
-## Ejemplo conceptual histórico
+Each variable should make clear:
 
 ```text
-PI_SOURCE=NOTPII
-# purpose: selects PI source provider
-# accepted: NOTPII | PI_WEB_API
-# required: yes
-# sensitive: no
-# reason: runtime must select exactly one PI adapter
+purpose
+required/optional
+accepted values or format
+secret/non-secret
+local/production applicability
+manual/derived/default
+owner/consumer
+expected infrastructure source
 ```
 
-El ejemplo expresa la política documental, **no** una nueva configuración aprobada de Master ni una auditoría de PI actual.
+## ADA CURRENT
 
-## Variable Master realmente implementada
+Current `ada-generic-application/.env.detail` documents:
+
+```text
+ATLANTICUS_ENVIRONMENT
+ADA_PERSISTENCE_MODE
+ADA_APPLICATION_NAMESPACE
+ADA_TOOL_NAMESPACE
+ADA_TOOL_SOURCE_BLOB_CONTAINER_NAME
+ADA_TOOL_SOURCE_BLOB_CONNECTION_STRING
+optional Blob account URL + SAS
+ADA_TOOL_PROJECTION_COSMOS_ENDPOINT
+ADA_TOOL_PROJECTION_COSMOS_KEY
+ADA_TOOL_PROJECTION_COSMOS_DATABASE_NAME
+optional KPI Delivery Cosmos variables
+```
+
+Master Projection identity is derived:
+
+```text
+master-projection/material.zip
+```
+
+No manual Master material path variable is part of the current runtime contract.
+
+Historical:
 
 ```text
 ADA_MASTER_PROJECTION_MATERIAL_PATH
 ```
 
-| Propiedad | Contrato actual |
-|---|---|
-| Owner | ADA Generic/Starter; lector `StarterMasterMaterialReader` |
-| Propósito | Ruta de archivo al material Master protegido externo |
-| Requerida | **No**: ausencia produce página informativa sin login |
-| Formato | Ruta absoluta a un ZIP Master; externa al proyecto distribuido |
-| Sensible | La **ruta** no es contraseña, pero debe administrarse cuidadosamente; el archivo apuntado es material de acceso sensible |
-| Valor por defecto conceptual | Vacío/ausente, no crear cuenta Master local implícita |
-| Validación runtime | `ABSENT`, `PRESENT` e `INVALID`; binding de identidad al namespace/ambiente al autenticar |
-| Consumers | `AdaGenericSettings` y Starter `application.runtime` |
+is **SUPERSEDED**.
 
-No agregar variables distintas para Master por conveniencia, ni utilizar esta ruta como prueba de warmup/upload/Key Vault productivo ya implementado. El archivo real se genera mediante el tooling ADA y permanece fuera de la distribución.
+## Command Center CURRENT
 
-## Evidencia y límites
+Current `.env.detail` documents:
 
-En 001C se observó distribución smoke `BUILT_UNQUALIFIED` de 67 wheels y HTTP 200 con la variable ausente y presente. El usuario informó login real tras generar material nuevo. La validación de toda la matriz `.env.detail` (incluido `kpi-runtime`) y el mapping DEV/UAT/PRD siguen **OPEN / OTHER FOCUS**; no certificar variables de otros procesos a partir de Master.
+```text
+ATLANTICUS_ENVIRONMENT
+ADA_MANAGER_PERSISTENCE_PROVIDER
+ATLANTICUS_LOCAL_IDENTITY_SUBJECT_ID optional
+ADA_COMMAND_CENTER_STORAGE_CONNECTION_STRING
+ADA_COMMAND_CENTER_STORAGE_CONTAINER_NAME
+ADA_COMMAND_CENTER_COSMOS_ENDPOINT
+ADA_COMMAND_CENTER_COSMOS_DATABASE_NAME
+ADA_COMMAND_CENTER_COSMOS_KEY
+dynamic external Tool Cosmos variables
+APPLICATION_PUBLICATIONS_ROOT optional
+```
+
+Important:
+
+```text
+documented Cosmos values
+!= durable Command Center runtime implemented
+```
+
+Generic 0.1.0 currently requires local Manager.
+
+## NEXT audit target
+
+Target operational topology agreed for the next stage:
+
+```text
+Web environment    local
+Storage            final/durable
+Cosmos             local
+Master Projection  available to both products
+```
+
+The audit must decide which variables are:
+
+```text
+manual
+derived
+secret
+defaulted
+DEV/UAT/PRD specific
+```
+
+Do not invent a new key simply to make documentation symmetrical.
+
+## ADA authoring proposal
+
+ADA already supports `ContentStatePresentationMode.AUTHORING`.
+
+Exposing a local-only environment selector for that mode is **PROPOSED / NOT FROZEN**.
+
+The next `.env.detail` audit may decide whether such a variable belongs in the distributed contract.
+
+## Production
+
+Secrets remain external to Git and `.env.detail`.
+
+Key Vault/App Settings mapping is PLANNED and should be derived only after variable ownership is frozen.

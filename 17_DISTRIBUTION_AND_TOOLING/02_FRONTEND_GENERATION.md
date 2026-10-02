@@ -1,109 +1,77 @@
 # Frontend Generation
 
-Estado: **CURRENT / ADA DISTRIBUTION TOOLING CLOSED FOR a7546574 / MANAGER ALIGNMENT NEXT**
+Estado: **CURRENT — SHARED ENGINE CLEAN / PRODUCT OWNERSHIP EXPLICIT**
 
-Implementation:
-
-```text
-moragaga/atlanticus@a75465745e188da4765e803595b17acaa55d9306
-```
-
-## Frontera
-
-Atlanticus genera Starters/artifacts editables y reutilizables.
-
-No debe copiar una segunda implementación completa del runtime, Manager o project tooling dentro de cada aplicación.
+## Shared engine
 
 ```text
-capabilities/packages
-        ↓
-product composition
-        ↓
-generation/distribution tooling
-        ↓
-generated application/artifact
+tooling/distribution/web/
 ```
 
-## ADA CURRENT
-
-El perfil ADA usa ADA Generic como composition/runtime authority.
-
-La Tool generada conserva sus propias:
+owns:
 
 ```text
-application.pages
-application.modules
-Home
-host/deployment surfaces
+products.toml
+generate_starter
+build_wheelhouse
+qualify_starter
+probe_starter
+distribute
+starter/base
 ```
 
-El project tooling reusable vive en:
+It does not own ADA runtime, Command Center runtime or product-specific starter subtrees.
+
+## Generic Starter
+
+The base Starter is a minimal Atlanticus Web application.
+
+It may contain the minimum composition/runtime needed to demonstrate the generic framework contract.
+
+The previous `example` demo module/callback/assets were removed from the base.
+
+## ADA
+
+Product-specific generation support:
 
 ```text
-tooling/distribution/web/ada/project-tooling
+scopes/ada/tooling/distribution/web/
 ```
 
-y se distribuye como:
+ADA Starter remains editable host/deployment surface but delegates runtime behavior to `ada-generic-application`.
+
+Project tooling also belongs to the ADA scope.
+
+Master Projection and local resources are **not** Starter code.
+
+## Command Center
+
+Starter:
 
 ```text
-ada-project-tooling==0.1.0
+scopes/ada-command-center/tooling/distribution/web/starter
 ```
 
-## Manager authority in generated artifacts
-
-La generación no debe fijar una versión Manager diferente de la autoridad del package owner.
-
-CURRENT package owner:
+is intentionally minimal and delegates to:
 
 ```text
-web/capabilities/manager
-atlanticus-web-manager==0.3.18
+ada-command-center-generic-application
 ```
 
-El próximo frente debe revisar todos los pins/locks/manifests/wheels que materialicen Manager.
+## Product catalog
 
-Si el package owner aumenta de versión durante la convergencia, el tooling debe regenerar y calificar los artifacts con esa misma versión.
-
-No mantener artifacts ADA y Command Center con autoridades Manager divergentes.
-
-## Command Center tooling
-
-Command Center todavía no posee una aplicación generic/distribución final acreditada.
-
-No inventar un segundo framework de generación.
-
-Después de integrar el Manager convergido en Command Center, el mismo frente debe alinear su generación/distribución usando los contratos de tooling ya existentes donde correspondan.
-
-La implementación exacta se deriva del código existente en ese momento; no crear adapters o scripts duplicados por adelantado.
-
-## Python / image freeze
-
-Python CURRENT:
+Current profiles:
 
 ```text
-3.14.2
+generic
+ada
+command-center
 ```
 
-Migración 3.14.7 / Trixie:
+Shared engine selects strategies/handlers from product catalog instead of hardcoding ADA internals.
 
-```text
-BLOCKED / DEFERRED UNTIL EXPLICIT USER AUTHORIZATION
-```
+## Rule
 
-No cambiarla como parte de Manager/tooling alignment.
+A product runtime change should normally require a product package change, not a mirrored implementation change in distribution tooling.
 
-## Próximo foco
-
-Tooling no es el primer paso independiente.
-
-Secuencia obligatoria:
-
-```text
-Manager composition/version convergence
-→ ADA Generic integration
-→ Command Center integration
-→ tooling/distribution alignment of both
-→ qualification
-```
-
-Todo pertenece al mismo siguiente frente para evitar que artifacts y aplicaciones vuelvan a divergir.
+Generated artifacts may pin/version the product dependency, but do not become a second runtime authority.
