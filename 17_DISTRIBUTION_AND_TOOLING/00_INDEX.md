@@ -1,6 +1,6 @@
 # Distribution and Tooling — Canonical Index
 
-Estado: **CURRENT — ROOT ORCHESTRATION + SCOPE OWNERSHIP; CURRENT-HEAD ARTIFACT REGENERATION AFTER DURABLE SMOKE**
+Estado: **CURRENT — WEB DISTRIBUTION REGENERATION CLOSED / ADA DISTRIBUTED LINUX RUNTIME SMOKE NEXT**
 
 ## CURRENT layout
 
@@ -12,109 +12,122 @@ Estado: **CURRENT — ROOT ORCHESTRATION + SCOPE OWNERSHIP; CURRENT-HEAD ARTIFAC
 
 /scopes/ada/tooling
     ADA-specific distribution composition
+    ADA distributed project tooling
 
 /scopes/ada-command-center/tooling
     Command Center-specific distribution composition
 ```
 
-Operational Data owns its processes under `scopes/operational-data`, while some Operational Data gate/orchestration logic remains under root tooling.
+Operational Data owns its processes under `scopes/operational-data`. Process artifact/distribution tooling is a separate boundary from Web Distribution and was not part of this hito.
 
-## Architecture direction
+## Closed prerequisites
 
-```text
-/scopes/<owner>/tooling
-    owner-specific build/distribution/qualification composition
-
-/tooling
-    reusable mechanisms + cross-scope orchestration
-```
-
-Planned future normalization:
-
-```text
-scopes/operational-data/tooling
-scopes/ada/tooling/distribution/backend
-scopes/ada-command-center/tooling/distribution/backend
-```
-
-No normalization implementation is part of the namespace hito.
-
-## Source namespace prerequisite — CLOSED
-
-The previous distribution prerequisite:
+The following prerequisites are CLOSED / VERIFIED:
 
 ```text
 SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
-```
-
-is now CLOSED / VERIFIED.
-
-Current generic package added to the Web platform:
-
-```text
-atlanticus-web-storage-namespace==0.1.0
-```
-
-Current consumers no longer depend on the removed ADA-owned `ada-web-storage-namespace`.
-
-## Artifact state
-
-Historical artifacts:
-
-```text
-generic         PASS
-ADA             PRECHECK_PASS
-Command Center  PRECHECK_PASS
-```
-
-Current package versions and dependencies have changed since those artifacts.
-
-Therefore current-head artifact qualification remains:
-
-```text
-UNVERIFIED
-```
-
-## Ordering
-
-NEXT project focus:
-
-```text
+SHARED-DURABLE-RESOURCE-PREPARATION
 DUAL-APP-DURABLE-RUNTIME-SMOKE
-```
-
-After that:
-
-```text
+DISTRIBUTION-CONTRACT-CONVERGENCE
+ADA-COMPOSE-CONTRACT-CONVERGENCE
+ADA-PROJECT-TOOLING-CONTRACT-CONVERGENCE
+ADA-LOCAL-RESOURCES-CONTRACT-CONVERGENCE
 CURRENT-HEAD-DISTRIBUTION-REGENERATION
 ```
 
-Distribution regeneration must use the current package graph, including:
+Generic capabilities relevant to the current distribution include:
 
 ```text
 atlanticus-web-storage-namespace==0.1.0
-ada-web-tools-projection-local==0.1.1
-ada-web-tools-projection-cosmos==0.1.1
-ada-web-tools-persistence==0.1.1
-ada-generic-application==0.2.23
-ada-command-center-web-tool-discovery-cosmos==0.1.1
-ada-command-center-web-tool-catalog-manager==0.1.2
-ada-command-center-configuration-manager==0.1.3
-ada-command-center-generic-application==0.1.2
+atlanticus-web-storage-preparation==0.1.0
+atlanticus-web-master-projection==0.1.0
 ```
 
-After distribution qualification:
+## Current Web product state
+
+### Generic
 
 ```text
-ADA-GENERIC-OVER-ATLANTICUS-DISTRIBUTION
+packages          36
+status            PASS
+qualification     PORTABLE
+readiness         ready
+runtime checks    health.live
+                  health.ready.diagnostic
+                  home.http
+                  dash.layout
 ```
 
-must prove that ADA consumes Atlanticus artifacts without relying on editable monorepo paths.
-
-## Deferred
+### ADA
 
 ```text
-tooling topology normalization
+ada-generic-application    0.2.26
+ada-project-tooling        0.1.1
+internal wheels            73
+status                     PRECHECK_PASS
+image_build                UNVERIFIED
+runtime                    UNVERIFIED
+```
+
+The ADA artifact contains no active references to the superseded physical/provider variables:
+
+```text
+ADA_MANAGER_PERSISTENCE_PROVIDER
+ADA_TOOL_SOURCE_PROVIDER
+ADA_TOOL_PROJECTION_PROVIDER
+ADA_TOOL_SOURCE_BLOB_*
+ADA_TOOL_PROJECTION_COSMOS_*
+```
+
+### Command Center
+
+```text
+ada-command-center-configuration-manager    0.1.4
+ada-command-center-generic-application      0.1.3
+packages                                    92
+dependency_check                            PASS
+status                                      PRECHECK_PASS
+runtime                                     UNVERIFIED
+```
+
+## Current configuration-template state
+
+```text
+generic          configuration templates: false
+ADA              configuration templates: true
+Command Center   configuration templates: true
+```
+
+ADA and Command Center generate deployment mappings for DEV/UAT/PRD from their current `.env.detail` contracts.
+
+## Qualification rule
+
+`PRECHECK_PASS` is not runtime verification.
+
+Artifact manifests may record a repository HEAD for provenance, but repository-global HEAD or clean-tree state is not a qualification gate because independent scopes can advance concurrently. Qualification must be tied to the owned files, contracts and artifact inputs of the increment.
+
+## NEXT
+
+The unique next project focus is:
+
+```text
+ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE
+```
+
+It must prove ADA from a copy of the generated distribution outside the monorepo, including Linux image build, isolated local durable infrastructure, resource preparation, Web startup, health checks and absence of monorepo dependency.
+
+## Deferred / separate
+
+```text
+Command Center distributed runtime qualification
+Process artifact/distribution regeneration
+KPI Runtime
+KPI Historian
+KPI Delivery / Timeseries
+Collector
+browser stores
+UI
+production Azure / Entra qualification
 Python 3.14.7 / Trixie migration
-production Azure/Entra qualification
+tooling topology normalization
 ```

@@ -1,80 +1,104 @@
 # Web Platform — Current Gaps
 
-Estado: **CURRENT — SOURCE OWNERSHIP CLOSED / DURABLE RUNTIME VALIDATION PRIMARY GAP**
+Estado: **CURRENT — WEB DISTRIBUTION REGENERATION CLOSED / ADA DISTRIBUTED LINUX RUNTIME PRIMARY GAP**
 
 ## CLOSED / CURRENT
 
 ```text
 generic Source Core/Local/Blob
 generic Storage Namespace
+shared durable resource preparation
 generic Manager compositions used by current products
 Command Center durable Manager composition
 shared Master Projection engine
 ADA Master Projection product composition
 Command Center Master Projection product composition
 cross-product namespace ownership convergence
+dual-app durable runtime smoke
+Web distribution contract convergence
+current Web artifact regeneration
+ADA physical Storage/Cosmos contract convergence
+ADA distributed Compose/tooling convergence
+ADA local resource preparation contract convergence
 ```
 
-## Storage namespace CURRENT
-
-Generic owner:
+## Current Web distribution state
 
 ```text
-web/capabilities/storage/namespace
-atlanticus-web-storage-namespace==0.1.0
-StorageNamespace(application_namespace, scope_namespace)
+Generic
+    PASS / portable runtime qualification
+    packages: 36
+
+ADA
+    PRECHECK_PASS
+    internal wheels: 73
+    ada-generic-application: 0.2.26
+    ada-project-tooling: 0.1.1
+    image build: UNVERIFIED
+    runtime: UNVERIFIED
+
+Command Center
+    PRECHECK_PASS
+    packages: 92
+    dependency_check: PASS
+    runtime: UNVERIFIED
 ```
-
-Product-independent semantics:
-
-```text
-application scope
-sub-scope
-local roots
-Blob prefixes
-projection root derivation
-```
-
-Product-specific values stay in their product compositions.
-
-No Command Center dependency on ADA-owned storage namespace infrastructure remains.
 
 ## Primary gap
 
 ```text
-DUAL-APP-DURABLE-RUNTIME-SMOKE
+ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE
 ```
 
 Reason:
 
-Unit/package qualification is complete, but the full durable application compositions have not yet been validated together against selected Storage/Cosmos targets.
+ADA artifact integrity and precheck are verified, but the current distribution has not yet been proven as an independent Linux runtime outside the Atlanticus monorepo.
 
-The smoke must establish that:
+The smoke must establish:
 
 ```text
-ADA Generic durable composition starts
-Command Center durable composition starts
-storage/cosmos bindings resolve
-namespace physical identities are preserved in running composition
-restart/readback is valid where required by the selected smoke contract
+copy generated ADA artifact outside monorepo
+build Linux image from the copied artifact
+start Cosmos Emulator and Azurite
+use durable ADA contract with dataproduct
+prepare durable resources
+start ADA Web
+validate /health/live
+inspect /health/ready
+prove there is no editable/path dependency on the monorepo
+validate restart/readback where required by the agreed smoke contract
 ```
 
-## Secondary gaps after runtime smoke
+## Secondary gaps after the ADA distributed smoke
+
+Still OPEN, but not part of the next increment:
 
 ```text
-current-head distribution regeneration
-ADA lift using Atlanticus distribution
-Command Center resource-preparation parity only if runtime evidence requires it
-production identity / Azure
+Command Center distributed runtime qualification
+Process artifact/distribution regeneration
+KPI Runtime
+KPI Historian
+KPI Delivery / Timeseries
+Collector
+browser stores
+UI
+```
+
+## Separate production gaps
+
+```text
+production Entra integration
+Azure production qualification
+production Key Vault/App Settings runtime evidence
 ```
 
 ## Deferred architecture
 
 ```text
+Python 3.14.7 / Trixie migration
 scope tooling topology normalization
 backend distribution tooling normalization
 Operational Data tooling relocation/normalization
-Python 3.14.7 / Trixie
 ```
 
-These are not blockers for the durable runtime smoke.
+These are not blockers for the ADA distributed Linux runtime smoke.
