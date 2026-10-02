@@ -1,6 +1,6 @@
 # Distribution and Tooling — Canonical Index
 
-Estado: **CURRENT — ROOT ORCHESTRATION + SCOPE OWNERSHIP; NORMALIZATION DEFERRED**
+Estado: **CURRENT — ROOT ORCHESTRATION + SCOPE OWNERSHIP; CURRENT-HEAD ARTIFACT REGENERATION AFTER DURABLE SMOKE**
 
 ## CURRENT layout
 
@@ -17,8 +17,7 @@ Estado: **CURRENT — ROOT ORCHESTRATION + SCOPE OWNERSHIP; NORMALIZATION DEFERR
     Command Center-specific distribution composition
 ```
 
-Operational Data already owns its processes under `scopes/operational-data`, while some
-Operational Data gate/orchestration logic remains under root tooling.
+Operational Data owns its processes under `scopes/operational-data`, while some Operational Data gate/orchestration logic remains under root tooling.
 
 ## Architecture direction
 
@@ -38,11 +37,29 @@ scopes/ada/tooling/distribution/backend
 scopes/ada-command-center/tooling/distribution/backend
 ```
 
-No implementation in this hito.
+No normalization implementation is part of the namespace hito.
+
+## Source namespace prerequisite — CLOSED
+
+The previous distribution prerequisite:
+
+```text
+SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
+```
+
+is now CLOSED / VERIFIED.
+
+Current generic package added to the Web platform:
+
+```text
+atlanticus-web-storage-namespace==0.1.0
+```
+
+Current consumers no longer depend on the removed ADA-owned `ada-web-storage-namespace`.
 
 ## Artifact state
 
-Historical:
+Historical artifacts:
 
 ```text
 generic         PASS
@@ -50,16 +67,54 @@ ADA             PRECHECK_PASS
 Command Center  PRECHECK_PASS
 ```
 
-Current package versions changed after those artifacts.
+Current package versions and dependencies have changed since those artifacts.
 
-Therefore current-head artifact qualification is:
+Therefore current-head artifact qualification remains:
 
 ```text
 UNVERIFIED
 ```
 
-## Priority
+## Ordering
 
-Tooling normalization is `PLANNED / DEFERRED`.
+NEXT project focus:
 
-NEXT project focus is Source namespace/composition convergence, then lifting both apps.
+```text
+DUAL-APP-DURABLE-RUNTIME-SMOKE
+```
+
+After that:
+
+```text
+CURRENT-HEAD-DISTRIBUTION-REGENERATION
+```
+
+Distribution regeneration must use the current package graph, including:
+
+```text
+atlanticus-web-storage-namespace==0.1.0
+ada-web-tools-projection-local==0.1.1
+ada-web-tools-projection-cosmos==0.1.1
+ada-web-tools-persistence==0.1.1
+ada-generic-application==0.2.23
+ada-command-center-web-tool-discovery-cosmos==0.1.1
+ada-command-center-web-tool-catalog-manager==0.1.2
+ada-command-center-configuration-manager==0.1.3
+ada-command-center-generic-application==0.1.2
+```
+
+After distribution qualification:
+
+```text
+ADA-GENERIC-OVER-ATLANTICUS-DISTRIBUTION
+```
+
+must prove that ADA consumes Atlanticus artifacts without relying on editable monorepo paths.
+
+## Deferred
+
+```text
+tooling topology normalization
+Python 3.14.7 / Trixie migration
+production Azure/Entra qualification
+```
