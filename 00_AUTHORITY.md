@@ -8,18 +8,41 @@ Estado: **CURRENT**
 
 - Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- Commit auditado: `346e7ac7ba7c21eede8b524613a6adee7e839e55`
-- Fecha del commit: `2026-10-03T11:41:18Z`
+- HEAD inspeccionado: `09e9acf6edf6f84a66a4a0a041ad9a8f645daf79`
+- Fecha del HEAD: `2026-10-03T13:56:26Z`
 - Mensaje: `feat`
 
-Este commit incorpora el cierre de paridad de ADA Command Center para Users / Profiles / Navigation / Manager y la normalización de los lockfiles Web alcanzados durante el qualifier.
+Para el frente Alarm Engine, la implementación relevante permanece sin cambios desde:
+
+```text
+346e7ac7ba7c21eede8b524613a6adee7e839e55
+```
+
+Verificación de cierre:
+
+```text
+compare 346e7ac7...09e9acf6
+ahead_by = 4
+```
+
+Los cuatro commits posteriores modifican exclusivamente:
+
+```text
+scopes/ada-kpi-engine/*
+backend/json/tests/*
+tooling/gates/ada-kpi-engine/*
+```
+
+No modifican rutas de Alarm Engine / ADA Command Center Alarm backend.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
-- Commit de partida inspeccionado antes de estos reemplazos: `19fe30dcc2f34dbe7a0c4615c188409ace2089b8`
-- Fecha del commit: `2026-10-03T09:11:10Z`
+- HEAD inspeccionado antes de estos reemplazos: `f02b4740ca1002b060afdb94d142f2e2d8d588af`
+- Fecha: `2026-10-03T12:00:57Z`
+
+Estos archivos son reemplazos documentales preparados fuera de Git. Su existencia local no implica commit, push ni mutación remota.
 
 ## Jerarquía congelada
 
@@ -29,10 +52,10 @@ Este commit incorpora el cierre de paridad de ADA Command Center para Users / Pr
 4. `atlanticus-decisions` y otros repositorios/documentos históricos son referencia sólo cuando se indiquen explícitamente.
 5. Si implementación y canonical se contradicen, registrar el conflicto; no resolverlo silenciosamente.
 
-## Baseline técnico CURRENT
+## Baseline técnico CURRENT para este frente
 
 ```text
-Python 3.14.2
+Alarm / Command Center packages actuales: Python 3.14.2
 uv
 backend Python
 Web Python + Dash + Flask + Gunicorn + JavaScript
@@ -40,7 +63,7 @@ Azure productivo / Docker local
 Microsoft Entra ID como identidad objetivo
 ```
 
-Python 3.14.7 / Trixie permanece como migración separada. No introducirla incidentalmente dentro de otro incremento.
+Python 3.14.7 / Trixie permanece como migración separada. No introducirla incidentalmente dentro de la extracción Alarm Engine.
 
 ## Git
 

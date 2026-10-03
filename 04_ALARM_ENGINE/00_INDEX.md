@@ -1,11 +1,18 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT — shared contracts cutover implemented; Command Center parity closed; physical Engine extraction design NEXT**.
+Estado: **CURRENT — extraction boundary refined; Modeler target design frozen; implementation next**.
 
-Checkpoint:
+Checkpoints:
 
 ```text
+Repository HEAD inspected
+atlanticus@09e9acf6edf6f84a66a4a0a041ad9a8f645daf79
+
+Alarm implementation unchanged since
 atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
+
+Canonical source before these replacements
+atlanticus-cannonical@f02b4740ca1002b060afdb94d142f2e2d8d588af
 ```
 
 ## Ownership CURRENT
@@ -18,7 +25,7 @@ ada-contracts-alarms
     shared Alarm contracts + Engine publication schemas
 
 ada-command-center/domain/alarms
-    residual Command Center/Alarm policy pending reclassification
+    residual source/routing policy pending physical reclassification
 
 ada-command-center/backend
     current physical Alarm Engine implementation
@@ -37,52 +44,67 @@ processes/alarms-runtime
 processes/alarms-delivery
 ```
 
-Working hypothesis for the next chat:
+Target logical Engine now includes a new responsibility:
 
 ```text
-all of the current Alarm backend belongs to the Engine;
-the main extraction debt is dependency direction toward Web.
+modeler
 ```
 
-This is PROPOSED / PLANNED, not yet physically implemented.
+Its physical package/process does not exist yet.
+
+## Target pipeline
+
+```text
+Command Center
+    ↓ publication
+Materialization
+    ├── RuntimeConfiguration
+    ├── ModelerConfiguration
+    └── DeliveryConfiguration
+        ↓
+Runtime
+    ↓
+Modeler
+    ↓
+Delivery
+    ↓
+Projection Store
+    ↓
+Web
+```
+
+Current direct Runtime → Delivery receiving remains implemented but is SUPERSEDED as the target boundary.
 
 ## Qualification state
 
-Capability parity no longer blocks qualification.
+Command Center capability parity is closed.
 
-Focal passes:
+The resumed full Web qualifier is BLOCKED separately at Tool Catalog / Discovery because ADA Tool configuration still produces `ada.web.tools.*` types while Command Center catalog consumes `ada.contracts.tools.*`.
 
-```text
-configuration-manager   31 passed
-generic-application     12 passed
-catalog-manager          8 passed
-```
-
-The resumed Web qualifier is BLOCKED separately at Tool Catalog / Discovery because current ADA Tool configuration still produces `ada.web.tools.*` types while Command Center catalog consumes `ada.contracts.tools.*`.
-
-Do not solve that by changing Alarm contracts or adding Command Center adapters.
+Do not solve that by changing Alarm contracts or adding adapters.
 
 ## Documents
 
 | Archivo | Rol actual |
 |---|---|
-| `01_DOMAIN_MODEL.md` | Alarm model contracts. |
+| `01_DOMAIN_MODEL.md` | Alarm domain model contracts. |
 | `02_RUNTIME_AND_LIFECYCLE.md` | lifecycle and Engine state. |
 | `03_PERSISTENCE_AND_RECOVERY.md` | WAL/EFFECTIVE/recovery. |
 | `04_CONCURRENCY_LEASES_AND_FENCING.md` | concurrency and fencing. |
-| `05_PROJECTION_AND_PUBLICATION.md` | CURRENT/FACTS. |
+| `05_PROJECTION_AND_PUBLICATION.md` | CURRENT/FACTS current implementation + target Runtime/Modeler/Delivery handoffs. |
 | `06_MANAGEMENT.md` | management/deactivation. |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | publication/materialization boundary. |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | publication/materialization and Runtime/Modeler/Delivery configuration split. |
 | `08_QUALIFICATION_BASELINE.md` | historical qualification evidence. |
 | `09_DECISION_INDEX.md` | current canonical decisions/refinements. |
-| `10_OPEN_ITEMS.md` | next extraction boundary. |
-| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Command Center ↔ Engine ↔ Web/Analytics boundary. |
-| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | exact adoption/runtime contracts. |
+| `10_OPEN_ITEMS.md` | remaining open contracts before implementation. |
+| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Command Center ↔ Engine ↔ Modeler ↔ Delivery ↔ Web/Analytics boundary. |
+| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | exact adoption/runtime current implementation and target handoff refinement. |
+| `14_MODELER_AND_DELIVERY_PIPELINE.md` | Modeler scheduling, backpressure, recovery and delivery target contract. |
 
 ## NEXT único
 
 ```text
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN
+ADA-ALARM-ENGINE-MATERIALIZATION-CONTRACT-SPLIT
 ```
 
-First inventory and freeze dependencies. No code move until the design is closed.
+Definir y luego implementar sólo la separación de configuración antes de construir el Modeler operacional.

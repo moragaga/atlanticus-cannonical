@@ -1,84 +1,206 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT — physical extraction design is NEXT**.
+Estado: **CURRENT — Modeler boundary decided; materialization contract split is NEXT**.
 
-## CLOSED / CURRENT
+## CLOSED / CURRENT decisions
 
 ```text
 shared Tool contracts package
 shared Alarm contracts package
 Engine publication schemas ownership
-Command Center Alarm/Tool consumer cutover
-Command Center Users/Profiles/Navigation/Manager parity
-Command Center Web lock normalization
+Command Center semantic ownership before publication
+READY != EFFECTIVE
+exact artifact pin
+Runtime CURRENT v1
+Runtime FACTS v2
+current direct Delivery receiver
+target Runtime -> Modeler -> Delivery direction
+Runtime/Modeler/Delivery same exact artifact
+CAROUSEL six-position topology
+QUEUE_IN_QUEUE Mine/Plant topology
+backpressure ownership
+Modeler recovery principle
+no legacy adapters
+no Engine dependency on Command Center Web
 ```
 
 ## NEXT único
 
 ```text
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN
+ADA-ALARM-ENGINE-MATERIALIZATION-CONTRACT-SPLIT
 ```
 
-Required outputs before implementation:
+Required output:
 
 ```text
-complete backend package inventory
-dependency graph
-KEEP / MOVE / REMOVE / INVERT / REHOME classification
-Command Center publication -> Engine input contract
-destination of ada-command-center/domain/alarms
-target scopes/ada-alarm-engine layout
-package/module rename strategy
-incremental qualification order
+current DeliveryAlarmConfiguration field inventory
+field-by-field ownership classification
+RuntimeConfiguration final boundary
+ModelerConfiguration exact contract
+DeliveryConfiguration exact contract
+codec/materialization impact
+qualification plan
 ```
 
-## Working hypothesis
+No implementar todavía scheduling operacional del Modeler.
+
+## OPEN — ModelerConfiguration exact schema
+
+Debe resolverse:
 
 ```text
-all current ada-command-center/backend Alarm packages are Engine;
-Web-facing acquisition/resolution layers are the part to remove/invert.
+cómo se identifica CAROUSEL vs QUEUE_IN_QUEUE
+qué representa exactamente GENERIC / DISTRIBUTED
+qué "variante" adicional existe y dónde vive
+qué fields de Tool configuration se publican como primitives
+qué enrichment metadata necesita realmente Modeler
 ```
 
-This remains PROPOSED until verified package by package.
+No asumir valores que no estén en contrato/implementación o decisión explícita.
 
-## Known debt to remove
+## OPEN — Runtime → Modeler physical handoff
 
-At least `alarms-materialization-process` still depends on Web packages for configuration/projection acquisition.
+Semántica congelada:
 
-Target Engine must not depend on Command Center Web.
+```text
+durable
+ordered
+no-drop
+consumer checkpoint
+bounded memory
+```
+
+Elección física aún OPEN:
+
+```text
+coordinated CURRENT+FACTS reader
+vs
+explicit coherent model-input batch/document
+```
+
+Debe garantizar coherencia temporal/artifact y recovery.
+
+## OPEN — ModelerState durable minimum
+
+Definir exactamente qué persiste:
+
+```text
+input checkpoint
+candidate state
+scheduler cursors
+visible/hidden membership
+timer anchors
+rotation counters only if contractually needed
+current modeled heads
+liveness/disconnection metadata
+```
+
+Evitar persistir datos derivables innecesariamente.
+
+## OPEN — QUEUE_IN_QUEUE fairness
+
+Topología congelada:
+
+```text
+MINE: 4 components / 3 visible
+PLANT: 5 components / 3 visible
+```
+
+Pendiente:
+
+```text
+fairness dentro del mismo component
+vs
+fairness entre components
+tratamiento de components vacíos/nuevos
+selección después de desaparición abrupta
+```
+
+## OPEN — rotation window
+
+El usuario indicó rango candidato:
+
+```text
+90..120 seconds
+```
+
+No hay valor final.
+
+Debe ser configurable y validado; no hardcodear antes de decisión.
+
+## OPEN — configuration adoption with live Modeler state
+
+Cuando artifact/config cambia:
+
+```text
+A state/backlog -> B
+```
+
+definir:
+
+```text
+qué se preserva
+qué se reconcilia
+qué se reinicia
+qué invalida state
+cómo se evita mezclar artifacts
+```
+
+## OPEN — DeliveryConfiguration exact transport contract
+
+Responsabilidad congelada:
+
+```text
+transport/publication only
+```
+
+Fields físicos exactos aún deben inventariarse contra provisioning/connections actuales.
+
+## OPEN — residual `domain/alarms`
+
+Dirección conceptual decidida:
+
+```text
+next_routing_tool_kind -> Command Center validation
+ALARM_CONFIGURATION_SOURCE_KEY -> shared/primitive identity
+```
+
+Falta confirmar imports restantes antes de remover/rehome físicamente el package.
+
+## OPEN — physical extraction / namespaces
+
+Target scope:
+
+```text
+scopes/ada-alarm-engine
+```
+
+Aún no están congelados todos los package names / namespaces finales ni el orden físico exacto de movimiento.
+
+No introducir aliases legacy.
 
 ## BLOCKED / SEPARATE
 
-Full Command Center Web qualifier:
+Full Command Center Web qualifier por:
 
 ```text
-catalog            FAIL
-discovery-cosmos   FAIL
+ada.web.tools.*
+vs
+ada.contracts.tools.*
 ```
 
-Cause observed: duplicated Tool contract types between ADA Web and `ada-contracts-tools`.
+No resolver dentro del Modeler/Alarm Engine contract split.
 
-Do not patch Alarm contracts for this.
-
-## PLANNED / AFTER EXTRACTION DESIGN
-
-- physical move/rename to `scopes/ada-alarm-engine`;
-- deterministic Materialization cleanup;
-- distribution/build qualification;
-- independent Docker jobs;
-- Live Projection;
-- History/Analytics;
-- production Azure/Entra validation.
-
-## Frozen invariants
+## PLANNED after contract split
 
 ```text
-contracts before consumers
-READY != EFFECTIVE
-exact artifact pin
-Runtime and Delivery same exact artifact
-no fallback to latest READY
-no legacy adapters by inference
-no Tool semantic rediscovery in target Materialization
-no Engine dependency on Command Center Web
+Modeler persistence/state
+CAROUSEL implementation
+QUEUE_IN_QUEUE implementation
+Modeler -> Delivery heads
+Delivery transport cutover
+physical scope extraction
+distribution/Docker qualification
 ```
+
+Un frente por incremento.

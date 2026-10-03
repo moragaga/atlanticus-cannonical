@@ -1,6 +1,6 @@
 # Alarm Engine — Decision Index
 
-Estado: **CURRENT at `atlanticus@346e7ac7...`**.
+Estado: **CURRENT at repository HEAD `atlanticus@09e9acf6...`; Alarm implementation unchanged since `346e7ac7...`**.
 
 | Frontera | Estado |
 |---|---|
@@ -8,30 +8,46 @@ Estado: **CURRENT at `atlanticus@346e7ac7...`**.
 | Source snapshot + exact Tool manifest | CURRENT. |
 | Shared Tool contracts | CURRENT in `ada-contracts-tools`. |
 | Shared Alarm contracts | CURRENT in `ada-contracts-alarms`. |
-| `domain/tools` | SUPERSEDED / removed. |
 | Published valid configuration | CURRENT: `AlarmConfigurationSnapshot`. |
 | Public `ResolvedAlarmConfiguration` stage | SUPERSEDED. |
-| Materialization deterministic splitter | CURRENT target / implementation cleanup pending. |
-| READY/EFFECTIVE exact pin | CURRENT. |
+| Materialization Runtime+Delivery pair | CURRENT implemented / SUPERSEDED target. |
+| Materialization Runtime+Modeler+Delivery split | CURRENT decision / PLANNED implementation. |
+| READY/EFFECTIVE exact pin | CURRENT / frozen. |
 | Engine CURRENT v1 / FACTS v2 | CURRENT. |
-| Delivery input CURRENT-only + FACTS | CURRENT. |
-| Command Center capability parity | CLOSED. |
-| Engine physical extraction | PLANNED / NEXT DESIGN. |
-| Live Projection / History / Analytics | PLANNED / separate. |
+| Direct Delivery input CURRENT+FACTS | CURRENT implemented / SUPERSEDED target. |
+| Runtime→Modeler durable ordered handoff semantics | CURRENT decision / physical schema OPEN. |
+| Modeler stateful backend responsibility | CURRENT decision / PLANNED implementation. |
+| Modeler→Delivery latest-wins per destination | CURRENT decision / physical schema OPEN. |
+| CAROUSEL six-slot semantics | DESIGN FROZEN partial. |
+| QUEUE_IN_QUEUE Mine/Plant topology | DESIGN FROZEN partial. |
+| QUEUE_IN_QUEUE fairness | OPEN. |
+| Rotation window 90/120 s | OPEN. |
+| Modeler config adoption with live state | OPEN. |
+| Engine physical extraction | PLANNED. |
+| History / Analytics | PLANNED / separate. |
 
 ## Refinements from this closure
 
-1. Command Center capability parity no longer blocks Alarm/contract qualification.
-2. Full Web qualification is now blocked separately by duplicated Tool contract types upstream.
-3. Do not modify ADA as part of the Command Center or Alarm Engine extraction closure.
-4. The next Engine design starts with the full `scopes/ada-command-center/backend` as candidate ownership, not only `alarms/core`.
-5. Dependencies from that backend toward Command Center Web are debt to REMOVE/INVERT, not dependencies to preserve.
-6. Physical extraction to `scopes/ada-alarm-engine` requires a frozen dependency graph before implementation.
-7. `ada-command-center/domain/alarms` must be reclassified explicitly rather than dragged across by path.
+1. El Engine target incorpora un `Modeler` backend lógico stateful entre Runtime y Delivery.
+2. El actual `DeliveryAlarmConfiguration` se reconoce como mezcla de Modeler + Delivery concerns.
+3. Materialization target pasa de dos artefactos a tres: Runtime / Modeler / Delivery.
+4. Runtime conserva la verdad operacional; Modeler conserva estado lógico de slots/colas/timers; Delivery queda transporte/publicación.
+5. El consumo directo Runtime → Delivery sigue siendo CURRENT implementado pero queda SUPERSEDED como target.
+6. Runtime nunca espera a Modeler y Modeler nunca espera a Delivery para persistir su propio estado.
+7. Runtime → Modeler requiere stream/handoff durable, ordenado y no-drop con checkpoint del consumidor.
+8. Modeler → Delivery usa latest-wins por destination con checkpoints independientes.
+9. CAROUSEL mantiene siempre seis posiciones físicas.
+10. Con 0..1 DISTRIBUTED se usa un único carousel de seis posiciones.
+11. Con 2+ DISTRIBUTED, posiciones 1..5 forman el scheduler normal y posición 6 tiene scheduler DISTRIBUTED independiente.
+12. QUEUE_IN_QUEUE mantiene schedulers independientes MINE/PLANT, con 4/5 components respectivamente y 3 slots visibles por área.
+13. Recovery del Modeler reconstruye el presente desde state+checkpoint+replay; no reproduce obligatoriamente todas las rotaciones atrasadas.
+14. No crear adapters/mirror types sólo para leer Tool metadata externa.
 
 ## Open conflicts
 
-- backend Materialization still depends on Web packages;
-- physical package/module names still use `ada_command_center`;
-- historical documentation that states the Engine necessarily belongs to Command Center is SUPERSEDED as a target direction but remains true of current physical location;
-- Tool contract duplication blocks the full Web qualifier and is outside this next focus.
+- Materialization CURRENT todavía repite semantic validation que el target asigna a Command Center pre-publicación.
+- Materialization CURRENT todavía depende de Web/projection packages.
+- `DeliveryAlarmConfiguration` CURRENT importa `ToolConfigurationKind`, incompatible con el target de Engine sin Tool-model dependency.
+- Canonical histórico que describe Delivery como consumidor directo de Runtime sigue siendo cierto de la implementación, pero no del target.
+- `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` decía que Delivery receiver “no es proceso Engine”; esa formulación debe leerse como descripción del receiver CURRENT, no como prohibición de un Delivery target dentro del Alarm Engine.
+- Tool contract duplication `ada.web.tools.*` vs `ada.contracts.tools.*` bloquea el qualifier Web y permanece fuera de este frente.

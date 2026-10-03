@@ -1,26 +1,35 @@
-# Alarm Engine — Command Center / Web / Analytics Boundary
+# Alarm Engine — Command Center / Modeler / Delivery / Web / Analytics Boundary
 
-Estado: **REFINED / PLANNED — Engine extraction design NEXT; physical implementation not moved yet**.
+Estado: **REFINED / TARGET DESIGN FROZEN; physical implementation still under Command Center backend**.
 
 ## 1. Principle
 
-Command Center owns configuration authoring and publication.
+Command Center owns configuration authoring, semantic validation and publication.
 
-Alarm Engine owns backend execution, state, materialization, persistence, runtime and delivery.
+Alarm Engine owns backend execution and state:
 
-Web consumes projections/results and must not become an Engine dependency.
+```text
+core
+materialization
+persistence
+runtime
+modeler
+delivery
+```
 
-Analytics builds read models from durable facts and does not mutate Engine state.
+Web consumes modeled projections/results and must not become an Engine dependency.
+
+Analytics builds read models from durable facts and does not mutate Engine operational state.
 
 ## 2. Current physical state
 
-Today the Engine implementation is physically located under:
+CURRENT:
 
 ```text
 scopes/ada-command-center/backend
 ```
 
-Candidate Engine packages:
+contains:
 
 ```text
 alarms/core
@@ -31,27 +40,15 @@ processes/alarms-runtime
 processes/alarms-delivery
 ```
 
-This physical location is CURRENT.
+No `alarms-modeler` process exists yet.
 
-## 3. Working ownership hypothesis
-
-PROPOSED for next design:
-
-```text
-all current Alarm backend packages belong to ada-alarm-engine
-```
-
-The extraction should not cherry-pick only pure core.
-
-Instead, remove/invert the layers that point from backend into Command Center Web.
-
-## 4. Target direction
+## 3. Target direction
 
 ```text
 ADA Command Center
     authoring
     business validation
-    Tool/reference validation
+    Tool/reference validation/resolution
     routing/visual validation
     publication
         ↓
@@ -61,27 +58,29 @@ ADA Alarm Engine
     materialization
     persistence
     runtime
+    modeler
     delivery
         ↓
-durable operational facts / projections
+projection store / durable modeled heads
         ↓
-Command Center Web / Analytics
+Command Center Web
+
+Engine durable facts
+        ↓
+History / Analytics
 ```
 
-Dependency direction is one-way across the publication boundary.
+Dependency direction is one-way across publication/consumption boundaries.
 
-## 5. Materialization
-
-Target responsibility:
+## 4. Materialization target
 
 ```text
 published Alarm configuration
         ↓
-contract validation
-        ↓
-deterministic split/materialization
-        ├── runtime artifact
-        └── delivery artifact
+deterministic split
+        ├── RuntimeConfiguration
+        ├── ModelerConfiguration
+        └── DeliveryConfiguration
 ```
 
 It must not:
@@ -90,115 +89,153 @@ It must not:
 discover Tools
 query Command Center Tool Catalog
 import Configuration Manager
-import Command Center Web Alarm projection
-depend on atlanticus.web.source/projection only to understand Engine configuration
-repeat semantic resolution already closed before publication
+import Command Center Web projection packages
+repeat semantic resolution closed before publication
 ```
 
-## 6. Runtime
+## 5. Runtime
 
 Runtime owns:
 
 ```text
 evaluation
-lifecycle
-priority
+occurrence / episode
+priority semantics
 management/deactivation runtime effects
+assignments
 adoption/effective configuration
 durable execution facts
 ```
 
-Runtime does not know layout or Web consumers.
+Runtime does not know carousel/queue-in-queue slots or physical publication destinations.
 
-## 7. Persistence
+## 6. Modeler
 
-Engine persistence owns its durable operational state/WAL and recovery semantics.
+Modeler is Engine backend logic, not Web.
 
-Its physical implementation may use generic Atlanticus backend/connectivity capabilities, but it must not depend on Command Center Web.
-
-## 8. Delivery
-
-Delivery consumes Engine state/facts and the exact delivery configuration matching the same effective artifact.
-
-It may carry stable semantic routing keys, but not layout geometry or CSS.
-
-## 9. Web
-
-Web decides:
+It owns logical presentation state that requires memory/time:
 
 ```text
-layout
-visual composition
-CSS/theme
-presentation
+slot membership
+ordering
+visible/hidden queues
+carousel rotation
+queue-in-queue rotation
+timer anchors
+reconciliation
+checkpoint/recovery
+modeled heads
 ```
 
-Engine decides:
+It may know logical `component_key`, `subcomponent_key`, logical slot number and projection mode because these are part of the projection contract.
+
+It must not know:
 
 ```text
-alarm existence/state
-semantic color
-logical routing target
-operational lifecycle/priority
+CSS
+Dash callback graph
+pixel dimensions
+browser sessions
+Web component instances
 ```
 
-Web does not read WAL directly.
+This refines older wording that the Engine does not know “layout”: Engine Core/Runtime do not know UI layout; Modeler may know **logical projection positions**, not Web geometry.
 
-## 10. Analytics
+## 7. Delivery
 
-Analytics consumes durable facts such as:
+CURRENT implementation consumes Runtime CURRENT/FACTS directly.
+
+Target Delivery:
+
+```text
+consumes already modeled heads/documents
+publishes them to resolved destinations
+handles connection/retry/batching/transport concerns
+```
+
+Delivery does not decide ordering, dwell time, movement or queue semantics.
+
+## 8. Web
+
+Web:
+
+```text
+reads published modeled state
+renders it
+owns CSS/theme/pixel layout
+```
+
+Web does not:
+
+```text
+read WAL
+run carousel timers
+run queue-in-queue fairness
+reconstruct operational state
+```
+
+## 9. Analytics
+
+Analytics consumes durable Engine facts such as:
 
 ```text
 Occurrence/Episode
 Journey
 Evidence
 management/deactivation
-routing
+routing/assignment
 priority transitions
 configuration revisions
-delivery/publication revisions when needed
 ```
 
 Keep separate:
 
 ```text
-Live Projection
-Management Projection
+Live modeled projection
+Management modeled projection
 History/Analytics
 ```
 
-## 11. Known inverted dependencies
+Modeled projection behavior must not become a prerequisite for preserving operational history.
 
-CURRENT implementation contains backend → Web dependencies, especially in Materialization acquisition.
-
-These edges are **TO REMOVE / INVERT**, not contracts to preserve during the move.
-
-## 12. domain/alarms
-
-`scopes/ada-command-center/domain/alarms` currently contains residual source/routing policy.
-
-Its final owner is OPEN.
-
-The next design must classify each element:
+## 10. Backpressure boundary
 
 ```text
-KEEP in Command Center
-MOVE to Engine
-REHOME to ada-contracts-alarms
-REMOVE
+Runtime never waits Modeler.
+Modeler never waits Delivery for its state commit.
+One Delivery destination never blocks other destinations.
 ```
 
-## 13. Next design deliverable
+Pending work lives in durable state, not unbounded process memory.
 
-Before code movement, produce:
+## 11. Known CURRENT inverted dependencies
+
+Materialization acquisition still depends on Web/projection packages.
+
+These edges are **TO REMOVE / INVERT**, not contracts to preserve.
+
+## 12. Residual `domain/alarms`
+
+Target direction:
 
 ```text
-current dependency graph
-target dependency graph
-package MOVE/STAY/REMOVE/INVERT/REHOME matrix
-exact publication boundary
-incremental extraction order
-qualification plan
+routing policy -> Command Center pre-publication validation
+source key -> shared/primitive publication identity
 ```
 
-Only after consensus should `scopes/ada-alarm-engine` be implemented.
+Physical cleanup remains OPEN until import inventory.
+
+## 13. History of the direct Delivery receiver
+
+The current receiver is valid implementation evidence.
+
+Its existence does not freeze the target architecture.
+
+Target transition:
+
+```text
+Runtime -> Delivery     CURRENT implementation
+Runtime -> Modeler -> Delivery   target
+```
+
+The first becomes SUPERSEDED only as a target contract until implementation cutover.

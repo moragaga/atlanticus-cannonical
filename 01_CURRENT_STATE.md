@@ -1,156 +1,46 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT — COMMAND CENTER CAPABILITY PARITY CLOSED; ALARM ENGINE EXTRACTION DESIGN NEXT**
+Estado: **CURRENT — ALARM ENGINE EXTRACTION BOUNDARY REFINED; MODELER TARGET DESIGN FROZEN; IMPLEMENTATION NEXT**
 
 ## Autoridad
 
 ```text
-Implementation
+Implementation HEAD inspected
+moragaga/atlanticus@09e9acf6edf6f84a66a4a0a041ad9a8f645daf79
+
+Alarm implementation unchanged since
 moragaga/atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
 
-Canonical before replacement
-moragaga/atlanticus-cannonical@19fe30dcc2f34dbe7a0c4615c188409ace2089b8
+Canonical source before these replacements
+moragaga/atlanticus-cannonical@f02b4740ca1002b060afdb94d142f2e2d8d588af
 ```
 
-## CLOSED / VERIFIED relevante
+El compare `346e7ac7...09e9acf6` contiene cuatro commits y ningún cambio bajo las rutas Alarm del Command Center. Por tanto el inventario/lectura de Alarm realizado contra `main` continúa representando la implementación relevante de este frente.
+
+## CLOSED / VERIFIED previo relevante
 
 ```text
-ADA-TOOL-SCOPED-SOURCE-OWNERSHIP
-ADA-USERS-GLOBAL-IDENTITY
-ADA-TOOL-USER-MEMBERSHIP
-ADA-USERS-RUNTIME
-ADA-USERS-RECOVERY-SNAPSHOT
-MASTER-PROJECTION-USERS-REPLACE
-
-KPI-NAMED-CONNECTIONS
-KPI-REGISTRY-MATERIALIZATION
-KPI-LATEST-MULTI-TOOL-DELIVERY
-KPI-HISTORIAN-ROLLING-READ-MODEL
-KPI-TIMESERIES-MULTI-TOOL-DELIVERY
-KPI-HISTORY-DATASET-BOUNDARY
-
 COMMAND-CENTER-USERS-PROFILES-NAVIGATION-MANAGER-PARITY
 COMMAND-CENTER-WEB-LOCK-NORMALIZATION
+
+Alarm shared contracts
+Alarm Core lifecycle/priority/persistence
+READY != EFFECTIVE
+exact artifact adoption
+Engine CURRENT v1
+Engine FACTS v2
+current direct Delivery input receiver
 ```
 
-## Command Center capability parity CURRENT
+## Alarm backend CURRENT físico
 
-`ada-command-center` consume ahora las capabilities genéricas actuales sin API legacy de Users.
-
-```text
-UsersRegistryStore
-ToolMembershipStore
-UsersRuntimeStore
-UsersDirectoryReader
-
-UsersAdministrationService(
-    registry=...,
-    memberships=...,
-    profiles=...,
-    directory=...,
-)
-```
-
-Composición durable:
-
-```text
-Global Users Registry
-    <application>/users/users.json.gz
-
-Tool Membership
-    <application>/<tool>/users/memberships.json.gz
-
-Users Runtime
-    Cosmos users-runtime por Tool
-
-Users Recovery
-    <application>/<tool>/users/recovery/...
-```
-
-Navigation usa la autoridad genérica `NAVIGATION_SOURCE_KEY` y la semántica `PUBLIC | RESTRICTED`.
-
-Manager principal/runtime binding sigue el contrato de `RuntimeUser`, con override root y local sólo bajo ambiente local confiable.
-
-Users permanece una operación especial de recovery en Master Projection; no es un `ProjectionDomain` ordinario.
-
-## Qualification focal del cierre
-
-Reportado y verificado en el hito:
-
-```text
-ada-command-center-configuration-manager   31 passed
-ada-command-center-generic-application     12 passed
-ada-command-center-web-tool-catalog-manager 8 passed
-
-Ruff focal                            PASS
-```
-
-Los cuatro lockfiles alcanzados por el qualifier fueron normalizados y posteriormente integrados en `atlanticus:main`:
-
-```text
-web/application/ada-command-center-generic-application/uv.lock
-web/tools/catalog-manager/uv.lock
-web/tools/catalog/uv.lock
-web/tools/discovery-cosmos/uv.lock
-```
-
-Para los cuatro:
-
-```text
-uv lock --check     PASS
-uv sync --locked    PASS
-```
-
-## BLOCKED separado
-
-```text
-COMMAND-CENTER-FULL-WEB-QUALIFIER
-```
-
-El qualifier ya no está bloqueado por Users / Profiles / Navigation / Manager.
-
-El bloqueo observado está en la frontera Tools:
-
-```text
-catalog
-    7 failed / 5 passed
-
-discovery-cosmos
-    1 failed / 33 passed
-```
-
-Causa observada:
-
-```text
-ToolCatalogEntry espera:
-    ada.contracts.tools.ToolConfigurationKind
-    ada.contracts.tools.ToolStructure
-
-ADA ToolConfiguration actual produce:
-    ada.web.tools.ToolConfigurationKind
-    ada.web.tools.ToolStructure
-```
-
-Los valores documentales pueden coincidir, pero las clases Python no son idénticas.
-
-Tratamiento:
-
-```text
-NO modificar ADA dentro de este hito
-NO relajar ToolCatalogEntry
-NO introducir adapters/shims en Command Center
-registrar el bloqueo y continuar en el frente correspondiente cuando se abra ADA
-```
-
-## Alarm backend CURRENT
-
-Físicamente continúa bajo:
+Continúa bajo:
 
 ```text
 scopes/ada-command-center/backend/
 ```
 
-Incluye:
+Paquetes candidatos del Engine:
 
 ```text
 alarms/core
@@ -161,20 +51,269 @@ processes/alarms-runtime
 processes/alarms-delivery
 ```
 
-Hipótesis de trabajo acordada para el próximo chat:
+El target físico sigue siendo extracción limpia hacia `scopes/ada-alarm-engine`; no se implementó durante este hito.
+
+## Materialization CURRENT implementado
+
+El artefacto materializado actual contiene pareja:
 
 ```text
-ese backend constituye en esencia el Alarm Engine;
-la extracción debe conservarlo como unidad y remover/invertir
-las capas que todavía apuntan a Command Center Web.
+RuntimeAlarmConfiguration
+DeliveryAlarmConfiguration
 ```
 
-Esta hipótesis es **PROPOSED / PLANNED**, todavía no una extracción implementada.
-
-## NEXT
+`DeliveryAlarmConfiguration` contiene información que hoy mezcla responsabilidades de modelado/proyección y entrega, incluyendo:
 
 ```text
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN
+Alarm identity + display metadata
+messages
+visual_targets
+    tool_key
+    tool_kind
+    component_keys
+    subcomponents
+    process_projection_mode
 ```
 
-Primero inventario/dependency graph. Implementación sólo después de congelar contratos y ownership.
+`ProcessAlarmProjectionMode` actual define:
+
+```text
+GENERIC
+DISTRIBUTED
+```
+
+## Runtime publication CURRENT implementado
+
+Runtime publica:
+
+```text
+runtime/output/current/latest.json
+runtime/output/facts/facts-<hash>.json
+runtime/output/state/facts-export-cursor.json
+```
+
+CURRENT v1 contiene estado operacional completo de occurrences abiertas, incluyendo evaluación, prioridad, holds, management/deactivation y assignments.
+
+FACTS v2 contiene lotes durables encadenados por `previous_batch`, `journal_position`, commit/hash y records.
+
+## Delivery input CURRENT implementado
+
+El proceso actual `alarms-delivery` recibe directamente CURRENT/FACTS y mantiene su inbox/cursor propio.
+
+Esta implementación sigue siendo **CURRENT / VERIFIED**.
+
+Como frontera target, el consumo directo Runtime → Delivery queda **SUPERSEDED** por la decisión de diseño de este hito:
+
+```text
+Runtime
+    ↓
+Modeler
+    ↓
+Delivery
+```
+
+No borrar ni reinterpretar la evidencia CURRENT hasta que el nuevo pipeline esté implementado y cualificado.
+
+## Target Engine pipeline — DESIGN FROZEN / IMPLEMENTATION PLANNED
+
+### Configuration plane
+
+```text
+Command Center
+    authoring
+    semantic validation
+    Tool/reference resolution
+    routing/visual validation
+    publication
+        ↓
+AlarmConfigurationSnapshot
+        ↓
+Materialization
+        ├── RuntimeConfiguration
+        ├── ModelerConfiguration
+        └── DeliveryConfiguration
+```
+
+### Data plane
+
+```text
+Runtime
+    ↓ durable / ordered / no-drop handoff
+Modeler
+    ↓ durable latest head per destination
+Delivery
+    ↓ transport/publication
+Projection Store / Cosmos
+    ↓
+Web
+```
+
+## Modeler ownership — DESIGN FROZEN
+
+Modeler es una capa lógica backend stateful del Alarm Engine.
+
+Posee:
+
+```text
+logical slots/positions
+ordering
+rotation timers
+queue state
+carousel state
+queue-in-queue state
+change reconciliation
+recovery/checkpoint
+disconnection/staleness state when contractually defined
+modeled projection heads
+```
+
+No posee:
+
+```text
+CSS
+Dash layout
+pixel geometry
+Web callbacks
+Cosmos transport mechanics
+Tool Catalog discovery
+```
+
+Runtime conserva verdad operacional de alarmas; Modeler deriva el estado lógico consumible; Delivery publica el resultado ya modelado.
+
+## CAROUSEL — DESIGN FROZEN parcial
+
+Siempre existen seis posiciones físicas.
+
+Con `0..1` alarmas `DISTRIBUTED` elegibles:
+
+```text
+un solo carousel
+capacity = 6
+GENERIC y una DISTRIBUTED pueden ocupar las mismas seis posiciones
+```
+
+Con `2+` alarmas `DISTRIBUTED` elegibles:
+
+```text
+positions 1..5
+    scheduler normal
+
+position 6
+    scheduler DISTRIBUTED independiente
+```
+
+La cola normal y la cola DISTRIBUTED rotan de forma independiente.
+
+Dentro de cada región las posiciones visibles se mantienen compactas sin huecos.
+
+Desaparición, gestión o pérdida de elegibilidad provoca reconciliación inmediata; el timer no obliga a conservar una alarma que ya no es elegible.
+
+La ventana exacta `90 vs 120 segundos` permanece OPEN.
+
+## QUEUE_IN_QUEUE — DESIGN FROZEN parcial
+
+Topología acordada:
+
+```text
+MINE
+    4 components
+    3 posiciones visibles totales
+
+PLANT
+    5 components
+    3 posiciones visibles totales
+
+total máximo visible = 6
+```
+
+Un component puede contener más alarmas elegibles que sus alarmas actualmente visibles; existen candidatos ocultos.
+
+MINE y PLANT evolucionan de forma independiente.
+
+El algoritmo exacto de fairness entre:
+
+```text
+alarmas ocultas del mismo component
+vs
+candidatos de otros components
+```
+
+permanece OPEN.
+
+La ventana exacta `90 vs 120 segundos` permanece OPEN.
+
+## Throughput / backpressure — DESIGN FROZEN
+
+```text
+Runtime nunca espera al Modeler.
+Modeler nunca espera a Delivery para persistir su propio estado.
+```
+
+Runtime → Modeler:
+
+```text
+durable
+ordered
+no-drop para los cambios necesarios
+checkpoint propiedad del Modeler
+bounded reads / bounded memory
+```
+
+Modeler → Delivery:
+
+```text
+latest-wins por destination/projection head
+checkpoint independiente por destino
+un destino lento no bloquea los demás
+```
+
+El backlog pertenece a almacenamiento durable, no a memoria de los procesos.
+
+## Recovery — DESIGN FROZEN
+
+Modeler debe persistir checkpoint y estado suficiente para:
+
+```text
+load durable state
+replay sólo cambios posteriores al checkpoint
+reconcile against now
+rebuild current modeled head
+continue
+```
+
+No reproducir como frames visibles todas las rotaciones históricas vencidas durante una caída.
+
+Cambios múltiples de un mismo batch/ciclo se reconcilian antes de emitir una nueva revisión modelada; no publicar una secuencia de estados intermedios inútiles durante inicialización masiva.
+
+## BLOCKED separado
+
+```text
+COMMAND-CENTER-FULL-WEB-QUALIFIER
+```
+
+Sigue separado por coexistencia de tipos Tool:
+
+```text
+ada.web.tools.*
+ada.contracts.tools.*
+```
+
+No resolverlo como parte del Alarm Engine / Modeler.
+
+## NEXT único
+
+```text
+ADA-ALARM-ENGINE-MATERIALIZATION-CONTRACT-SPLIT
+```
+
+Objetivo:
+
+```text
+definir con precisión y luego implementar incrementalmente
+la separación del actual DeliveryAlarmConfiguration en:
+
+ModelerConfiguration
+DeliveryConfiguration
+```
+
+sin implementar todavía CAROUSEL/QUEUE_IN_QUEUE y sin mezclar la extracción física completa.

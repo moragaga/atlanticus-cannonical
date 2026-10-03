@@ -1,16 +1,24 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **CURRENT implementation + target boundary frozen at contract level; physical extraction PLANNED/NEXT DESIGN**.
+Estado: **CURRENT implementation + target Runtime/Modeler/Delivery split DESIGN FROZEN; implementation PLANNED**.
 
-Checkpoint:
+Implementation checkpoint relevante de Alarm:
 
 ```text
 atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
 ```
 
-## Published configuration CURRENT
+Repository HEAD inspeccionado:
 
-Shared configuration lives in `ada-contracts-alarms`.
+```text
+atlanticus@09e9acf6edf6f84a66a4a0a041ad9a8f645daf79
+```
+
+Los commits entre ambos no modifican rutas Alarm.
+
+## 1. Published configuration CURRENT
+
+Shared configuration vive en `ada-contracts-alarms`.
 
 ```text
 AlarmConfigurationSnapshot
@@ -18,13 +26,11 @@ AlarmConfigurationSnapshot
     tool_dependencies: ToolDependencyManifest
 ```
 
-`ToolDependencyManifest` lives in `ada-contracts-tools`.
+El snapshot publicado preserva la Tool Catalog revision confirmada.
 
-Published snapshot preserves the exact Tool Catalog revision used by Command Center.
+## 2. Command Center semantic ownership — FROZEN
 
-## Command Center semantic ownership CURRENT
-
-Before publication, Command Center owns:
+Antes de publicación, Command Center posee:
 
 ```text
 authoring
@@ -35,73 +41,202 @@ visual target validation
 publication
 ```
 
-A published snapshot means valid/materializable according to the current contract.
+Una publicación debe llegar al Engine ya semanticamente válida/materializable.
 
-## Materialization target
+Materialization target no debe rediscover Tools ni repetir semantic resolution.
+
+## 3. Materialization CURRENT implementado
+
+Actualmente produce:
+
+```text
+RuntimeAlarmConfiguration
+DeliveryAlarmConfiguration
+```
+
+`DeliveryAlarmConfiguration` mezcla información de modelado y entrega.
+
+Campos verificados relevantes:
+
+```text
+ResolvedDeliveryAlarm
+    identity
+    is_active
+    visibility_mode
+    display_name
+    title
+    cause_template
+    kind
+    criticality
+    business_category
+    operational_areas
+    color
+    deactivation policies/messages
+    visual_targets
+
+ResolvedVisualTarget
+    tool_key
+    tool_kind
+    component_keys
+    subcomponents
+    process_projection_mode
+```
+
+`tool_kind` usa actualmente `ada.contracts.tools.ToolConfigurationKind`.
+
+`process_projection_mode` usa:
+
+```text
+GENERIC
+DISTRIBUTED
+```
+
+## 4. Materialization target — REFINED / DESIGN FROZEN
+
+SUPERSEDED como target:
+
+```text
+published AlarmConfigurationSnapshot
+        ↓
+RuntimeAlarmConfiguration
+DeliveryAlarmConfiguration
+```
+
+Target:
 
 ```text
 published AlarmConfigurationSnapshot
         ↓
 deterministic materialization
-        ├── RuntimeAlarmConfiguration
-        └── DeliveryAlarmConfiguration
+        ├── RuntimeConfiguration
+        ├── ModelerConfiguration
+        └── DeliveryConfiguration
 ```
 
-Materialization must not rediscover Tools or redo semantic resolution already closed upstream.
+Los tres artefactos deben formar parte del mismo result/materialization y compartir el exact artifact pin.
 
-`ResolvedAlarmConfiguration` as an extra published stage remains SUPERSEDED.
+## 5. RuntimeConfiguration target
 
-## Current implementation debt
-
-Physical implementation still lives under Command Center backend and Materialization retains dependencies from the previous acquisition model.
-
-Known debt includes backend dependencies toward Web/projection packages.
-
-These dependencies are not target contracts.
-
-## Next extraction rule
-
-The next design increment treats:
+Contiene exclusivamente lo necesario para evaluación/ejecución operacional:
 
 ```text
-backend/alarms/*
-backend/processes/alarms-*
+defined alarm identities
+planned alarms
+evaluator references
+runtime parameters
+priority/lifecycle execution inputs
 ```
 
-as a single candidate Engine boundary.
+No contiene carousel, queue-in-queue, component/subcomponent projection logic ni destino físico de publicación.
 
-During extraction, classify dependencies:
+## 6. ModelerConfiguration target
+
+Debe recibir la información pre-resuelta necesaria para producir el estado lógico consumible por una proyección.
+
+Candidatos ya observados en el contrato actual:
 
 ```text
-KEEP
-MOVE
-REMOVE
-INVERT
-REHOME
+alarm identity
+visibility
+display semantic metadata
+messages/enrichment data needed downstream
+logical target key
+component keys
+subcomponent addresses
+process projection mode
 ```
 
-Do not preserve backend → Web edges with shims.
+Además deberá expresar la estrategia/configuración necesaria para:
 
-## Pin/adoption invariants — FROZEN
+```text
+CAROUSEL
+QUEUE_IN_QUEUE
+rotation windows
+logical capacity/partitioning
+```
+
+### Exact schema — OPEN
+
+No inventar todavía:
+
+```text
+model type enum
+queue_in_queue variant field
+fairness policy fields
+rotation default
+```
+
+Deben derivarse del contrato/Tool configuration real o definirse explícitamente en el siguiente incremento.
+
+## 7. DeliveryConfiguration target
+
+Debe quedar reducida a información de entrega/transporte ya resuelta.
+
+Responsabilidad target:
+
+```text
+destination identity
+physical connection/reference
+container/topic/store target
+transport/publication options
+```
+
+### Exact fields — OPEN
+
+No congelar `connection_ref`, `container_name` u otros detalles como contrato público hasta inventariar cómo se provisionan las proyecciones actuales.
+
+Principio congelado:
+
+```text
+Delivery no decide modelado.
+Delivery publica documentos ya modelados.
+```
+
+## 8. Tool dependency cleanup — FROZEN direction
+
+El Engine target no debe depender de `ada-contracts-tools` sólo para transportar algunos valores externos.
+
+No crear:
+
+```text
+EngineToolKind mirrors ToolConfigurationKind
+EngineToolStructure mirrors ToolStructure
+adapters sólo para leer enum/attributes
+```
+
+Regla:
+
+```text
+transport-only external value
+    -> primitive/documented value
+
+Alarm semantic decision
+    -> Alarm-owned type
+```
+
+`ToolDependencyManifest` puede seguir siendo provenance/audit del snapshot publicado, pero no obliga a que el Modeler/Runtime consuma tipos Tool completos.
+
+## 9. Residual Command Center domain
+
+`next_routing_tool_kind()` pertenece conceptualmente a validación/routing pre-publicación en Command Center.
+
+`ALARM_CONFIGURATION_SOURCE_KEY` es identidad de publicación compartida/primitiva; no justifica un módulo completo como dependencia del Engine.
+
+La rehome/eliminación física sigue OPEN hasta inventario final.
+
+## 10. Exact pin/adoption invariants — FROZEN
 
 ```text
 READY != EFFECTIVE
-exact artifact pin
 source_key + result_id + manifest_sha256 + resolution_key
-Runtime and Delivery use same exact artifact
+Runtime, Modeler y Delivery usan el mismo exact artifact
 no fallback to latest READY
 ```
 
-## Engine publication schemas CURRENT
+## 11. Current implementation debt
 
-Authority:
+Materialization todavía contiene semantic checks y dependencias hacia Web/projection packages del modelo anterior.
 
-```text
-ada-contracts-alarms/ada/contracts/alarms/schemas
-```
+Mover ese código tal cual sería mover deuda de frontera.
 
-Do not restore historical copies under backend.
-
-## Separate blocker
-
-The Tool Catalog qualifier failure caused by `ada.web.tools.*` vs `ada.contracts.tools.*` is outside this materialization/extraction increment.
+La extracción debe limpiar la frontera, no conservarla mediante adapters.
