@@ -1,10 +1,10 @@
 # KPI Backend Recovery — Timeseries Delivery
 
-Estado: **CURRENT IMPLEMENTATION / PLANNED REPLACEMENT**
+Estado: **CURRENT LEGACY IMPLEMENTATION / PLANNED NEXT REPLACEMENT**
 
 ## CURRENT implementación en main
 
-La implementación actual todavía corresponde al contrato anterior:
+La implementación vigente aún corresponde al contrato anterior:
 
 ```text
 single Cosmos connection
@@ -16,13 +16,76 @@ single Timeseries output
 step_seconds = 120
 ```
 
-Este código sigue siendo realidad implementada hasta que el reemplazo se implemente y valide.
+Esta implementación sigue siendo realidad hasta que el reemplazo se implemente y valide.
 
-No describir el diseño nuevo como CURRENT antes de ese cutover.
+No describir el diseño nuevo como CURRENT antes del cutover.
 
 ## SUPERSEDED como dirección futura
 
-La estrategia de que Timeseries Delivery reconstruya ventanas leyendo historia durable por cada configuración queda reemplazada conceptualmente por un rolling read model producido por Historian.
+Queda SUPERSEDED la estrategia futura de reconstruir cada ventana Timeseries leyendo directamente
+la historia durable.
+
+El consumidor nuevo debe usar el rolling CURRENT producido por Historian.
+
+## Upstream CURRENT / congelado
+
+Historian ya publica:
+
+```text
+<application_root>/timeseries/current.parquet
+```
+
+Contrato disponible:
+
+```text
+schema_version      = 1
+grid_seconds        = 30
+max_hours           = 24
+shape               = wide
+timestamp_utc       = timestamp(us, UTC)
+metadata key        = ada_kpi_timeseries
+write               = atomic replacement
+physical coverage   = observed only
+```
+
+Metadata:
+
+```text
+schema_version
+watermark_utc
+historian_revision
+grid_seconds
+max_hours
+coverage_start_utc
+coverage_end_utc
+value_types
+```
+
+Timeseries debe validar coherencia exacta contra `HistorianAuthority`.
+
+No debe consumir una vista adelantada, corrupta o contractualmente incompatible.
+
+## Registry CURRENT / congelado
+
+El Registry materializado expone por KPI:
+
+```text
+kpi_key
+destination_keys
+latest_enabled
+series_enabled
+series_hours
+```
+
+Invariante:
+
+```text
+series_enabled = true  → series_hours in 1..24
+series_enabled = false → series_hours = None
+```
+
+El reemplazo de Timeseries debe consumir el Registry materializado y no volver a leer el Registry
+operacional directamente desde Cosmos.
 
 ## PLANNED target
 
@@ -40,12 +103,12 @@ consolidate required series in memory
 RUNNING:
 
 ```text
-read Historian authority
-validate rolling read-model coherence
-read rolling wide Parquet once
+read HistorianAuthority
+validate rolling metadata/revision coherence
+read rolling wide Parquet once per relevant watermark
 hydrate requested logical grid
 build snapshot per Tool
-publish Tools in parallel
+publish Tools with bounded parallelism
 checkpoint each successful Tool
 ```
 
@@ -58,12 +121,13 @@ required_columns = union(series_enabled KPI keys)
 max_window       = max(series_hours)
 ```
 
-`series_hours` continúa limitado a `1..24`.
+`series_hours` permanece limitado a `1..24`.
 
 El plan vive en memoria.
+
 No requiere documento durable adicional.
 
-Timeseries debe leer el rolling una sola vez por cambio relevante, proyectando solo:
+Timeseries debe proyectar únicamente:
 
 ```text
 timestamp_utc
@@ -73,7 +137,11 @@ required KPI columns
 
 ## Hydration
 
-Cada Tool recibe únicamente su configuración.
+Cada Tool recibe únicamente su configuración y ventana.
+
+El rolling almacena solo cobertura física observada.
+
+El consumidor debe construir la grilla lógica requerida.
 
 Si una columna solicitada no existe:
 
@@ -87,14 +155,17 @@ Si falta un timestamp dentro de la grilla lógica:
 value = null
 ```
 
-El rolling no necesita materializar filas o columnas nulas artificiales.
+El consumidor no debe exigir que Historian materialice filas o columnas nulas artificiales.
 
 ## Output form
 
 Mantener salida compacta/soft.
-No introducir diccionarios indexados por cada timestamp.
 
-La representación física wide del rolling es una optimización interna y no obliga al output Cosmos a usar el mismo shape.
+No introducir diccionarios indexados por cada timestamp salvo que una necesidad contractual real lo
+exija.
+
+La forma física wide del rolling es una optimización interna y no obliga al documento de salida
+Cosmos a adoptar el mismo shape.
 
 ## Publication target
 
@@ -106,28 +177,61 @@ partial failure preserves successful Tool progress
 ```
 
 No compartir implementación de proceso con Latest por conveniencia.
+
 Compartir solo contratos genuinamente reutilizables.
 
 ## Checkpoint target
 
-PLANNED:
+Debe reemplazarse el checkpoint global por progreso independiente por Tool.
+
+Shape mínimo todavía por congelar:
 
 ```text
-per Tool
-aligned/read-model watermark
-registry revision
-registry digest
+Tool identity
+delivered/read-model watermark
+Registry revision
+Registry digest
 ```
+
+El state key exacto y el payload final permanecen OPEN.
 
 ## OPEN antes de implementar
 
+Historian ya resolvió y cerró:
+
 ```text
-1. Confirm exact Timeseries output step_seconds under the new 30 s rolling grid.
-2. Freeze rolling metadata/coherence contract with HistorianAuthority.
-3. Freeze per-Tool checkpoint payload and state key.
-4. Decide whether Timeseries coalesces directly to latest available rolling watermark
-   when multiple intermediate grids were missed.
-5. Confirm whether output schema_version remains 2 or requires a new schema.
+rolling filesystem path
+rolling Parquet schema
+rolling metadata
+30 s physical grid
+rolling/HistorianAuthority coherence
+atomic replacement
+recovery behavior
 ```
 
-Hasta resolver estos puntos, Timeseries permanece `PLANNED`.
+Quedan OPEN exclusivamente en Timeseries Delivery:
+
+```text
+1. Freeze exact logical/output step_seconds.
+2. Freeze per-Tool checkpoint payload and state key.
+3. Decide whether delivery coalesces directly to the latest coherent rolling watermark
+   after missing intermediate grids.
+4. Confirm whether Timeseries output schema_version remains 2 or requires a new schema.
+5. Confirm exact publication/fencing behavior when one Tool fails and others succeed,
+   reusing the already-agreed independent-progress principle.
+```
+
+## Siguiente incremento
+
+Este es el único foco recomendado:
+
+```text
+KPI-TIMESERIES-MULTI-TOOL-DELIVERY
+```
+
+Primero cerrar los contratos OPEN anteriores.
+
+Después implementar el consumidor.
+
+No modificar Historian en el mismo incremento salvo finding real de incompatibilidad con su
+contrato CURRENT.
