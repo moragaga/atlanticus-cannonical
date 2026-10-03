@@ -1,6 +1,6 @@
 # ADA Web — Canonical Index
 
-Estado: **CURRENT — DISTRIBUTED WEB RUNTIME VERIFIED / REAL CONFIGURATION PAUSED FOR ROOT CUTOVER**
+Estado: **CURRENT — TOOL CONTRACT WEB CUTOVER CLOSED / DISTRIBUTION PREPARATION NEXT**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -11,6 +11,7 @@ Estado: **CURRENT — DISTRIBUTED WEB RUNTIME VERIFIED / REAL CONFIGURATION PAUS
 | `05_SOURCE_LEDGER.md` | Evidencia previa. | HISTORICAL |
 | `06_INFRASTRUCTURE_STARTUP.md` | Runtime Docker, resource preparation y emuladores. | CURRENT / VERIFIED |
 | `07_ALARM_MANAGEMENT_FRONTEND.md` | Alarm management UI. | OTHER FOCUS |
+| `08_INTEGRATED_OPERATIONS_PRESENTATION.md` | Integrated Operations composition, focus, responsive y videowall presentation contract. | CURRENT DESIGN / IMPLEMENTATION PLANNED |
 
 ## Runtime verified
 
@@ -26,12 +27,12 @@ Web healthy
 /health/ready 200
 ```
 
-## Current block before continuing UI configuration
+## Current sequence
 
-```text
-ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
-```
+Tool Contract Web Cutover is closed.
 
-The application should not continue accumulating real configuration until Tool-scoped ownership and the Users model are corrected.
+Distribution preparation remains the implementation priority documented in `01_CURRENT_BASELINE.md`.
 
-Alarm integration remains later and separate.
+Integrated Operations now has a canonical presentation design contract, but its implementation and visual qualification remain PLANNED.
+
+Alarm Engine / Command Center integration remains later and separate.
