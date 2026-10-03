@@ -5,151 +5,95 @@ Estado: **AUDIT LEDGER / CURRENT**
 ## Implementation cut
 
 ```text
-moragaga/atlanticus@38bcd8c5607d67f999e2bc4bf9dbf176c8340588
-date = 2026-10-03T01:09:03Z
+moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
+date = 2026-10-03T05:42:35Z
 ```
 
-Este commit contiene el cierre de Historian rolling.
-
-El commit padre inmediato:
+Parent:
 
 ```text
-c0c01cc816687fc7db20a3559f6ac9b46e6df7d4
+2f9b65c3ba2646d519abfb0bb49e095d6819d185
 ```
 
-corresponde a otro frente de tooling/Data Explorer y no forma parte del contrato Historian de este
-hito.
-
-## Decisions
-
-```text
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-```
-
-No se observó una decisión frozen específica que describa el rolling Historian 24 h / 30 s o el
-reemplazo Timeseries multi-Tool.
-
-Clasificación:
-
-```text
-Historian rolling implementation   IMPLEMENTED + VALIDATED / CURRENT
-specific frozen decision           NOT OBSERVED
-decision formalization             OPEN DOCUMENTAL
-```
-
-No existe conflicto con una decisión frozen incompatible conocida.
+The final commit touches only the KPI History/Historian/Timeseries boundary plus `uv.lock`.
 
 ## Canonical before replacement
 
 ```text
-moragaga/atlanticus-cannonical@bac346a4c65e7a7d689e74a421656e75fe1d27b3
-date = 2026-10-02T23:56:25Z
+moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
+date = 2026-10-03T05:40:40Z
 ```
 
-Ese canonical todavía clasificaba:
+Stale canonical state before this replacement:
 
 ```text
-Historian durable history     CURRENT
-Historian rolling             PLANNED
-Timeseries replacement        PLANNED after Historian
+Timeseries multi-Tool delivery = PLANNED
+Timeseries direct legacy history path = CURRENT
+Historian atomic file replacement = process-owned
+Materialization consumer set = Latest only
+History tabular representation = mixed across contract/rolling_dataset
+qualification counts = pre-final-boundary values
 ```
 
-La promoción de Historian rolling a CURRENT es el delta documental de este cierre.
+Implementation CURRENT resolves those discrepancies.
 
-## Inspected CURRENT implementation
-
-### Connections
+## Decisions
 
 ```text
-scopes/ada-kpi-engine/kpis/connections/
+NOT INSPECTED
+```
+
+The closure explicitly prohibited reading `atlanticus-decisions`.
+
+Therefore:
+
+```text
+implementation-vs-decisions conflict status = UNVERIFIED
+```
+
+No statement of compatibility or incompatibility with decisions is made in this ledger.
+
+## CURRENT implementation inspected
+
+### KPI History
+
+```text
+scopes/ada-kpi-engine/kpis/history/
 ```
 
 CURRENT:
 
 ```text
-named Tool connections
-dynamic environment variable declarations
-strict tool_key
-duplicate physical endpoint/database rejection
+contract.py
+    logical durable DatasetDefinitions / targets
+
+rolling.py
+    logical rolling metadata and invariants
+
+dataset.py
+    reusable KPI PyArrow schemas/conversion
+    rolling DatasetDefinition / target
+    durable projection decode
+    rolling encode/decode/projection
 ```
 
-### Materialization
-
-```text
-scopes/ada-kpi-engine/kpis/materialization/
-scopes/ada-kpi-engine/processes/kpi-materialization/
-```
-
-CURRENT:
-
-```text
-full Registry + root tool_key
-per-Tool local JSON
-sequential acquisition
-LKG preservation on failures
-30 s readiness retry for missing remote Registry
-```
-
-### Latest Delivery
-
-```text
-scopes/ada-kpi-engine/processes/kpi-delivery/
-```
-
-CURRENT:
-
-```text
-materialized Registry consumer
-30 s startup readiness
-process-lifetime freeze
-1 s normal polling
-parallel per-Tool publication
-per-Tool checkpoints
-partial failure isolation
-```
+PyArrow is intentionally isolated to `dataset.py`.
 
 ### Historian
 
 ```text
-scopes/ada-kpi-engine/kpis/history/
 scopes/ada-kpi-engine/processes/kpi-historian/
 ```
 
 CURRENT:
 
 ```text
-daily durable long history
+daily durable history
 error history
 HistorianAuthority
-rolling wide current.parquet
-24 h maximum physical horizon
-30 s strict grid
-UTC timestamp
-observed physical coverage only
-atomic replacement
-incremental update from new batches
-rebuild from durable history
-shared rolling metadata contract
-```
-
-Exact rolling path:
-
-```text
-<application_root>/timeseries/current.parquet
-```
-
-Exact metadata key:
-
-```text
-ada_kpi_timeseries
-```
-
-Commit ordering:
-
-```text
-durable history
-→ rolling
-→ HistorianAuthority
+rolling current.parquet
+DatasetRuntime for durable and rolling I/O
+no direct PyArrow import in process materializers
 ```
 
 ### Timeseries Delivery
@@ -158,44 +102,41 @@ durable history
 scopes/ada-kpi-engine/processes/kpi-timeseries-delivery/
 ```
 
-CURRENT legacy implementation:
+CURRENT:
 
 ```text
-direct Registry Cosmos reader
-single configuration
-direct durable-history scan
-global checkpoint
-120 s grid
+materialized Registry per Tool
+named connections
+lazy/frozen readiness
+consolidated rolling read plan
+HistorianAuthority coherence
+DatasetRuntime rolling access
+120 s output grid
+schema_version 2
+per-Tool checkpoints
+bounded parallel publication
+partial-failure progress preservation
 ```
 
-PLANNED / NEXT replacement:
+### Materialization
+
+CURRENT consumers:
 
 ```text
-materialized Registry
-named connections
-HistorianAuthority
-Historian rolling
-logical hydration
-per-Tool publication
-per-Tool checkpoints
+Latest Delivery
+Timeseries Delivery
 ```
 
 ## Qualification evidence
 
-Reported and completed after final Ruff formatting:
-
 ```text
-kpis/history
-27 passed
-ruff check                 PASS
-ruff format --check        PASS
+kpis/history                         31 passed
+processes/kpi-historian             45 passed
+processes/kpi-timeseries-delivery   28 passed
 
-processes/kpi-historian
-47 passed
-ruff check                 PASS
-ruff format --check        PASS
-
-git diff --check           PASS
+Ruff                                PASS
+format                              PASS
+git diff --check                    PASS
 ```
 
 ## Epistemic status
@@ -203,79 +144,72 @@ git diff --check           PASS
 ### VERIFIED
 
 ```text
-rolling implementation is present in atlanticus:main
-rolling shared contract is public
-rolling path/schema/metadata/coherence are implemented
-incremental/recovery/atomic behavior has focused test coverage
-final focused test and Ruff gates pass
-Timeseries legacy implementation remains in main
+final KPI commit is present in main
+History dataset.py owns reusable Arrow representation
+Historian process consumes shared dataset helpers
+Timeseries rolling repository consumes DatasetRuntime
+Timeseries multi-Tool implementation is present
+per-Tool checkpoint contract is implemented
+120 s output contract is implemented
+focused package suites are green
 ```
 
 ### INFERRED
 
 ```text
-No additional inference is required to promote Historian rolling to CURRENT.
+No additional architectural inference is required to classify this KPI backend increment CLOSED locally.
 ```
 
 ### ASSUMED
 
 ```text
-No unverified assumption was converted into a CURRENT Historian contract.
+None promoted to CURRENT.
 ```
 
 ### PROPOSED
 
 ```text
-Timeseries replacement behavior not yet frozen in implementation:
-logical/output step
-per-Tool checkpoint exact schema/state key
-missed-watermark coalescing
-output schema_version decision
+Next separate focus: inspect Command Center / Alarm backend boundary.
 ```
 
 ### UNVERIFIED
 
 ```text
-new Timeseries consumer
-full operational Historian -> Timeseries E2E
-real Azure/Cosmos production behavior
-load/performance profile
+full KPI operational E2E
+real multi-Tool Cosmos behavior
+production Azure behavior
+performance/RU profile
+implementation-vs-decisions compatibility
 ```
 
 ## Conflict ledger
 
-### Implementation vs canonical
-
-Before this replacement:
+### Implementation vs canonical before replacement
 
 ```text
 CONFLICT / STALE DOCUMENTATION
-canonical said Historian rolling = PLANNED
-main now implements and validates Historian rolling
 ```
 
-This replacement resolves that stale status.
+Canonical still described Timeseries replacement as future and process-level rolling atomicity.
+
+This replacement updates canonical to the current implementation.
 
 ### Implementation vs decisions
 
 ```text
-NO KNOWN FROZEN CONFLICT
+UNVERIFIED
 ```
 
-There is no observed frozen decisions entry specific to the new rolling contract.
-
-Formalizing that decision remains documentary work, not a blocker for recognizing implemented
-reality.
+Decisions were intentionally not read.
 
 ### Python baseline
 
-Current `kpi-historian/pyproject.toml` remains:
+Relevant current packages remain:
 
 ```text
 requires-python = ==3.14.2
 ```
 
-This hito did not modify the runtime baseline.
+Project target baseline remains 3.14.7.
 
-Any migration to Python 3.14.7 is a separate concern and must not be mixed into Timeseries Delivery
-unless explicitly opened.
+Migration is separate and was not mixed into this hito.

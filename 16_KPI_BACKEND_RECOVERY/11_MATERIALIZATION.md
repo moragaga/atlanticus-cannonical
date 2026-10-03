@@ -4,10 +4,11 @@ Estado: **CLOSED / VERIFIED / CURRENT**
 
 ## Purpose
 
-KPI Materialization localiza por Tool el KPI Registry durable para que los consumidores backend no necesiten leer configuración directamente desde Cosmos durante su ejecución.
+KPI Materialization localizes the durable KPI Registry per Tool so backend consumers do not read Registry configuration directly from Cosmos during normal execution.
 
-No consolida Registries globalmente.
-No produce una configuración resuelta común.
+It does not merge all Tools into one global Registry.
+
+It does not persist resolved secrets.
 
 ## Connections
 
@@ -17,23 +18,23 @@ Input:
 config/connections.json
 ```
 
-Cada key es un `tool_key` real y resuelve una named Cosmos connection.
+Each key is a real `tool_key` resolving a named Cosmos connection.
 
-Materialization lee connections una vez al iniciar el proceso.
+Materialization reads connections at process startup.
 
-## Source Registry
-
-Por Tool:
+## Local authority
 
 ```text
-container       = ada-kpi-registry-projection
-partition value = kpis
-document_type   = ada_kpi_registry_projection_record
-schema_version  = 1
-source_key      = kpis
+<VOLUMEN_PATH>/ada-kpi-engine/materialization/registries/<tool_key>.json
 ```
 
-Registry payload binding:
+The local document preserves the full Registry and carries `tool_key`.
+
+No resolved `CosmosSettings` or secrets are persisted.
+
+## Registry binding
+
+Per KPI:
 
 ```text
 kpi_key
@@ -43,36 +44,16 @@ series_enabled
 series_hours
 ```
 
-`series_hours`:
+Invariant:
 
 ```text
-1..24 iff series_enabled=true
-None iff series_enabled=false
+series_enabled = true  → series_hours in 1..24
+series_enabled = false → series_hours = None
 ```
-
-## Local authority
-
-Path:
-
-```text
-<VOLUMEN_PATH>/ada-kpi-engine/materialization/registries/<tool_key>.json
-```
-
-El documento local preserva el Registry completo e inyecta únicamente:
-
-```text
-tool_key
-```
-
-en la raíz.
-
-No persistir secretos ni CosmosSettings resueltos.
 
 ## Update semantics
 
-Materialization procesa Tools secuencialmente.
-
-Por Tool:
+Per Tool:
 
 ```text
 read durable Registry
@@ -82,68 +63,63 @@ compare with local
 atomic replace only when changed
 ```
 
-Failure de una Tool:
+Tool failure:
 
 ```text
-preserve its last-known-good
+preserve last-known-good
 continue remaining Tools
-raise iteration error after processing all real failures
+raise iteration error after real failures
 ```
 
-Configured Tool removida:
+Removed Tool:
 
 ```text
-remove corresponding local JSON
+remove corresponding local Registry
 ```
 
 ## Readiness
 
-Missing Registry document no es configuración inválida.
-
-CURRENT:
+Missing remote Registry:
 
 ```text
 KpiMaterializationRegistryPending
 → no process failure
-→ set_next_iteration_delay(30)
+→ retry after 30 s
 ```
 
-Real Cosmos/acquisition/contract/store errors continúan siendo failures.
+Real acquisition/contract/storage error remains a failure.
 
-## Polling
-
-```text
-POLL_INTERVAL_SECONDS=30
-```
-
-## Consumers
-
-CURRENT:
+## Consumers CURRENT
 
 ```text
 Latest Delivery
-```
-
-PLANNED:
-
-```text
 Timeseries Delivery
 ```
 
-Cada consumidor:
+Both consumers:
 
 ```text
-reads materialized Registries only while becoming ready
-freezes them for process lifetime
-does not hot-reload
+wait for exact Tool-set readiness
+read materialized Registries
+validate
+freeze process-lifetime configuration
+do not hot-reload
+```
+
+Timeseries additionally consolidates all frozen Tool requirements into:
+
+```text
+required_columns
+max_window_hours
 ```
 
 ## Qualification
 
+Historical focused qualification remains:
+
 ```text
-kpi-materialization-runtime    14 passed
-Ruff / format                  PASS
-mirrors                        PASS
-public import                  PASS
-wheel build                    PASS
+kpi-materialization-runtime   14 passed
+Ruff / format                 PASS
 ```
+
+No Materialization production change was required by the final History/Timeseries boundary correction.

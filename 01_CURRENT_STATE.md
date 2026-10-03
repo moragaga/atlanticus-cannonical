@@ -1,21 +1,21 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT — TOOL-SCOPED USERS CUTOVER CLOSED; NAVIGATION ACCESS NEXT**
+Estado: **CURRENT — KPI BACKEND CLOSED; COMMAND CENTER / ALARM ANALYSIS NEXT**
 
 ## Autoridad
 
 ```text
 Implementation
-moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
-
-Decisions
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
 
 Canonical before replacement
-moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
+moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
+
+Decisions
+NOT INSPECTED in this closure by explicit instruction
 ```
 
-## CLOSED / VERIFIED
+## CLOSED / VERIFIED relevante
 
 ```text
 ADA-TOOL-SCOPED-SOURCE-OWNERSHIP
@@ -24,143 +24,117 @@ ADA-TOOL-USER-MEMBERSHIP
 ADA-USERS-RUNTIME
 ADA-USERS-RECOVERY-SNAPSHOT
 MASTER-PROJECTION-USERS-REPLACE
-ADA-MANAGER-RUNTIMEUSER-CONSUMPTION
-LOCAL-JANE-JOHN-AVATAR-PALETTES
+
+KPI-NAMED-CONNECTIONS
+KPI-REGISTRY-MATERIALIZATION
+KPI-LATEST-MULTI-TOOL-DELIVERY
+KPI-HISTORIAN-ROLLING-READ-MODEL
+KPI-TIMESERIES-MULTI-TOOL-DELIVERY
+KPI-HISTORY-DATASET-BOUNDARY
 ```
 
-## Ownership CURRENT
+## KPI backend CURRENT
 
 ```text
-application namespace
-└── users/users.json.gz
-    └── UserIdentity[]
-
-tool namespace
-├── Source Navigation
-├── Source Profiles
-├── Source ADA Access
-├── Source Operational
-├── Source Tools
-├── Source KPI Registry
-├── Source KPI Definitions
-├── users/memberships.json.gz
-└── users/recovery/
-    ├── snapshots/
-    ├── audit/
-    └── replace-before/
-
-Cosmos propio de la Tool
-└── users-runtime
-    └── RuntimeUser
+KPI Runtime
+    ↓
+durable evaluation batches
+    ↓
+KPI Historian
+    ├─ durable daily history
+    ├─ error history
+    ├─ rolling current.parquet
+    └─ HistorianAuthority
+    ↓
+KPI Timeseries Delivery
+    ├─ materialized Registry per Tool
+    ├─ named Cosmos connections
+    ├─ per-Tool checkpoints
+    ├─ bounded parallel publication
+    └─ schema_version = 2 output
 ```
 
-## Users CURRENT
+`ada-kpis-history` conserva un único package reusable.
+
+Separación CURRENT:
 
 ```text
-UserIdentity
-    user_id
-    issuer
-    subject_id
-    display_name
-    email
+ada.kpis.history.contract
+    logical DatasetDefinitions / targets / durable identity
 
-ToolUserMembership
-    user_id
-    profile_key
-    enabled
+ada.kpis.history.rolling
+    logical rolling metadata / grid / horizon / revision invariants
 
-RuntimeUser
-    identity
-    enabled
-    profile {id,label,background_color,text_color}
-    operational {area,position,group}
+ada.kpis.history.dataset
+    shared PyArrow representation and KPI dataset conversion
+
+processes/kpi-historian
+processes/kpi-timeseries-delivery
+    orchestration only; no direct PyArrow ownership
 ```
 
-`root` es asignable a un usuario administrado.
+Timeseries usa `DatasetRuntime` como frontera operacional.
 
-`guest` y `local` no son perfiles administrados asignables.
+`ParquetDatasetStore` se compone debajo de Runtime.
 
-Jane/John mantienen sus paletas locales propias sin persistir colores en Global Users.
+No existe package `ada-kpis-history-tabular`.
 
-## users-runtime CURRENT
+## Qualification focal reportada
 
 ```text
-id            = user_id
-partition_key = user_id
+kpis/history                         31 passed
+processes/kpi-historian             45 passed
+processes/kpi-timeseries-delivery   28 passed
+
+Ruff check                          PASS
+Ruff format --check                 PASS
+git diff --check                    PASS
 ```
 
-No contiene ni consulta por `application_key`/`tool_key`.
+Los tres suites se calificaron en procesos pytest separados porque sus directorios de tests usan el mismo namespace top-level `tests.support`.
 
-## Recovery CURRENT
+Ese collision de collection no representa una regresión productiva.
+
+## BLOCKED
 
 ```text
-Global Users
-+ Tool Membership
-+ Profiles
-+ Operational
-→ RuntimeUser[]
-→ Tool-scoped recovery snapshot
-→ complete REPLACE users-runtime
+KPI-FULL-OPERATIONAL-E2E
 ```
 
-Recovery no modifica Global Users ni Tool Membership. No existe RESTORE parcial legacy.
-
-## Qualification focal reportada por el usuario
+Razón:
 
 ```text
-Users Core                    44 passed
-Users Blob                     7 passed
-Users Cosmos                   7 passed
-Master Projection             53 passed
-ADA Configuration Manager     65 passed
-ADA Generic Application      199 passed
+se requieren correcciones Web previas para levantar/configurar la aplicación completa
+y ejecutar el flujo real de KPI de extremo a extremo
 ```
 
-## CURRENT / OPEN — Navigation
-
-CURRENT:
+Por lo tanto:
 
 ```text
-allowed_profiles=[]
-→ public/unrestricted
+unit/focused KPI qualification = VERIFIED
+real integrated KPI runtime E2E = UNVERIFIED / BLOCKED
 ```
 
-DECIDED / PLANNED:
+## OPEN / PLANNED separado
 
 ```text
-PUBLIC
-    acceso ordinario
-
-RESTRICTED + []
-    sólo root/local implícitos
-
-RESTRICTED + [profiles]
-    perfiles seleccionados + root/local
+Navigation PUBLIC / RESTRICTED
+current-head artifact generation
+.env.detail complete audit
+distribution regeneration
+ADA Generic real configuration
+macOS host sync / rcssmin
+/health/ready functional checks
+Python 3.14.7 / Trixie migration
+production Azure / Entra validation
 ```
 
-Debe implementarse también en la UI del Manager.
-
-## PLANNED después de Navigation
+## NEXT
 
 ```text
-1. current-head artifact generation/qualification
-2. .env.detail full audit
-3. distribution regeneration
-4. isolated consumer qualification
-5. ADA Generic real configuration with Docker Storage/Cosmos
-6. resume Operaciones Integradas end-to-end
-7. backend processes as separate increments
-8. Collector / Time Status / UI
+COMMAND-CENTER-ALARM-BACKEND-ANALYSIS
 ```
 
-## OPEN / SEPARATE
+No presupone todavía que Alarmas deba ser un engine independiente.
 
-```text
-macOS host sync / rcssmin wheel           BLOCKED
-/health/ready functional checks           OPEN
-Python 3.14.7 / Trixie                    PLANNED
-production Azure / Entra                  UNVERIFIED
-Command Center distributed runtime        separate
-Alarm integration                         separate
-KPI backend/history/timeseries work       separate
-```
+La maduración a engine debe surgir del análisis del estado real, responsabilidades y fronteras.

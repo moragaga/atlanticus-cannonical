@@ -1,43 +1,62 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT — USERS/TOOL OWNERSHIP CLOSED; NAVIGATION ACCESS CONTRACT NEXT (2026-10-03)**
+Estado: **CURRENT — KPI BACKEND CLOSED; COMMAND CENTER / ALARM ANALYSIS NEXT (2026-10-03)**
 
-## Autoridades del cierre
+## Autoridad de este cierre
 
 ```text
-Implementation        moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
-Decisions             moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical pre-replace moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
+Implementation        moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
+Canonical pre-replace moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
+Decisions             NOT INSPECTED in this closure by explicit instruction
 ```
+
+Git permanece **SOLO LECTURA**.
 
 ## Estado por frente
 
 | Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Tool-scoped Source + Users runtime CLOSED; Navigation access semantics NEXT. |
-| `02_ARCHITECTURE.md` | Ownership actual de Users/Tool Source y contrato Navigation decidido. |
-| `03_DECISIONS_CURRENT.md` | Decisiones congeladas/refinadas tras el cutover. |
-| `07_VALIDATION_BASELINE.md` | Qualification focal Users/Master/Manager/ADA Generic. |
-| `08_ROADMAP.md`, `09_OPEN_QUESTIONS.md` | Navigation NEXT; artifacts/.env/distribution después. |
-| `10_MANAGER/` | Manager consume RuntimeUser; Navigation Manager UI requiere PUBLIC/RESTRICTED. |
-| `11_ADA_GENERIC/` | Tool Source + Users runtime CURRENT. |
-| `15_WEB_PLATFORM/` | Users cutover CLOSED; Navigation access OPEN. |
-| `16_KPI_BACKEND_RECOVERY/` | Frente separado. |
-| `17_DISTRIBUTION_AND_TOOLING/` | Artifact regeneration/.env.detail audit AFTER Navigation. |
+| `01_CURRENT_STATE.md` | Users/Web state remains CURRENT; KPI backend History/Historian/Timeseries closure incorporated. |
+| `08_ROADMAP.md` | Command Center / Alarm backend analysis is the next unique focus. |
+| `09_OPEN_QUESTIONS.md` | KPI operational E2E remains BLOCKED by required Web corrections; Navigation/artifacts remain separate planned work. |
+| `04_ALARM_ENGINE/` | Existing canonical input for the next analysis; not modified by this closure. |
+| `14_ADA_COMMAND_CENTER/` | Existing canonical input for the next analysis; not modified by this closure. |
+| `16_KPI_BACKEND_RECOVERY/` | KPI Materialization + Latest + Historian + Timeseries multi-Tool CLOSED / VERIFIED locally. |
+| `17_DISTRIBUTION_AND_TOOLING/` | Separate planned front; not reopened here. |
 
 ## Checkpoints
 
 ```text
-ADA-TOOL-SCOPED-SOURCE-OWNERSHIP              CLOSED / VERIFIED
-ADA-USERS-IDENTITY-MEMBERSHIP-CUTOVER          CLOSED / VERIFIED
-ADA-USERS-RUNTIME-SESSION-CUTOVER               CLOSED / VERIFIED
-ADA-USERS-RECOVERY-SNAPSHOT-REPLACE             CLOSED / VERIFIED
-MASTER-PROJECTION-USERS-REPLACE                 CLOSED / VERIFIED
-LOCAL-JANE-JOHN-AVATAR-PALETTES                 CLOSED / VERIFIED
+KPI-NAMED-CONNECTIONS                    CLOSED / VERIFIED / CURRENT
+KPI-REGISTRY-MATERIALIZATION             CLOSED / VERIFIED / CURRENT
+KPI-LATEST-MULTI-TOOL-DELIVERY           CLOSED / VERIFIED / CURRENT
+KPI-HISTORIAN-ROLLING-READ-MODEL         CLOSED / VERIFIED / CURRENT
+KPI-TIMESERIES-MULTI-TOOL-DELIVERY       CLOSED / VERIFIED / CURRENT
+KPI-HISTORY-DATASET-BOUNDARY              CLOSED / VERIFIED / CURRENT
 
-NAVIGATION-PUBLIC-RESTRICTED-CONTRACT            PLANNED / NEXT
-CURRENT-HEAD-ARTIFACT-REGENERATION               PLANNED / AFTER NEXT
-ENV-DETAIL-COMPLETE-AUDIT                        PLANNED / AFTER ARTIFACTS
-ADA-DISTRIBUTION-REGENERATION                    PLANNED
-ADA-GENERIC-REAL-CONFIG-E2E                      PLANNED
+KPI-FULL-OPERATIONAL-E2E                  BLOCKED
+COMMAND-CENTER-ALARM-BACKEND-ANALYSIS     PLANNED / NEXT
+```
+
+## Siguiente frontera única
+
+Analizar `ada-command-center` y Alarmas en backend usando:
+
+```text
+moragaga/atlanticus:main
+atlanticus-cannonical/04_ALARM_ENGINE/
+atlanticus-cannonical/14_ADA_COMMAND_CENTER/
+```
+
+El objetivo del siguiente frente es determinar el estado real, las fronteras y si Alarmas debe madurar a un engine reusable.
+
+No mezclar en ese incremento:
+
+```text
+KPI backend
+KPI E2E
+artifact generation
+.env.detail
+distribution
+Navigation access
 ```

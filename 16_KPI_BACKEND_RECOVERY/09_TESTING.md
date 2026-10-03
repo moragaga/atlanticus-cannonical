@@ -1,116 +1,132 @@
 # KPI Backend Recovery — Testing
 
-Estado: **VERIFIED for Materialization + Latest + Historian rolling / TIMESERIES NEW DESIGN UNVERIFIED**
+Estado: **VERIFIED LOCALLY / OPERATIONAL E2E BLOCKED**
 
-## Qualification verificada — Historian rolling
+## Final focused qualification
 
-Resultado final del hito:
+Reported after integration on `main`:
 
 ```text
 kpis/history
-27 passed
-ruff check                 PASS
-ruff format --check        PASS
-15 files already formatted
+31 passed
 
 processes/kpi-historian
-47 passed
-ruff check                 PASS
-ruff format --check        PASS
-24 files already formatted
+45 passed
+
+processes/kpi-timeseries-delivery
+28 passed
+
+Ruff check
+PASS
+
+Ruff format --check
+PASS
 
 git diff --check
 PASS
 ```
 
-El único finding mecánico durante qualification fue formato de
-`processes/kpi-historian/tests/test_rolling.py`.
+## Qualification execution detail
 
-Se corrigió con Ruff y se repitió la suite completa del proceso:
-
-```text
-47 passed
-All checks passed
-24 files already formatted
-```
-
-## Qué acredita Historian
-
-VERIFIED:
+Running Historian and Timeseries test directories together in one pytest process caused a collection collision because both packages expose a top-level:
 
 ```text
-shared rolling constants and metadata contract
-metadata canonical JSON roundtrip
-30 s alignment validation
-historian_revision/watermark coherence
-exact <application_root>/timeseries/current.parquet path
-incremental update without durable-history reread
-observed physical rows only
-empty rolling coverage
-wide Parquet shape
-scalar value_type tracking
-value_type transition resets prior logical series
-JSON excludes/clears scalar rolling series
-24 h physical trimming
-durable-history rebuild
-corrupt/missing rolling recovery
-atomic replacement preserves previous committed file on failure
-current coherent skip
-current incoherent rebuild
-durable history -> rolling -> HistorianAuthority ordering
-rolling failure prevents authority advancement
-composition and public API
+tests.support
 ```
 
-## Qualification previa conservada
-
-También permanece VERIFIED de hitos anteriores:
+Observed failure:
 
 ```text
-kpi-materialization-runtime    14 passed
-kpi-delivery-runtime           28 passed
-kpi-connections                 7 passed
+Timeseries tests resolved tests.support from Historian tests
 ```
 
-Esos resultados no se reabrieron en este hito.
+Each package suite was then executed in its own pytest process and passed.
 
-## Política de tests
-
-No crear tests cuyo único objetivo sea:
+Classification:
 
 ```text
-assert a word does not exist
-assert a class/function does not exist
-freeze internal implementation shape
-freeze visual CSS/markup structure
+production regression = NO
+package-focused qualification = VERIFIED
+combined test namespace collision = test harness limitation
 ```
 
-Probar:
+No production change was made to work around this collection behavior.
+
+## What is VERIFIED
+
+```text
+History logical contract
+History reusable dataset representation
+PyArrow isolation to ada.kpis.history.dataset
+Historian process without direct PyArrow ownership
+Historian Runtime-owned dataset I/O
+durable history + error history
+rolling metadata/schema/grid/horizon
+rolling incremental update
+rolling durable rebuild
+rolling type transitions
+rolling empty coverage
+HistorianAuthority ordering/coherence
+
+Timeseries materialized Registry readiness
+Timeseries frozen per-Tool configuration
+consolidated read plan
+DatasetRuntime rolling reads
+Authority/rolling coherence
+120 s logical alignment
+null hydration behavior
+schema_version 2 output
+per-Tool checkpoint
+checkpoint regression guard
+registry digest integrity guard
+bounded parallel publication
+partial failure independent progress
+idempotent unchanged publication
+```
+
+## Previous qualification retained
+
+```text
+kpi-materialization-runtime
+14 passed
+
+kpi-delivery-runtime
+28 passed
+
+kpi-connections
+7 passed
+```
+
+Those suites were not reopened by the final History/Timeseries boundary correction.
+
+## Testing policy
+
+Test:
 
 ```text
 behavior
 contracts
 invariants
 regressions
-recovery
 failure ordering
+recovery
 public integration surfaces
 ```
 
-En Web, apariencia y responsive se validan visualmente salvo comportamiento funcional automatizable.
+Do not create tests solely to freeze internal implementation shape or visual CSS/markup structure.
 
-## UNVERIFIED / OPEN
+## BLOCKED / UNVERIFIED
 
 ```text
-new Timeseries rolling consumer
-new Timeseries logical hydration
-new Timeseries multi-Tool parallel publication
-new Timeseries per-Tool checkpoints
-new Timeseries output grid/schema
-real Cosmos multi-Tool integration
-real Azure credentials
-full Historian -> Timeseries operational E2E
+full KPI operational E2E
+real multi-Tool Cosmos delivery
+production Azure credentials/network behavior
+runtime restart/readback through deployed stack
 RU/load/performance profile
 ```
 
-No usar esos pendientes para reabrir Historian sin un finding concreto.
+Reason for E2E block:
+
+```text
+required Web corrections must be completed before the complete application can be configured and exercised
+```

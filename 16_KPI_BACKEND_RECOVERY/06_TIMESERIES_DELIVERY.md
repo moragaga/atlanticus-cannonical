@@ -1,237 +1,284 @@
 # KPI Backend Recovery — Timeseries Delivery
 
-Estado: **CURRENT LEGACY IMPLEMENTATION / PLANNED NEXT REPLACEMENT**
+Estado: **CLOSED / VERIFIED / CURRENT**
 
-## CURRENT implementación en main
-
-La implementación vigente aún corresponde al contrato anterior:
+## Implementation cut
 
 ```text
-single Cosmos connection
-direct Registry read from Cosmos
-single frozen KpiDeliveryConfiguration
-single global checkpoint
-direct scans over durable Historian Parquet
-single Timeseries output
-step_seconds = 120
+moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
 ```
 
-Esta implementación sigue siendo realidad hasta que el reemplazo se implemente y valide.
+The legacy single-Tool/direct-history design is SUPERSEDED.
 
-No describir el diseño nuevo como CURRENT antes del cutover.
+## CURRENT startup
 
-## SUPERSEDED como dirección futura
+Timeseries composition receives named Cosmos connections.
 
-Queda SUPERSEDED la estrategia futura de reconstruir cada ventana Timeseries leyendo directamente
-la historia durable.
-
-El consumidor nuevo debe usar el rolling CURRENT producido por Historian.
-
-## Upstream CURRENT / congelado
-
-Historian ya publica:
+START/readiness:
 
 ```text
-<application_root>/timeseries/current.parquet
+config/connections.json
+→ named Tool CosmosSettings
+→ expected tool_key set
+
+LocalKpiRegistryStore
+→ require exact convergence with expected Tool set
+→ read each materialized Registry
+→ validate and freeze configuration per Tool
+→ build one consolidated read plan
 ```
 
-Contrato disponible:
+If materialized Registries are not yet ready:
 
 ```text
-schema_version      = 1
-grid_seconds        = 30
-max_hours           = 24
-shape               = wide
-timestamp_utc       = timestamp(us, UTC)
-metadata key        = ada_kpi_timeseries
-write               = atomic replacement
-physical coverage   = observed only
+status = materialization_pending
+retry  = 30 s
 ```
 
-Metadata:
+Invalid Registry/config is a configuration error, not infinite readiness.
 
-```text
-schema_version
-watermark_utc
-historian_revision
-grid_seconds
-max_hours
-coverage_start_utc
-coverage_end_utc
-value_types
-```
+Configuration freezes after first successful materialization.
 
-Timeseries debe validar coherencia exacta contra `HistorianAuthority`.
-
-No debe consumir una vista adelantada, corrupta o contractualmente incompatible.
-
-## Registry CURRENT / congelado
-
-El Registry materializado expone por KPI:
-
-```text
-kpi_key
-destination_keys
-latest_enabled
-series_enabled
-series_hours
-```
-
-Invariante:
-
-```text
-series_enabled = true  → series_hours in 1..24
-series_enabled = false → series_hours = None
-```
-
-El reemplazo de Timeseries debe consumir el Registry materializado y no volver a leer el Registry
-operacional directamente desde Cosmos.
-
-## PLANNED target
-
-START:
-
-```text
-read config/connections.json once
-resolve named Cosmos connections once
-wait for materialized Registries
-retry readiness every 30 s
-freeze per-Tool configuration for process lifetime
-consolidate required series in memory
-```
-
-RUNNING:
-
-```text
-read HistorianAuthority
-validate rolling metadata/revision coherence
-read rolling wide Parquet once per relevant watermark
-hydrate requested logical grid
-build snapshot per Tool
-publish Tools with bounded parallelism
-checkpoint each successful Tool
-```
-
-No hot reload de Registries.
+No hot reload during process lifetime.
 
 ## Consolidated read plan
 
 ```text
-required_columns = union(series_enabled KPI keys)
-max_window       = max(series_hours)
+required_columns = sorted union of series_enabled KPI keys
+max_window_hours = max(series_hours)
 ```
 
-`series_hours` permanece limitado a `1..24`.
-
-El plan vive en memoria.
-
-No requiere documento durable adicional.
-
-Timeseries debe proyectar únicamente:
+Constraints:
 
 ```text
-timestamp_utc
+0 <= max_window_hours <= 24
+series_enabled=true requires series_hours
+```
+
+The rolling is read once per pending watermark/read-plan window, not once per Tool.
+
+## Logical time contract
+
+```text
+TIMESERIES_STEP_SECONDS = 120
+```
+
+`output_end` is the absolute epoch floor of `HistorianAuthority.watermark_utc` to 120 seconds.
+
+Each series window is:
+
+```text
+(output_end - series_hours, output_end]
+```
+
+Values are exact-grid only.
+
+No:
+
+```text
+interpolation
+nearest
+aggregation
+forward fill
+backfill
+```
+
+Missing logical timestamps hydrate to `null`.
+
+Requested KPI without physical rolling series produces a logical null series.
+
+## Historian coherence
+
+Timeseries reads:
+
+```text
+HistorianAuthority
 +
-required KPI columns
+rolling current.parquet
 ```
 
-## Hydration
-
-Cada Tool recibe únicamente su configuración y ventana.
-
-El rolling almacena solo cobertura física observada.
-
-El consumidor debe construir la grilla lógica requerida.
-
-Si una columna solicitada no existe:
+Operational data access uses:
 
 ```text
-virtual column = null
+DatasetRuntime.read_schema
+DatasetRuntime.scan_table
 ```
 
-Si falta un timestamp dentro de la grilla lógica:
+Timeseries rolling repository does not own direct Parquet I/O.
+
+Coherence guards:
 
 ```text
-value = null
+rolling metadata watermark == HistorianAuthority watermark
+rolling historian_revision == HistorianAuthority revision
+metadata/schema token unchanged across schema-read and scan
 ```
 
-El consumidor no debe exigir que Historian materialice filas o columnas nulas artificiales.
+Missing publication is explicit.
 
-## Output form
+Invalid/corrupt rolling is explicit.
 
-Mantener salida compacta/soft.
+## Shared KPI dataset boundary
 
-No introducir diccionarios indexados por cada timestamp salvo que una necesidad contractual real lo
-exija.
-
-La forma física wide del rolling es una optimización interna y no obliga al documento de salida
-Cosmos a adoptar el mismo shape.
-
-## Publication target
+Timeseries consumes:
 
 ```text
-parallel publication per Tool
-bounded worker pool
-main thread owns checkpoint/fencing/runtime mutation
-partial failure preserves successful Tool progress
+ada.kpis.history.dataset
 ```
 
-No compartir implementación de proceso con Latest por conveniencia.
-
-Compartir solo contratos genuinamente reutilizables.
-
-## Checkpoint target
-
-Debe reemplazarse el checkpoint global por progreso independiente por Tool.
-
-Shape mínimo todavía por congelar:
+for:
 
 ```text
-Tool identity
-delivered/read-model watermark
-Registry revision
-Registry digest
+rolling DatasetDefinition / target
+metadata decode
+projection validation
+schema token comparison
 ```
 
-El state key exacto y el payload final permanecen OPEN.
+Timeseries process does not import PyArrow directly.
 
-## OPEN antes de implementar
+## Per-Tool checkpoint
 
-Historian ya resolvió y cerró:
+State key:
 
 ```text
-rolling filesystem path
-rolling Parquet schema
-rolling metadata
-30 s physical grid
-rolling/HistorianAuthority coherence
-atomic replacement
-recovery behavior
+namespace = ('kpi-timeseries-delivery', 'tools', <tool_key>)
+name      = checkpoint
 ```
 
-Quedan OPEN exclusivamente en Timeseries Delivery:
+Payload:
 
 ```text
-1. Freeze exact logical/output step_seconds.
-2. Freeze per-Tool checkpoint payload and state key.
-3. Decide whether delivery coalesces directly to the latest coherent rolling watermark
-   after missing intermediate grids.
-4. Confirm whether Timeseries output schema_version remains 2 or requires a new schema.
-5. Confirm exact publication/fencing behavior when one Tool fails and others succeed,
-   reusing the already-agreed independent-progress principle.
+watermark_utc
+registry_revision
+registry_digest
 ```
 
-## Siguiente incremento
+Watermark is the aligned 120 s output end that was successfully published/unchanged and checkpointed.
 
-Este es el único foco recomendado:
+Invariants:
 
 ```text
-KPI-TIMESERIES-MULTI-TOOL-DELIVERY
+checkpoint watermark must not regress
+same registry_revision + different registry_digest = configuration error
+Tool progress is independent
 ```
 
-Primero cerrar los contratos OPEN anteriores.
+No global legacy checkpoint shim.
 
-Después implementar el consumidor.
+## Downtime behavior
 
-No modificar Historian en el mismo incremento salvo finding real de incompatibilidad con su
-contrato CURRENT.
+Timeseries coalesces to the latest coherent output end.
+
+It does not replay intermediate historical output snapshots after downtime.
+
+## Publication
+
+Each Tool owns a Cosmos connection and repository.
+
+Container:
+
+```text
+ada-kpi-timeseries-delivery
+partition key = /partition_id
+TTL           = None
+```
+
+Document identity:
+
+```text
+id            = timeseries
+partition_id  = kpis
+document_type = ada_kpi_timeseries_delivery
+```
+
+Output:
+
+```text
+schema_version = 2
+step_seconds   = 120
+```
+
+Manifest includes:
+
+```text
+revision
+configuration_revision
+tool_projection_revision
+historian_revision
+published_at_utc
+```
+
+Revision payload includes Historian/config/tool/data identity and excludes `published_at_utc`.
+
+## Parallelism
+
+Publication uses bounded `ThreadPoolExecutor`.
+
+Workers own only Tool snapshot publication.
+
+Main thread retains:
+
+```text
+lease validation
+cancellation
+fenced checkpoint commit
+runtime-context mutation
+failure aggregation
+```
+
+Successful Tools commit checkpoints even if another Tool fails.
+
+After processing all results, any failures raise one aggregate iteration error.
+
+Idempotent retry:
+
+```text
+publish succeeds
+checkpoint fails
+→ next iteration republishes
+→ matching revision resolves UNCHANGED
+→ checkpoint can advance
+```
+
+## Lifecycle
+
+`--run-once` behavior remains one runtime iteration.
+
+Materialization readiness does not block bootstrap indefinitely:
+
+```text
+materialization_pending
+→ next delay 30 s for resident process
+→ run-once exits after that iteration
+```
+
+## Qualification
+
+Final focused qualification:
+
+```text
+processes/kpi-timeseries-delivery
+28 passed
+
+Ruff check
+PASS
+
+Ruff format --check
+PASS
+
+git diff --check
+PASS
+```
+
+## UNVERIFIED / BLOCKED
+
+```text
+real multi-Tool Cosmos run
+full Runtime -> Historian -> Timeseries E2E
+restart/recovery through deployed application
+production Azure credentials/network behavior
+RU/load/performance profile
+```
+
+These validations are BLOCKED by required Web corrections and do not reopen the CURRENT Timeseries contract.

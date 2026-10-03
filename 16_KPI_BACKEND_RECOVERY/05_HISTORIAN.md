@@ -4,19 +4,19 @@ Estado: **CLOSED / VERIFIED / CURRENT**
 
 ## Autoridad implementada
 
-Corte verificado:
+Corte actual:
 
 ```text
-moragaga/atlanticus@38bcd8c5607d67f999e2bc4bf9dbf176c8340588
+moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
 ```
 
-Historian mantiene dos superficies con responsabilidades distintas:
+Historian mantiene dos superficies distintas:
 
 ```text
 daily long history
     = durable authority
 
-rolling wide parquet
+rolling wide dataset
     = regenerable/read-optimized Timeseries projection
 ```
 
@@ -34,54 +34,120 @@ KPI evaluation batches
 Orden contractual:
 
 ```text
-durable history write
-→ rolling update
-→ HistorianAuthority commit
+durable history
+→ rolling
+→ HistorianAuthority
 ```
 
-Si durable history falla, no se publica rolling ni authority.
+Durable failure impide rolling y authority.
 
-Si rolling falla, no se avanza `HistorianAuthority`.
+Rolling failure impide authority.
 
-## Ruta física congelada
-
-No existe variable de entorno nueva para el rolling.
-
-La ruta deriva de `application_root`:
+## Ruta rolling congelada
 
 ```text
 <application_root>/timeseries/current.parquet
 ```
 
-`datasets/` continúa siendo la frontera durable administrada por `DatasetRuntime`.
+No existe variable de entorno adicional para esa ruta.
 
-`timeseries/` es una proyección operacional distinta, descartable y regenerable.
+## Contrato lógico y representación tabular
 
-## Contrato compartido
+El package reusable único es:
 
-`ada.kpis.history.rolling` expone:
+```text
+ada-kpis-history
+```
+
+Separación CURRENT:
+
+```text
+ada.kpis.history.contract
+    durable DatasetDefinition / targets / key and ordering contract
+
+ada.kpis.history.rolling
+    KpiRollingMetadata
+    grid
+    horizon
+    revision/coherence invariants
+
+ada.kpis.history.dataset
+    durable history Arrow schemas
+    records -> Arrow table
+    Arrow table -> projected durable records
+    rolling DatasetDefinition / target
+    rolling Arrow encode/decode/projection
+```
+
+PyArrow está aislado en:
+
+```text
+ada.kpis.history.dataset
+```
+
+Historian process no importa PyArrow directamente.
+
+No existe package separado `ada-kpis-history-tabular`.
+
+## Backend I/O boundary
+
+Historian opera mediante:
+
+```text
+DatasetRuntime
+```
+
+Concrete composition:
+
+```text
+durable history
+DatasetRuntime(
+    ParquetDatasetStore(<application_root>/datasets)
+)
+
+rolling
+DatasetRuntime(
+    ParquetDatasetStore(<application_root>)
+)
+```
+
+Historian no hace directamente:
+
+```text
+Parquet read/write
+temporary file management
+os.replace
+filesystem publication
+```
+
+La atomicidad física pertenece al datasets backend.
+
+## Rolling contract
 
 ```text
 ROLLING_SCHEMA_VERSION   = 1
 ROLLING_GRID_SECONDS     = 30
 ROLLING_MAX_HOURS        = 24
-ROLLING_DIRECTORY        = "timeseries"
-ROLLING_FILENAME         = "current.parquet"
-ROLLING_METADATA_KEY     = "ada_kpi_timeseries"
-ROLLING_TIMESTAMP_COLUMN = "timestamp_utc"
+ROLLING_DIRECTORY        = timeseries
+ROLLING_FILENAME         = current.parquet
+ROLLING_METADATA_KEY     = ada_kpi_timeseries
+ROLLING_TIMESTAMP_COLUMN = timestamp_utc
+```
 
-ROLLING_VALUE_TYPES:
+Scalar value types:
+
+```text
 text
 integer
 float
 boolean
 ```
 
-El rolling no acepta JSON como serie escalar.
+JSON no forma una serie scalar rolling.
 
-## Schema físico Parquet
+## Physical shape
 
-Forma wide:
+Wide:
 
 ```text
 timestamp_utc
@@ -90,21 +156,19 @@ timestamp_utc
 ...
 ```
 
-Contrato:
+Contract:
 
 ```text
 timestamp_utc = Arrow timestamp(us, UTC), non-null
 KPI columns   = nullable string
-column order  = KPI keys sorted
+physical rows = observed usable points only
 ```
 
-Los valores escalares físicos permanecen en su representación string canónica.
+No se materializan filas artificiales para completar 24 h.
 
-No se persisten filas artificiales para completar la ventana lógica.
+## Metadata
 
-## Metadata exacta
-
-La metadata JSON canónica se almacena bajo:
+Canonical metadata under:
 
 ```text
 ada_kpi_timeseries
@@ -123,219 +187,105 @@ coverage_end_utc
 value_types
 ```
 
-`value_types` es un mapping:
+Invariants:
 
 ```text
-kpi_key -> text | integer | float | boolean
+watermark aligned 30 s
+coverage aligned 30 s
+coverage start/end both present or both null
+coverage_start <= coverage_end <= watermark
+coverage_start strictly inside (watermark - 24 h, watermark]
+historian_revision derived from watermark
+empty physical coverage => empty value_types
 ```
 
-Invariantes:
+## Incremental behavior
+
+Normal path:
 
 ```text
-watermark_utc       aligned to 30 s
-coverage_start_utc  aligned to 30 s when present
-coverage_end_utc    aligned to 30 s when present
-historian_revision  exact revision derived from watermark_utc
-coverage start/end  both present or both null
-coverage_start      <= coverage_end <= watermark
-coverage_start      strictly inside (watermark - 24 h, watermark]
+new batches already available to Historian
+→ update current rolling state
+→ trim >24 h
+→ DatasetRuntime.replace
 ```
 
-Cobertura vacía implica:
+Durable history is not reread for normal incremental updates.
+
+## Recovery behavior
+
+Missing/corrupt/behind rolling:
 
 ```text
-coverage_start_utc = null
-coverage_end_utc   = null
-value_types        = {}
+durable history
+→ scan only dates required by last 24 h
+→ rebuild rolling
+→ DatasetRuntime.replace
 ```
 
-Cobertura física no vacía requiere `value_types` no vacío.
+Rolling ahead of authority is an error.
 
-## Grilla y alineación
+CURRENT + coherent rolling is skipped.
 
-Historian valida alineación estricta a 30 segundos.
+CURRENT + incoherent/missing/corrupt rolling is rebuilt from durable history without rewriting durable history.
 
-No redondea ni hace floor silencioso.
+## Type transitions
 
-Un watermark o punto procesado fuera de la grilla contractual falla con
-`KpiHistorianRollingError`.
-
-## Semántica de cobertura
-
-El archivo almacena solo datos observados y utilizables.
+Scalar type change:
 
 ```text
-missing timestamp   = la fila física puede no existir
-missing KPI value   = celda ausente/null
-missing/error point = no valor escalar usable
+clear previous physical series for that KPI
+start new scalar series with new type
 ```
 
-No se fabrican 24 horas de filas nulas.
-
-La ventana física se conserva en:
+JSON result:
 
 ```text
-(watermark - 24 h, watermark]
+clear/exclude scalar rolling series
 ```
 
-Los puntos en o antes del cutoff se eliminan.
+A later scalar result may start a scalar series again.
 
-## Cambios de tipo
+## Frozen boundary
 
-Si un KPI cambia de `value_type` escalar dentro del horizonte rolling:
-
-```text
-old physical values for that KPI are cleared
-new scalar type starts a new logical series
-```
-
-Si aparece un resultado JSON:
-
-```text
-that KPI rolling scalar series is cleared/excluded
-```
-
-Un valor escalar posterior puede iniciar nuevamente una serie escalar.
-
-## Incremental path
-
-En operación normal Historian no relee durable history para actualizar el rolling.
-
-```text
-new batches already held by Historian
-→ merge into current rolling
-→ trim horizon
-→ atomic replace
-```
-
-El merge es idempotente por timestamp/KPI para reintentos del mismo rango.
-
-## Recovery path
-
-Si el rolling está ausente, corrupto o no es coherente con la authority previa:
-
-```text
-durable history exists
-→ read only the dates needed to cover the last 24 h
-→ rebuild wide rolling
-→ atomic replace
-```
-
-Si todavía no existe history durable previa:
-
-```text
-current batches
-→ create rolling
-→ physical coverage grows naturally
-```
-
-No se crea backfill artificial de `null`.
-
-## Coherencia
-
-`KpiHistorianRollingMaterializer.is_coherent(authority)` valida metadata y revisión.
-
-Casos:
-
-```text
-rolling == authority
-→ coherent
-
-rolling missing/corrupt/behind
-→ not coherent; rebuild when required
-
-rolling ahead of authority
-→ error
-```
-
-Cuando Historian ya está CURRENT y no se solicita reprocess:
-
-```text
-rolling coherent
-→ SKIPPED_CURRENT
-
-rolling incoherent/missing/corrupt
-→ rebuild rolling from durable history
-→ PROCESSED
-```
-
-Ese recovery no reescribe durable history ni recommitea `HistorianAuthority`.
-
-## Atomicidad
-
-La escritura usa un archivo temporal sibling en el mismo directorio y reemplazo mediante
-`os.replace`.
-
-Contrato validado:
-
-```text
-failed new write
-→ previously committed rolling remains intact
-```
-
-## Boundary congelado
-
-Historian no conoce:
+Historian does not know:
 
 ```text
 Tools
 destination_keys
 named output Cosmos connections
-Timeseries Delivery checkpoints
-logical per-Tool windows
+Timeseries checkpoints
+per-Tool logical windows
+Timeseries output grid
 ```
-
-La hidratación de una grilla lógica completa pertenece al consumidor Timeseries Delivery.
 
 ## Qualification
 
-Validación final reportada sobre el árbol integrado:
+Final focused qualification:
 
 ```text
 kpis/history
-27 passed
-ruff check                 PASS
-ruff format --check        PASS
+31 passed
 
 processes/kpi-historian
-47 passed
-ruff check                 PASS
-ruff format --check        PASS
+45 passed
+
+Ruff check
+PASS
+
+Ruff format --check
+PASS
 
 git diff --check
 PASS
 ```
 
-Cobertura relevante validada:
+## OPEN outside this contract
 
 ```text
-shared metadata roundtrip and validation
-exact rolling path
-incremental update without durable reread
-observed rows only
-empty physical coverage
-value_type transition
-24 h trimming
-durable rebuild
-corrupt rolling recovery
-strict 30 s alignment
-atomic replacement failure preservation
-history -> rolling -> authority ordering
-current coherent skip
-current incoherent recovery
-composition/public API
-```
-
-## OPEN fuera de este cierre
-
-No queda un contrato interno del Historian bloqueando el siguiente incremento.
-
-Permanece UNVERIFIED fuera de este foco:
-
-```text
-full operational E2E with the future Timeseries consumer
-real production storage/runtime behavior
+full operational Runtime -> Historian -> Timeseries E2E
+real production storage behavior
 load/performance profile
 ```
 
-Esas validaciones no reabren el contrato CURRENT del rolling.
+These are UNVERIFIED/BLOCKED operational validations, not internal Historian design gaps.

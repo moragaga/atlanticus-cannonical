@@ -1,6 +1,6 @@
 # Atlanticus — Open Questions
 
-Estado: **CURRENT — NAVIGATION ACCESS CONTRACT NEXT**
+Estado: **CURRENT — COMMAND CENTER / ALARM BACKEND ANALYSIS NEXT**
 
 ## CLOSED
 
@@ -11,51 +11,68 @@ Tool User Membership
 users-runtime
 Tool Users Recovery Snapshot
 Master Projection Users REPLACE
-Jane/John palette regression
+
+KPI named connections
+KPI Registry materialization
+Latest multi-Tool delivery
+Historian rolling projection
+Timeseries multi-Tool delivery
+KPI History dataset representation boundary
 ```
 
-## OPEN / NEXT — Navigation
+## OPEN / NEXT — Command Center / Alarm
 
-CURRENT ambiguity:
+El siguiente chat debe resolver desde fuentes autoritativas, sin asumir respuesta previa:
 
 ```text
-allowed_profiles=[]
-→ public/unrestricted
+1. Qué responsabilidad pertenece hoy a ada-command-center.
+2. Qué responsabilidad pertenece hoy a Alarm backend.
+3. Qué piezas son producto/UI y cuáles son dominio/runtime reusable.
+4. Si Alarm posee suficiente responsabilidad, ciclo de vida y contrato propio para madurar a engine.
+5. Si Command Center debe consumir/orquestar Alarm en vez de poseer su núcleo.
+6. Qué contratos deben quedar en backend antes de continuar consumidores Web.
+7. Qué implementación actual debe mantenerse, moverse, reemplazarse o eliminarse.
 ```
 
-Resolver:
+No congelar una respuesta antes de inspeccionar `main`.
+
+## BLOCKED
 
 ```text
-1. persisted field/type PUBLIC vs RESTRICTED
-2. clean replacement of existing documents
-3. UI Público / Restringido
-4. PUBLIC forbids ordinary profile grants
-5. RESTRICTED permits zero ordinary grants
-6. root/local implicit, not selectable
-7. menu and direct URL same semantics
-8. group/link inheritance under explicit mode
+KPI full operational E2E
 ```
 
-## OPEN / AFTER
+Razón:
 
 ```text
-current-head artifact completeness
-artifact installability
-.env.detail exhaustive audit
-system-derived/system-assigned values
-ADA durable end-to-end
-runtime restart/readback
-recovery gate
+Web requiere correcciones previas antes de poder levantar/configurar el entorno completo.
+```
+
+Lo que permanece UNVERIFIED:
+
+```text
+real Runtime -> Historian -> Timeseries execution
+real multi-Tool Cosmos delivery
+restart/recovery through the complete deployed flow
+production Azure behavior
+load/RU profile
 ```
 
 ## OPEN / SEPARATE
 
 ```text
+Navigation PUBLIC / RESTRICTED
+current-head artifact completeness
+artifact installability
+.env.detail exhaustive audit
+system-derived/system-assigned values
+distribution regeneration
+ADA durable end-to-end
+runtime restart/readback
+recovery gate
 macOS rcssmin
 /health/ready checks
 production Entra/Azure
-Command Center
 Python migration
-Alarm
-KPI backend work
+Collector / Time Status / UI
 ```

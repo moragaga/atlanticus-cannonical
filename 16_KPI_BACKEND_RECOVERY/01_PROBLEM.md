@@ -2,17 +2,45 @@
 
 Estado: **CLOSED / HISTORICAL CONTEXT**
 
-El problema original era doble:
+El frente original acumuló tres problemas relacionados:
 
 ```text
-1. Runtime/Historian no podían rematerializar el watermark CURRENT sin nueva data.
-2. Delivery/Timeseries consumían un projection document KPI legacy distinto del KPI Registry durable CURRENT.
+1. Runtime/Historian necesitaban rematerializar CURRENT sin nueva data.
+2. Delivery/Timeseries debían dejar de depender de configuración/Registry legacy.
+3. Historian/Timeseries necesitaban una frontera coherente para history durable y rolling.
 ```
 
-Ambos problemas están resueltos en `atlanticus@3ca8c833...`.
+Estado final CURRENT:
 
-Runtime e Historian soportan `REPROCESS_CURRENT=false|true` con authority/fencing preservados.
+```text
+KPI Runtime
+→ durable evaluation batches
 
-Delivery y Timeseries consumen el Registry durable sin dual reader ni fallback y materializan outputs Cosmos propios.
+KPI Materialization
+→ Registry local per Tool
 
-Este documento conserva la motivación; ya no representa un gap OPEN.
+Latest Delivery
+→ named connections + Registry materialized + per-Tool progress
+
+Historian
+→ durable daily history + rolling current.parquet + HistorianAuthority
+
+Timeseries Delivery
+→ Registry materialized + named connections + rolling + per-Tool checkpoints
+```
+
+La representación tabular KPI reusable se concentra dentro del mismo package:
+
+```text
+ada.kpis.history.dataset
+```
+
+No existe package separado `history-tabular`.
+
+Los procesos no poseen conversión PyArrow directa.
+
+Este documento conserva la motivación histórica.
+
+No representa un gap interno OPEN.
+
+El único pendiente operativo de este dominio es el E2E completo, actualmente BLOCKED por correcciones Web externas al backend KPI.

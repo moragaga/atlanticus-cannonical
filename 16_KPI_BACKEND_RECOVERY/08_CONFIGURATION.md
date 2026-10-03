@@ -1,8 +1,8 @@
 # KPI Backend Recovery — Configuration
 
-Estado: **CURRENT for Materialization + Latest / TIMESERIES MIGRATION PLANNED**
+Estado: **CURRENT for Materialization + Latest + Timeseries**
 
-## Named connections — CURRENT
+## Named connections
 
 Package:
 
@@ -10,42 +10,13 @@ Package:
 ada-kpis-connections==1.0.0
 ```
 
-Contract file:
+Contract:
 
 ```text
 config/connections.json
 ```
 
-Schema:
-
-```json
-{
-  "schema_version": 1,
-  "connections": {
-    "example_tool": {
-      "endpoint_var": "EXAMPLE_TOOL_COSMOS_ENDPOINT",
-      "database_var": "EXAMPLE_TOOL_COSMOS_DATABASE",
-      "credential_var": "EXAMPLE_TOOL_COSMOS_KEY"
-    }
-  }
-}
-```
-
-`connections.json` contiene nombres de variables, no valores Cosmos resueltos.
-
-Los valores reales provienen de `.env` local o configuración/secrets del deployment.
-
-## Tool key
-
-```text
-^[a-z][a-z0-9_]*$
-```
-
-No normalizar silenciosamente keys inválidos.
-
-## Dynamic variable roles
-
-Cada Tool declara exactamente:
+Each Tool entry references variable names:
 
 ```text
 endpoint_var
@@ -53,63 +24,9 @@ database_var
 credential_var
 ```
 
-Las variables deben resolver a `CosmosSettings`.
-La credencial es sensitive.
+The document contains references, not resolved credentials.
 
-Implementación CURRENT rechaza dos Tools que resuelvan al mismo `(endpoint, database_name)`.
-
-## Materialization
-
-```text
-POLL_INTERVAL_SECONDS=30
-```
-
-Connections/config se leen al iniciar el proceso.
-
-Materialization consulta cada Tool secuencialmente.
-
-Si el Registry document todavía no existe:
-
-```text
-readiness pending
-retry = 30 s
-```
-
-Si Cosmos/config/contract falla realmente:
-
-```text
-error
-```
-
-No esconder configuración inválida detrás de retries infinitos.
-
-## Latest Delivery
-
-```text
-POLL_INTERVAL_SECONDS=1
-KPI_DELIVERY_MAX_WORKERS=2
-KPI_RUNTIME_APPLICATION=<runtime application>
-```
-
-Readiness por materialized Registry:
-
-```text
-30 s
-```
-
-Ese intervalo no reemplaza el polling normal de 1 s.
-
-## .env.detail / secrets.detail.json
-
-CURRENT templates incluyen ejemplos explícitos para:
-
-```text
-EXAMPLE_TOOL_COSMOS_ENDPOINT
-EXAMPLE_TOOL_COSMOS_DATABASE
-EXAMPLE_TOOL_COSMOS_KEY
-```
-
-`config/connections.json` referencia variables y no contiene sus valores.
+Tool keys remain strict and invalid keys are not silently normalized.
 
 ## Materialized Registry location
 
@@ -117,26 +34,91 @@ EXAMPLE_TOOL_COSMOS_KEY
 <VOLUMEN_PATH>/ada-kpi-engine/materialization/registries/<tool_key>.json
 ```
 
-No depende de `APPLICATION` del consumidor.
+Consumers use the common materialization root, independent of their own `APPLICATION`.
 
-## Timeseries CURRENT legacy
-
-Timeseries todavía usa configuración antigua:
+## Materialization
 
 ```text
-COSMOS_CONSUMPTION_ENDPOINT
-COSMOS_CONSUMPTION_KEY
-COSMOS_CONSUMPTION_DATABASE_NAME
+POLL_INTERVAL_SECONDS=30
+```
+
+Behavior:
+
+```text
+read named connections at startup
+acquire Registry per Tool
+write local full Registry
+preserve LKG on per-Tool failure
+remove local Registry for removed Tool
+missing remote Registry => readiness pending / 30 s
+real contract/connectivity error => failure
+```
+
+## Latest Delivery
+
+Relevant settings:
+
+```text
+KPI_RUNTIME_APPLICATION
+KPI_DELIVERY_MAX_WORKERS
+poll interval default = 1 s
+materialization readiness retry = 30 s
+```
+
+Configuration is frozen after materialized Registry readiness.
+
+## Timeseries Delivery
+
+CURRENT settings:
+
+```text
+KPI_HISTORIAN_APPLICATION
 KPI_TIMESERIES_DELIVERY_POLL_INTERVAL_SECONDS
+KPI_TIMESERIES_DELIVERY_MAX_WORKERS
+APPLICATION
+VOLUMEN_PATH
 ```
 
-PLANNED replacement:
+Defaults:
 
 ```text
-named connections package
-materialized Registries
-generic POLL_INTERVAL_SECONDS
-readiness 30 s
+poll interval = 1 s
+max workers   = 2
 ```
 
-No declarar esa migración como implementada antes del siguiente incremento correspondiente.
+Timeseries consumes the same named connections supplied by composition and the same materialized Registry set.
+
+Startup readiness:
+
+```text
+expected Tool set must equal materialized Registry Tool set
+missing/unexpected set => materialization_pending
+retry = 30 s
+```
+
+Successful readiness freezes all per-Tool configurations for process lifetime.
+
+No legacy single global Cosmos consumption connection remains in the CURRENT Timeseries path.
+
+## Historian location
+
+Timeseries identifies Historian state/storage through:
+
+```text
+KPI_HISTORIAN_APPLICATION
+```
+
+It reads:
+
+```text
+HistorianAuthority via AtomicStateStore
+rolling dataset via DatasetRuntime over Historian application root
+```
+
+## Secrets
+
+`config/connections.json` must not contain resolved secrets.
+
+Resolved Cosmos credentials come from environment/deployment secret sources.
+
+`.env.detail` exhaustive audit is a separate PLANNED front and was not reopened by this KPI closure.
