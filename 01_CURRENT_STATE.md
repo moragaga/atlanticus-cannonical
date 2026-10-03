@@ -1,192 +1,166 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT — ADA DISTRIBUTED RUNTIME CLOSED; TOOL-SCOPED CONFIGURATION CUTOVER NEXT**
+Estado: **CURRENT — TOOL-SCOPED USERS CUTOVER CLOSED; NAVIGATION ACCESS NEXT**
 
 ## Autoridad
 
 ```text
 Implementation
-moragaga/atlanticus@38bcd8c5607d67f999e2bc4bf9dbf176c8340588
+moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
 
 Decisions
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 
-Canonical inspected before replacement
-moragaga/atlanticus-cannonical@0a2ff691d8bb9a4bfe743cadb1cacb9c83d865c7
+Canonical before replacement
+moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
 ```
-
-Git permanece **SOLO LECTURA**.
-
-## Estado transversal no modificado por este hito
-
-```text
-Shared Master Projection                    CURRENT
-StorageNamespace generic                    CURRENT
-Source Core / Local / Blob                 CURRENT
-Command Center product work                separate
-Alarm Engine / Command Center alarm work   separate
-KPI Engine backend recovery work           separate
-```
-
-Este cierre no recalifica esos dominios salvo donde se los enumera explícitamente.
 
 ## CLOSED / VERIFIED
 
 ```text
-CURRENT-HEAD-DISTRIBUTION-REGENERATION
-ADA-LOCAL-COSMOS-DATA-EXPLORER
-ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE
-ADA-CONSUMER-REPOSITORY-RUNTIME
+ADA-TOOL-SCOPED-SOURCE-OWNERSHIP
+ADA-USERS-GLOBAL-IDENTITY
+ADA-TOOL-USER-MEMBERSHIP
+ADA-USERS-RUNTIME
+ADA-USERS-RECOVERY-SNAPSHOT
+MASTER-PROJECTION-USERS-REPLACE
+ADA-MANAGER-RUNTIMEUSER-CONSUMPTION
+LOCAL-JANE-JOHN-AVATAR-PALETTES
 ```
 
-### Runtime distribuido ADA
-
-Evidencia reportada desde un repositorio consumidor aislado:
+## Ownership CURRENT
 
 ```text
-Docker image build                  COMPLETED
-image                               ada-generic:compose-local
-Python image                        python:3.14.2-slim-bookworm
+application namespace
+└── users/users.json.gz
+    └── UserIdentity[]
 
-Azurite                             RUNNING
-Cosmos Emulator                     RUNNING
-Cosmos Data Explorer                HTTP 200 / port 1234
+tool namespace
+├── Source Navigation
+├── Source Profiles
+├── Source ADA Access
+├── Source Operational
+├── Source Tools
+├── Source KPI Registry
+├── Source KPI Definitions
+├── users/memberships.json.gz
+└── users/recovery/
+    ├── snapshots/
+    ├── audit/
+    └── replace-before/
 
-resource preparation
-  Blob container dataproduct        CREATED
-  Cosmos database cosmosdb-ada      CREATED
-  six Cosmos containers             CREATED
-
-Web                                 healthy
-/health/live                        HTTP 200
-/health/ready                       HTTP 200
-application version                 0.2.26
+Cosmos propio de la Tool
+└── users-runtime
+    └── RuntimeUser
 ```
 
-`/health/ready` continúa entregando `checks: {}`; el endpoint responde pero no demuestra checks funcionales de dependencias.
-
-## VERIFIED findings durante configuración real
-
-- `StorageNamespace(application_namespace, scope_namespace)` produce `conciencia_situacional/<tool>`.
-- La implementación durable actual usa `application_source` para Navigation, Profiles, ADA Access y Operational.
-- Tools, KPI Registry y KPI Definitions usan `tool_source`.
-- Users Registry durable es global bajo `<application_namespace>/users/users.json.gz`.
-- `UserRecord` global CURRENT contiene `profile_key` y `enabled`.
-- Tool Projection CURRENT contiene `tool_key` y `display_name`.
-- KPI Registry Projection CURRENT registra dependency exacta hacia Tool Projection.
-- El header ya soporta `tool_display_name`, pero el worker lo resuelve al bootstrap; refresco dinámico tras reproyección no está implementado.
-- Time Status ya modela PI/Dispatch, pero el circuito runtime que alimenta sus timestamps sigue incompleto.
-
-## DECIDED / PLANNED
-
-### Tool-scoped configuration cutover
-
-Bajo:
+## Users CURRENT
 
 ```text
-ADA_APPLICATION_NAMESPACE=conciencia_situacional
-ADA_TOOL_NAMESPACE=<tool>
+UserIdentity
+    user_id
+    issuer
+    subject_id
+    display_name
+    email
+
+ToolUserMembership
+    user_id
+    profile_key
+    enabled
+
+RuntimeUser
+    identity
+    enabled
+    profile {id,label,background_color,text_color}
+    operational {area,position,group}
 ```
 
-la configuración específica de la Tool debe quedar bajo:
+`root` es asignable a un usuario administrado.
+
+`guest` y `local` no son perfiles administrados asignables.
+
+Jane/John mantienen sus paletas locales propias sin persistir colores en Global Users.
+
+## users-runtime CURRENT
 
 ```text
-conciencia_situacional/<tool>/...
+id            = user_id
+partition_key = user_id
 ```
 
-Incluye:
+No contiene ni consulta por `application_key`/`tool_key`.
+
+## Recovery CURRENT
 
 ```text
-tools
-profiles
-navigation
-ada-access
-operational
-tool-user-membership
-kpis
-kpi-definitions
-tool users recovery snapshot
+Global Users
++ Tool Membership
++ Profiles
++ Operational
+→ RuntimeUser[]
+→ Tool-scoped recovery snapshot
+→ complete REPLACE users-runtime
 ```
 
-El registro global `users` queda como identidad compartida y pierde `profile_key` y `enabled`.
+Recovery no modifica Global Users ni Tool Membership. No existe RESTORE parcial legacy.
 
-### users-runtime por Tool
-
-Cosmos pertenece operativamente a una Tool.
-
-`users-runtime` será la autoridad de lectura de sesión de esa Tool y expondrá un snapshot completo con:
+## Qualification focal reportada por el usuario
 
 ```text
-identity
-enabled
-resolved profile
-operational
+Users Core                    44 passed
+Users Blob                     7 passed
+Users Cosmos                   7 passed
+Master Projection             53 passed
+ADA Configuration Manager     65 passed
+ADA Generic Application      199 passed
 ```
 
-La estructura `operational` siempre existe; valores no informados se representan con `null`.
+## CURRENT / OPEN — Navigation
 
-Access no se duplica dentro de cada usuario; se mantiene como contrato `profile_key -> access_keys`.
+CURRENT:
 
-### Navigation
+```text
+allowed_profiles=[]
+→ public/unrestricted
+```
 
-Debe distinguir explícitamente:
+DECIDED / PLANNED:
 
 ```text
 PUBLIC
-RESTRICTED
-```
+    acceso ordinario
 
-Semántica aceptada:
+RESTRICTED + []
+    sólo root/local implícitos
 
-```text
-PUBLIC
-    acceso ordinario según aplicación
-
-RESTRICTED + allowed_profiles=[]
-    sólo root/local
-
-RESTRICTED + allowed_profiles=[...]
+RESTRICTED + [profiles]
     perfiles seleccionados + root/local
 ```
 
-Root/local continúan implícitos y no son opciones editables normales.
+Debe implementarse también en la UI del Manager.
 
-### KPI Registry
-
-La proyección/materialización de KPI Registry debe exponer `tool_key` derivado de Tool Projection para consumo de Delivery.
-
-No duplicar `display_name` como autoridad editable del Source KPI.
-
-## BLOCKED
+## PLANNED después de Navigation
 
 ```text
-ADA-DURABLE-CONFIGURATION-RECOVERY
+1. current-head artifact generation/qualification
+2. .env.detail full audit
+3. distribution regeneration
+4. isolated consumer qualification
+5. ADA Generic real configuration with Docker Storage/Cosmos
+6. resume Operaciones Integradas end-to-end
+7. backend processes as separate increments
+8. Collector / Time Status / UI
 ```
 
-El recovery destructivo Blob → Cosmos se detiene hasta implementar el cutover Tool-scoped/Users mínimo. No tiene sentido certificar recovery sobre un ownership que ya fue descartado.
-
-## OPEN no bloqueante
+## OPEN / SEPARATE
 
 ```text
-host sync macOS / Python 3.14.2
-    BLOCKED por rcssmin==1.2.2 sin wheel macOS CPython 3.14 bajo --only-binary
-
-/health/ready checks
-    vacío
-
-Tool runtime hot refresh
-Time Status runtime integration
-KPI Delivery tool context consumption
-Python 3.14.7 / Trixie
-production Azure / Entra
-Command Center distributed runtime
-Alarm integration
+macOS host sync / rcssmin wheel           BLOCKED
+/health/ready functional checks           OPEN
+Python 3.14.7 / Trixie                    PLANNED
+production Azure / Entra                  UNVERIFIED
+Command Center distributed runtime        separate
+Alarm integration                         separate
+KPI backend/history/timeseries work       separate
 ```
-
-## Unique next focus
-
-```text
-ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
-```
-
-Resolver sólo esa raíz, regenerar/distribuir y volver a la configuración funcional ADA. No mezclar UI/Alarmas durante ese incremento.

@@ -1,8 +1,8 @@
 # Atlanticus Web Platform — Canonical Index
 
-Estado: **CURRENT — DISTRIBUTED ADA RUNTIME CLOSED / ADA TOOL-SCOPED USER MODEL NEXT**
+Estado: **CURRENT — USERS CUTOVER CLOSED / NAVIGATION ACCESS NEXT**
 
-## Current generic capabilities
+## Generic capabilities CURRENT
 
 ```text
 Source Core/Local/Blob
@@ -16,34 +16,28 @@ Storage Namespace
 Storage Topology
 ```
 
-remain generic Atlanticus capabilities.
-
-## Product status
+## Closed product gap
 
 ```text
-ADA Generic 0.2.26
-    distributed runtime VERIFIED
-
-Command Center
-    separate current product frontier
+ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
+CLOSED / VERIFIED
 ```
 
 ## Primary current gap
 
 ```text
-ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
+NAVIGATION-PUBLIC-RESTRICTED-CONTRACT
+PLANNED / NEXT
 ```
 
-This is a product composition/model cutover, not a generic Source/Projection rewrite.
-
-## After cutover
+## After Navigation
 
 ```text
-regenerate/distribute
-resume real ADA configuration
-validate recovery
-continue UI/Collector
-Alarm integration later
+artifact generation
+.env.detail audit
+distribution regeneration
+consumer runtime
+ADA real configuration
 ```
 
-Historical NEXT markers for Source convergence, dual-app smoke, distribution regeneration and ADA distributed runtime are SUPERSEDED.
+Historical NEXT markers for Tool/User cutover are SUPERSEDED.

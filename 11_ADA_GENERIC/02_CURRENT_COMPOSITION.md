@@ -1,18 +1,10 @@
 # ADA Generic — Current Composition
 
-Estado: **CURRENT — PRODUCT COMPOSITION ROOT / DISTRIBUTED RUNTIME VERIFIED**
-
-## Version CURRENT
-
-```text
-ada-generic-application==0.2.26
-ada-project-tooling==0.1.1
-Python == 3.14.2
-```
+Estado: **CURRENT — TOOL-SCOPED SOURCE + USERS RUNTIME CUTOVER IMPLEMENTED**
 
 ## Composition root CURRENT
 
-ADA Generic posee:
+ADA Generic owns product composition for:
 
 ```text
 settings
@@ -20,78 +12,72 @@ local/durable Manager composition
 identity binding
 Tool Projection resolution
 operational render binding
-ADA Master Projection composition/provisioning
+ADA Master Projection composition
 KPI Collector attachment
 Web runtime lifecycle
 ```
 
-Reusable engines remain owned by Atlanticus generic capabilities.
-
-## Durable runtime qualification
-
-Verified from an isolated consumer repository:
-
-```text
-Linux Docker image build        PASS
-Azurite                         PASS
-Cosmos Emulator                 PASS
-resource preparation            PASS
-Web container healthy           PASS
-/health/live                    HTTP 200
-/health/ready                   HTTP 200
-Cosmos Data Explorer            HTTP 200
-```
-
-`/health/ready` currently reports `checks: {}`.
-
-## Persistence modes
-
-```text
-ADA_PERSISTENCE_MODE=local
-ADA_PERSISTENCE_MODE=durable
-```
-
-A local environment may use durable persistence with emulators.
-
-## Storage namespace CURRENT API
-
-```text
-StorageNamespace(
-    application_namespace,
-    scope_namespace,
-)
-```
-
-ADA maps:
+## Namespace
 
 ```text
 application_namespace = ADA_APPLICATION_NAMESPACE
 scope_namespace       = ADA_TOOL_NAMESPACE
 ```
 
-## Current composition gap
+## Source ownership CURRENT
 
-Implementation CURRENT still creates:
+One Tool-scoped Source store is injected for:
 
 ```text
-application_source
-    Navigation
-    Profiles
-    ADA Access
-    Operational
-
-tool_source
-    Tools
-    KPI Registry
-    KPI Definitions
+Navigation
+Profiles
+ADA Access
+Operational
+Tools
+KPI Registry
+KPI Definitions
 ```
 
-The accepted next cutover moves all Tool-varying configuration to `tool_source`; only global user identity remains application-global.
+Global Users Registry remains application-scoped.
 
-This is `DECIDED / PLANNED`, not yet CURRENT implementation.
+Tool User Membership:
 
-## Host sync gap
+```text
+<application>/<tool>/users/memberships.json.gz
+```
 
-`tooling/project.py sync` on macOS CPython 3.14.2 is BLOCKED because the current binary-only external dependency set includes `rcssmin==1.2.2` without a usable macOS CPython 3.14 wheel.
+Recovery:
 
-Docker/Linux distribution remains verified.
+```text
+<application>/<tool>/users/recovery/...
+```
+
+## Cosmos CURRENT
+
+One Cosmos runtime/database belongs to one Tool.
+
+`users-runtime` uses `user_id` directly as item id/partition key and no app/tool routing fields.
+
+## Session CURRENT
+
+```text
+Identity
+→ users-runtime resolve
+→ RuntimeUser
+→ UsersRuntime
+→ Manager/Navigation principal
+```
+
+## Master Projection CURRENT
+
+Six Source Projection domains remain. Users is a special recovery operation.
+
+## Current gap
+
+Navigation still lacks explicit PUBLIC/RESTRICTED state.
+
+## Distribution
+
+Previously verified distributed artifacts predate this cutover.
+
+Current HEAD must be regenerated/requalified after Navigation semantics close.

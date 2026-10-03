@@ -1,95 +1,62 @@
 # ADA Web — Session, Tool User Snapshot and Operational Consumption
 
-Estado: **REFINED DESIGN / PLANNED INTEGRATION**
+Estado: **CURRENT SESSION CONTRACT / REVOCATION HARDENING OPEN**
 
-## Superseded session design
-
-SUPERSEDED as target:
-
-```text
-login
-→ read promoted user
-→ query operational assignment
-→ join operational catalog
-→ join profiles
-→ assemble session
-```
-
-The underlying durable contracts can still exist, but runtime login should not perform these joins.
-
-## Current target
+## Session CURRENT
 
 ```text
 identity provider
-→ resolve user identity
-→ read one Tool-specific users-runtime snapshot
-→ establish session
+→ users-runtime.resolve(identity)
+→ RuntimeUser
+→ UsersRuntime session
 ```
 
-`users-runtime` is the read authority for the current Tool.
+Supersedes login-time joins.
 
-## Runtime snapshot
-
-Conceptual required data:
+## RuntimeUser CURRENT
 
 ```text
 identity
 enabled
-resolved profile
-resolved operational
+profile
+operational
 ```
 
-Operational structure is always present:
-
-```text
-area      {id, label}
-position  {id, label}
-group     {id, label}
-```
-
-Unconfigured values are `null`.
+Operational has area/position/group with null when unconfigured.
 
 ## Access
 
-The user snapshot supplies `profile.id`.
-
-ADA Access remains:
+ADA Access remains separate:
 
 ```text
 profile_key -> access_keys
 ```
 
-and can be held in memory/cache as a small shared projection.
+## Manager
 
-Do not duplicate the complete access list into every user unless a later measured need justifies it.
+Manager principal derives from RuntimeUser.
 
-## Session refresh
+Trusted local is an explicit local-environment exception.
 
-A page reload re-resolves the Tool user snapshot.
+## Local presentation
 
-Server-side immediate session revocation remains a separate production-hardening concern.
+Jane/John may use local subject-specific avatar palettes.
 
 ## Warmup
 
-The prior requirement to warm Profiles + Operational catalogs specifically for login is SUPERSEDED by the denormalized users-runtime target.
-
-A cache/warmup may still be useful for other consumers, but it is not required to establish the session contract.
+Profiles/Operational warmup is not required for login.
 
 ## Recovery
 
-Immediate:
-
 ```text
-Tool Users Recovery Snapshot
+Tool recovery snapshot
 → users-runtime
 ```
 
-Future:
+## OPEN
 
 ```text
-Global Users + Tool Membership + Profiles + Operational
-→ join
-→ users-runtime
+server-side immediate session revocation
+multiworker revocation propagation
+production Entra qualification
 ```
-
-The future join is PLANNED and intentionally deferred.

@@ -1,50 +1,53 @@
 # ADA Generic — First Tool Delivery Order
 
-Estado: **CURRENT — OPERACIONES INTEGRADAS IS THE ACTIVE REAL TOOL / ROOT CUTOVER NEXT**
+Estado: **CURRENT — OWNERSHIP ROOT FIX CLOSED / NAVIGATION NEXT**
 
-Initial delivery order remains:
+Delivery order remains:
 
 ```text
 1. Operaciones Integradas
 2. Mina
 ```
 
-## Operaciones Integradas evidence
+## Closed prerequisite
 
-A real Tool Projection has been created with:
+Tool-varying configuration now has Tool-scoped durable ownership.
+
+Users now has:
 
 ```text
-tool_key      tool_operaciones_integradas_af1b7d9983bd
-display_name  Operaciones Integradas
-kind          integrated_operations
-sources       pi, dispatch
+global identity
+Tool membership
+Tool users-runtime
+Tool recovery snapshot
 ```
 
-KPI Registry was also projected against that exact Tool Projection.
-
-This real configuration surfaced the current ownership gaps before production Storage was used.
-
-## Finding
-
-`conciencia_situacional` is the application-global scope.
-
-`operaciones_integradas` is the Tool scope.
-
-Therefore Tool-varying configuration must not live directly under `conciencia_situacional/sources`.
-
-## Unique next focus
+## Next prerequisite
 
 ```text
-ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
+NAVIGATION-PUBLIC-RESTRICTED-CONTRACT
 ```
 
-After it is implemented and distribution regenerated:
+Need explicit route access mode + Manager UI + direct authorization.
+
+## After Navigation
 
 ```text
+artifact generation qualification
+.env.detail audit
+distribution regeneration
+isolated consumer
 resume Operaciones Integradas configuration
-→ recovery gate
-→ UI operational integration
-→ Alarm integration in a separate focus
+recovery qualification
 ```
 
-Do not open Tool→Tool consolidation semantics or broad multi-tool infrastructure protection during the next increment.
+## Later separate ADA flow
+
+```text
+KPI delivery / historian / timeseries
+Collector
+Time Status
+UI
+```
+
+Alarm remains separate.

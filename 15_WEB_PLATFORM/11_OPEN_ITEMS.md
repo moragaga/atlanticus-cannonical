@@ -1,58 +1,61 @@
 # Web Platform — Open Items
 
-Estado: **CURRENT — ADA TOOL-SCOPED CONFIGURATION/USERS CUTOVER NEXT**
+Estado: **CURRENT — NAVIGATION ACCESS NEXT**
 
 ## CLOSED / VERIFIED
 
 ```text
-CURRENT-HEAD-DISTRIBUTION-REGENERATION
-ADA-LOCAL-COSMOS-DATA-EXPLORER
-ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE
-ADA-CONSUMER-REPOSITORY-RUNTIME
+ADA-TOOL-SCOPED-SOURCE-OWNERSHIP
+GLOBAL-USERS-IDENTITY-CUTOVER
+TOOL-USER-MEMBERSHIP
+USERS-RUNTIME
+USERS-RECOVERY-SNAPSHOT-REPLACE
+MASTER-PROJECTION-USERS-REPLACE
+LOCAL-JANE-JOHN-PALETTE
 ```
 
 ## OPEN / NEXT
 
 ```text
-ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
+NAVIGATION-PUBLIC-RESTRICTED-CONTRACT
 ```
 
-Acceptance boundary:
+Acceptance:
 
 ```text
-Navigation/Profiles/Access/Operational use Tool Source root
-global Users identity no longer owns profile_key or enabled
-Tool User Membership owns profile_key + enabled
-Tool users-runtime is complete login/session snapshot
-operational runtime shape is stable with nullable values
-Tool Users Recovery Snapshot can restore users-runtime
-Navigation can represent privileged-only and profile-restricted routes
-KPI Registry projection/materialization exposes tool_key
-no legacy storage path/model adapters
+explicit access mode
+Manager UI supports public/restricted
+PUBLIC has no ordinary profile grants
+RESTRICTED may have zero ordinary grants
+root/local excluded from selector
+root/local implicit privilege
+menu and route middleware converge
+direct URL tests
 ```
 
 ## OPEN / AFTER
 
 ```text
-regenerate distribution
-rerun consumer runtime
-resume Operaciones Integradas configuration
-Master Projection recovery gate
+current-head artifacts
+.env.detail complete audit
+distribution regeneration
+isolated consumer rerun
+ADA real durable configuration
+recovery gate
 Tool hot refresh
-Time Status runtime
+Time Status
 KPI Delivery
-UI
-Alarm integration
+Collector/UI
 ```
 
 ## OPEN / SEPARATE
 
 ```text
-macOS host sync rcssmin wheel
-/health/ready functional checks
+macOS rcssmin
+/health/ready checks
 production Entra/Azure
-Command Center distributed runtime
+Command Center runtime
 Python 3.14.7/Trixie
+Alarm
+KPI backend process work
 ```
-
-Do not mix AFTER/SEPARATE items into the next root cutover.

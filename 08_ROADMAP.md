@@ -1,87 +1,72 @@
 # Atlanticus — Roadmap
 
-Estado: **CURRENT ROADMAP — SOURCE CONVERGENCE NEXT**
+Estado: **CURRENT ROADMAP — NAVIGATION ACCESS NEXT**
 
 ## CLOSED / CURRENT
 
 ```text
-WEB-DISTRIBUTION-SHARED-ENGINE-CLEANUP          CLOSED
-DUAL-APP-ENV-DETAIL-CONTRACT                    CLOSED
-COMMAND-CENTER-DURABLE-RUNTIME-COMPOSITION      CLOSED
-ATLANTICUS-WEB-MASTER-PROJECTION                CLOSED
-DUAL-APP-MASTER-PROJECTION-CONVERGENCE          CLOSED
+ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE
+ADA-CONSUMER-REPOSITORY-RUNTIME
+ADA-TOOL-SCOPED-SOURCE-OWNERSHIP
+ADA-USERS-IDENTITY-MEMBERSHIP-CUTOVER
+ADA-USERS-RUNTIME
+ADA-USERS-RECOVERY-SNAPSHOT
+MASTER-PROJECTION-USERS-REPLACE
 ```
 
 ## NEXT único
 
 ```text
-SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
-PLANNED / NEXT
+NAVIGATION-PUBLIC-RESTRICTED-CONTRACT
 ```
 
-Objetivo:
+Scope:
 
 ```text
-preserve SourceStore Core
-preserve Local/Blob provider semantics
-inspect current ADA + Command Center Source composition
-remove Command Center dependency on ADA-owned namespace contract
-define reusable namespace/composition boundary
-keep product-specific naming in product composition
+explicit PUBLIC | RESTRICTED
+persisted contract
+Manager UI
+ordinary profile selector
+root/local excluded from selector
+RESTRICTED + [] privileged-only
+menu + direct route authorization convergence
+behavioral tests
 ```
-
-No mezclar tooling reorganization, KPI/Collector/UI, Entra o Python migration.
 
 ## AFTER NEXT
 
 ```text
-DUAL-APP-DURABLE-RUNTIME-SMOKE
-PLANNED
+CURRENT-HEAD-ARTIFACT-GENERATION-QUALIFICATION
 ```
 
-Levantar desde source:
+## THEN
 
 ```text
-ADA Generic
-ADA Command Center Generic
+ENV-DETAIL-FULL-AUDIT
+DISTRIBUTION-REGENERATION
+ISOLATED-CONSUMER-QUALIFICATION
+ADA-GENERIC-REAL-CONFIG-E2E
 ```
 
-con:
+## Subsequent separate increments
 
 ```text
-ATLANTICUS_ENVIRONMENT=local
-persistence=durable
+nottpi / ingestion
+kpi-runtime
+kpi-historian
+latest/timeseries delivery
+workers vs local/pre-load
+Collector
+Time Status
+UI
 ```
 
-y conexiones configuradas a los destinos elegidos. Emulator/Azure no cambian el contrato.
-
-Validar:
+## DEFERRED / SEPARATE
 
 ```text
-resource availability
-application startup
-Master Projection material provisioning/read
-projection planning/apply where applicable
-restart/readback as needed
+Python 3.14.7/Trixie
+production Azure/Entra
+Command Center runtime
+Alarm
+macOS host sync
 ```
-
-## THEN — ADA
-
-```text
-ADA KPI/data
-→ KPI Delivery Latest/Timeseries
-→ Collector
-→ browser stores
-→ UI
-```
-
-## DEFERRED — tooling topology normalization
-
-```text
-scopes/operational-data/tooling
-scopes/ada/tooling/distribution/backend
-scopes/ada-command-center/tooling/distribution/backend
-root tooling as cross-scope orchestrator
-```
-
-La dirección está decidida, pero no es blocker para levantar las apps.

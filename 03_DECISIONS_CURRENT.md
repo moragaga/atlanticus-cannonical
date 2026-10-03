@@ -14,66 +14,7 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-Current distributed ADA remains Python 3.14.2 / slim-bookworm.
-Python 3.14.7 / Trixie is separate `PLANNED`.
-
-## Environment and persistence — FROZEN
-
-```text
-ATLANTICUS_ENVIRONMENT
-ADA_PERSISTENCE_MODE
-ADA_APPLICATION_NAMESPACE
-ADA_TOOL_NAMESPACE
-```
-
-Emulator versus Azure is connection configuration, not architecture mode.
-
-## Master Projection ownership — FROZEN
-
-```text
-atlanticus-web-master-projection
-    reusable engine
-
-ADA Generic
-    ADA projection composition + provisioning
-
-Command Center Generic
-    Command Center projection composition + provisioning
-```
-
-Do not duplicate the reusable engine inside products.
-
-## Command Center
-
-This hito does not change Command Center contracts.
-
-Its distributed runtime qualification and Alarm integration remain separate work.
-
-## ADA physical durable contract — CURRENT
-
-```text
-ADA_STORAGE_CONTAINER_NAME
-ADA_STORAGE_CONNECTION_STRING
-
-or
-
-ADA_STORAGE_ACCOUNT_URL
-ADA_STORAGE_SAS_TOKEN
-
-ADA_COSMOS_ENDPOINT
-ADA_COSMOS_KEY
-ADA_COSMOS_DATABASE_NAME
-```
-
-`dataproduct` remains the default Storage container.
-
-## ADA namespace ownership — REFINED / DECIDED
-
-`ADA_APPLICATION_NAMESPACE=conciencia_situacional` is the global application boundary.
-
-`ADA_TOOL_NAMESPACE` identifies the current Tool scope.
-
-DECIDED target:
+## ADA namespace ownership — CURRENT / CLOSED
 
 ```text
 application-global
@@ -88,95 +29,81 @@ tool-scoped
     Tool User Membership
     KPI Registry
     KPI Definitions
-    Tool Users Recovery Snapshot
+    Tool Users Recovery artifacts
 ```
 
-Implementation has not completed this cutover.
+## Users model — CURRENT / CLOSED
 
-## Users model — REFINED / DECIDED
-
-SUPERSEDED target:
-
+SUPERSEDED:
 ```text
 global UserRecord owns profile_key + enabled
 ```
 
-DECIDED target:
-
+CURRENT:
 ```text
-global user
-    identity/global personal data only
-
-tool membership
-    user_id + profile_key + enabled
-
-tool Cosmos users-runtime
-    complete session snapshot
+UserIdentity                   application-global
+ToolUserMembership             Tool-scoped
+RuntimeUser                    Tool runtime snapshot
 ```
 
-Operational shape in runtime snapshots is stable and nullable, not omitted.
+`root` es asignable a usuarios administrados. `guest/local` no.
 
-## Users recovery — REFINED
-
-Immediate recovery:
+## users-runtime — CURRENT / CLOSED
 
 ```text
-Tool Users Recovery Snapshot
-→ users-runtime
+one Cosmos per Tool
+item id       = user_id
+partition key = user_id
 ```
 
-Granular reconstruction from independent durable contracts is `PLANNED / FUTURE`, not part of the next increment.
+No `application_key`/`tool_key` internos.
 
-## Navigation authorization — REFINED / DECIDED
-
-The current ambiguity:
+## Users recovery — CURRENT / CLOSED
 
 ```text
-allowed_profiles=[]
-→ public
+Tool snapshot
+→ complete users-runtime REPLACE
 ```
 
-cannot represent a privileged-only route.
+Scope físico por Blob path. No RESTORE parcial.
 
-Target behavior:
+## Master Projection Users — CURRENT / CLOSED
 
+Users es operación especial de recovery, no Source Projection normal.
+
+## Navigation authorization — DECIDED / PLANNED
+
+CURRENT:
+```text
+allowed_profiles=[] → unrestricted
+```
+
+TARGET frozen:
 ```text
 PUBLIC
-RESTRICTED + []
-    root/local only
-RESTRICTED + [profiles]
-    selected profiles + root/local
+RESTRICTED + []          root/local only
+RESTRICTED + [profiles]  profiles + root/local
 ```
 
-Exact persisted schema may be finalized during contract implementation, but this behavior is frozen.
+UI Manager debe editar modo explícito.
 
-## KPI Registry / Delivery — REFINED / DECIDED
-
-KPI Registry projection/materialization will carry the stable Tool identity:
+## Distribution order — REFINED
 
 ```text
-tool_key
+1. Navigation explicit access contract + UI
+2. current-head artifacts
+3. .env.detail audit
+4. distribution regeneration
+5. isolated consumer
+6. ADA real configuration/end-to-end
 ```
 
-derived from Tool Projection.
-
-Do not make Tool display name an independently editable KPI authority.
-
-## Distributed runtime — CLOSED
-
-`ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE` is `CLOSED / VERIFIED`.
-
-`PRECHECK_PASS != runtime verified` remains a general rule.
-
-## Next order — FROZEN
+## Separate
 
 ```text
-1. ADA Tool-scoped configuration + Users runtime cutover
-2. regenerate/distribute consumer
-3. resume real ADA configuration
-4. validate recovery on the corrected ownership model
-5. continue UI / Collector / operational runtime
-6. integrate Alarm surfaces/backend in their dedicated focus
+Python 3.14.7/Trixie
+production Azure/Entra
+Command Center runtime
+Alarm
+KPI backend/process work
 ```
-
-Do not pull Alarm, Collector or Python migration into step 1.

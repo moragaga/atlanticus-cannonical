@@ -1,50 +1,43 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT — Dual App Durable + Master Projection cerrado; Source convergence NEXT (2026-10-02)**
+Estado: **CURRENT — USERS/TOOL OWNERSHIP CLOSED; NAVIGATION ACCESS CONTRACT NEXT (2026-10-03)**
 
 ## Autoridades del cierre
 
 ```text
-Implementation evidence checkpoint  moragaga/atlanticus@7bd11afdf2af82c56fb100f4aa5336c039d9bd22
-Decisions                           moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical pre-replacement           moragaga/atlanticus-cannonical@cedbe3156bc384add0de58cda27f2b77628c133d
+Implementation        moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
+Decisions             moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical pre-replace moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
 ```
-
-El SHA de implementación es evidencia del hito, no baseline rígido para cambios paralelos.
 
 ## Estado por frente
 
 | Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Estado ejecutivo vigente del hito dual y siguiente frontera Source. |
-| `02_ARCHITECTURE.md` | Master Projection genérico, product composition, Source ownership y tooling boundaries. |
-| `03_DECISIONS_CURRENT.md` | Decisiones congeladas/refinadas de este cierre. |
-| `04_ALARM_ENGINE/` | No revalidado ni modificado por este hito. |
-| `05_ENGINEERING_BASELINE.md`, `06_OPERATING_MODEL.md` | Baseline general; Python Web 3.14.2 continúa CURRENT. |
-| `07_VALIDATION_BASELINE.md` | Evidencia local del durable runtime composition y Master Projection convergence. |
-| `08_ROADMAP.md`, `09_OPEN_QUESTIONS.md` | Source convergence NEXT; runtime smoke después; tooling reorg diferido. |
-| `10_MANAGER/` | No reabierto en este hito. |
-| `11_ADA_GENERIC/` | ADA Generic 0.2.22 consume Master Projection genérico. |
-| `12_SOURCE_STORAGE/` | Source Core permanece frozen; namespace/composition consumer convergence es NEXT. |
-| `13_ADA_WEB/` | No reabierto. |
-| `14_ADA_COMMAND_CENTER/` | Generic 0.1.1: durable local host + Master Projection implementados. |
-| `15_WEB_PLATFORM/` | Gap transversal principal: Source/namespace ownership y dual-app runtime smoke posterior. |
-| `16_KPI_BACKEND_RECOVERY/` | Conservado; no reabierto. |
-| `17_DISTRIBUTION_AND_TOOLING/` | Root tooling genérico + tooling por scope; normalización futura diferida. |
-| `18_UNIVERSITY/` | No revalidado. |
+| `01_CURRENT_STATE.md` | Tool-scoped Source + Users runtime CLOSED; Navigation access semantics NEXT. |
+| `02_ARCHITECTURE.md` | Ownership actual de Users/Tool Source y contrato Navigation decidido. |
+| `03_DECISIONS_CURRENT.md` | Decisiones congeladas/refinadas tras el cutover. |
+| `07_VALIDATION_BASELINE.md` | Qualification focal Users/Master/Manager/ADA Generic. |
+| `08_ROADMAP.md`, `09_OPEN_QUESTIONS.md` | Navigation NEXT; artifacts/.env/distribution después. |
+| `10_MANAGER/` | Manager consume RuntimeUser; Navigation Manager UI requiere PUBLIC/RESTRICTED. |
+| `11_ADA_GENERIC/` | Tool Source + Users runtime CURRENT. |
+| `15_WEB_PLATFORM/` | Users cutover CLOSED; Navigation access OPEN. |
+| `16_KPI_BACKEND_RECOVERY/` | Frente separado. |
+| `17_DISTRIBUTION_AND_TOOLING/` | Artifact regeneration/.env.detail audit AFTER Navigation. |
 
-## Checkpoints del hito
+## Checkpoints
 
 ```text
-DUAL-APP-ENV-DETAIL-CONTRACT                     CLOSED / CURRENT
-COMMAND-CENTER-DURABLE-RUNTIME-COMPOSITION       CLOSED / VERIFIED
-DUAL-APP-MASTER-PROJECTION-CONVERGENCE            CLOSED / VERIFIED
-ATLANTICUS-WEB-MASTER-PROJECTION-EXTRACTION       CLOSED / VERIFIED
+ADA-TOOL-SCOPED-SOURCE-OWNERSHIP              CLOSED / VERIFIED
+ADA-USERS-IDENTITY-MEMBERSHIP-CUTOVER          CLOSED / VERIFIED
+ADA-USERS-RUNTIME-SESSION-CUTOVER               CLOSED / VERIFIED
+ADA-USERS-RECOVERY-SNAPSHOT-REPLACE             CLOSED / VERIFIED
+MASTER-PROJECTION-USERS-REPLACE                 CLOSED / VERIFIED
+LOCAL-JANE-JOHN-AVATAR-PALETTES                 CLOSED / VERIFIED
 
-SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE      PLANNED / NEXT
-DUAL-APP-DURABLE-RUNTIME-SMOKE                    PLANNED / AFTER SOURCE
-SCOPE-TOOLING-TOPOLOGY-NORMALIZATION              PLANNED / DEFERRED
+NAVIGATION-PUBLIC-RESTRICTED-CONTRACT            PLANNED / NEXT
+CURRENT-HEAD-ARTIFACT-REGENERATION               PLANNED / AFTER NEXT
+ENV-DETAIL-COMPLETE-AUDIT                        PLANNED / AFTER ARTIFACTS
+ADA-DISTRIBUTION-REGENERATION                    PLANNED
+ADA-GENERIC-REAL-CONFIG-E2E                      PLANNED
 ```
-
-Los PRECHECK de distribución anteriores pertenecen a artifacts generados antes de este hito.
-No tratarlos como qualification de los paquetes actuales hasta regenerarlos.

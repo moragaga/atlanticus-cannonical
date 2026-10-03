@@ -1,99 +1,50 @@
 # Atlanticus — Validation Baseline
 
-Estado: **CURRENT — DUAL APP DURABLE COMPOSITION + MASTER PROJECTION CONVERGENCE 2026-10-02**
+Estado: **CURRENT — USERS TOOL RUNTIME CUTOVER QUALIFIED 2026-10-03**
 
 ## Autoridad
 
 ```text
-Implementation evidence checkpoint
-moragaga/atlanticus@7bd11afdf2af82c56fb100f4aa5336c039d9bd22
-
-Decisions
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Implementation  moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
+Decisions       moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-La evidencia siguiente es local/user-reported. No equivale a CI, Docker actual, Azure ni producción.
-
-## Durable runtime convergence — VERIFIED
-
-Command Center Configuration Manager:
+## Evidencia focal reportada por el usuario
 
 ```text
-uv lock     PASS
-pytest      31 passed
-Ruff        PASS
-format      PASS
+Users Core                    44 passed
+Users Blob                     7 passed
+Users Cosmos                   7 passed
+Master Projection             53 passed
+ADA Configuration Manager     65 passed
+ADA Generic Application      199 passed
 ```
 
-Command Center Generic después de Master Projection:
+## Acredita
 
 ```text
-pytest      10 passed
-Ruff        PASS
-format      PASS
+Global UserIdentity + ToolUserMembership
+RuntimeUser
+Tool-owned users-runtime without app/tool fields
+Blob identity/membership separation
+Tool recovery snapshot + REPLACE
+Master Projection Users
+Manager/session integration
+Jane/John palettes
+Operational membership consumer
 ```
 
-ADA Generic después de extracción Master Projection:
+## No acredita
 
 ```text
-pytest      249 passed
-Ruff        PASS
-format      PASS
-commented host AST mirror PASS
-```
-
-Shared Master Projection:
-
-```text
-atlanticus-web-master-projection==0.1.0
-pytest      56 passed
-Ruff        PASS
-format      PASS
-```
-
-Repository:
-
-```text
-git diff --check PASS
-```
-
-## Qué acredita
-
-VERIFIED:
-
-```text
-shared Master Projection engine compiles/tests independently
-ADA consumes shared engine without duplicate engine files
-Command Center consumes shared engine
-Command Center local host can select durable Manager composition
-.env.detail contracts were aligned with environment/persistence separation
-```
-
-## Qué NO acredita
-
-UNVERIFIED:
-
-```text
-real Storage/Cosmos connectivity for both applications in this hito
-Command Center resource preparation automation/parity
-Master material generation + login in both current product builds
-Docker/image runtime from current packages
-regenerated current-head Web distribution artifacts
+monorepo-wide pytest
+CI
+new Docker artifact after current HEAD
+new isolated consumer after current HEAD
 Azure/Entra
-production Key Vault/secrets
-KPI/Collector/UI E2E
+Navigation PUBLIC/RESTRICTED
+production-like destructive recovery
+multiworker revocation
 ```
 
-## Historical distribution evidence
-
-Earlier artifacts reached:
-
-```text
-generic         PASS
-ADA             PRECHECK_PASS
-Command Center  PRECHECK_PASS
-```
-
-Those artifacts precede the current package/version changes.
-
-Do not reuse those statuses as current-head artifact qualification without regeneration.
+Un `git diff --check` del worktree del usuario mostró errores EOF en archivos KPI ajenos a este incremento. No atribuirlos a Users.

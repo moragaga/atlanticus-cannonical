@@ -1,14 +1,8 @@
 # env.detail Contract
 
-Estado: **CURRENT — PHYSICAL CONTRACT CLOSED**
+Estado: **CURRENT PHYSICAL CONTRACT / COMPLETE CONTENT AUDIT PLANNED**
 
-## Purpose
-
-`.env.detail` is the human-readable deployment configuration contract.
-
-It contains no real secrets.
-
-## ADA CURRENT
+## Core ADA fields CURRENT
 
 ```text
 ATLANTICUS_ENVIRONMENT
@@ -17,7 +11,7 @@ ADA_APPLICATION_NAMESPACE
 ADA_TOOL_NAMESPACE
 ```
 
-Physical durable settings:
+Durable:
 
 ```text
 ADA_STORAGE_CONTAINER_NAME
@@ -33,68 +27,37 @@ ADA_COSMOS_KEY
 ADA_COSMOS_DATABASE_NAME
 ```
 
-Defaults:
-
-```text
-ADA_APPLICATION_NAMESPACE=conciencia_situacional
-ADA_STORAGE_CONTAINER_NAME=dataproduct
-```
-
 ## Namespace semantics
 
-`ADA_APPLICATION_NAMESPACE` is the application-global scope.
-
-`ADA_TOOL_NAMESPACE` is the current Tool scope.
-
-The next product cutover changes which domains use `application_prefix` versus `scope_prefix`; it does **not** add new physical connection variables.
-
-No new env variable is required for Tool User Membership.
-
-## Cosmos
-
-Current infrastructure assumption:
-
 ```text
-one Cosmos runtime/database boundary per Tool
+ADA_APPLICATION_NAMESPACE
+    global identity boundary
+
+ADA_TOOL_NAMESPACE
+    Tool Blob Source/membership/recovery boundary
 ```
 
-Do not add multi-tool routing variables now.
-
-## Compose-local operational ports
-
-Operational overrides such as:
+## Cosmos CURRENT
 
 ```text
-ADA_COSMOS_EXPLORER_PORT
-ADA_COSMOS_PORT
-ADA_COSMOS_READY_PORT
-ADA_AZURITE_PORT
+one Cosmos runtime/database per Tool
 ```
 
-are Compose-local controls, not application configuration contract fields.
+No Users routing env variables.
 
-## KPI consumption
+## Planned audit
 
-Remains separate:
+After artifact generation, inspect every `.env.detail` entry for:
 
 ```text
-COSMOS_CONSUMPTION_ENDPOINT
-COSMOS_CONSUMPTION_KEY
-COSMOS_CONSUMPTION_DATABASE_NAME
+meaning
+comment
+required/optional
+safe example/default
+system-derived/system-assigned possibility
+consumer
+scope
+secret classification
 ```
 
-## Superseded
-
-Do not restore:
-
-```text
-ADA_MANAGER_PERSISTENCE_PROVIDER
-ADA_TOOL_SOURCE_PROVIDER
-ADA_TOOL_PROJECTION_PROVIDER
-ADA_TOOL_SOURCE_BLOB_*
-ADA_TOOL_PROJECTION_COSMOS_*
-```
-
-## Runtime status
-
-The ADA durable local contract has been exercised successfully with Azurite + Cosmos Emulator in the isolated consumer repository.
+Do not invent missing values.

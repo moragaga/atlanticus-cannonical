@@ -1,159 +1,44 @@
 # Distribution and Tooling — Source Ledger
 
-Estado: **AUDIT LEDGER — ADA DISTRIBUTED RUNTIME CLOSED 2026-10-02/03**
+Estado: **AUDIT LEDGER — USERS CUTOVER CURRENT / ARTIFACT REGENERATION PENDING**
 
 ## Authorities
 
 ```text
-Implementation
-moragaga/atlanticus@38bcd8c5607d67f999e2bc4bf9dbf176c8340588
-
-Decisions
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-
-Canonical before replacement
-moragaga/atlanticus-cannonical@0a2ff691d8bb9a4bfe743cadb1cacb9c83d865c7
+Implementation  moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
+Decisions       moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical base  moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
 ```
 
-Git remained read-only from the assistant side.
+## Historical runtime evidence
 
-## Prior artifact baseline retained
+Previous isolated consumer reached Docker build, emulators, resource preparation, healthy Web and health endpoints.
+
+That artifact predates current HEAD.
+
+## Current source delta
 
 ```text
-ada-generic-application==0.2.26
-ada-project-tooling==0.1.1
-internal wheels=73
-delivery strategy=internal-wheels-external-image-build
+Tool-scoped Navigation/Profiles/Access/Operational Sources
+global identity-only Users registry
+Tool User Membership
+RuntimeUser Cosmos
+Tool recovery snapshots
+Master Projection Users REPLACE
 ```
 
-## Cosmos Data Explorer increment
-
-Verified:
+Therefore:
 
 ```text
-ADA distribution test suite      63 passed
-starter infra/full               ENABLE_EXPLORER=true
-local bind                       127.0.0.1:${ADA_COSMOS_EXPLORER_PORT:-1234}:1234
-distribution build               73 wheels
-precheck                         PRECHECK_PASS
-Explorer runtime                 HTTP 200
+current-head artifact qualification = PLANNED / UNVERIFIED
 ```
 
-No `.env.detail` application variable was added for the Explorer port.
-
-## Isolated consumer runtime
-
-User evidence from `mlp0002-code-aa-ada-webapp-3`:
+## Next ordering
 
 ```text
-docker build --tag ada-generic:compose-local
-    COMPLETED
-
-compose up infra
-    COMPLETED
-
-compose ps infra
-    Azurite 127.0.0.1:10000
-    Cosmos 127.0.0.1:1234,8080,8081
-
-compose prepare web
-    Blob dataproduct CREATED
-    Cosmos cosmosdb-ada CREATED
-    six Cosmos containers CREATED
-
-compose up web
-    COMPLETED
-
-compose ps web
-    healthy
-
-/health/live
-    HTTP 200
-    status alive
-    version 0.2.26
-
-/health/ready
-    HTTP 200
-    status ready
-    checks {}
+Navigation semantic closure
+→ artifact regeneration/qualification
+→ .env.detail audit
+→ distribution regeneration
+→ isolated consumer
 ```
-
-Classification:
-
-```text
-ADA distributed Linux runtime     VERIFIED / CLOSED
-consumer repository independence  VERIFIED
-readiness dependency checks       UNVERIFIED
-```
-
-## Host sync finding
-
-`project.py sync` on macOS failed under binary-only resolution:
-
-```text
-rcssmin==1.2.2
-no usable wheel for tested macOS CPython 3.14
-```
-
-Current code declares the dependency directly and sync uses binary-only external resolution.
-
-Classification:
-
-```text
-VERIFIED / BLOCKED / non-blocking for Docker runtime
-```
-
-## Configuration findings after runtime closure
-
-Current code and runtime evidence show:
-
-```text
-application_source
-    Navigation
-    Profiles
-    ADA Access
-    Operational
-
-tool_source
-    Tools
-    KPI Registry
-    KPI Definitions
-
-Users Registry
-    application-global
-```
-
-Real Tool Projection observed:
-
-```text
-tool_key      tool_operaciones_integradas_af1b7d9983bd
-display_name  Operaciones Integradas
-```
-
-Real KPI Registry Projection observed exact dependency on Tool Projection.
-
-These findings triggered the next product ownership cutover.
-
-## Decisions accepted in this hito
-
-`DECIDED / PLANNED`, not implemented:
-
-```text
-global Users identity drops profile_key/enabled
-Tool User Membership owns profile_key/enabled
-Navigation/Profiles/Access/Operational move to Tool Source root
-users-runtime becomes complete Tool session snapshot
-operational runtime shape remains present with nullable values
-Tool Users Recovery Snapshot is immediate recovery path
-granular rebuild joins are future only
-Navigation gains explicit public/restricted semantics
-KPI Registry projection/materialization exposes tool_key
-```
-
-## Next audit boundary
-
-```text
-ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
-```
-
-Do not mix UI/Alarm/Collector work into the root cutover.

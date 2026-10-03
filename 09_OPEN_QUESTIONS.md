@@ -1,93 +1,61 @@
 # Atlanticus — Open Questions
 
-Estado: **CURRENT — SOURCE CONVERGENCE NEXT**
+Estado: **CURRENT — NAVIGATION ACCESS CONTRACT NEXT**
 
 ## CLOSED
 
 ```text
-dual .env.detail alignment
-Command Center durable Manager composition
-shared Master Projection extraction
-ADA Master Projection adoption
-Command Center Master Projection adoption
+Tool-scoped Source ownership
+Global Users identity split
+Tool User Membership
+users-runtime
+Tool Users Recovery Snapshot
+Master Projection Users REPLACE
+Jane/John palette regression
 ```
 
-No reabrir sin finding real.
+## OPEN / NEXT — Navigation
 
-## OPEN / NEXT — Source namespace and composition
-
-VERIFIED implementation gap:
+CURRENT ambiguity:
 
 ```text
-ada-command-center
-    imports
-ada.web.storage.namespace.AdaStorageNamespace
+allowed_profiles=[]
+→ public/unrestricted
 ```
 
-Preguntas a resolver en el siguiente incremento:
+Resolver:
 
 ```text
-1. ¿Cuál es la responsabilidad reusable mínima del namespace?
-2. ¿Debe vivir como capability Atlanticus Storage/Source o integrarse en topology existente?
-3. ¿Cómo representar application namespace + optional sub-scope sin llamar "tool" a Command Center?
-4. ¿Qué rutas/prefixes deben seguir siendo product-specific?
-5. ¿Qué consumidores actuales dependen de AdaStorageNamespace?
-6. ¿Puede eliminarse la asimetría location/settings sin crear otra capa innecesaria?
+1. persisted field/type PUBLIC vs RESTRICTED
+2. clean replacement of existing documents
+3. UI Público / Restringido
+4. PUBLIC forbids ordinary profile grants
+5. RESTRICTED permits zero ordinary grants
+6. root/local implicit, not selectable
+7. menu and direct URL same semantics
+8. group/link inheritance under explicit mode
 ```
 
-Frozen:
+## OPEN / AFTER
 
 ```text
-SourceStore Core
-Source Local
-Source Blob
-release/concurrency/integrity semantics
+current-head artifact completeness
+artifact installability
+.env.detail exhaustive audit
+system-derived/system-assigned values
+ADA durable end-to-end
+runtime restart/readback
+recovery gate
 ```
 
-No modificar esos contratos sin finding específico.
-
-## OPEN — dual application runtime smoke
-
-Después de Source convergence:
+## OPEN / SEPARATE
 
 ```text
-ADA Generic + Command Center Generic
-LOCAL HOST + DURABLE PERSISTENCE
-```
-
-UNVERIFIED:
-
-```text
-real current-head Storage/Cosmos connectivity
-Command Center explicit resource preparation
-Master material end-to-end in both apps
-runtime restart/recovery
-```
-
-## OPEN / DEFERRED — tooling topology
-
-Dirección acordada:
-
-```text
-scope-specific tooling -> /scopes/<scope>/tooling
-cross-scope orchestration -> /tooling
-```
-
-Pendiente futuro:
-
-```text
-Operational Data scope tooling normalization
-ADA backend distribution tooling
-Command Center backend distribution tooling
-```
-
-No abrir ahora.
-
-## Separate
-
-```text
+macOS rcssmin
+/health/ready checks
 production Entra/Azure
-Python 3.14.7/Trixie
-current-head artifact regeneration/qualification
-KPI/Collector/UI
+Command Center
+Python migration
+Alarm
+KPI backend work
 ```
