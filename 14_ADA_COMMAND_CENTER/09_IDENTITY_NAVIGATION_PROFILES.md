@@ -1,101 +1,139 @@
 # ADA Command Center — Identity, Users, Profiles, Navigation and Manager
 
-Estado: **CURRENT — DURABLE ADMINISTRATION STORES IMPLEMENTED; PRODUCTION IDENTITY OPEN**
+Estado: **BLOCKED / NEXT — Command Center debe alcanzar parity con las capabilities CURRENT y el patrón implementado en ADA**.
+
+Checkpoint:
+
+```text
+atlanticus@6725237a19c4442fdfa1b32c3410c124e9348dbc
+```
 
 ## Identity
 
-Current Generic host uses `LocalIdentityProvider`.
+El host local usa identidad local.
 
-Production Entra binding remains:
+Production Entra permanece:
 
 ```text
 PLANNED / UNVERIFIED
 ```
 
-Do not infer production permissions from local administrative override.
+No inferir permisos productivos desde `administrative_override` local.
 
-## Users
-
-Generic Atlanticus capability.
-
-Current local provider:
+## Generic capability model CURRENT
 
 ```text
-in-process registry + administration
+Atlanticus Users       global identity + Tool membership + runtime/recovery contracts
+Atlanticus Profiles    profile definitions/configuration/projection
+Atlanticus Navigation  route structure + PUBLIC/RESTRICTED authorization
+Atlanticus Manager     administrative shell/authorization
+product                composition
 ```
 
-Current durable provider:
+## Users CURRENT generic contract
 
 ```text
-Blob Users Registry
-Cosmos Users Runtime/administration
+UsersRegistryStore
+ToolMembershipStore
+UsersRuntimeStore
+UsersAdministrationService(
+    registry=...,
+    memberships=...,
+    profiles=...,
+    directory=...,
+)
 ```
 
-Users does not own ADA Access.
+Physical ownership usado por ADA:
+
+```text
+Global Users Registry
+    <application>/users/users.json.gz
+
+Tool Membership
+    <application>/<tool>/users/memberships.json.gz
+
+RuntimeUser
+    Tool-owned Cosmos users-runtime
+```
+
+## Command Center Users — BLOCKED
+
+El Configuration Manager todavía usa API superseded:
+
+```text
+UsersAdministrationStore
+UserRecord
+users_promoted
+promoted=
+CosmosUsersStore como administración
+```
+
+Esto ya no compone contra Atlanticus Users CURRENT.
+
+El próximo incremento debe reemplazarlo limpiamente; no crear aliases de compatibilidad.
 
 ## Profiles
 
-Generic Atlanticus capability.
+Command Center ya usa `compose_profiles_manager` y `ProfileCatalog` genéricos.
 
-Current local:
+Local:
 
 ```text
 shared local Source
 in-process Projection
 ```
 
-Current durable:
+Durable CURRENT:
 
 ```text
 Blob Source
 Cosmos Profiles Projection
 ```
 
-## Navigation
+No copiar `users-support` de ADA automáticamente. Compartir recurso físico sólo cuando exista compatibilidad y beneficio real.
 
-Generic Atlanticus capability.
+## Navigation CURRENT generic contract
 
-Current local:
-
-```text
-shared local Source
-in-process Projection
-```
-
-Current durable:
+Navigation Configuration ya modela explícitamente:
 
 ```text
-Blob Source
-Cosmos Navigation Projection
+access_mode = PUBLIC | RESTRICTED
+allowed_profiles = (...)
 ```
 
-Operational navigation consumes the same projection store supplied by administration.
+Command Center debe importar la autoridad `NAVIGATION_SOURCE_KEY` desde la capability genérica y dejar de declarar su propia constante equivalente.
 
-## Manager authorization — FROZEN
+Su `NavigationPrincipal` runtime también requiere revisión de paridad con ADA: presentation/profile metadata y semántica root/local no deben quedar hard-coded en una binding antigua.
 
-`atlanticus-web-manager==0.3.19`.
+## Manager
 
-Local Command Center principal:
+Manager authorization permanece separada de Navigation visibility y de cualquier Access específico de ADA.
+
+## Master Projection
+
+Command Center conserva como Source Projection domains:
 
 ```text
-subject_id=<local identity subject>
-profile_keys=('local',)
-administrative_override=True
-is_local=True
+Profiles
+Navigation
+Alarm Configuration
 ```
 
-## Master Projection interaction
+Users no debe agregarse como domain normal sólo para copiar ADA; recovery/runtime tiene contrato propio.
 
-Command Center Master Projection reuses the Profiles and Navigation projection stores and includes
-Alarm Configuration as a third domain.
+## Regla de paridad
 
-It does not create a parallel Manager.
+Copiar el **patrón de composición** que ADA ya usa para capabilities genéricas.
+
+No copiar lógica específica de producto ADA dentro de Command Center.
 
 ## OPEN
 
 ```text
-Production Entra provider
+Command Center capability parity
+production Entra provider
 production authorization mapping
-real durable runtime smoke
-Command Center Source/namespace generic ownership cleanup
+real durable smoke after parity
+decision de si Command Center necesita Users Runtime/Recovery completo igual que ADA
 ```

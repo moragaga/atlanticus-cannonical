@@ -1,28 +1,34 @@
 # Users — Global Identity, Tool Runtime Snapshot and Recovery
 
-Estado: **CURRENT / IMPLEMENTED / CLOSED**
+Estado: **CURRENT / IMPLEMENTED en capabilities; consumer parity parcial**.
 
 ## Global identity CURRENT
 
 ```text
 UserIdentity
-    user_id
-    issuer
-    subject_id
-    display_name
-    email
+```
+
+Durable ownership:
+
+```text
+<application>/users/users.json.gz
 ```
 
 ## Tool Membership CURRENT
 
 ```text
 ToolUserMembership
-    user_id
-    profile_key
-    enabled
 ```
 
-## Materialization CURRENT
+Durable ownership:
+
+```text
+<application>/<tool>/users/memberships.json.gz
+```
+
+Global Users y Tool Membership son autoridades distintas.
+
+## Materialization CURRENT contract
 
 ```text
 Global Users
@@ -32,17 +38,7 @@ Global Users
 → RuntimeUser[]
 ```
 
-RuntimeUser contains identity, enabled, profile and operational.
-
-## Recovery snapshot CURRENT
-
-Physical scope:
-
-```text
-<application>/<tool>/users/recovery/snapshots
-```
-
-Snapshot body does not duplicate `application_key` or `tool_key`.
+RuntimeUser contiene identity, enabled, profile y operational.
 
 ## Cosmos users-runtime CURRENT
 
@@ -51,9 +47,17 @@ item id       = user_id
 partition key = user_id
 ```
 
-One Cosmos runtime boundary belongs to one Tool.
+Es superficie runtime/read de una Tool. No usarla como reemplazo del store administrativo de Membership.
 
-## Recovery operation
+## Recovery CURRENT
+
+Physical snapshot scope:
+
+```text
+<application>/<tool>/users/recovery/snapshots
+```
+
+Operation:
 
 ```text
 validate
@@ -66,14 +70,18 @@ audit completed/failed
 
 Complete REPLACE only.
 
-Global Users and Membership are not mutated.
+Global Users y Membership no son mutados por recovery de runtime.
 
-## Master Projection CURRENT
+## Master Projection
 
-Users is a special snapshot/recovery operation, not a seventh Source Projection domain.
+Users sigue siendo operación especial snapshot/recovery, no un Source Projection domain ordinario.
 
-Self-contained snapshot is not gated on Profiles CURRENT.
+## Consumer state
+
+ADA consume este modelo CURRENT.
+
+Command Center todavía usa wiring anterior en `main@6725237...`; su paridad es **PLANNED / NEXT** y debe reemplazar la API vieja sin adapters.
 
 ## Future
 
-Continuous/event-driven materialization may be considered later if required; it is not a blocker now.
+Continuous/event-driven materialization puede evaluarse después si existe requisito real. No es prerequisito para corregir la composición actual de Command Center.

@@ -1,105 +1,104 @@
 # Web Platform — Users / Profiles / Navigation / Manager Capability Boundary
 
-Estado: **CURRENT USERS CUTOVER / NAVIGATION REFINEMENT PLANNED**
+Estado: **CURRENT — Users + Navigation refined contracts implemented**.
 
 ## Generic ownership
 
 ```text
-Atlanticus Users       identity/membership/runtime
-Atlanticus Profiles    profile definitions/catalog
-Atlanticus Navigation  route structure/authorization
-Atlanticus Manager     administrative shell/authorization
-ADA Access             ADA profile -> operational access_keys
-ADA                    composition
+Atlanticus Users       identity / membership / runtime / recovery
+Atlanticus Profiles    profile definitions / catalog
+Atlanticus Navigation  route structure / authorization
+Atlanticus Manager     administrative shell / authorization
+Product                composition
 ```
 
-## System profiles
-
-```text
-basic
-root
-guest
-local
-```
-
-Managed Tool users:
-
-```text
-root   assignable
-guest  not assignable
-local  not assignable
-```
-
-Navigation route grants:
-
-```text
-root   not selectable
-local  not selectable
-```
-
-Root/local are implicit privileged identities for Navigation, not ordinary grants.
+No hacer que una capability genérica dependa de ADA sólo porque ADA sea el consumidor más avanzado.
 
 ## Global Users CURRENT
 
 ```text
-user_id
-issuer
-subject_id
-display_name
-email
+UserIdentity
+    user_id
+    issuer
+    subject_id
+    display_name
+    email
 ```
 
-No Tool profile/enabled state.
+No contiene Tool profile/enabled state.
+
+Physical scope target:
+
+```text
+<application>/users/users.json.gz
+```
 
 ## Tool Membership CURRENT
 
 ```text
-user_id
-profile_key
-enabled
+ToolUserMembership
+    user_id
+    profile_key
+    enabled
+```
+
+Physical scope target:
+
+```text
+<application>/<tool>/users/memberships.json.gz
 ```
 
 ## users-runtime CURRENT
 
 ```text
-identity
-enabled
-profile
-operational
+RuntimeUser
+    identity
+    enabled
+    profile
+    operational
 ```
 
-Complete Tool session-read authority.
+Tool-owned session/read authority.
 
-One Cosmos belongs to one Tool, so no app/tool routing fields are added.
+One users-runtime Cosmos belongs to one Tool boundary; no duplicar `application_key`/`tool_key` dentro de cada item sólo para routing.
 
-## Local users
+## Profiles CURRENT
 
-Jane/John use RuntimeUser-compatible session behavior.
-
-Their avatar palette is local subject-specific presentation.
+Profiles es capability genérica y su Projection puede componerse con stores local/Cosmos. Compartir un container físico con otras projections sólo cuando topology/ownership sean compatibles y exista razón operacional; no hacerlo por copia literal de ADA.
 
 ## Navigation CURRENT
 
-Persisted config has `allowed_profiles` only.
-
-Empty profiles means unrestricted.
-
-## Navigation target
+Persisted link contract:
 
 ```text
-PUBLIC
-RESTRICTED + []
-RESTRICTED + [profiles]
+access_mode = PUBLIC | RESTRICTED
+allowed_profiles = (...)
 ```
 
-Manager UI must edit the mode explicitly.
+Semantics:
+
+```text
+PUBLIC                 -> accesible sin grant de profile
+RESTRICTED + []        -> restringido sin perfiles habilitados
+RESTRICTED + [profiles] -> sólo perfiles listados
+```
+
+Manager UI edita el modo explícitamente.
+
+System `root/local` no se convierten en grants ordinarios por convenience; el privilege override pertenece a principal/authorization composition.
 
 ## Manager separation
 
-Do not map ADA Access into Manager authorization.
+No usar Navigation visibility como Manager authorization.
 
-Do not use Navigation visibility as Manager authorization.
+No mapear automáticamente Access específico de un producto a permisos Manager genéricos.
+
+## Consumer parity rule
+
+Los productos deben consumir estas capabilities mediante composición explícita.
+
+ADA sirve como referencia implementada del patrón actual, pero Command Center no debe copiar lógica específica de ADA; debe alcanzar el mismo nivel usando los contracts genéricos.
 
 ## Clean cutover
 
-Replace ambiguous Navigation semantics cleanly; no hidden compatibility interpretation.
+Cuando una API anterior es reemplazada, remover el wiring viejo. No crear hidden compatibility aliases.

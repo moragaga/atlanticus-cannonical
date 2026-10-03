@@ -5,98 +5,77 @@ Estado: **CURRENT**
 ## Repositorios autoritativos auditados
 
 ### Implementación
+
 - Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- Commit auditado: `2f9b65c3ba2646d519abfb0bb49e095d6819d185`
-- Fecha del commit: `2026-10-03T05:22:45Z`
+- Commit auditado: `6725237a19c4442fdfa1b32c3410c124e9348dbc`
+- Fecha del commit: `2026-10-03T08:46:13Z`
 - Mensaje: `feat`
 
-### Decisiones
-- Repositorio: `moragaga/atlanticus-decisions`
-- Rama: `main`
-- Commit auditado: `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`
-- Fecha del commit: `2026-09-13T03:31:11Z`
+### Canonical
 
-### Canonical antes de este reemplazo
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
-- Commit inspeccionado: `c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9`
-- Fecha del commit: `2026-10-03T01:49:32Z`
+- Commit de partida inspeccionado: `9a6dafce3382d2d21fa0ebf790af57daf8715e7a`
+- Fecha del commit: `2026-10-03T05:54:56Z`
 
-## Jerarquía
+## Jerarquía congelada
 
-1. `atlanticus:main`: realidad implementada actual.
-2. Decisión explícitamente vigente/frozen en `atlanticus-decisions:main`: intención contractual autoritativa.
-3. Qualification, tests y evidencia reproducible.
-4. Canonical vigente.
-5. Decisiones recientes del Project aún no formalizadas en decisions: `DECIDED / PLANNED`, nunca implementación si `main` no las contiene.
-6. Historial conversacional: pista, no autoridad.
+1. `moragaga/atlanticus:main` es la realidad implementada actual.
+2. `moragaga/atlanticus-cannonical:main` contiene decisiones, contratos, qualification, rationale y estado canónico vigente.
+3. Tests, builds y logs reproducibles son evidencia de propiedades verificadas, pero no reemplazan implementación ni canonical.
+4. Otros repositorios, documentos históricos, decisiones previas y conversaciones son referencias únicamente cuando se indiquen explícitamente. No tienen autoridad automática sobre Atlanticus.
+5. Si implementación y canonical se contradicen, registrar el conflicto; no resolverlo silenciosamente.
+
+`atlanticus-decisions` deja de ser autoridad vigente por defecto. Puede consultarse como evidencia histórica cuando el usuario lo indique, pero no prevalece sobre `atlanticus:main` ni `atlanticus-cannonical:main`.
+
+## Baseline técnico CURRENT
+
+```text
+Python 3.14.2
+uv
+backend Python
+Web Python + Dash + Flask + Gunicorn + JavaScript
+Azure productivo / Docker local
+Microsoft Entra ID como identidad objetivo
+```
+
+No migrar incidentalmente a Python 3.14.7 dentro de otro incremento.
 
 ## Git
 
-Git continúa **SOLO LECTURA** para el asistente salvo autorización explícita.
+Git es **SOLO LECTURA** por defecto para el asistente.
 
-## Estado focal de este cierre
+No crear commits, push, branches, PR, issues ni otras mutaciones remotas sin autorización explícita.
 
-### ADA Tool-scoped configuration + Users runtime
+## Forma de trabajo
 
 ```text
-VERIFIED / CURRENT / CLOSED
+1. debate/diseño
+2. implementación incremental sólo tras consenso/autorización
 ```
 
-`atlanticus:main@2f9b65c3ba2646d519abfb0bb49e095d6819d185` contiene el cutover limpio:
+Contratos antes que consumidores. Backend antes que frontend. Cambios de raíz reemplazan limpiamente soluciones superseded; no crear legacy, shims ni adapters temporales salvo decisión explícita.
+
+## Estados y certeza
+
+Usar:
 
 ```text
-application-global
-    Users identity registry
-
-Tool-scoped Blob
-    Navigation Source
-    Profiles Source
-    ADA Access Source
-    Operational Source
-    Tool Configuration Source
-    Tool User Membership
-    KPI Registry Source
-    KPI Definitions Source
-    Tool Users Recovery artifacts
-
-Tool-owned Cosmos
-    users-runtime
+VERIFIED
+INFERRED
+ASSUMED
+PROPOSED
+UNVERIFIED
 ```
 
-Global Users ya no posee `profile_key` ni `enabled`.
-
-`users-runtime` contiene `RuntimeUser` materializado y, como Cosmos pertenece a una Tool, no repite `application_key` ni `tool_key`.
-
-### Navigation access contract
+Y estado:
 
 ```text
-DECIDED / PLANNED / OPEN
-implementation: CURRENT OLD SEMANTICS
-```
-
-CURRENT:
-
-```text
-allowed_profiles=[]
-→ unrestricted/public
-```
-
-Target aceptado:
-
-```text
-PUBLIC
-RESTRICTED + []
-RESTRICTED + [profiles]
-```
-
-## Conflictos globales preservados
-
-```text
-Alarm Materialization boundary                    OPEN / separate
-Alarm Engine physical ownership                   PROPOSED / separate
-KPI Engine physical ownership                     PROPOSED / separate
-Python 3.14.7 / Trixie migration                  PLANNED / separate
-production Azure / Entra                          UNVERIFIED / separate
+CURRENT
+IN PROGRESS
+PLANNED
+SUPERSEDED
+BLOCKED
+CLOSED
 ```

@@ -1,92 +1,67 @@
 # Manager — Testing Boundary
 
-Estado: **CURRENT POLICY / UI REVIEW IN PROGRESS**
+Estado: **CURRENT POLICY**
 
 ## Principio
 
-Los tests automatizados deben proteger comportamiento, contracts, invariantes, regresiones y
-flujos críticos.
+Los tests automatizados protegen comportamiento, contratos funcionales, invariantes, regresiones y flujos críticos.
 
-No deben congelar presentación accidental ni implementación interna.
+No deben congelar presentación accidental, packaging ni implementación interna.
 
 ## Automatizar
 
-Probar comportamiento real:
+Cuando corresponda:
 
-- autorización;
-- registry/routing;
+- authorization behavior;
+- registry/routing behavior;
 - lifecycle;
-- draft persistence semantics;
-- validation;
-- source verification;
-- conflict behavior;
-- publish/project transitions;
-- history semantics;
-- callbacks críticos;
-- errores;
+- draft/save/validate/publish/project transitions;
+- conflict/recovery behavior;
+- callbacks funcionales;
+- persistencia;
+- concurrencia real;
 - integridad referencial;
-- session reuse;
-- backend concurrency contract;
-- paginación funcional: page calculation, límites, cambios de página y callbacks cuando sean
-  contractualmente relevantes;
-- invariantes de Access como grants prohibidos para `root/local`;
-- helpers de identidad visual sólo cuando representan comportamiento explícito, no CSS;
-- carga de un asset JS/CSS sólo cuando su presencia/carga sea parte explícita del contract.
+- paginación funcional;
+- errores y fallbacks;
+- integración entre capabilities;
+- disponibilidad/carga de un asset sólo cuando sea requisito funcional explícito.
 
-## No congelar con tests
+## No crear ni conservar tests cuyo objetivo sea validar
 
-No añadir ni conservar tests cuya finalidad sea validar:
-
-- CSS visual;
-- margin/padding/color/tamaño;
-- estilos concretos;
-- clases CSS visuales concretas;
-- estructura de markup sin comportamiento contractual;
-- responsive visual;
-- overflow visual;
-- forma visual de paginación;
-- contenido o estructura interna de JavaScript;
-- existencia/no existencia de funciones internas;
-- existencia/no existencia de clases internas;
+- versiones de packages o `__version__`;
+- `requires-python`;
+- lista u orden exacto de dependencies de `pyproject.toml`;
+- contenido/metadata exacta de wheel/sdist;
+- imports permitidos/prohibidos como arquitectura;
+- public API shape por existencia/ausencia de símbolos;
+- existencia/no existencia de funciones o clases;
+- `__all__`;
+- estructura física del package/repository;
+- mirrors comentados ni equivalencia AST con productivo;
+- comentarios/no comentarios de source;
 - nombres privados;
-- estructura accidental del package;
-- una implementación interna concreta cuando el comportamiento observable ya está cubierto.
+- una implementación interna concreta cuando el comportamiento observable ya está cubierto;
+- CSS visual, spacing, branding, geometría, responsive o estructura visual accidental.
 
-## Boundary tests válidos
+La regla previa que permitía boundary tests de imports/dependencies queda **SUPERSEDED**.
 
-Un boundary test puede validar imports/dependencies reales.
+## Packaging
 
-Ejemplo CURRENT:
+El build es el gate natural de packaging.
 
-```text
-Navigation Configuration
-must not import Profiles / Users / ADA
-```
+No duplicar ese gate con tests que inspeccionan archivos/versiones del wheel. Si un recurso empaquetado es requisito funcional, probar que el consumidor real puede cargarlo.
 
-## UI review actual
+## Dependencias de test
 
-```text
-MANAGER-UI-CONSISTENCY-REVIEW
-IN PROGRESS
-```
+Una dependencia que el test importa directamente debe declararse como dependencia de desarrollo cuando corresponda; no convertirla en product dependency sólo para satisfacer tests.
 
-Orden:
+No ocultar dependencias productivas mediante configuración pytest.
 
-```text
-1. revisar presentación desktop/página
-2. revisar responsive y media queries
-3. ejecutar qualification final y limpiar tests inválidos
-```
+Si tests necesitan source paths de packages hermanos durante desarrollo, preferir `conftest.py` para el wiring de test antes que una lista monolítica de `pythonpath` en pytest. La dependencia productiva real sigue perteneciendo a `pyproject.toml`.
 
-Navigation, Accesos y Perfiles ya tienen cierre visual manual.
+## UI
 
-El siguiente slice es Users.
-
-No anticipar la fase 3 cambiando UI para complacer tests visuales.
-
-## Qualification visual
-
-Se valida visualmente:
+Validar manualmente:
 
 - responsive;
 - overflow;
@@ -95,56 +70,7 @@ Se valida visualmente:
 - header;
 - modal shell;
 - densidad;
-- apariencia;
 - alineación;
-- consistencia entre superficies;
-- presentación de paginación.
+- apariencia.
 
-## Qualification Profiles observada
-
-El usuario confirmó manualmente el resultado visual final publicado en:
-
-```text
-df5b99502265758e873e0565abf2176cc617104b
-```
-
-El commit contiene tests focales para:
-
-```text
-profile avatar initial
-local identity avatar initials
-pagination 10 / 20
-source/projection labels
-system profile context
-composition metadata propagation
-```
-
-La existencia de esos tests en el commit no demuestra su ejecución.
-
-Permanece:
-
-```text
-post-df5b targeted pytest
-UNVERIFIED
-
-post-df5b targeted Ruff
-UNVERIFIED
-
-remote CI
-UNVERIFIED
-
-full monorepo pytest
-UNVERIFIED
-
-full workspace Ruff
-UNVERIFIED
-```
-
-## Después
-
-```text
-MANAGER-REAL-PERSISTENCE-QUALIFICATION
-PLANNED / AFTER UI REVIEW
-```
-
-No usar Users UI review para abrir persistencia real ni otros frentes backend.
+Un finding visual sólo genera test automatizado si puede expresarse como comportamiento contractual estable.

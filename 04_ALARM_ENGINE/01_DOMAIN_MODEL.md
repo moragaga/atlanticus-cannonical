@@ -1,274 +1,145 @@
 # Alarm Engine — Domain Model
 
-Estado: **DESIGN FROZEN para el modelo de negocio / OWNERSHIP Y MATERIALIZATION BOUNDARY OPEN**
+Estado: **CURRENT — shared contract ownership migrated; business model frozen; physical Engine extraction PLANNED**.
 
-Fuente principal histórica:
-`alarm_decisions/R3.6M-006B.1-alarm-definition-contract-inventory-DESIGN-FROZEN.md`
+## Modelo de negocio congelado
 
-## 1. Estado y alcance
+No reabrir por motivos de packaging:
 
-El modelo de dominio de Alarmas permanece congelado en sus conceptos e invariantes principales.
+- Rule;
+- AlarmDefinition;
+- AlarmIdentity `(family_key, alarm_key)`;
+- PlannedAlarm;
+- Occurrence;
+- Episode;
+- priority group/order;
+- visibility;
+- evaluator contract;
+- routing/lifecycle/reappearance/deactivation semantics ya aceptadas.
 
-Lo que está abierto no es la semántica de Rule/Occurrence/Episode, sino:
+## Shared contracts — CURRENT
 
-- ownership físico del Engine;
-- dirección de dependencias entre Engine, Command Center y Web;
-- frontera exacta entre Resolution y Materialization;
-- contrato físico publicado en Cosmos que alimentará Materialization.
+### `ada-contracts-alarms==1.0.0`
 
-No reabrir el modelo de negocio para resolver estos puntos de arquitectura.
-
-## 2. Ownership
-
-### Histórico
-
-Owner histórico del contrato:
-`ada-command-center-alarms-core==1.0.0`.
-
-La decisión frozen histórica ubica físicamente Alarm Engine bajo `scopes/ada-command-center/backend/`.
-
-### Estado actual
-
-`VERIFIED / CURRENT`
-
-La implementación ya contiene responsabilidades de engine diferenciadas:
-
-- alarms/core;
-- alarms/materialization;
-- alarms/persistence;
-- alarms-runtime;
-- alarms-materialization process;
-- alarms-delivery process.
-
-### Dirección propuesta
-
-`PROPOSED / PLANNED`
-
-Alarm Engine debe evaluarse como engine autónomo del ecosistema ADA, consumido por ADA Command Center, en vez de ser propiedad arquitectónica de la Web o del backend específico de Command Center.
-
-La extracción física no debe hacerse antes de cerrar la frontera de Materialization y eliminar dependencias invertidas hacia Web.
-
-## 3. Regla de dependencias
-
-Core/domain del Engine no debe conocer:
-
-- Dash o Flask;
-- geometría UI;
-- callbacks;
-- sesiones web;
-- módulos de Configuration Manager;
-- implementaciones de proyección Web;
-- `ada.web.tools` como dependencia necesaria del Engine;
-- clientes de Cosmos/SharePoint/Key Vault dentro del dominio puro;
-- WAL/leases/persistencia física dentro del dominio puro;
-- detalles CSS o tokens visuales.
-
-Una key utilizada para direccionamiento (`tool_key`, `component_key`, `subcomponent_key`) es dato contractual y no convierte al Engine en consumidor de la implementación Web que conoce esa key.
-
-## 4. Conceptos de dominio congelados
-
-- Rule: alarma configurada.
-- AlarmDefinition: definición editable canónica de una Rule.
-- PlannedAlarm: forma operacional resuelta para ejecución.
-- Occurrence: activación concreta de una Rule.
-- Episode: lifecycle compartido dentro de un `priority_group`.
-
-## 5. Identidad
-
-`AlarmIdentity(family_key, alarm_key)`
-
-Invariantes:
-
-- `alarm_key` es estable;
-- no reintroducir `rule_key` como identidad paralela;
-- `rule_name` es editable y único dentro de family;
-- `display_name` es requerido;
-- `title` es estático;
-- `cause_template` admite materialización dinámica.
-
-## 6. Configuración de negocio
-
-- kind: `RISK | IMPACT`;
-- criticality: `C1 | C2 | C3`;
-- categorías: Ecology / Productivity / Safety / Costs;
-- áreas: Mine / Plant, una o más;
-- color semántico: `RED | YELLOW`;
-- evaluator: `evaluator_key` + parámetros simples `str | float | bool`;
-- no código/listas/nested/None en parámetros;
-- enteros numéricos expresados como float.
-
-## 7. Estado de configuración
-
-Una Rule `inactive` sigue definida, pero sale de la ejecución activa.
-
-Si existía una occurrence abierta, el Runtime debe reconciliarla conforme al contrato de configuración deshabilitada sin resetear toda la family o el priority group.
-
-## 8. Visibilidad
-
-- `VISIBLE`
-- `TRACE_ONLY`
-
-`TRACE_ONLY` se evalúa y deja trazabilidad, pero no se publica como alarma operacional visible.
-
-## 9. Priority y Special Condition
-
-- `priority_group`;
-- `priority_order` positivo y único dentro del grupo.
-
-Una Special Condition es una Rule normal con flag especializado. Su efecto especial opera dentro de la misma family + priority_group conforme al contrato frozen.
-
-## 10. Reappearance
-
-`Reappearance(after_minutes, special_conditions)`
-
-Reaparece si:
-
-- la condición principal sigue activa y vence el timer; o
-- se activa una Special Condition referenciada conforme al contrato.
-
-Un cambio de `after_minutes` recalcula el vencimiento. No confundir reappearance de una Special Condition deactivated con reappearance residual de una Rule normal.
-
-## 11. Frontera Resolution → Materialization
-
-`OPEN / CONFLICT WITH RECORDED DECISION`
-
-La decisión histórica B.2 hace que Alarm Materialization participe en adquisición de candidato, Confirmed Tool Catalog y resolución cross-tool.
-
-La dirección acordada en el Project para el siguiente hito es más estricta:
+Owner de contratos compartidos entre productos/consumidores:
 
 ```text
-ADA Command Center Configuration
-    authoring
-    + Tool catalog
-    + cross-tool validation
-    + destination resolution
-        ↓
-Resolved Alarm Configuration
-        ↓ publish
-Cosmos
-        ↓
-Alarm Engine Materialization
+AlarmIdentity
+AlarmKind
+Criticality
+Alarm definition/configuration value types
+AlarmConfiguration
+AlarmConfigurationSnapshot
+Alarm configuration errors
+Engine CURRENT/FACTS JSON schemas
 ```
 
-Bajo esta dirección, Alarm Materialization no vuelve a descubrir Tools ni re-resuelve relaciones ya publicadas.
-
-Este cambio requiere una decisión formal que reemplace/refine B.2 antes de considerarse frozen en `atlanticus-decisions`.
-
-## 12. Responsabilidad propuesta de Alarm Materialization
-
-`PROPOSED / PLANNED`
-
-Materialization debe:
-
-1. leer una configuración operacional de alarmas ya resuelta y publicada;
-2. validar el contrato de entrada propio del Engine;
-3. producir dos artefactos coherentes con la misma revisión/resolution key;
-4. no depender de implementación Web para interpretar el documento.
-
-Salida conceptual:
+Schemas CURRENT:
 
 ```text
-Resolved Alarm Configuration
-        ↓
-Alarm Materialization
-        ├── runtime.json
-        └── delivery.json
+ada/contracts/alarms/schemas/engine_committed_facts_batch.v1.schema.json
+ada/contracts/alarms/schemas/engine_committed_facts_batch.v2.schema.json
+ada/contracts/alarms/schemas/engine_resolved_current_state.v1.schema.json
 ```
 
-## 13. runtime.json
+### `ada-contracts-tools==1.0.0`
 
-Debe contener solo lo necesario para ejecución del Engine, por ejemplo:
-
-- resolution/revision identity;
-- alarm identities definidas;
-- planned alarms;
-- evaluator keys;
-- parameters;
-- priority/lifecycle inputs;
-- routing operacional requerido por Runtime;
-- reappearance/deactivation inputs de ejecución.
-
-Runtime no debe necesitar Configuration Manager ni Web para adoptar esta configuración.
-
-## 14. delivery.json
-
-Debe contener solo lo necesario para enriquecer y despachar los hechos producidos por Runtime, por ejemplo:
-
-- identity;
-- display name;
-- title/cause contract;
-- kind/criticality/category/areas;
-- color semántico;
-- messages/capabilities de delivery;
-- visual targets ya resueltos mediante keys estables;
-- `tool_key`;
-- `component_key` / `component_keys`;
-- `subcomponent_key` y owner cuando corresponda;
-- modos de proyección solo si alteran el comportamiento real de Delivery.
-
-No debe transportar geometría UI ni estilos.
-
-## 15. Tool kinds y routing
-
-`OPEN`
-
-Si `ToolConfigurationKind` solo participa en validación de direccionalidad durante authoring/resolution, no debe formar parte del contrato necesario del Engine después de publicada la configuración resuelta.
-
-Debe verificarse en el próximo hito si existe alguna semántica Runtime/Delivery que realmente dependa de `tool_kind`. Si no existe, se elimina de la frontera del Engine y queda solo la key de destino.
-
-## 16. Diferencia estructural con KPI
-
-No copiar el patrón de KPI Collector de forma literal.
-
-### KPI
-
-KPI Delivery distribuye datos por destinos/componentes y la Web mantiene stores por componente.
-
-### Alarm
-
-Alarm Delivery publica un conjunto operacional global de alarmas con visual targets. La Web debe combinar ese conjunto con su `ToolStructure` y construir un layout completo desde un único store/modelo global de alarmas.
+Owner de contratos Tool reutilizables:
 
 ```text
-Alarm Live Projection
-        +
-ToolStructure
-        ↓
-Web Alarm Layout Resolver
-        ↓
-UN store/modelo global
-        ↓
-layout completo
+Tool enums
+ToolStructure / component/subcomponent contracts
+Tool source contracts
+ToolDependencyEntry
+ToolDependencyManifest
+shared validation/errors
 ```
 
-El Engine determina **qué elemento lógico debe afectarse** mediante keys y semántica de negocio.
+`ada-contracts-alarms` depende de `ada-contracts-tools`.
 
-La Web determina **dónde está físicamente ese elemento y cómo se representa**.
+## Command Center domain — CURRENT
 
-## 17. Color
+`scopes/ada-command-center/domain/alarms` ya no es owner de los modelos Alarm compartidos.
 
-Engine entrega color semántico:
+Su responsabilidad queda limitada a concern específico de Command Center:
 
-- `RED`
-- `YELLOW`
+```text
+ALARM_CONFIGURATION_SOURCE_KEY
+next_routing_tool_kind()
+```
 
-Web resuelve representación visual concreta:
+`scopes/ada-command-center/domain/tools` está **SUPERSEDED / REMOVED**.
 
-- CSS;
-- theme token;
-- borde;
-- background;
-- opacity;
-- animación.
+## Engine internals — CURRENT
 
-No mover estilos al Engine.
+No mover a los packages de contracts:
 
-## 18. Open items
+```text
+Planned/runtime state models
+WAL / EFFECTIVE
+RuntimeAlarmConfiguration
+DeliveryAlarmConfiguration
+materialization internal artifact types
+leases/fencing/persistence internals
+process bootstraps
+```
 
-- contrato exacto del documento Cosmos `Resolved Alarm Configuration`;
-- ownership del publicador de ese documento;
-- reconciliación formal con B.2 registrada;
-- eliminación de dependencias backend → `web`;
-- necesidad real o no de `ToolConfigurationKind` dentro de Engine;
-- naming/namespace final de un posible `ada-alarm-engine`;
-- extracción física fuera de `ada-command-center`;
-- read model History/Analytics posterior.
+Los packages de contracts no deben depender de ADA Web ni de Command Center.
+
+## Authoring → Materialization contract — DECIDED
+
+Command Center posee:
+
+```text
+authoring
+semantic/business validation
+Tool reference resolution
+routing validation
+visual target validation
+publication
+```
+
+La publicación válida es:
+
+```text
+AlarmConfigurationSnapshot
+    configuration
+    ToolDependencyManifest
+```
+
+Un snapshot publicado debe ser materializable por contrato.
+
+El stage adicional `ResolvedAlarmConfiguration` como contrato publicado está **SUPERSEDED**.
+
+## Target de Materialization — PLANNED
+
+```text
+Published AlarmConfigurationSnapshot
+        ↓
+deterministic materialization
+        ├── RuntimeAlarmConfiguration
+        └── DeliveryAlarmConfiguration
+```
+
+Materialization no debe volver a:
+
+- consultar Tool Catalog;
+- comprobar existencia semántica de Tools;
+- validar component/subcomponent membership de negocio;
+- recalcular routing direction;
+- volver a decidir visual target validity;
+- rehacer qualification del evaluator.
+
+Puede conservar validación mínima de integridad técnica/transport si existe una invariante real.
+
+## Deuda CURRENT
+
+La implementación física sigue bajo `scopes/ada-command-center/backend` y Materialization conserva dependencias/responsabilidades previas, incluyendo acoplamiento hacia superficies Web y resolución semántica. El cutover de packages no simplificó esa conducta.
+
+No introducir adapter de compatibilidad. La futura corrección debe reemplazar esa frontera limpiamente.
+
+## Extracción física
+
+`ada-alarm-engine` permanece **PLANNED**.
+
+Primero cerrar contratos y eliminar dependencias invertidas; luego evaluar mover físicamente Engine. Una frontera lógica no obliga a crear un servicio remoto.

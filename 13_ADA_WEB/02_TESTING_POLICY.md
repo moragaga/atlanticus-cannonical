@@ -4,73 +4,59 @@ Estado: **CURRENT**
 
 ## Objetivo
 
-Los tests Web protegen comportamiento y contratos.
-
-No deben congelar apariencia o implementación interna.
+Los tests Web protegen comportamiento y contratos funcionales, no la forma accidental de implementación.
 
 ## Automatizar
 
-Cuando corresponda:
-
-- routing;
-- autorización;
+- routing y authorization behavior;
 - callbacks funcionales;
 - state transitions;
 - session lifecycle;
-- PWA/runtime behavior;
-- wake/activity behavior;
-- data extraction/binding;
 - configuration-driven rendering;
-- empty/loading/error state contracts;
-- alarm/KPI integration;
-- asset availability cuando un JS/CSS sea requisito de composición;
-- errores y fallbacks reales.
+- data binding/extraction;
+- empty/loading/error behavior;
+- recovery;
+- persistencia;
+- integración Alarm/KPI/Manager;
+- asset availability sólo cuando su carga sea requisito funcional explícito.
 
-## No automatizar como contrato unitario
+## No automatizar como contrato
 
-No crear asserts cuyo objetivo principal sea comprobar:
+No crear ni mantener asserts cuyo objetivo principal sea comprobar:
 
-- colores;
-- margin;
-- padding;
-- tamaños;
-- selectores CSS;
-- clases CSS;
-- coordenadas/geometría;
-- spacing visual;
-- presencia/ausencia de funciones internas;
-- nombres privados;
-- estructura accidental de módulos.
+- package version / `__version__`;
+- `requires-python`;
+- dependencias exactas o su orden;
+- imports y arquitectura de imports;
+- exports / `__all__`;
+- existencia o ausencia de funciones/clases;
+- estructura física del package;
+- mirrors comentados;
+- contenido exacto de distribución;
+- colores, CSS, margin, padding, tamaños, selectores, clases, coordenadas o spacing visual.
+
+Los tests estructurales existentes de estas categorías deben eliminarse en vez de actualizar sus expectativas durante una migración legítima.
+
+## Packaging
+
+`uv build`/instalación y smoke funcional prueban packaging. No congelar el wheel mediante inventarios de archivos/versiones salvo que exista un comportamiento de carga real que deba probarse.
+
+## Dependencias de test
+
+Las dependencias exclusivas de integración pertenecen a `dev`.
+
+Ejemplo CURRENT: Alarm Delivery necesita Runtime y pandas para su prueba Engine→Delivery, pero no por eso los convierte en dependencias productivas.
+
+Para source-path wiring de tests entre packages, preferir `conftest.py`; no usar pytest config como sustituto de una dependencia productiva real.
 
 ## Qualification visual/manual
 
-Corresponde validar visualmente:
-
-- responsive;
-- overflow;
-- branding;
-- espaciado;
-- alineación;
-- densidad;
-- header;
-- sidebar;
-- modal shells;
-- composición desktop/mobile/videowall.
-
-Un finding visual puede originar un test automatizado sólo si se traduce a un comportamiento contractual estable.
-
-## CSS histórico
-
-Checkpoints antiguos mencionan gates/validadores CSS.
-
-La búsqueda en el commit actual no encuentra `validate_css_tokens`.
-
-Aunque un validador histórico exista en una versión anterior, la política vigente del Project lo supersede como criterio general de testing.
-
-No reintroducir tests de CSS visual para mantener compatibilidad con ese historial.
+Validar visualmente responsive, overflow, branding, espaciado, alineación, densidad y shell.
 
 ## Principio
 
-`test count != confidence`
+```text
+test count != confidence
+```
 
-La suite debe fallar cuando cambia un comportamiento importante, no cuando se reorganiza código o se calibra presentación.
+La suite debe fallar cuando cambia comportamiento importante, no cuando se reorganiza código, se renombra una clase interna o se calibra packaging.

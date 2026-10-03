@@ -1,18 +1,17 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT — GENERIC 0.1.1 / DURABLE LOCAL HOST + MASTER PROJECTION IMPLEMENTED**
+Estado: **CURRENT implementation at `6725237...`; ada-contracts cutover IN PROGRESS qualification; capability parity BLOCKED/NEXT**.
 
 ## Current checkpoints
 
 ```text
-ada-command-center-generic-application      0.1.1 / CURRENT
-configuration-manager                       0.1.2 / CURRENT
-local Manager provider                      CURRENT
-durable Manager provider                    CURRENT
-Master Projection integration               CLOSED / VERIFIED
-atlanticus-web-master-projection             0.1.0 / CURRENT
-production identity                         OPEN
-current-head distribution runtime           UNVERIFIED
+Alarm/Tool shared contracts ownership        CURRENT
+Command Center contracts consumer cutover    IMPLEMENTED
+cutover qualification                        IN PROGRESS
+configuration-manager                        BLOCKED by capability drift
+Users/Profiles/Navigation parity with ADA    PLANNED / NEXT
+production identity                          OPEN
+final distribution gate                      PLANNED after parity
 ```
 
 ## Current Master domains
@@ -23,32 +22,37 @@ Navigation
 Alarm Configuration
 ```
 
-## Current durable topology
+Users sigue siendo operación especial de runtime/recovery cuando se habilita, no un Source Projection domain normal.
+
+## Current implementation drift
+
+Command Center todavía contiene wiring anterior para Users y parte de Navigation:
 
 ```text
-Storage
-    Tool Catalog
-    Source
-    Users Registry
-    Master material
-
-Command Center Cosmos
-    Alarm Configuration Projection
-    Profiles Projection
-    Navigation Projection
-    Users Runtime
+UsersAdministrationStore
+UserRecord
+CosmosUsersStore as administration
+promoted=
+local NAVIGATION_SOURCE_KEY declaration
+older NavigationPrincipal binding
 ```
 
-## NEXT shared boundary
+Las capacidades genéricas CURRENT y ADA ya usan el modelo nuevo.
+
+## NEXT único
 
 ```text
-SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
+COMMAND-CENTER-CAPABILITY-PARITY
+Users + Profiles + Navigation + Manager
 ```
 
-Reason:
+Objetivo: llevar Command Center al mismo nivel arquitectónico que ADA reutilizando las capabilities genéricas, no copiando lógica específica de ADA.
+
+## AFTER NEXT
 
 ```text
-Command Center currently consumes ada.web.storage.namespace
+resume ada-contracts qualifier
+→ full GREEN gate
+→ final dependency/diff audit
+→ artifact/distribution work
 ```
-
-After that, lift both applications using local host + durable persistence.
