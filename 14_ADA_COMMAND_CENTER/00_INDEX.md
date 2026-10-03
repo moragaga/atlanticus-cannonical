@@ -1,17 +1,25 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT implementation at `6725237...`; ada-contracts cutover IN PROGRESS qualification; capability parity BLOCKED/NEXT**.
+Estado: **CURRENT — capability parity CLOSED; full Web qualifier BLOCKED separately; Alarm Engine extraction design NEXT**.
+
+Checkpoint:
+
+```text
+atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
+```
 
 ## Current checkpoints
 
 ```text
-Alarm/Tool shared contracts ownership        CURRENT
-Command Center contracts consumer cutover    IMPLEMENTED
-cutover qualification                        IN PROGRESS
-configuration-manager                        BLOCKED by capability drift
-Users/Profiles/Navigation parity with ADA    PLANNED / NEXT
-production identity                          OPEN
-final distribution gate                      PLANNED after parity
+Alarm/Tool shared contracts ownership                   CURRENT
+Command Center contracts consumer cutover               IMPLEMENTED
+Users/Profiles/Navigation/Manager parity                 CLOSED
+Configuration Manager focal qualification               PASS
+Generic Application focal qualification                 PASS
+Web lock normalization                                  CLOSED
+full Web qualifier                                      BLOCKED by Tools contract duplication
+production identity                                     OPEN
+Alarm Engine physical extraction                        PLANNED / NEXT DESIGN
 ```
 
 ## Current Master domains
@@ -22,37 +30,34 @@ Navigation
 Alarm Configuration
 ```
 
-Users sigue siendo operación especial de runtime/recovery cuando se habilita, no un Source Projection domain normal.
+Users sigue siendo operación especial snapshot/recovery y puede inyectar `users.replace` cuando el runtime durable configura recovery/catalog. No es un Source Projection domain ordinario.
 
-## Current implementation drift
+## Capability parity CURRENT
 
-Command Center todavía contiene wiring anterior para Users y parte de Navigation:
+El wiring legacy queda SUPERSEDED:
 
 ```text
 UsersAdministrationStore
 UserRecord
-CosmosUsersStore as administration
+users_promoted
 promoted=
-local NAVIGATION_SOURCE_KEY declaration
-older NavigationPrincipal binding
+CosmosUsersStore como store administrativo
+local duplicate NAVIGATION_SOURCE_KEY
+old NavigationPrincipal binding
 ```
 
-Las capacidades genéricas CURRENT y ADA ya usan el modelo nuevo.
+Command Center consume ahora las capabilities genéricas actuales.
+
+## Qualifier blocker separado
+
+`catalog` y `discovery-cosmos` revelan una incompatibilidad upstream de Tools entre `ada.web.tools.*` y `ada.contracts.tools.*`.
+
+No modificar ADA ni introducir adapters en Command Center durante este cierre.
 
 ## NEXT único
 
 ```text
-COMMAND-CENTER-CAPABILITY-PARITY
-Users + Profiles + Navigation + Manager
+ADA-ALARM-ENGINE-EXTRACTION-DESIGN
 ```
 
-Objetivo: llevar Command Center al mismo nivel arquitectónico que ADA reutilizando las capabilities genéricas, no copiando lógica específica de ADA.
-
-## AFTER NEXT
-
-```text
-resume ada-contracts qualifier
-→ full GREEN gate
-→ final dependency/diff audit
-→ artifact/distribution work
-```
+El siguiente chat debe partir del backend actual completo como candidato al Engine y limpiar/invertir dependencias hacia Web antes de cualquier movimiento físico.

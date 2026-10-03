@@ -1,26 +1,30 @@
 # ADA Command Center — Current Implementation
 
-Estado: **CURRENT — PRODUCT HOST + DURABLE COMPOSITION + GENERIC STORAGE NAMESPACE + MASTER PROJECTION**
+Estado: **CURRENT — GENERIC CAPABILITY PARITY IMPLEMENTED IN MAIN**
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
+```
 
 ## Generic Application
 
-```text
-ada-command-center-generic-application==0.1.2
-```
-
-Role:
+Rol:
 
 ```text
 real Command Center Web product composition root
 ```
 
-Composition includes:
+Composition incluye:
 
 ```text
 Home
 Identity
+Users Runtime resolution
 Projected Navigation
 Navigation authorization
+Manager principal binding
 Manager surface/modules
 Master Projection independent surface
 Command Center pages
@@ -29,20 +33,36 @@ Manager pages
 
 ## Configuration Manager
 
-Current package:
-
-```text
-ada-command-center-configuration-manager==0.1.3
-```
-
-Local Web host accepts:
+El host soporta:
 
 ```text
 ADA_MANAGER_PERSISTENCE_PROVIDER=local
 ADA_MANAGER_PERSISTENCE_PROVIDER=durable
 ```
 
-Identity remains local in this host.
+## Administration parity CURRENT
+
+Command Center compone directamente:
+
+```text
+compose_profiles_manager
+compose_navigation_manager
+compose_users_manager
+compose_users_projection_manager
+```
+
+Users usa:
+
+```text
+UsersAdministrationService(
+    registry=...,
+    memberships=...,
+    profiles=...,
+    directory=...,
+)
+```
+
+No queda autorizado mantener la API superseded como compatibilidad.
 
 ## Durable stores CURRENT
 
@@ -51,21 +71,40 @@ Blob Source
 Cosmos Alarm Configuration Projection
 Cosmos Profiles Projection
 Cosmos Navigation Projection
+
 Blob Users Registry
+Blob Tool Membership
 Cosmos Users Runtime
+Blob Users Recovery snapshots/audit
+
 Tool Catalog on Storage
+```
+
+## Users physical ownership CURRENT
+
+```text
+Registry
+    <application>/users/users.json.gz
+
+Membership
+    <application>/<tool>/users/memberships.json.gz
+
+Recovery
+    <application>/<tool>/users/recovery/...
+
+Runtime
+    Cosmos users-runtime
 ```
 
 ## Storage namespace CURRENT
 
-Command Center now depends on:
+Command Center usa:
 
 ```text
-atlanticus-web-storage-namespace==0.1.0
 atlanticus.web.storage.namespace.StorageNamespace
 ```
 
-Current product namespace:
+Product namespace:
 
 ```text
 StorageNamespace(
@@ -74,29 +113,26 @@ StorageNamespace(
 )
 ```
 
-Preserved scope prefix:
+## Navigation CURRENT
+
+Usa la autoridad:
 
 ```text
-conciencia_situacional/command-center
+atlanticus.web.navigation.configuration.NAVIGATION_SOURCE_KEY
 ```
 
-The previous dependency on:
+Persisted access:
 
 ```text
-ada.web.storage.namespace.AdaStorageNamespace
+PUBLIC
+RESTRICTED + allowed_profiles
 ```
 
-is superseded and removed.
+Runtime principal binding resuelve metadata de profile, root override y local confiable siguiendo el contrato genérico ya usado por ADA.
 
 ## Master Projection CURRENT
 
-Shared engine:
-
-```text
-atlanticus-web-master-projection==0.1.0
-```
-
-Product composition domains:
+Dominios ordinarios:
 
 ```text
 Profiles
@@ -104,78 +140,45 @@ Navigation
 Alarm Configuration
 ```
 
-Product provisioning command:
+Users:
 
 ```text
-uv run ada-command-center-master-projection generate --user <service-user>
+special snapshot/recovery operation
+not ProjectionDomain
 ```
 
-Derived material identity remains:
+Cuando durable runtime inyecta recovery y snapshot catalog, el backend de Master puede ejecutar `users.replace`.
+
+## Qualification focal de este hito
 
 ```text
-conciencia_situacional/command-center/master-projection/material.zip
+configuration-manager   31 passed
+generic-application     12 passed
+catalog-manager          8 passed
+Ruff                    PASS
 ```
 
-## Tool discovery CURRENT
+Los cuatro lockfiles del qualifier Web fueron normalizados e integrados en este checkpoint.
+
+## BLOCKED separado
+
+El qualifier completo no está GREEN:
 
 ```text
-ada-command-center-web-tool-discovery-cosmos==0.1.1
+catalog            7 failed / 5 passed
+discovery-cosmos   1 failed / 33 passed
 ```
 
-Discovery uses the generic `StorageNamespace` when parsing persisted:
+La causa observada es la coexistencia de tipos `ada.web.tools.*` y `ada.contracts.tools.*`.
+
+No corresponde corregir ADA dentro de este hito.
+
+## Alarm backend
+
+Permanece físicamente bajo:
 
 ```text
-<application>/<tool>
+scopes/ada-command-center/backend
 ```
 
-Tool Projection physical namespace identity is preserved.
-
-## Catalog Manager CURRENT
-
-```text
-ada-command-center-web-tool-catalog-manager==0.1.2
-```
-
-## Qualification of namespace convergence
-
-Relevant packages:
-
-```text
-atlanticus-web-storage-namespace                  15 passed
-ada-web-tools-projection-local                     3 passed
-ada-web-tools-projection-cosmos                    5 passed
-ada-web-tools-persistence                         10 passed
-ada-generic-application                          249 passed
-ada-command-center-web-tool-discovery-cosmos      38 passed
-ada-command-center-web-tool-catalog-manager        9 passed
-ada-command-center-configuration-manager          31 passed
-ada-command-center-generic-application            10 passed
-```
-
-Total:
-
-```text
-370 passed
-```
-
-Also verified:
-
-```text
-Ruff PASS
-format PASS
-commented mirrors equivalent
-git diff --check PASS
-legacy AdaStorageNamespace references = 0
-legacy ada.web.storage.namespace imports = 0
-9 package uv lock --check PASS
-```
-
-## NEXT
-
-Actual dual-app durable runtime smoke remains:
-
-```text
-PLANNED / UNVERIFIED
-```
-
-It must validate the application-level composition with selected durable Storage/Cosmos targets, not only isolated package tests.
+El próximo frente debe evaluar su extracción completa como `ada-alarm-engine`, removiendo/invirtiendo dependencias hacia Web.

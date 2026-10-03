@@ -1,39 +1,37 @@
 # Alarm Engine — Decision Index
 
-Estado: **CURRENT canonical decisions at `atlanticus@6725237...`**.
-
-Este archivo resume decisiones vigentes de este frente. `atlanticus-decisions` es referencia histórica, no autoridad actual por defecto.
+Estado: **CURRENT at `atlanticus@346e7ac7...`**.
 
 | Frontera | Estado |
 |---|---|
 | Business Alarm model | CURRENT / frozen. |
 | Source snapshot + exact Tool manifest | CURRENT. |
-| Shared Tool contracts | CURRENT en `ada-contracts-tools`. |
-| Shared Alarm contracts | CURRENT en `ada-contracts-alarms`. |
+| Shared Tool contracts | CURRENT in `ada-contracts-tools`. |
+| Shared Alarm contracts | CURRENT in `ada-contracts-alarms`. |
 | `domain/tools` | SUPERSEDED / removed. |
-| `domain/alarms` shared model ownership | SUPERSEDED; queda source key + routing policy. |
-| Published valid configuration | CURRENT concept: `AlarmConfigurationSnapshot`. |
+| Published valid configuration | CURRENT: `AlarmConfigurationSnapshot`. |
 | Public `ResolvedAlarmConfiguration` stage | SUPERSEDED. |
-| Materialization deterministic splitter | DECIDED / PLANNED implementation cleanup. |
+| Materialization deterministic splitter | CURRENT target / implementation cleanup pending. |
 | READY/EFFECTIVE exact pin | CURRENT. |
 | Engine CURRENT v1 / FACTS v2 | CURRENT. |
-| Delivery input CURRENT-only | CURRENT. |
-| Engine physical extraction | PLANNED / separate. |
-| Full Live Delivery / History / Analytics | PLANNED / separate. |
+| Delivery input CURRENT-only + FACTS | CURRENT. |
+| Command Center capability parity | CLOSED. |
+| Engine physical extraction | PLANNED / NEXT DESIGN. |
+| Live Projection / History / Analytics | PLANNED / separate. |
 
-## Refinamientos cerrados en este hito
+## Refinements from this closure
 
-1. Los modelos Alarm/Tool que cruzan productos ya no pertenecen a packages de Command Center.
-2. Los schemas de publicación Engine pertenecen a `ada-contracts-alarms`.
-3. Command Center puede depender de los contracts; los contracts no dependen de ADA ni Command Center.
-4. `ToolDependencyManifest` sigue siendo parte del snapshot publicado.
-5. El stage adicional `ResolvedAlarmConfiguration` no forma parte del target publicado.
-6. Materialization no debe ser owner de validación semántica que Command Center ya cerró antes de publicar.
-7. El gate de packaging/build reemplaza tests que sólo congelaban metadata o forma interna.
+1. Command Center capability parity no longer blocks Alarm/contract qualification.
+2. Full Web qualification is now blocked separately by duplicated Tool contract types upstream.
+3. Do not modify ADA as part of the Command Center or Alarm Engine extraction closure.
+4. The next Engine design starts with the full `scopes/ada-command-center/backend` as candidate ownership, not only `alarms/core`.
+5. Dependencies from that backend toward Command Center Web are debt to REMOVE/INVERT, not dependencies to preserve.
+6. Physical extraction to `scopes/ada-alarm-engine` requires a frozen dependency graph before implementation.
+7. `ada-command-center/domain/alarms` must be reclassified explicitly rather than dragged across by path.
 
-## Conflictos / deuda preservada
+## Open conflicts
 
-- Materialization CURRENT aún conserva responsabilidades/acoplamientos previos que contradicen el target limpio; no se corrigió en este incremento.
-- Command Center Configuration Manager está desalineado frente a Users/Profiles/Navigation CURRENT; bloquea el qualifier.
-- Production Entra y runtime Azure siguen UNVERIFIED.
-- Engine físico sigue bajo Command Center aunque la dirección futura considera `ada-alarm-engine`; no mover hasta cerrar la frontera técnica.
+- backend Materialization still depends on Web packages;
+- physical package/module names still use `ada_command_center`;
+- historical documentation that states the Engine necessarily belongs to Command Center is SUPERSEDED as a target direction but remains true of current physical location;
+- Tool contract duplication blocks the full Web qualifier and is outside this next focus.

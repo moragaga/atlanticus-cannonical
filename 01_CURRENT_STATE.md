@@ -1,18 +1,15 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT — KPI BACKEND CLOSED; COMMAND CENTER / ALARM ANALYSIS NEXT**
+Estado: **CURRENT — COMMAND CENTER CAPABILITY PARITY CLOSED; ALARM ENGINE EXTRACTION DESIGN NEXT**
 
 ## Autoridad
 
 ```text
 Implementation
-moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
+moragaga/atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
 
 Canonical before replacement
-moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
-
-Decisions
-NOT INSPECTED in this closure by explicit instruction
+moragaga/atlanticus-cannonical@19fe30dcc2f34dbe7a0c4615c188409ace2089b8
 ```
 
 ## CLOSED / VERIFIED relevante
@@ -31,110 +28,153 @@ KPI-LATEST-MULTI-TOOL-DELIVERY
 KPI-HISTORIAN-ROLLING-READ-MODEL
 KPI-TIMESERIES-MULTI-TOOL-DELIVERY
 KPI-HISTORY-DATASET-BOUNDARY
+
+COMMAND-CENTER-USERS-PROFILES-NAVIGATION-MANAGER-PARITY
+COMMAND-CENTER-WEB-LOCK-NORMALIZATION
 ```
 
-## KPI backend CURRENT
+## Command Center capability parity CURRENT
+
+`ada-command-center` consume ahora las capabilities genéricas actuales sin API legacy de Users.
 
 ```text
-KPI Runtime
-    ↓
-durable evaluation batches
-    ↓
-KPI Historian
-    ├─ durable daily history
-    ├─ error history
-    ├─ rolling current.parquet
-    └─ HistorianAuthority
-    ↓
-KPI Timeseries Delivery
-    ├─ materialized Registry per Tool
-    ├─ named Cosmos connections
-    ├─ per-Tool checkpoints
-    ├─ bounded parallel publication
-    └─ schema_version = 2 output
+UsersRegistryStore
+ToolMembershipStore
+UsersRuntimeStore
+UsersDirectoryReader
+
+UsersAdministrationService(
+    registry=...,
+    memberships=...,
+    profiles=...,
+    directory=...,
+)
 ```
 
-`ada-kpis-history` conserva un único package reusable.
-
-Separación CURRENT:
+Composición durable:
 
 ```text
-ada.kpis.history.contract
-    logical DatasetDefinitions / targets / durable identity
+Global Users Registry
+    <application>/users/users.json.gz
 
-ada.kpis.history.rolling
-    logical rolling metadata / grid / horizon / revision invariants
+Tool Membership
+    <application>/<tool>/users/memberships.json.gz
 
-ada.kpis.history.dataset
-    shared PyArrow representation and KPI dataset conversion
+Users Runtime
+    Cosmos users-runtime por Tool
 
-processes/kpi-historian
-processes/kpi-timeseries-delivery
-    orchestration only; no direct PyArrow ownership
+Users Recovery
+    <application>/<tool>/users/recovery/...
 ```
 
-Timeseries usa `DatasetRuntime` como frontera operacional.
+Navigation usa la autoridad genérica `NAVIGATION_SOURCE_KEY` y la semántica `PUBLIC | RESTRICTED`.
 
-`ParquetDatasetStore` se compone debajo de Runtime.
+Manager principal/runtime binding sigue el contrato de `RuntimeUser`, con override root y local sólo bajo ambiente local confiable.
 
-No existe package `ada-kpis-history-tabular`.
+Users permanece una operación especial de recovery en Master Projection; no es un `ProjectionDomain` ordinario.
 
-## Qualification focal reportada
+## Qualification focal del cierre
+
+Reportado y verificado en el hito:
 
 ```text
-kpis/history                         31 passed
-processes/kpi-historian             45 passed
-processes/kpi-timeseries-delivery   28 passed
+ada-command-center-configuration-manager   31 passed
+ada-command-center-generic-application     12 passed
+ada-command-center-web-tool-catalog-manager 8 passed
 
-Ruff check                          PASS
-Ruff format --check                 PASS
-git diff --check                    PASS
+Ruff focal                            PASS
 ```
 
-Los tres suites se calificaron en procesos pytest separados porque sus directorios de tests usan el mismo namespace top-level `tests.support`.
-
-Ese collision de collection no representa una regresión productiva.
-
-## BLOCKED
+Los cuatro lockfiles alcanzados por el qualifier fueron normalizados y posteriormente integrados en `atlanticus:main`:
 
 ```text
-KPI-FULL-OPERATIONAL-E2E
+web/application/ada-command-center-generic-application/uv.lock
+web/tools/catalog-manager/uv.lock
+web/tools/catalog/uv.lock
+web/tools/discovery-cosmos/uv.lock
 ```
 
-Razón:
+Para los cuatro:
 
 ```text
-se requieren correcciones Web previas para levantar/configurar la aplicación completa
-y ejecutar el flujo real de KPI de extremo a extremo
+uv lock --check     PASS
+uv sync --locked    PASS
 ```
 
-Por lo tanto:
+## BLOCKED separado
 
 ```text
-unit/focused KPI qualification = VERIFIED
-real integrated KPI runtime E2E = UNVERIFIED / BLOCKED
+COMMAND-CENTER-FULL-WEB-QUALIFIER
 ```
 
-## OPEN / PLANNED separado
+El qualifier ya no está bloqueado por Users / Profiles / Navigation / Manager.
+
+El bloqueo observado está en la frontera Tools:
 
 ```text
-Navigation PUBLIC / RESTRICTED
-current-head artifact generation
-.env.detail complete audit
-distribution regeneration
-ADA Generic real configuration
-macOS host sync / rcssmin
-/health/ready functional checks
-Python 3.14.7 / Trixie migration
-production Azure / Entra validation
+catalog
+    7 failed / 5 passed
+
+discovery-cosmos
+    1 failed / 33 passed
 ```
+
+Causa observada:
+
+```text
+ToolCatalogEntry espera:
+    ada.contracts.tools.ToolConfigurationKind
+    ada.contracts.tools.ToolStructure
+
+ADA ToolConfiguration actual produce:
+    ada.web.tools.ToolConfigurationKind
+    ada.web.tools.ToolStructure
+```
+
+Los valores documentales pueden coincidir, pero las clases Python no son idénticas.
+
+Tratamiento:
+
+```text
+NO modificar ADA dentro de este hito
+NO relajar ToolCatalogEntry
+NO introducir adapters/shims en Command Center
+registrar el bloqueo y continuar en el frente correspondiente cuando se abra ADA
+```
+
+## Alarm backend CURRENT
+
+Físicamente continúa bajo:
+
+```text
+scopes/ada-command-center/backend/
+```
+
+Incluye:
+
+```text
+alarms/core
+alarms/materialization
+alarms/persistence
+processes/alarms-materialization
+processes/alarms-runtime
+processes/alarms-delivery
+```
+
+Hipótesis de trabajo acordada para el próximo chat:
+
+```text
+ese backend constituye en esencia el Alarm Engine;
+la extracción debe conservarlo como unidad y remover/invertir
+las capas que todavía apuntan a Command Center Web.
+```
+
+Esta hipótesis es **PROPOSED / PLANNED**, todavía no una extracción implementada.
 
 ## NEXT
 
 ```text
-COMMAND-CENTER-ALARM-BACKEND-ANALYSIS
+ADA-ALARM-ENGINE-EXTRACTION-DESIGN
 ```
 
-No presupone todavía que Alarmas deba ser un engine independiente.
-
-La maduración a engine debe surgir del análisis del estado real, responsabilidades y fronteras.
+Primero inventario/dependency graph. Implementación sólo después de congelar contratos y ownership.

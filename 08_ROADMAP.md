@@ -1,6 +1,6 @@
 # Atlanticus — Roadmap
 
-Estado: **CURRENT ROADMAP — COMMAND CENTER / ALARM BACKEND ANALYSIS NEXT**
+Estado: **CURRENT ROADMAP — ADA ALARM ENGINE EXTRACTION DESIGN NEXT**
 
 ## CLOSED / CURRENT
 
@@ -19,60 +19,56 @@ KPI-LATEST-MULTI-TOOL-DELIVERY
 KPI-HISTORIAN-ROLLING-READ-MODEL
 KPI-TIMESERIES-MULTI-TOOL-DELIVERY
 KPI-HISTORY-DATASET-BOUNDARY
+
+COMMAND-CENTER-USERS-PROFILES-NAVIGATION-MANAGER-PARITY
+COMMAND-CENTER-WEB-LOCK-NORMALIZATION
 ```
 
 ## NEXT único
 
 ```text
-COMMAND-CENTER-ALARM-BACKEND-ANALYSIS
+ADA-ALARM-ENGINE-EXTRACTION-DESIGN
 ```
 
 Scope permitido:
 
 ```text
-inspect ada-command-center CURRENT implementation
-inspect Alarm CURRENT backend implementation
-compare responsibilities and ownership
-identify reusable domain/runtime boundaries
-determine whether Alarm should mature into an engine
-identify contracts before consumers
-identify conflicts against current canonical
-produce a concrete recommended architecture
+inspect scopes/ada-command-center/backend
+inventory all backend packages and dependency directions
+treat complete Alarm backend as candidate Engine ownership
+identify backend -> Web dependencies
+classify KEEP / MOVE / REMOVE / INVERT / REHOME
+define Command Center publication -> Engine input contract
+decide target scope/package names
+freeze dependency graph
 ```
 
-No implementar hasta cerrar debate/diseño.
+No mover código hasta cerrar debate/diseño.
 
-No mezclar con:
+## BLOCKED / SEPARATE
 
 ```text
-KPI backend
-KPI operational E2E
-Web corrective work
-Navigation access
-artifacts
-.env.detail
-distribution
-Collector
+COMMAND-CENTER-FULL-WEB-QUALIFIER
 ```
 
-## BLOCKED
+Causa actual:
 
 ```text
-KPI-FULL-OPERATIONAL-E2E
+Tool contract duplication between ada.web.tools.* and ada.contracts.tools.*
 ```
 
-Depende de correcciones Web previas necesarias para levantar/configurar la aplicación y ejecutar el flujo real.
+No abrir ADA para resolverlo durante Alarm Engine extraction.
 
 ## PLANNED / SEPARATE
 
 ```text
-NAVIGATION-PUBLIC-RESTRICTED-CONTRACT
-CURRENT-HEAD-ARTIFACT-GENERATION-QUALIFICATION
-ENV-DETAIL-FULL-AUDIT
-DISTRIBUTION-REGENERATION
-ISOLATED-CONSUMER-QUALIFICATION
-ADA-GENERIC-REAL-CONFIG-E2E
-KPI-FULL-OPERATIONAL-E2E
+resolution of ADA Tool contract duplication
+current-head artifact generation qualification
+.env.detail full audit
+distribution regeneration
+isolated consumer qualification
+ADA Generic real configuration E2E
+KPI full operational E2E
 Collector / Time Status / UI
 Python 3.14.7 / Trixie
 production Azure / Entra

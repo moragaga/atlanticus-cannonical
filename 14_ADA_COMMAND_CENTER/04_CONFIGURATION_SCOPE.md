@@ -1,10 +1,10 @@
 # ADA Command Center — Configuration Scope
 
-Estado: **CURRENT — LOCAL/DURABLE PERSISTENCE CONTRACT IMPLEMENTED**
+Estado: **CURRENT — LOCAL/DURABLE PERSISTENCE + GENERIC USERS PARITY IMPLEMENTED**
 
 ## Existing configuration reader
 
-`ManagerConfigurationReader` resolves:
+`ManagerConfigurationReader` resuelve:
 
 ```text
 ATLANTICUS_ENVIRONMENT
@@ -27,20 +27,22 @@ ADA_MANAGER_PERSISTENCE_PROVIDER
 → local | durable persistence
 ```
 
-Do not introduce Azure/emulator provider modes.
+No introducir Azure/emulator como provider modes.
 
 ## Durable CURRENT
 
-One Command Center Storage connection/container supports:
+Un Storage connection/container de Command Center soporta:
 
 ```text
 Tool Catalog
 Source
 Users Registry
+Tool Membership
+Users Recovery
 Master material
 ```
 
-One own Command Center Cosmos connection/database supports:
+El Cosmos propio de Command Center soporta:
 
 ```text
 Alarm Configuration
@@ -49,11 +51,46 @@ Navigation
 Users Runtime
 ```
 
-External Tool Cosmos connections remain independently named.
+External Tool Cosmos connections siguen nombradas independientemente.
+
+## Storage namespace CURRENT
+
+Autoridad:
+
+```text
+atlanticus.web.storage.namespace.StorageNamespace
+```
+
+Namespace de producto:
+
+```text
+StorageNamespace(
+    "conciencia_situacional",
+    "command-center",
+)
+```
+
+La dependencia anterior hacia `ada.web.storage.namespace.AdaStorageNamespace` está SUPERSEDED.
+
+## Users durable CURRENT
+
+```text
+Registry
+conciencia_situacional/users/users.json.gz
+
+Membership
+conciencia_situacional/command-center/users/memberships.json.gz
+
+Recovery
+conciencia_situacional/command-center/users/recovery/...
+
+Runtime
+Cosmos users-runtime
+```
 
 ## Master Projection
 
-No manual location variable.
+No usar variable manual para material location.
 
 Derived identity:
 
@@ -61,25 +98,12 @@ Derived identity:
 conciencia_situacional/command-center/master-projection/material.zip
 ```
 
-Command:
-
-```text
-uv run ada-command-center-master-projection generate --user <service-user>
-```
+Users recovery/snapshot catalog se inyectan como operación especial cuando durable runtime está configurado.
 
 ## Production
 
-Production identity remains separate and UNVERIFIED.
+Production Entra y autorización productiva permanecen UNVERIFIED.
 
-## NEXT ownership cleanup
+## Separate
 
-Current reader defines:
-
-```text
-COMMAND_CENTER_NAMESPACE = AdaStorageNamespace('conciencia_situacional', 'command-center')
-```
-
-using a class owned by the ADA scope.
-
-The next Source/namespace convergence must remove this product-to-product dependency without
-changing connection semantics.
+La incompatibilidad Tools observada por `catalog`/`discovery-cosmos` no cambia estos contratos de configuración y no se corrige en este hito.

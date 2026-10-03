@@ -1,6 +1,6 @@
 # Atlanticus Web Platform — Canonical Index
 
-Estado: **CURRENT — Users cutover y Navigation access refinement implementados; Command Center consumer parity NEXT**.
+Estado: **CURRENT — Users/Profiles/Navigation/Manager generic contracts implemented; Command Center parity CLOSED**.
 
 ## Generic capabilities CURRENT
 
@@ -27,30 +27,42 @@ runtime/recovery separation
 
 ## Navigation CURRENT
 
-Persisted route access now distinguishes:
+Persisted route access:
 
 ```text
 PUBLIC
 RESTRICTED + allowed_profiles
 ```
 
-La semántica anterior "empty allowed_profiles = public/unrestricted" como único mecanismo está **SUPERSEDED**.
+La semántica histórica "empty allowed_profiles = public" como único mecanismo está SUPERSEDED.
 
-## Primary current gap
+## Consumer state CURRENT
 
 ```text
-COMMAND-CENTER-CAPABILITY-PARITY
-PLANNED / NEXT
+ADA             consumes current generic capability contracts
+Command Center  consumes current generic capability contracts
 ```
 
-ADA ya consume el modelo genérico actual. Command Center aún tiene wiring anterior y bloquea el qualifier del cutover `ada-contracts`.
+La paridad de Command Center queda CLOSED en `atlanticus@346e7ac7...`.
 
-## After parity
+## Command Center qualification note
+
+El full Web qualifier permanece BLOCKED por una incompatibilidad Tools upstream separada:
 
 ```text
-resume ada-contracts qualification
+ada.web.tools.*
+ada.contracts.tools.*
+```
+
+No es un gap de Users / Profiles / Navigation / Manager.
+
+## Separate planned fronts
+
+```text
+ADA Tools contract convergence
 artifact generation
 .env.detail audit
 distribution regeneration
 consumer runtime qualification
+production Entra
 ```

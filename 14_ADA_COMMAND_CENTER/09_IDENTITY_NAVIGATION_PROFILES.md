@@ -1,41 +1,47 @@
 # ADA Command Center — Identity, Users, Profiles, Navigation and Manager
 
-Estado: **BLOCKED / NEXT — Command Center debe alcanzar parity con las capabilities CURRENT y el patrón implementado en ADA**.
+Estado: **CURRENT / CLOSED — CAPABILITY PARITY IMPLEMENTED**
 
 Checkpoint:
 
 ```text
-atlanticus@6725237a19c4442fdfa1b32c3410c124e9348dbc
+atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
 ```
 
 ## Identity
 
 El host local usa identidad local.
 
-Production Entra permanece:
+Production Entra:
 
 ```text
 PLANNED / UNVERIFIED
 ```
 
-No inferir permisos productivos desde `administrative_override` local.
+No inferir permisos productivos desde overrides locales.
 
 ## Generic capability model CURRENT
 
 ```text
-Atlanticus Users       global identity + Tool membership + runtime/recovery contracts
+Atlanticus Users       global identity + Tool membership + runtime/recovery
 Atlanticus Profiles    profile definitions/configuration/projection
 Atlanticus Navigation  route structure + PUBLIC/RESTRICTED authorization
 Atlanticus Manager     administrative shell/authorization
-product                composition
+Command Center         composition
 ```
 
-## Users CURRENT generic contract
+## Users CURRENT
 
 ```text
 UsersRegistryStore
 ToolMembershipStore
 UsersRuntimeStore
+UsersDirectoryReader
+```
+
+Administration:
+
+```text
 UsersAdministrationService(
     registry=...,
     memberships=...,
@@ -44,7 +50,7 @@ UsersAdministrationService(
 )
 ```
 
-Physical ownership usado por ADA:
+Physical ownership:
 
 ```text
 Global Users Registry
@@ -57,25 +63,23 @@ RuntimeUser
     Tool-owned Cosmos users-runtime
 ```
 
-## Command Center Users — BLOCKED
-
-El Configuration Manager todavía usa API superseded:
+## Runtime/recovery CURRENT
 
 ```text
-UsersAdministrationStore
-UserRecord
-users_promoted
-promoted=
-CosmosUsersStore como administración
+Global Users
++ Tool Membership
++ Profiles
++ Operational
+→ RuntimeUser[]
 ```
 
-Esto ya no compone contra Atlanticus Users CURRENT.
+Recovery reemplaza únicamente runtime.
 
-El próximo incremento debe reemplazarlo limpiamente; no crear aliases de compatibilidad.
+Users no es un `ProjectionDomain` ordinario.
 
-## Profiles
+## Profiles CURRENT
 
-Command Center ya usa `compose_profiles_manager` y `ProfileCatalog` genéricos.
+Command Center usa `compose_profiles_manager` y `ProfileCatalog` genéricos.
 
 Local:
 
@@ -84,35 +88,67 @@ shared local Source
 in-process Projection
 ```
 
-Durable CURRENT:
+Durable:
 
 ```text
 Blob Source
 Cosmos Profiles Projection
 ```
 
-No copiar `users-support` de ADA automáticamente. Compartir recurso físico sólo cuando exista compatibilidad y beneficio real.
+## Navigation CURRENT
 
-## Navigation CURRENT generic contract
-
-Navigation Configuration ya modela explícitamente:
+Persisted contract:
 
 ```text
 access_mode = PUBLIC | RESTRICTED
 allowed_profiles = (...)
 ```
 
-Command Center debe importar la autoridad `NAVIGATION_SOURCE_KEY` desde la capability genérica y dejar de declarar su propia constante equivalente.
+Command Center importa:
 
-Su `NavigationPrincipal` runtime también requiere revisión de paridad con ADA: presentation/profile metadata y semántica root/local no deben quedar hard-coded en una binding antigua.
+```text
+atlanticus.web.navigation.configuration.NAVIGATION_SOURCE_KEY
+```
+
+No existe autoridad local duplicada.
+
+## Manager principal CURRENT
+
+Cadena:
+
+```text
+IdentityProvider
+→ AccessRuntime
+→ UsersAccessResolver
+→ UsersRuntime
+→ ManagerPrincipalBinding
+→ Manager
+```
+
+Reglas:
+
+```text
+managed root → administrative override
+local override → sólo environment local confiable
+disabled RuntimeUser → no principal válido
+profile metadata/avatar → runtime/profile binding
+```
 
 ## Manager
 
-Manager authorization permanece separada de Navigation visibility y de cualquier Access específico de ADA.
+Manager authorization permanece separada de Navigation visibility.
+
+Rutas genéricas:
+
+```text
+/manager/profiles
+/manager/navigation
+/manager/users
+```
 
 ## Master Projection
 
-Command Center conserva como Source Projection domains:
+Dominios ordinarios:
 
 ```text
 Profiles
@@ -120,20 +156,27 @@ Navigation
 Alarm Configuration
 ```
 
-Users no debe agregarse como domain normal sólo para copiar ADA; recovery/runtime tiene contrato propio.
+Users conserva operación especial snapshot/recovery. En durable composition, recovery/catalog permiten configurar `users.replace`.
 
-## Regla de paridad
-
-Copiar el **patrón de composición** que ADA ya usa para capabilities genéricas.
-
-No copiar lógica específica de producto ADA dentro de Command Center.
-
-## OPEN
+## SUPERSEDED
 
 ```text
-Command Center capability parity
+UsersAdministrationStore
+UserRecord
+users_promoted
+promoted=
+CosmosUsersStore as administration
+local SourceKey('navigation')
+old hard-coded navigation principal binding
+```
+
+No crear aliases de compatibilidad.
+
+## OPEN / SEPARATE
+
+```text
 production Entra provider
 production authorization mapping
-real durable smoke after parity
-decision de si Command Center necesita Users Runtime/Recovery completo igual que ADA
+real durable multi-service smoke
+full Command Center qualifier blocked by upstream Tools contract duplication
 ```

@@ -1,16 +1,16 @@
 # Alarm Engine — Configuration and Materialization
 
-Estado: **CURRENT implementation + DECIDED target boundary; semantic simplification PLANNED**.
+Estado: **CURRENT implementation + target boundary frozen at contract level; physical extraction PLANNED/NEXT DESIGN**.
 
 Checkpoint:
 
 ```text
-atlanticus@6725237a19c4442fdfa1b32c3410c124e9348dbc
+atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
 ```
 
 ## Published configuration CURRENT
 
-La configuración compartida vive en `ada-contracts-alarms`.
+Shared configuration lives in `ada-contracts-alarms`.
 
 ```text
 AlarmConfigurationSnapshot
@@ -18,13 +18,13 @@ AlarmConfigurationSnapshot
     tool_dependencies: ToolDependencyManifest
 ```
 
-`ToolDependencyManifest` vive en `ada-contracts-tools`.
+`ToolDependencyManifest` lives in `ada-contracts-tools`.
 
-El snapshot conserva la revisión exacta del Tool Catalog usada para publicar y es la frontera durable entre authoring y consumidores downstream.
+Published snapshot preserves the exact Tool Catalog revision used by Command Center.
 
-## Ownership semántico DECIDED
+## Command Center semantic ownership CURRENT
 
-Antes de publicar, Command Center debe completar:
+Before publication, Command Center owns:
 
 ```text
 authoring
@@ -35,73 +35,73 @@ visual target validation
 publication
 ```
 
-No publicar configuración inválida.
+A published snapshot means valid/materializable according to the current contract.
 
-Por contrato, snapshot publicado significa **ready/materializable**, no "candidato que Materialization debe volver a calificar".
-
-## Materialization target PLANNED
+## Materialization target
 
 ```text
-AlarmConfigurationSnapshot publicado
+published AlarmConfigurationSnapshot
         ↓
-transformación determinista
+deterministic materialization
         ├── RuntimeAlarmConfiguration
         └── DeliveryAlarmConfiguration
 ```
 
-Materialization no debe consultar Tools ni repetir semantic resolution ya cerrada upstream.
+Materialization must not rediscover Tools or redo semantic resolution already closed upstream.
 
-`ResolvedAlarmConfiguration` como stage publicado separado está **SUPERSEDED**.
+`ResolvedAlarmConfiguration` as an extra published stage remains SUPERSEDED.
 
-## Implementación CURRENT
+## Current implementation debt
 
-El cutover `ada-contracts` cambió ownership/imports y preservó wire/document contracts. No reescribió todavía la lógica existente de Materialization.
+Physical implementation still lives under Command Center backend and Materialization retains dependencies from the previous acquisition model.
 
-Permanece deuda técnica en:
+Known debt includes backend dependencies toward Web/projection packages.
 
-- dependencias hacia Web/projection contracts;
-- semantic resolution downstream;
-- qualification previa que debe moverse definitivamente upstream.
+These dependencies are not target contracts.
 
-Esta deuda no debe esconderse con compatibility shims.
+## Next extraction rule
 
-## Pin / adoption invariants — CURRENT
+The next design increment treats:
 
-Se conservan:
+```text
+backend/alarms/*
+backend/processes/alarms-*
+```
+
+as a single candidate Engine boundary.
+
+During extraction, classify dependencies:
+
+```text
+KEEP
+MOVE
+REMOVE
+INVERT
+REHOME
+```
+
+Do not preserve backend → Web edges with shims.
+
+## Pin/adoption invariants — FROZEN
 
 ```text
 READY != EFFECTIVE
 exact artifact pin
 source_key + result_id + manifest_sha256 + resolution_key
-Runtime y Delivery deben usar el mismo artefacto exacto
-no fallback a latest READY
+Runtime and Delivery use same exact artifact
+no fallback to latest READY
 ```
 
-El job fijado no reinterpreta latest en cada ciclo.
+## Engine publication schemas CURRENT
 
-## Engine publication schemas — CURRENT
-
-Autoridad física:
+Authority:
 
 ```text
-ada-contracts-alarms
-└── ada/contracts/alarms/schemas/
+ada-contracts-alarms/ada/contracts/alarms/schemas
 ```
 
-Las copias históricas bajo `backend/alarms/contracts` ya no existen en `main@6725237...`.
+Do not restore historical copies under backend.
 
-El gate debe verificar que builds/distribuciones carguen los schemas desde el package autoritativo; no reintroducir duplicados sólo para conservar paths históricos.
+## Separate blocker
 
-## Frontera siguiente
-
-No simplificar Materialization durante el siguiente chat.
-
-Primero:
-
-```text
-Command Center capability parity
-→ retomar qualifier ada-contracts
-→ cerrar gate
-```
-
-La limpieza semántica de Materialization y extracción física del Engine son incrementos separados.
+The Tool Catalog qualifier failure caused by `ada.web.tools.*` vs `ada.contracts.tools.*` is outside this materialization/extraction increment.

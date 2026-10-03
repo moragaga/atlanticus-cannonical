@@ -1,6 +1,6 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT — no abrir Engine durante el próximo incremento**.
+Estado: **CURRENT — physical extraction design is NEXT**.
 
 ## CLOSED / CURRENT
 
@@ -8,46 +8,69 @@ Estado: **CURRENT — no abrir Engine durante el próximo incremento**.
 shared Tool contracts package
 shared Alarm contracts package
 Engine publication schemas ownership
-Command Center consumer cutover implementado en main
-invalid structural/version/mirror tests removed in touched scopes
-partial qualification through Web Alarm Configuration
+Command Center Alarm/Tool consumer cutover
+Command Center Users/Profiles/Navigation/Manager parity
+Command Center Web lock normalization
 ```
 
-## BLOCKED
-
-### Full ada-contracts cutover gate
-
-Bloqueado en Command Center Configuration Manager por drift de Users/Profiles/Navigation/Manager frente al baseline genérico actual.
-
-Tratamiento autorizado:
+## NEXT único
 
 ```text
-resolver primero Command Center parity
-luego retomar exactamente el qualifier
+ADA-ALARM-ENGINE-EXTRACTION-DESIGN
 ```
 
-No parchear los contracts de Alarm para compensar ese drift.
+Required outputs before implementation:
 
-## PLANNED / AFTER GATE
+```text
+complete backend package inventory
+dependency graph
+KEEP / MOVE / REMOVE / INVERT / REHOME classification
+Command Center publication -> Engine input contract
+destination of ada-command-center/domain/alarms
+target scopes/ada-alarm-engine layout
+package/module rename strategy
+incremental qualification order
+```
 
-- audit final de dependencies y packages;
-- distribución final;
-- ejecución Engine/Delivery desde artefactos distribuidos;
-- Docker independiente;
-- cleanup de Materialization para hacerlo splitter determinista;
-- eventual extracción física `ada-alarm-engine` si sigue justificada.
+## Working hypothesis
 
-## OPEN / SEPARATE
+```text
+all current ada-command-center/backend Alarm packages are Engine;
+Web-facing acquisition/resolution layers are the part to remove/invert.
+```
 
-- Live materialization/AlarmLiveProjection;
-- Management Capture;
+This remains PROPOSED until verified package by package.
+
+## Known debt to remove
+
+At least `alarms-materialization-process` still depends on Web packages for configuration/projection acquisition.
+
+Target Engine must not depend on Command Center Web.
+
+## BLOCKED / SEPARATE
+
+Full Command Center Web qualifier:
+
+```text
+catalog            FAIL
+discovery-cosmos   FAIL
+```
+
+Cause observed: duplicated Tool contract types between ADA Web and `ada-contracts-tools`.
+
+Do not patch Alarm contracts for this.
+
+## PLANNED / AFTER EXTRACTION DESIGN
+
+- physical move/rename to `scopes/ada-alarm-engine`;
+- deterministic Materialization cleanup;
+- distribution/build qualification;
+- independent Docker jobs;
+- Live Projection;
 - History/Analytics;
-- production Entra;
-- Azure/CI;
-- datasets reales y Tool/evaluator qualification;
-- migraciones físicas sólo si existe histórico real que las requiera.
+- production Azure/Entra validation.
 
-## Invariantes que no se reabren
+## Frozen invariants
 
 ```text
 contracts before consumers
@@ -57,4 +80,5 @@ Runtime and Delivery same exact artifact
 no fallback to latest READY
 no legacy adapters by inference
 no Tool semantic rediscovery in target Materialization
+no Engine dependency on Command Center Web
 ```

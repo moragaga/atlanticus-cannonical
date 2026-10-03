@@ -1,6 +1,6 @@
 # Atlanticus — Open Questions
 
-Estado: **CURRENT — COMMAND CENTER / ALARM BACKEND ANALYSIS NEXT**
+Estado: **CURRENT — ADA ALARM ENGINE EXTRACTION DESIGN NEXT**
 
 ## CLOSED
 
@@ -11,6 +11,8 @@ Tool User Membership
 users-runtime
 Tool Users Recovery Snapshot
 Master Projection Users REPLACE
+Command Center Users/Profiles/Navigation/Manager parity
+Command Center Web lock normalization
 
 KPI named connections
 KPI Registry materialization
@@ -20,59 +22,59 @@ Timeseries multi-Tool delivery
 KPI History dataset representation boundary
 ```
 
-## OPEN / NEXT — Command Center / Alarm
+## OPEN / NEXT — ADA Alarm Engine extraction
 
-El siguiente chat debe resolver desde fuentes autoritativas, sin asumir respuesta previa:
-
-```text
-1. Qué responsabilidad pertenece hoy a ada-command-center.
-2. Qué responsabilidad pertenece hoy a Alarm backend.
-3. Qué piezas son producto/UI y cuáles son dominio/runtime reusable.
-4. Si Alarm posee suficiente responsabilidad, ciclo de vida y contrato propio para madurar a engine.
-5. Si Command Center debe consumir/orquestar Alarm en vez de poseer su núcleo.
-6. Qué contratos deben quedar en backend antes de continuar consumidores Web.
-7. Qué implementación actual debe mantenerse, moverse, reemplazarse o eliminarse.
-```
-
-No congelar una respuesta antes de inspeccionar `main`.
-
-## BLOCKED
+El próximo chat debe resolver desde fuentes autoritativas:
 
 ```text
-KPI full operational E2E
+1. Confirmar si todo scopes/ada-command-center/backend pertenece conceptualmente al Alarm Engine.
+2. Inventariar dependencias package por package.
+3. Identificar dependencias backend -> Command Center Web.
+4. Clasificar cada dependencia como KEEP / MOVE / REMOVE / INVERT / REHOME.
+5. Definir el contrato exacto publicado por Command Center que consume Materialization.
+6. Determinar el destino de ada-command-center/domain/alarms.
+7. Definir el target físico scopes/ada-alarm-engine.
+8. Definir renames/package ownership sin adapters ni re-exports legacy.
+9. Definir orden incremental de extracción y qualification.
 ```
 
-Razón:
+Working hypothesis:
 
 ```text
-Web requiere correcciones previas antes de poder levantar/configurar el entorno completo.
+el backend actual es el Engine;
+el problema principal de frontera son capas de adquisición/resolución
+que aún dependen de Web.
 ```
 
-Lo que permanece UNVERIFIED:
+Debe verificarse antes de mover código.
+
+## BLOCKED / SEPARATE — Command Center full qualifier
+
+El blocker de capability parity está cerrado.
+
+El qualifier completo se detiene actualmente por incompatibilidad entre:
 
 ```text
-real Runtime -> Historian -> Timeseries execution
-real multi-Tool Cosmos delivery
-restart/recovery through the complete deployed flow
-production Azure behavior
-load/RU profile
+ada.web.tools.*
+ada.contracts.tools.*
 ```
+
+No resolver dentro del frente Alarm Engine.
 
 ## OPEN / SEPARATE
 
 ```text
-Navigation PUBLIC / RESTRICTED
-current-head artifact completeness
-artifact installability
+production Entra/Azure
+artifact completeness/installability
 .env.detail exhaustive audit
-system-derived/system-assigned values
 distribution regeneration
 ADA durable end-to-end
 runtime restart/readback
-recovery gate
 macOS rcssmin
 /health/ready checks
-production Entra/Azure
 Python migration
+KPI operational E2E
 Collector / Time Status / UI
+Alarm Live Projection
+History / Analytics
 ```

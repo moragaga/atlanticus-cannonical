@@ -8,26 +8,26 @@ Estado: **CURRENT**
 
 - Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- Commit auditado: `6725237a19c4442fdfa1b32c3410c124e9348dbc`
-- Fecha del commit: `2026-10-03T08:46:13Z`
+- Commit auditado: `346e7ac7ba7c21eede8b524613a6adee7e839e55`
+- Fecha del commit: `2026-10-03T11:41:18Z`
 - Mensaje: `feat`
+
+Este commit incorpora el cierre de paridad de ADA Command Center para Users / Profiles / Navigation / Manager y la normalización de los lockfiles Web alcanzados durante el qualifier.
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
-- Commit de partida inspeccionado: `9a6dafce3382d2d21fa0ebf790af57daf8715e7a`
-- Fecha del commit: `2026-10-03T05:54:56Z`
+- Commit de partida inspeccionado antes de estos reemplazos: `19fe30dcc2f34dbe7a0c4615c188409ace2089b8`
+- Fecha del commit: `2026-10-03T09:11:10Z`
 
 ## Jerarquía congelada
 
 1. `moragaga/atlanticus:main` es la realidad implementada actual.
-2. `moragaga/atlanticus-cannonical:main` contiene decisiones, contratos, qualification, rationale y estado canónico vigente.
-3. Tests, builds y logs reproducibles son evidencia de propiedades verificadas, pero no reemplazan implementación ni canonical.
-4. Otros repositorios, documentos históricos, decisiones previas y conversaciones son referencias únicamente cuando se indiquen explícitamente. No tienen autoridad automática sobre Atlanticus.
+2. `moragaga/atlanticus-cannonical:main` contiene contratos, decisiones vigentes, qualification, rationale y estado canónico.
+3. Tests y logs reproducibles son evidencia de propiedades verificadas, pero no reemplazan implementación ni canonical.
+4. `atlanticus-decisions` y otros repositorios/documentos históricos son referencia sólo cuando se indiquen explícitamente.
 5. Si implementación y canonical se contradicen, registrar el conflicto; no resolverlo silenciosamente.
-
-`atlanticus-decisions` deja de ser autoridad vigente por defecto. Puede consultarse como evidencia histórica cuando el usuario lo indique, pero no prevalece sobre `atlanticus:main` ni `atlanticus-cannonical:main`.
 
 ## Baseline técnico CURRENT
 
@@ -40,7 +40,7 @@ Azure productivo / Docker local
 Microsoft Entra ID como identidad objetivo
 ```
 
-No migrar incidentalmente a Python 3.14.7 dentro de otro incremento.
+Python 3.14.7 / Trixie permanece como migración separada. No introducirla incidentalmente dentro de otro incremento.
 
 ## Git
 
@@ -55,7 +55,7 @@ No crear commits, push, branches, PR, issues ni otras mutaciones remotas sin aut
 2. implementación incremental sólo tras consenso/autorización
 ```
 
-Contratos antes que consumidores. Backend antes que frontend. Cambios de raíz reemplazan limpiamente soluciones superseded; no crear legacy, shims ni adapters temporales salvo decisión explícita.
+Contratos antes que consumidores. Backend antes que frontend. Cambios de raíz reemplazan limpiamente soluciones superseded; no crear legacy, aliases, shims ni adapters temporales salvo decisión explícita.
 
 ## Estados y certeza
 
@@ -69,7 +69,7 @@ PROPOSED
 UNVERIFIED
 ```
 
-Y estado:
+Y:
 
 ```text
 CURRENT

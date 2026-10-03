@@ -1,251 +1,204 @@
 # Alarm Engine — Command Center / Web / Analytics Boundary
 
-Estado: **CANDIDATE REFINED / OPEN RECONCILIATION**
+Estado: **REFINED / PLANNED — Engine extraction design NEXT; physical implementation not moved yet**.
 
-## 1. Principio
+## 1. Principle
 
-Alarm Engine produce y mantiene estado/hechos operacionales.
+Command Center owns configuration authoring and publication.
 
-Command Center configura, valida y resuelve referencias necesarias para publicar configuración operacional.
+Alarm Engine owns backend execution, state, materialization, persistence, runtime and delivery.
 
-Web consume proyecciones operacionales; no participa en resolución del Engine ni lee WAL directamente.
+Web consumes projections/results and must not become an Engine dependency.
 
-Analytics construye read models históricos; no modifica estado del Engine.
+Analytics builds read models from durable facts and does not mutate Engine state.
 
-## 2. Dirección conceptual
+## 2. Current physical state
+
+Today the Engine implementation is physically located under:
 
 ```text
-ADA Command Center Configuration
-        ↓
-Resolved Alarm Configuration
-        ↓
-Alarm Engine Materialization
-        ├── runtime.json
-        └── delivery.json
-        ↓
-Alarm Runtime
-        ↓ durable operational facts
-Alarm Delivery
-        ↓
-Live Alarm Projection
-        ↓
-Command Center Web
+scopes/ada-command-center/backend
 ```
 
-En paralelo:
+Candidate Engine packages:
 
 ```text
-Alarm Engine durable facts
-        ↓
-History / Analytics read model
-        ↓
-Command Center analytics surfaces
+alarms/core
+alarms/materialization
+alarms/persistence
+processes/alarms-materialization
+processes/alarms-runtime
+processes/alarms-delivery
 ```
 
-## 3. Ownership histórico y conflicto
+This physical location is CURRENT.
 
-### Histórico
+## 3. Working ownership hypothesis
 
-La documentación anterior indicaba:
-
-> Alarm Engine pertenece al backend de ADA Command Center.
-
-### Estado actual
-
-`CONFLICT / OPEN`
-
-La implementación ha madurado hacia un Engine con responsabilidades propias, pero aún vive físicamente bajo `scopes/ada-command-center/backend` y conserva dependencias hacia módulos `web`.
-
-La dirección propuesta es que ADA Command Center sea consumidor/configurador del Engine, no su frontera arquitectónica obligatoria.
-
-Este cambio de ownership físico debe formalizarse antes de mover código.
-
-## 4. Frontera Command Center Configuration → Engine
-
-Command Center puede conocer:
-
-- Tool catalog;
-- Tool kinds;
-- Tool topology;
-- components/subcomponents;
-- authoring;
-- validación cross-tool;
-- reglas de direccionalidad;
-- resolución de referencias;
-- publicación de configuración operacional resuelta.
-
-Alarm Engine no debe necesitar conocer cómo se descubrieron o administraron esas referencias.
-
-El punto de corte propuesto es un documento autosuficiente:
-
-`Resolved Alarm Configuration`.
-
-## 5. Alarm Materialization
-
-`PROPOSED / PLANNED`
-
-Materialization es backend del Engine y su responsabilidad propuesta es:
+PROPOSED for next design:
 
 ```text
-Cosmos / Resolved Alarm Configuration
+all current Alarm backend packages belong to ada-alarm-engine
+```
+
+The extraction should not cherry-pick only pure core.
+
+Instead, remove/invert the layers that point from backend into Command Center Web.
+
+## 4. Target direction
+
+```text
+ADA Command Center
+    authoring
+    business validation
+    Tool/reference validation
+    routing/visual validation
+    publication
+        ↓
+shared published Alarm contract
+        ↓
+ADA Alarm Engine
+    materialization
+    persistence
+    runtime
+    delivery
+        ↓
+durable operational facts / projections
+        ↓
+Command Center Web / Analytics
+```
+
+Dependency direction is one-way across the publication boundary.
+
+## 5. Materialization
+
+Target responsibility:
+
+```text
+published Alarm configuration
         ↓
 contract validation
         ↓
-materialization
-        ├── runtime.json
-        └── delivery.json
+deterministic split/materialization
+        ├── runtime artifact
+        └── delivery artifact
 ```
 
-No debe volver a:
-
-- descubrir Tools;
-- consultar el catálogo Web de Tools;
-- importar Configuration Manager;
-- importar proyecciones Web de Alarm Configuration;
-- depender de `atlanticus.web.projection` o `atlanticus.web.source` solo para comprender el contrato operacional;
-- resolver una segunda vez referencias que ya fueron publicadas resueltas.
-
-## 6. Runtime boundary
-
-Runtime consume `runtime.json`.
-
-Runtime es dueño de:
-
-- evaluación;
-- lifecycle;
-- priority;
-- management/deactivation runtime;
-- adoption/effective configuration;
-- hechos durables de ejecución.
-
-Runtime no debe conocer layout ni consumidores Web.
-
-## 7. Delivery boundary
-
-Delivery consume:
-
-- hechos producidos por Runtime;
-- `delivery.json` exacto de la misma configuración efectiva.
-
-Delivery puede conocer direccionamiento semántico mediante keys estables:
-
-- `tool_key`;
-- component keys;
-- subcomponent keys;
-- mensajes/capabilities;
-- visual targets;
-- color semántico.
-
-Delivery no debe conocer geometría del layout ni estilos CSS.
-
-## 8. Live Projection
-
-Live Projection representa el estado operacional actual ya resuelto por el Engine.
-
-Debe preservar los invariantes registrados:
-
-- priority se resuelve antes de publicar;
-- eclipsed Rules no se convierten en alarmas actuales predominantes;
-- managed/deactivated siguen siendo dimensiones del estado actual cuando la condición física continúa activa;
-- Web no re-resuelve prioridad, Messages ni reglas de negocio.
-
-## 9. Diferencia KPI vs Alarm en Web
-
-### KPI
-
-KPI Delivery puede distribuir valores por component/destination y el Collector mantiene stores por componente.
-
-### Alarm
-
-Alarmas necesitan una vista global porque la Web construye un layout completo.
+It must not:
 
 ```text
-Live Alarm Projection
-        +
-ToolStructure local de la Web
-        ↓
-Alarm layout resolver
-        ↓
-store/modelo global de alarmas
-        ↓
-layout completo
+discover Tools
+query Command Center Tool Catalog
+import Configuration Manager
+import Command Center Web Alarm projection
+depend on atlanticus.web.source/projection only to understand Engine configuration
+repeat semantic resolution already closed before publication
 ```
 
-La Web usa las keys entregadas por Alarm Delivery para localizar components/subcomponents dentro de su propia `ToolStructure`.
+## 6. Runtime
 
-La Web decide:
+Runtime owns:
 
-- posición concreta;
-- estructura visual;
-- composición del layout;
-- CSS/theme;
-- cómo representar el color semántico.
+```text
+evaluation
+lifecycle
+priority
+management/deactivation runtime effects
+adoption/effective configuration
+durable execution facts
+```
 
-El Engine decide:
+Runtime does not know layout or Web consumers.
 
-- qué alarma existe;
-- qué estado operacional tiene;
-- qué color semántico corresponde;
-- a qué Tool/component/subcomponent lógico apunta.
+## 7. Persistence
+
+Engine persistence owns its durable operational state/WAL and recovery semantics.
+
+Its physical implementation may use generic Atlanticus backend/connectivity capabilities, but it must not depend on Command Center Web.
+
+## 8. Delivery
+
+Delivery consumes Engine state/facts and the exact delivery configuration matching the same effective artifact.
+
+It may carry stable semantic routing keys, but not layout geometry or CSS.
+
+## 9. Web
+
+Web decides:
+
+```text
+layout
+visual composition
+CSS/theme
+presentation
+```
+
+Engine decides:
+
+```text
+alarm existence/state
+semantic color
+logical routing target
+operational lifecycle/priority
+```
+
+Web does not read WAL directly.
 
 ## 10. Analytics
 
-Fuentes útiles para History/Analytics:
-
-- Occurrence/Episode;
-- Journey;
-- Evidence;
-- management/deactivation;
-- routing;
-- priority transitions;
-- configuration revisions;
-- delivery/publication revisions cuando sean relevantes para trazabilidad.
-
-Mantener separadas:
-
-- Live Projection;
-- Management Projection;
-- History/Analytics.
-
-Web no lee WAL directo.
-
-Analytics no modifica estado del Engine.
-
-## 11. Dependencias invertidas actuales
-
-`VERIFIED / CURRENT IMPLEMENTATION / TO REMOVE`
-
-La implementación actual contiene dependencias desde backend Alarm Materialization hacia paquetes bajo `web`, incluyendo configuración/proyección y contratos de Tools.
-
-Estas dependencias deben tratarse como deuda de frontera, no como contrato a preservar.
-
-No mover esos módulos a otro ownership solo para mantener el acoplamiento. Primero determinar si la dependencia debe existir. Para el flujo propuesto de Materialization, la expectativa es eliminarla y consumir únicamente el contrato operacional publicado.
-
-## 12. Conflicto con decisiones registradas
-
-`CONFLICT`
-
-R3.6M-006B.2 registrada asigna a Materialization adquisición del candidato, lectura de Alarm revision + Confirmed Tool Catalog y resolución B.2.
-
-La frontera refinada en este Project propone:
+Analytics consumes durable facts such as:
 
 ```text
-Command Center Resolution
-        ↓
-Resolved Alarm Configuration
-        ↓
-Engine Materialization
+Occurrence/Episode
+Journey
+Evidence
+management/deactivation
+routing
+priority transitions
+configuration revisions
+delivery/publication revisions when needed
 ```
 
-Por tanto, la decisión previa debe ser reemplazada o refinada explícitamente en `atlanticus-decisions` antes de considerar esta frontera DESIGN FROZEN.
+Keep separate:
 
-## 13. OPEN
+```text
+Live Projection
+Management Projection
+History/Analytics
+```
 
-1. Definir el schema exacto de `Resolved Alarm Configuration` publicado en Cosmos.
-2. Definir qué campos pertenecen exclusivamente a `runtime.json`.
-3. Definir qué campos pertenecen exclusivamente a `delivery.json`.
-4. Determinar si `tool_kind` tiene alguna semántica Engine real después de resolución.
-5. Eliminar dependencias backend → Web una vez congelado el contrato.
-6. Reconciliar B.2 en `atlanticus-decisions`.
-7. Solo después, evaluar extracción física a un scope `ada-alarm-engine`.
-8. KPI Engine se revisará en un hito separado; no mezclarlo con esta corrección.
+## 11. Known inverted dependencies
+
+CURRENT implementation contains backend → Web dependencies, especially in Materialization acquisition.
+
+These edges are **TO REMOVE / INVERT**, not contracts to preserve during the move.
+
+## 12. domain/alarms
+
+`scopes/ada-command-center/domain/alarms` currently contains residual source/routing policy.
+
+Its final owner is OPEN.
+
+The next design must classify each element:
+
+```text
+KEEP in Command Center
+MOVE to Engine
+REHOME to ada-contracts-alarms
+REMOVE
+```
+
+## 13. Next design deliverable
+
+Before code movement, produce:
+
+```text
+current dependency graph
+target dependency graph
+package MOVE/STAY/REMOVE/INVERT/REHOME matrix
+exact publication boundary
+incremental extraction order
+qualification plan
+```
+
+Only after consensus should `scopes/ada-alarm-engine` be implemented.

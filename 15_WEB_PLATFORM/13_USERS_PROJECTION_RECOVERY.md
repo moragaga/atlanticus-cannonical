@@ -1,6 +1,6 @@
 # Users — Global Identity, Tool Runtime Snapshot and Recovery
 
-Estado: **CURRENT / IMPLEMENTED en capabilities; consumer parity parcial**.
+Estado: **CURRENT / IMPLEMENTED — ADA and Command Center consumers aligned**.
 
 ## Global identity CURRENT
 
@@ -28,7 +28,7 @@ Durable ownership:
 
 Global Users y Tool Membership son autoridades distintas.
 
-## Materialization CURRENT contract
+## Materialization CURRENT
 
 ```text
 Global Users
@@ -47,7 +47,7 @@ item id       = user_id
 partition key = user_id
 ```
 
-Es superficie runtime/read de una Tool. No usarla como reemplazo del store administrativo de Membership.
+Es superficie runtime/read de una Tool. No es el store administrativo de Membership.
 
 ## Recovery CURRENT
 
@@ -76,12 +76,26 @@ Global Users y Membership no son mutados por recovery de runtime.
 
 Users sigue siendo operación especial snapshot/recovery, no un Source Projection domain ordinario.
 
+`MasterProjectionExecutor` soporta `apply_users` cuando la composición inyecta `users_replace`.
+
+Command Center durable composition puede inyectar:
+
+```text
+users_recovery
+users_snapshot_ids
+```
+
+y habilitar esa operación.
+
 ## Consumer state
 
-ADA consume este modelo CURRENT.
+```text
+ADA             CURRENT
+Command Center  CURRENT at atlanticus@346e7ac7...
+```
 
-Command Center todavía usa wiring anterior en `main@6725237...`; su paridad es **PLANNED / NEXT** y debe reemplazar la API vieja sin adapters.
+La API anterior de Users en Command Center queda SUPERSEDED.
 
 ## Future
 
-Continuous/event-driven materialization puede evaluarse después si existe requisito real. No es prerequisito para corregir la composición actual de Command Center.
+Continuous/event-driven materialization sólo se evalúa ante requisito real. No es prerequisito del modelo actual.

@@ -1,62 +1,64 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT — KPI BACKEND CLOSED; COMMAND CENTER / ALARM ANALYSIS NEXT (2026-10-03)**
+Estado: **CURRENT — COMMAND CENTER CAPABILITY PARITY CLOSED; ADA ALARM ENGINE EXTRACTION DESIGN NEXT**
 
 ## Autoridad de este cierre
 
 ```text
-Implementation        moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
-Canonical pre-replace moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
-Decisions             NOT INSPECTED in this closure by explicit instruction
+Implementation        moragaga/atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
+Canonical pre-replace moragaga/atlanticus-cannonical@19fe30dcc2f34dbe7a0c4615c188409ace2089b8
+Git                   SOLO LECTURA
 ```
-
-Git permanece **SOLO LECTURA**.
 
 ## Estado por frente
 
 | Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Users/Web state remains CURRENT; KPI backend History/Historian/Timeseries closure incorporated. |
-| `08_ROADMAP.md` | Command Center / Alarm backend analysis is the next unique focus. |
-| `09_OPEN_QUESTIONS.md` | KPI operational E2E remains BLOCKED by required Web corrections; Navigation/artifacts remain separate planned work. |
-| `04_ALARM_ENGINE/` | Existing canonical input for the next analysis; not modified by this closure. |
-| `14_ADA_COMMAND_CENTER/` | Existing canonical input for the next analysis; not modified by this closure. |
-| `16_KPI_BACKEND_RECOVERY/` | KPI Materialization + Latest + Historian + Timeseries multi-Tool CLOSED / VERIFIED locally. |
-| `17_DISTRIBUTION_AND_TOOLING/` | Separate planned front; not reopened here. |
+| `01_CURRENT_STATE.md` | Command Center capability parity CLOSED; qualifier global permanece BLOCKED por una incompatibilidad Tools upstream separada. |
+| `03_DECISIONS_CURRENT.md` | Users / Profiles / Navigation / Manager parity CURRENT; no adapters; ADA no se modifica dentro de este cierre. |
+| `04_ALARM_ENGINE/` | Backend de Alarmas sigue físicamente bajo Command Center; extracción a `ada-alarm-engine` es el siguiente frente de diseño. |
+| `14_ADA_COMMAND_CENTER/` | Paridad genérica implementada en `main`; backend Alarm queda como candidato completo a extracción. |
+| `15_WEB_PLATFORM/` | Consumer parity de Command Center queda CURRENT/CLOSED para las capabilities tocadas. |
+| `16_KPI_BACKEND_RECOVERY/` | KPI backend permanece CLOSED en su hito anterior; no se reabre aquí. |
+| `17_DISTRIBUTION_AND_TOOLING/` | Frente separado; no se reabre aquí. |
 
 ## Checkpoints
 
 ```text
-KPI-NAMED-CONNECTIONS                    CLOSED / VERIFIED / CURRENT
-KPI-REGISTRY-MATERIALIZATION             CLOSED / VERIFIED / CURRENT
-KPI-LATEST-MULTI-TOOL-DELIVERY           CLOSED / VERIFIED / CURRENT
-KPI-HISTORIAN-ROLLING-READ-MODEL         CLOSED / VERIFIED / CURRENT
-KPI-TIMESERIES-MULTI-TOOL-DELIVERY       CLOSED / VERIFIED / CURRENT
-KPI-HISTORY-DATASET-BOUNDARY              CLOSED / VERIFIED / CURRENT
-
-KPI-FULL-OPERATIONAL-E2E                  BLOCKED
-COMMAND-CENTER-ALARM-BACKEND-ANALYSIS     PLANNED / NEXT
+COMMAND-CENTER-USERS-PROFILES-NAVIGATION-MANAGER-PARITY   CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-WEB-LOCK-NORMALIZATION                    CLOSED / VERIFIED / CURRENT
+COMMAND-CENTER-FULL-WEB-QUALIFIER                        BLOCKED
+ADA-ALARM-ENGINE-EXTRACTION-DESIGN                       PLANNED / NEXT
 ```
+
+## Bloqueo separado del qualifier
+
+El qualifier retomado después de la paridad alcanzó:
+
+```text
+generic-application   PASS
+catalog-manager       PASS
+catalog               FAIL
+discovery-cosmos      FAIL
+```
+
+El fallo observado corresponde a coexistencia de tipos Tools de `ada.web.tools.*` y `ada.contracts.tools.*`.
+
+No corregir ADA dentro del cierre de Command Center ni introducir adapters en Command Center para esconder esa incompatibilidad.
 
 ## Siguiente frontera única
 
-Analizar `ada-command-center` y Alarmas en backend usando:
-
 ```text
-moragaga/atlanticus:main
-atlanticus-cannonical/04_ALARM_ENGINE/
-atlanticus-cannonical/14_ADA_COMMAND_CENTER/
+ADA-ALARM-ENGINE-EXTRACTION-DESIGN
 ```
 
-El objetivo del siguiente frente es determinar el estado real, las fronteras y si Alarmas debe madurar a un engine reusable.
+Objetivo del próximo chat:
 
-No mezclar en ese incremento:
+- inspeccionar todo `scopes/ada-command-center/backend`;
+- comprobar la hipótesis de que ese backend constituye el Alarm Engine;
+- clasificar dependencias como KEEP / MOVE / REMOVE / INVERT / REHOME;
+- eliminar conceptualmente dependencias backend → Web;
+- definir la frontera Command Center publication → Engine;
+- congelar el dependency graph objetivo antes de mover código.
 
-```text
-KPI backend
-KPI E2E
-artifact generation
-.env.detail
-distribution
-Navigation access
-```
+No implementar hasta cerrar debate/diseño.

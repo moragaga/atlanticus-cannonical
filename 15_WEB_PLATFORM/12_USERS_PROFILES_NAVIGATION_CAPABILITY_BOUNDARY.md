@@ -1,6 +1,6 @@
 # Web Platform — Users / Profiles / Navigation / Manager Capability Boundary
 
-Estado: **CURRENT — Users + Navigation refined contracts implemented**.
+Estado: **CURRENT — generic contracts implemented; ADA and Command Center consumer parity CURRENT**.
 
 ## Generic ownership
 
@@ -12,7 +12,7 @@ Atlanticus Manager     administrative shell / authorization
 Product                composition
 ```
 
-No hacer que una capability genérica dependa de ADA sólo porque ADA sea el consumidor más avanzado.
+Una capability genérica no depende de ADA ni Command Center.
 
 ## Global Users CURRENT
 
@@ -27,7 +27,7 @@ UserIdentity
 
 No contiene Tool profile/enabled state.
 
-Physical scope target:
+Physical scope:
 
 ```text
 <application>/users/users.json.gz
@@ -42,7 +42,7 @@ ToolUserMembership
     enabled
 ```
 
-Physical scope target:
+Physical scope:
 
 ```text
 <application>/<tool>/users/memberships.json.gz
@@ -58,13 +58,11 @@ RuntimeUser
     operational
 ```
 
-Tool-owned session/read authority.
-
-One users-runtime Cosmos belongs to one Tool boundary; no duplicar `application_key`/`tool_key` dentro de cada item sólo para routing.
+Es autoridad runtime/read Tool-scoped.
 
 ## Profiles CURRENT
 
-Profiles es capability genérica y su Projection puede componerse con stores local/Cosmos. Compartir un container físico con otras projections sólo cuando topology/ownership sean compatibles y exista razón operacional; no hacerlo por copia literal de ADA.
+Profiles es capability genérica y su Projection se compone con stores local/Cosmos.
 
 ## Navigation CURRENT
 
@@ -78,27 +76,46 @@ allowed_profiles = (...)
 Semantics:
 
 ```text
-PUBLIC                 -> accesible sin grant de profile
-RESTRICTED + []        -> restringido sin perfiles habilitados
-RESTRICTED + [profiles] -> sólo perfiles listados
+PUBLIC                  -> accesible sin grant de profile
+RESTRICTED + []         -> restringido sin perfiles habilitados
+RESTRICTED + [profiles] -> perfiles listados
 ```
 
-Manager UI edita el modo explícitamente.
-
-System `root/local` no se convierten en grants ordinarios por convenience; el privilege override pertenece a principal/authorization composition.
+Root/local privilege override pertenece a principal/authorization composition y no se persiste como grant ordinario.
 
 ## Manager separation
 
-No usar Navigation visibility como Manager authorization.
+```text
+Navigation visibility != Manager authorization
+Product access != generic Manager access
+```
 
-No mapear automáticamente Access específico de un producto a permisos Manager genéricos.
+## Consumer parity CURRENT
 
-## Consumer parity rule
+ADA y Command Center consumen estas capabilities mediante composición explícita.
 
-Los productos deben consumir estas capabilities mediante composición explícita.
+Command Center CURRENT incluye:
 
-ADA sirve como referencia implementada del patrón actual, pero Command Center no debe copiar lógica específica de ADA; debe alcanzar el mismo nivel usando los contracts genéricos.
+```text
+UsersAdministrationService(registry, memberships, profiles, directory)
+generic Profiles manager
+generic Navigation manager
+generic NAVIGATION_SOURCE_KEY
+UsersRuntimeStore
+ManagerPrincipalBinding
+Users special recovery integration
+```
 
 ## Clean cutover
 
-Cuando una API anterior es reemplazada, remover el wiring viejo. No crear hidden compatibility aliases.
+Las APIs superseded no deben permanecer como aliases ocultos.
+
+No restaurar:
+
+```text
+UserRecord
+UsersAdministrationStore
+users_promoted
+promoted=
+local duplicate navigation source authority
+```
