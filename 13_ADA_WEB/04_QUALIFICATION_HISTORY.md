@@ -1,12 +1,12 @@
 # ADA Web — Qualification History
 
-Estado: **CURRENT HISTORY / LOCAL MANAGER HEADER + COLORS CLOSED 2026-09-27**
+Estado: **CURRENT HISTORY / TOOL CONTRACT WEB CUTOVER CLOSED 2026-10-03**
 
 ## Checkpoints históricos conservados
 
 - `atlanticus@01a4387d9f73aceb83441d2f26f94ad9025a661c`: ADA Generic bootstrap; 83 tests, Ruff check/format PASS reportados.
 - `atlanticus@940336d5b704d10280cc2375e68c60b45f235eb0`: hygiene `pydantic` / `pydantic-settings`.
-- `atlanticus@d6e405e6466b1bf8d29dadae442a03062da2f1b3`: wiring de Collector; 87 tests y Ruff PASS reportados.
+- `atlanticus@d6e405e6466b1bf8d29dadae442a03062da2f1b3e`: wiring de Collector; 87 tests y Ruff PASS reportados.
 - `atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f`: structural Operational Render cutover; 7 + 56 + 86 = 149 tests, Ruff y diff check reportados.
 
 No atribuir estas suites históricas al HEAD del nuevo cierre.
@@ -17,13 +17,115 @@ Implementación entonces inspeccionada: `atlanticus@c2bf25e353b890dc8fd8553ad375
 
 Límite: PORTABLE no prueba identidad productiva, autorización browser HTML, Manager ni persistencia real. Liveness Docker no equivale a readiness del Manager. Las imágenes no fueron reconstruidas desde el HEAD del nuevo cierre.
 
-## Nuevo cierre: header Manager ADA local
+## Header Manager ADA local — cierre previo
 
-- El usuario aportó para el correctivo 01C: `CHECK_PASS` y `APPLY_PASS`, 16 tests del Manager y 12 de ADA Configuration Manager aprobados y `git diff --check` sin hallazgos. No convertir 16+12 en un pase del monorepo.
-- El incremento posterior 01D retiró el nombre del usuario del header. El usuario confirmó su **aceptación visual**: marcas ADA/Atlanticus, sin Los Pelambres, retorno/Manager Home y label `Usuarios`. No consta aquí salida del rerun final de tests 01D; queda **UNVERIFIED como ejecución**.
-- En el último incremento 02 corregido, el usuario aceptó visualmente avatar **e insignia Local** Jane rosa `#C85D91` y John azul `#3778C2`, con selección automática. El ZIP original que dejaba la insignia siempre azul quedó **SUPERSEDED**. No consta aquí salida terminal de la suite final de 02 corregido.
-- Inspección estática actual de `atlanticus@392ee281a32396516fb08c23c63514d8cbdb3489`: están las marcas finales, ausencia de principal en header, label ADA `Usuarios`, resolución local de ambos colores y tests `test_local_navigation_avatar.py`. Ello no prueba CI ni ejecución completa.
+Se conservan como historia los cierres visuales/locales previos de header, navegación de Manager y colores de identidad.
 
-## Todavía OPEN / UNVERIFIED
+No usar esos resultados como evidencia del Tool Contract Web Cutover ni del próximo rebuild distribuido.
 
-Header/Manager desde **Starter ADA distribuido**, ruta `/example` con HTML autorizada por Navigation, Gunicorn/8000 local+productivo, Entra, Cosmos/Azurite/restart, pipelines, Azure, full-workspace Ruff, tests completos y rebuild del wheelhouse desde HEAD actual. Estos frentes no forman parte del cierre visual del core.
+## Tool Contract Web Cutover — cierre local 2026-10-03
+
+Base remota al iniciar el incremento:
+
+```text
+moragaga/atlanticus@df2a125cf428085419595d8ad164fce0f8d86115
+```
+
+Objetivo:
+
+```text
+retirar ada-web-tools de la release-chain ADA Generic
+consumir ada-contracts-tools==1.0.0
+mantener Tool Configuration Web-specific
+```
+
+Resultado de ownership:
+
+```text
+ADA Generic release-chain ownership scan: PASS
+```
+
+Qualification reportada:
+
+```text
+ada-contracts/tools                 10 passed
+ada-web-tools-configuration         75 passed
+projection-local                     3 passed
+projection-cosmos                    5 passed
+ada-web-tools-persistence           10 passed
+ada-configuration-manager           64 passed
+ada-generic-application            205 passed
+```
+
+Runtime export:
+
+```text
+ADA Generic runtime contract dependency gate: PASS
+ada-contracts-tools: PRESENT
+ada-web-tools: ABSENT
+```
+
+Cierre:
+
+```text
+ADA Web Tool contract cutover qualification: PASS
+```
+
+## Commented mirror test retirement — cierre local 2026-10-03
+
+La política vigente de testing ya declaraba que mirrors comentados no debían ser un contrato automatizado.
+
+Durante el hito se retiraron tests cuya única responsabilidad era comprobar equivalencia entre productivo y `commented`.
+
+La limpieza final reportó:
+
+```text
+Files changed: 81
+Mirror/commented test functions removed: 104
+Mirror-only test files deleted: 58
+No commented-mirror tests remain: PASS
+```
+
+Archivos mixtos conservaron sus tests funcionales; sólo se retiraron las funciones de mirror.
+
+Límite:
+
+```text
+NO full-monorepo test run was reported
+```
+
+Por lo tanto, no interpretar la limpieza transversal como calificación funcional de todo Atlanticus.
+
+## Límites del cierre
+
+El working tree del cierre contiene cambios locales sobre la base indicada.
+
+No consta en este documento que:
+
+```text
+los cambios estén committeados en atlanticus:main
+exista una nueva versión distribuida de ada-generic
+se haya regenerado el wheelhouse final
+se haya probado el nuevo artifact en consumer aislado
+se haya revalidado Docker/Cosmos/Storage con esta nueva release
+```
+
+También permanecen fuera del hito:
+
+```text
+Command Center
+alarmas
+timeseries
+physical retirement de scopes/ada/web/tools/core
+inspection stale locks
+```
+
+## Próxima qualification
+
+Single next focus:
+
+```text
+ADA Generic artifact generation qualification
+```
+
+Debe cerrar generation + `.env.detail` contract antes de regenerar la siguiente distribución.

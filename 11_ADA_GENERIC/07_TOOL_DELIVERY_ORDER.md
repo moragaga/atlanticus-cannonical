@@ -1,6 +1,6 @@
 # ADA Generic — First Tool Delivery Order
 
-Estado: **CURRENT — OWNERSHIP ROOT FIX CLOSED / NAVIGATION NEXT**
+Estado: **CURRENT — TOOL CONTRACT BOUNDARY CLOSED / ARTIFACT QUALIFICATION NEXT**
 
 Delivery order remains:
 
@@ -9,45 +9,94 @@ Delivery order remains:
 2. Mina
 ```
 
-## Closed prerequisite
+## Closed prerequisites relevant to the current release path
 
-Tool-varying configuration now has Tool-scoped durable ownership.
+Tool-varying configuration has Tool-scoped durable ownership.
 
-Users now has:
+Users has its previously established runtime/recovery model.
+
+The additional pre-release ownership boundary is now closed:
 
 ```text
-global identity
-Tool membership
-Tool users-runtime
-Tool recovery snapshot
+ADA Tool transversal contract owner
 ```
+
+CURRENT owner:
+
+```text
+scopes/ada-contracts/tools
+ada-contracts-tools==1.0.0
+ada.contracts.tools
+```
+
+ADA Generic runtime export confirms:
+
+```text
+ada-contracts-tools  PRESENT
+ada-web-tools        ABSENT
+```
+
+## Web Tool Configuration boundary
+
+Tool Configuration remains Web/ADA-specific:
+
+```text
+scopes/ada/web/tools/configuration
+```
+
+It consumes the transversal contract and owns Web-specific Source/Projection/Branding/persistence/editor responsibilities.
+
+Do not recreate structural/source value objects under `ada.web.tools`.
+
+## Physical legacy retirement
+
+```text
+scopes/ada/web/tools/core
+```
+
+is **SUPERSEDED** as Web contract owner.
+
+Deletion is **BLOCKED** by Command Center references outside this delivery increment.
+
+Do not make distribution progress depend on cleaning that separate scope once the ADA Generic runtime dependency gate is clean.
 
 ## Next prerequisite
 
+Single next focus:
+
 ```text
-NAVIGATION-PUBLIC-RESTRICTED-CONTRACT
+ADA Generic artifact generation qualification
 ```
 
-Need explicit route access mode + Manager UI + direct authorization.
-
-## After Navigation
+Scope:
 
 ```text
-artifact generation qualification
-.env.detail audit
+artifact generation
+.env.detail generated contract audit
+system-derived vs operator-supplied environment values
+generation qualification
+```
+
+Do not regenerate the final distributed release until this gate is clean.
+
+## After artifact qualification
+
+```text
 distribution regeneration
-isolated consumer
-resume Operaciones Integradas configuration
+isolated consumer installation
+local Docker runtime
+durable Cosmos + Storage configuration
 recovery qualification
+resume Operaciones Integradas configuration
 ```
 
 ## Later separate ADA flow
 
 ```text
-KPI delivery / historian / timeseries
+KPI runtime / historian / delivery / timeseries
 Collector
 Time Status
 UI
 ```
 
-Alarm remains separate.
+Alarm and Command Center cleanup remain separate.

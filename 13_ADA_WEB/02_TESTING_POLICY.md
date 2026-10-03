@@ -1,6 +1,6 @@
 # ADA Web — Testing Policy
 
-Estado: **CURRENT**
+Estado: **CURRENT — COMMENTED MIRROR TEST RETIREMENT CLOSED**
 
 ## Objetivo
 
@@ -32,10 +32,25 @@ No crear ni mantener asserts cuyo objetivo principal sea comprobar:
 - existencia o ausencia de funciones/clases;
 - estructura física del package;
 - mirrors comentados;
+- equivalencia AST, tokens o estructura entre productivo y `commented`;
 - contenido exacto de distribución;
 - colores, CSS, margin, padding, tamaños, selectores, clases, coordenadas o spacing visual.
 
 Los tests estructurales existentes de estas categorías deben eliminarse en vez de actualizar sus expectativas durante una migración legítima.
+
+## Commented mirrors CURRENT
+
+Los mirrors bajo `commented/` continúan como material pedagógico.
+
+No son una segunda implementación contractual y no requieren una suite que pruebe igualdad con productivo.
+
+El retiro transversal local ejecutado en el hito Tool Contract Web Cutover eliminó funciones de test cuyo único propósito era comprobar igualdad de mirror y terminó con:
+
+```text
+No commented-mirror tests remain: PASS
+```
+
+La auditoría fue estructural respecto de la política de mirrors. No equivale a una ejecución del full monorepo.
 
 ## Packaging
 
@@ -59,4 +74,4 @@ Validar visualmente responsive, overflow, branding, espaciado, alineación, dens
 test count != confidence
 ```
 
-La suite debe fallar cuando cambia comportamiento importante, no cuando se reorganiza código, se renombra una clase interna o se calibra packaging.
+La suite debe fallar cuando cambia comportamiento importante, no cuando se reorganiza código, se renombra una clase interna, se calibra packaging o se actualiza un mirror pedagógico.

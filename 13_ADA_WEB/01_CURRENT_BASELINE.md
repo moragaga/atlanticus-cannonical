@@ -1,18 +1,20 @@
 # ADA Web — Current Baseline
 
-Estado: **CURRENT — DISTRIBUTED RUNTIME VERIFIED / TOOL CONFIGURATION ROOT CUTOVER OPEN**
+Estado: **CURRENT — TOOL CONTRACT WEB CUTOVER CLOSED / DISTRIBUTION PREPARATION NEXT**
 
 ## Application
 
 ADA Generic is the product composition root.
 
-Version observed in distributed runtime:
+Version observed before the next distribution regeneration:
 
 ```text
 0.2.26
 ```
 
-## Runtime qualification
+No new distributed version was produced during the Tool Contract Web Cutover hito.
+
+## Runtime qualification previously observed
 
 From the isolated consumer repository:
 
@@ -28,47 +30,145 @@ Cosmos Data Explorer       HTTP 200
 
 `/health/ready` still reports `checks: {}`.
 
-## Real configuration evidence
+These observations belong to the previous distributed runtime and were not requalified as a new distribution in this hito.
 
-A real Operaciones Integradas Tool Projection and KPI Registry Projection were produced.
+## Tool contract ownership CURRENT
 
-The exercise demonstrated that the system can publish/project configuration and exposed the ownership issue before using real Azure Storage.
+Shared ADA Tool structural/source contracts now have one transversal owner:
 
-## UI gaps observed
+```text
+scopes/ada-contracts/tools
+ada-contracts-tools==1.0.0
+ada.contracts.tools
+```
+
+Web-specific Tool Configuration remains:
+
+```text
+scopes/ada/web/tools/configuration
+```
+
+Boundary:
+
+```text
+ada.contracts.tools
+        |
+        v
+ada.web.tools.configuration
+        |
+        +--> Source / Projection
+        +--> Branding
+        +--> persistence
+        +--> editor / callbacks / presentation
+```
+
+The ADA Generic release-chain no longer resolves `ada-web-tools`.
+
+Runtime export gate:
+
+```text
+ada-contracts-tools  PRESENT
+ada-web-tools        ABSENT
+```
+
+## Qualification of the cutover
+
+Local qualification:
+
+```text
+ada-contracts/tools                 10 passed
+ada-web-tools-configuration         75 passed
+projection-local                     3 passed
+projection-cosmos                    5 passed
+ada-web-tools-persistence           10 passed
+ada-configuration-manager           64 passed
+ada-generic-application            205 passed
+release-chain ownership scan       PASS
+runtime dependency gate            PASS
+```
+
+Base remote commit used:
+
+```text
+moragaga/atlanticus@df2a125cf428085419595d8ad164fce0f8d86115
+```
+
+The qualified result is still a local working tree until integrated. Do not present it as the current remote `main` commit.
+
+## Commented mirrors
+
+Commented source remains valid as pedagogical material.
+
+Tests whose only purpose was to assert structural/AST/token equivalence between productive and `commented` were retired.
+
+Final local audit:
+
+```text
+No commented-mirror tests remain: PASS
+```
+
+This does not mean the full monorepo test suite was executed; only the suites explicitly reported in the cutover qualification are verified.
+
+## Existing operational gaps not changed by this hito
 
 ### Header
 
-Tool display name already belongs to Tool Configuration and is wired to operational branding.
+Tool display name belongs to Tool Configuration and is wired to operational branding.
 
-Current worker bootstrap freezes the Tool context; dynamic refresh after Tool reprojection is not yet implemented.
+Dynamic refresh after Tool reprojection was not changed in this hito.
 
 ### Time Status
 
-PI and Dispatch are already modeled and labeled in UI contracts.
+PI and Dispatch remain modeled and labeled in UI contracts.
 
-The runtime timestamp/source feed remains incomplete.
+The runtime timestamp/source feed was not addressed in this hito.
 
 ### Navigation
 
-Current `allowed_profiles=[]` means public, so the model cannot express a route available only to privileged `root/local`.
+Navigation behavior was not modified or requalified in this hito.
 
-A new explicit public/restricted policy is DECIDED / PLANNED.
+Do not infer new navigation behavior from the Tool contract cutover.
+
+## Retirement still BLOCKED
+
+Physical removal of:
+
+```text
+scopes/ada/web/tools/core
+```
+
+is blocked by references outside this chat scope, principally Command Center locks/configuration.
+
+The directory is not the accepted owner for new Web consumers.
+
+Inspection locks under:
+
+```text
+scopes/ada/web/inspection/portability
+scopes/ada/web/inspection/providers/kpi-definition
+```
+
+remain outside this hito because regeneration is independently blocked by an invalid KPI Definition project path.
 
 ## Current priority
 
-Do not redesign UI while the ownership root is wrong.
+The boundary that blocked a new Generic release is closed.
 
-Next:
-
-```text
-Tool-scoped configuration + Users runtime cutover
-```
-
-Then return to:
+Single next focus:
 
 ```text
-real configuration
-recovery
-UI operational data
-Alarm integration
+ADA Generic artifact generation qualification
 ```
+
+That focus should:
+
+```text
+regenerate the expected artifacts
+validate that all artifact generation paths succeed
+audit .env.detail as part of the generated artifact contract
+identify which environment values are user-supplied vs system-derived
+```
+
+Do not mix that increment with Command Center cleanup, physical retirement of `tools/core`, alarms, timeseries or unrelated UI work.
+
+Only after artifact generation and `.env.detail` qualification should the final distribution regeneration/isolated-consumer exercise become the next increment.
