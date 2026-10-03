@@ -5,7 +5,7 @@ Estado: **CURRENT**
 ## Baseline global — FROZEN
 
 ```text
-uv, no pip normal
+uv; no pip normal
 contracts before consumers
 backend before frontend
 clean root cutover
@@ -14,129 +14,169 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-Web CURRENT usa Python 3.14.2.
-Python 3.14.7/Trixie permanece `PLANNED / DEFERRED`.
+Current distributed ADA remains Python 3.14.2 / slim-bookworm.
+Python 3.14.7 / Trixie is separate `PLANNED`.
 
-## Environment and persistence axes — FROZEN
-
-```text
-ATLANTICUS_ENVIRONMENT = local | production
-```
-
-controla host/runtime behavior.
-
-Cada producto puede tener un selector de persistencia:
+## Environment and persistence — FROZEN
 
 ```text
-local | durable
+ATLANTICUS_ENVIRONMENT
+ADA_PERSISTENCE_MODE
+ADA_APPLICATION_NAMESPACE
+ADA_TOOL_NAMESPACE
 ```
 
-que controla filesystem/in-process versus stores durables.
+Emulator versus Azure is connection configuration, not architecture mode.
 
-No introducir:
-
-```text
-storage=local|azure
-cosmos=local|azure
-```
-
-Emulator y Azure son destinos de conexión.
-
-## Dual-app lockstep — FROZEN
-
-ADA Generic y ADA Command Center Generic participan del mismo checkpoint de madurez para
-fronteras compartidas.
-
-Un producto no se declara adelantado en un checkpoint dual hasta que ambos pasen la misma clase
-aplicable de validación.
-
-## Master Projection ownership — REFINED / FROZEN
-
-SUPERSEDED:
-
-```text
-ADA Generic owns the reusable Master Projection engine
-Command Center still needs its own implementation
-```
-
-CURRENT:
+## Master Projection ownership — FROZEN
 
 ```text
 atlanticus-web-master-projection
-    owns reusable engine
+    reusable engine
 
 ADA Generic
-    owns ADA projection-domain composition + provisioning
+    ADA projection composition + provisioning
 
 Command Center Generic
-    owns Command Center projection-domain composition + provisioning
+    Command Center projection composition + provisioning
 ```
 
-No duplicar el motor.
+Do not duplicate the reusable engine inside products.
 
-## Command Center runtime — REFINED / FROZEN
+## Command Center
 
-SUPERSEDED:
+This hito does not change Command Center contracts.
+
+Its distributed runtime qualification and Alarm integration remain separate work.
+
+## ADA physical durable contract — CURRENT
 
 ```text
-Command Center Generic is local-manager-only
+ADA_STORAGE_CONTAINER_NAME
+ADA_STORAGE_CONNECTION_STRING
+
+or
+
+ADA_STORAGE_ACCOUNT_URL
+ADA_STORAGE_SAS_TOKEN
+
+ADA_COSMOS_ENDPOINT
+ADA_COSMOS_KEY
+ADA_COSMOS_DATABASE_NAME
 ```
 
-CURRENT:
+`dataproduct` remains the default Storage container.
+
+## ADA namespace ownership — REFINED / DECIDED
+
+`ADA_APPLICATION_NAMESPACE=conciencia_situacional` is the global application boundary.
+
+`ADA_TOOL_NAMESPACE` identifies the current Tool scope.
+
+DECIDED target:
 
 ```text
-local Web host
-+
-local or durable Manager persistence
+application-global
+    Users identity registry
+
+tool-scoped
+    Tool Configuration
+    Profiles
+    Navigation
+    ADA Access
+    Operational
+    Tool User Membership
+    KPI Registry
+    KPI Definitions
+    Tool Users Recovery Snapshot
 ```
 
-Production identity remains separate and unimplemented in Generic.
+Implementation has not completed this cutover.
 
-## Source boundary — FROZEN CORE / NEXT CONVERGENCE
+## Users model — REFINED / DECIDED
 
-`SourceStore` + Local/Blob providers continúan genéricos y frozen.
-
-NEXT no debe reescribir Source Core.
-
-El siguiente incremento debe resolver ownership/composición compartidos por ADA y Command Center,
-incluyendo el actual acoplamiento:
+SUPERSEDED target:
 
 ```text
-ada-command-center -> ada.web.storage.namespace
+global UserRecord owns profile_key + enabled
 ```
 
-No congelar todavía el nombre/path final de una nueva capability hasta inspeccionar todos los
-consumidores reales.
-
-## Tooling ownership — DECIDED DIRECTION / PLANNED
-
-Regla de arquitectura:
+DECIDED target:
 
 ```text
-/scopes/<owner>/tooling
-    product/scope-specific build, distribution and qualification composition
+global user
+    identity/global personal data only
 
-/tooling
-    reusable mechanisms and cross-scope orchestration
+tool membership
+    user_id + profile_key + enabled
+
+tool Cosmos users-runtime
+    complete session snapshot
 ```
 
-ADA y Command Center ya siguen parcialmente esta regla.
+Operational shape in runtime snapshots is stable and nullable, not omitted.
 
-Normalizar Operational Data y futuros backend toolings queda:
+## Users recovery — REFINED
+
+Immediate recovery:
 
 ```text
-PLANNED / DEFERRED
+Tool Users Recovery Snapshot
+→ users-runtime
 ```
 
-No es blocker para levantar las aplicaciones.
+Granular reconstruction from independent durable contracts is `PLANNED / FUTURE`, not part of the next increment.
 
-## Próximo orden — FROZEN
+## Navigation authorization — REFINED / DECIDED
+
+The current ambiguity:
 
 ```text
-1. Source namespace/composition convergence
-2. lift ADA Generic + Command Center Generic
-   using LOCAL HOST + DURABLE PERSISTENCE
-3. validate real durable runtime / Master Projection
-4. then continue ADA KPI/Collector/UI
-5. tooling topology normalization later
+allowed_profiles=[]
+→ public
 ```
+
+cannot represent a privileged-only route.
+
+Target behavior:
+
+```text
+PUBLIC
+RESTRICTED + []
+    root/local only
+RESTRICTED + [profiles]
+    selected profiles + root/local
+```
+
+Exact persisted schema may be finalized during contract implementation, but this behavior is frozen.
+
+## KPI Registry / Delivery — REFINED / DECIDED
+
+KPI Registry projection/materialization will carry the stable Tool identity:
+
+```text
+tool_key
+```
+
+derived from Tool Projection.
+
+Do not make Tool display name an independently editable KPI authority.
+
+## Distributed runtime — CLOSED
+
+`ADA-DISTRIBUTED-LINUX-RUNTIME-SMOKE` is `CLOSED / VERIFIED`.
+
+`PRECHECK_PASS != runtime verified` remains a general rule.
+
+## Next order — FROZEN
+
+```text
+1. ADA Tool-scoped configuration + Users runtime cutover
+2. regenerate/distribute consumer
+3. resume real ADA configuration
+4. validate recovery on the corrected ownership model
+5. continue UI / Collector / operational runtime
+6. integrate Alarm surfaces/backend in their dedicated focus
+```
+
+Do not pull Alarm, Collector or Python migration into step 1.

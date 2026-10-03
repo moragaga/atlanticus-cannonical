@@ -8,8 +8,8 @@ Estado: **CURRENT**
 
 - Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- Commit auditado: `0e7db853802dc59ffd85410a611cdc093b08dc20`
-- Fecha del commit: `2026-10-02T19:10:34Z`
+- Commit auditado: `38bcd8c5607d67f999e2bc4bf9dbf176c8340588`
+- Fecha del commit: `2026-10-03T01:09:03Z`
 
 ### Decisiones
 
@@ -18,18 +18,23 @@ Estado: **CURRENT**
 - Commit auditado: `50c2bb3f7bf21b05444a102d4502250a5c8a7d2e`
 - Fecha del commit: `2026-09-13T03:31:11Z`
 
+### Canonical antes de este reemplazo
+
+- Repositorio: `moragaga/atlanticus-cannonical`
+- Rama: `main`
+- Commit inspeccionado: `0a2ff691d8bb9a4bfe743cadb1cacb9c83d865c7`
+- Fecha del commit: `2026-10-03T01:26:18Z`
+
 ## Jerarquía
 
 1. `atlanticus:main`: realidad implementada actual.
-2. Decisión explícitamente vigente/frozen en `atlanticus-decisions:main`: intención contractual autoritativa, incluso cuando la implementación aún no la materializa.
+2. Decisión explícitamente vigente/frozen en `atlanticus-decisions:main`: intención contractual autoritativa, incluso cuando aún no esté implementada.
 3. Qualification, tests y evidencia reproducible: propiedades demostradas.
-4. Documentación canónica del Project: estado vigente, conflictos conocidos y delta pendiente de formalización.
-5. Decisiones recientes del Project aún no formalizadas en `atlanticus-decisions`: dirección propuesta o acordada localmente, pero no reemplazan silenciosamente una decisión frozen incompatible.
-6. Memoria e historial conversacional: pista de búsqueda, nunca autoridad suficiente por sí sola.
+4. Documentación canónica: estado vigente, decisiones del Project ya aceptadas y conflictos conocidos.
+5. Decisiones recientes del Project todavía no formalizadas en `atlanticus-decisions`: pueden quedar `DECIDED / PLANNED`, pero nunca presentarse como implementación.
+6. Historial conversacional: pista de búsqueda, no autoridad autónoma.
 
 ## Clasificación epistemológica
-
-Usar siempre una de estas etiquetas cuando exista incertidumbre relevante:
 
 - `VERIFIED`
 - `INFERRED`
@@ -39,8 +44,6 @@ Usar siempre una de estas etiquetas cuando exista incertidumbre relevante:
 
 ## Estado conceptual
 
-Usar siempre una de estas etiquetas para estado de trabajo:
-
 - `CURRENT`
 - `IN PROGRESS`
 - `PLANNED`
@@ -48,62 +51,94 @@ Usar siempre una de estas etiquetas para estado de trabajo:
 - `BLOCKED`
 - `CLOSED`
 
-## Conflictos
-
-No elegir silenciosamente entre implementación, decisiones y canónico.
-
-Clasificar explícitamente como corresponda:
-
-- `IMPLEMENTED + VALIDATED`
-- `DECIDED / NOT YET IMPLEMENTED`
-- `CURRENT`
-- `SUPERSEDED`
-- `HISTORICAL`
-- `DRAFT`
-- `DUPLICATE`
-- `CONFLICT`
-- `UNVERIFIED`
-
-Un cambio de ownership físico, dirección de dependencias o responsabilidad entre productos debe tratarse como decisión arquitectónica. Mover código sin reconciliar una decisión frozen incompatible no está permitido.
-
 ## Git
 
 Git es **SOLO LECTURA** por defecto.
 
-No crear commits, push, ramas, PR, issues ni otra mutación remota sin autorización explícita del usuario.
+No crear commits, push, ramas, PR, issues ni otra mutación remota sin autorización explícita.
 
-La generación local de archivos de propuesta, reemplazos canónicos o ZIPs integrables no modifica Git y es válida cuando el usuario la solicita.
+Generar reemplazos canónicos, handoffs o ZIPs locales no modifica Git.
 
-## Referencias externas
+## Reglas de conflicto
 
-Otros repositorios, proyectos, implementaciones o versiones solo son referencias cuando el usuario lo indique. No transfieren automáticamente autoridad, contratos, nombres, dependencias ni arquitectura a Atlanticus.
+No elegir silenciosamente entre implementación, decisiones y canonical.
 
-## Conflictos vigentes relevantes para el próximo hito
+Cuando una decisión aceptada todavía no esté implementada, registrar:
+
+```text
+DECIDED / PLANNED
+implementation: CURRENT OLD CONTRACT
+```
+
+No introducir adapters, aliases, compatibilidad legacy o doble contrato para conservar el estado anterior durante un root cutover salvo autorización explícita.
+
+## Conflictos globales previos preservados
+
+Este cierre no reabre ni resuelve los siguientes frentes ya registrados:
 
 ### Alarm Materialization
 
-`VERIFIED / CONFLICT / OPEN`
+```text
+VERIFIED / CONFLICT / OPEN
+```
 
-La decisión registrada de R3.6M-006B.2 ubica en Alarm Materialization la adquisición del candidato, la lectura de Alarm Configuration y Confirmed Tool Catalog, y la resolución B.2.
-
-La implementación actual refleja esa dirección y contiene dependencias desde backend/materialization hacia paquetes bajo `web`.
-
-La dirección reafirmada en el Project para el próximo hito propone que Command Center resuelva y publique una configuración operacional autosuficiente y que Alarm Materialization solo la consuma y produzca los artefactos de Runtime y Delivery.
-
-Hasta que se formalice el reemplazo correspondiente en `atlanticus-decisions`, este punto debe permanecer explícitamente como `CONFLICT` y no resolverse de forma implícita.
+Sigue pendiente reconciliar la decisión histórica que ubica adquisición/resolución dentro de Alarm Materialization con la dirección de Project que propone una configuración operacional autosuficiente publicada por Command Center.
 
 ### Ownership físico de Alarm Engine
 
-`PROPOSED / OPEN`
+```text
+PROPOSED / OPEN
+```
 
-La decisión histórica fija `scopes/ada-command-center/backend/` como scope físico de Alarm Engine.
-
-La implementación ha madurado hacia un conjunto autónomo de `core`, `materialization`, `persistence` y procesos de runtime/materialization/delivery. Se propone evaluar su extracción a un scope propio de engine, pero no debe ejecutarse antes de cerrar la frontera contractual anterior.
+No ejecutar extracción física mientras la frontera contractual de materialización no quede reconciliada.
 
 ### Ownership físico de KPI Engine
 
-`PROPOSED / OPEN`
+```text
+PROPOSED / OPEN
+```
 
-KPI ya presenta responsabilidades de engine separadas (`core`, `evaluation`, `persistence`, `history`, `delivery` y procesos asociados), aunque actualmente viva bajo `scopes/ada/backend`.
+Permanece diferido y no forma parte del cutover ADA Tool/User.
 
-Su extracción física y la introducción de una materialización equivalente a Alarm quedan planificadas para un hito posterior, sin mezclarlo con la corrección inmediata de Alarm Materialization.
+## Conflicto focal CURRENT
+
+### ADA Tool-scoped configuration y Users runtime
+
+`VERIFIED / DECIDED / NOT YET IMPLEMENTED`
+
+La implementación actual todavía mantiene `Navigation`, `Profiles`, `ADA Access` y `Operational` sobre el `application_prefix`, y `UserRecord` global todavía contiene `profile_key` y `enabled`.
+
+El contrato aceptado para el siguiente incremento es:
+
+```text
+application namespace
+    users identity registry only
+
+tool namespace
+    Tool Configuration
+    Profiles
+    Navigation
+    ADA Access
+    Operational
+    Tool User Membership
+    KPI Registry
+    KPI Definitions
+    Tool Users Recovery Snapshot
+```
+
+`users-runtime` de Cosmos pertenece a una Tool y será el snapshot completo autoritativo para lectura de sesión de esa Tool.
+
+La reconstrucción granular:
+
+```text
+Global Users
++ Tool Membership
++ Profiles
++ Operational
+→ join por IDs
+→ users-runtime
+```
+
+queda `PLANNED / FUTURE`, no bloquea el primer cutover.
+
+No se identificó en `atlanticus-decisions:main` una decisión textual frozen que defina el contrato nuevo o que lo contradiga explícitamente. Hasta formalizarlo allí, canonical debe distinguir implementación actual de dirección decidida.

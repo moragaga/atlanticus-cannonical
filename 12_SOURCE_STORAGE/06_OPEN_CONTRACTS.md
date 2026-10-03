@@ -1,10 +1,8 @@
 # Source Storage — Open Contracts
 
-Estado: **CURRENT — CORE + NAMESPACE CLOSED / DURABLE RUNTIME SMOKE OPEN**
+Estado: **CURRENT — CORE CLOSED / ADA PRODUCT MAPPING CUTOVER OPEN**
 
 ## Core Source — CLOSED / FROZEN
-
-Frozen:
 
 ```text
 SourceKey
@@ -16,155 +14,82 @@ basis_release
 SourceStore
 ConcurrencyToken
 CAS/current promotion
-History opaque cursor
+History
 exact reads
 integrity
-same-content republish may create a new release
 ```
 
 ## Projection handoff — CLOSED / FROZEN
 
 ```text
-ProjectionTarget = SourceKey + SourceReleaseRef
-project(target) does not reread current
-exact provenance
-retry same target
-failure does not rollback Source
+ProjectionTarget
+exact source release provenance
+dependency provenance
 ProjectionStore.get_active/replace_active
 ```
 
 ## Storage namespace — CLOSED / FROZEN
 
-Current generic owner:
-
 ```text
-web/capabilities/storage/namespace
-atlanticus-web-storage-namespace==0.1.0
+StorageNamespace(application_namespace, scope_namespace)
 ```
 
-Public contract:
+No generic API redesign is required.
+
+## OPEN / NEXT — ADA product ownership mapping
+
+Move the following Source consumers from application root to Tool scope:
 
 ```text
-StorageNamespace(
-    application_namespace: str,
-    scope_namespace: str,
-)
+Profiles
+Navigation
+ADA Access
+Operational
 ```
 
-Frozen derivations:
+Add Tool-scoped membership/recovery ownership for Users.
+
+Keep only global Users identity under application scope.
+
+## User global contract — DECIDED target
+
+Remove:
 
 ```text
-application_prefix = application_namespace
-scope_prefix = application_namespace + "/" + scope_namespace
-
-local_application_root(base_root)
-local_scope_root(base_root)
-local_projection_root(base_root)
-
-application_blob_name(relative_path)
-scope_blob_name(relative_path)
+profile_key
+enabled
 ```
 
-Frozen validation:
+from global Users identity.
+
+Tool-specific state moves to Tool User Membership.
+
+## Recovery — immediate versus future
+
+Immediate:
 
 ```text
-namespace segments are non-empty text
-no surrounding whitespace
-"." and ".." are invalid segments
-"/", "\\" and NUL are invalid inside a segment
-local base roots must be absolute
-Blob relative paths must remain safe relative POSIX paths
+Tool Users Recovery Snapshot
+→ users-runtime
 ```
 
-## Product mappings — CLOSED / FROZEN
-
-ADA:
+Future only:
 
 ```text
-ADA_APPLICATION_NAMESPACE
-ADA_TOOL_NAMESPACE
-    ↓
-StorageNamespace(
-    application_namespace=<ADA_APPLICATION_NAMESPACE>,
-    scope_namespace=<ADA_TOOL_NAMESPACE>,
-)
+Global Users
++ Tool Membership
++ Profiles
++ Operational
+→ join
+→ users-runtime
 ```
 
-The external ADA environment contract remains unchanged.
+The future join is not an acceptance gate for the next increment.
 
-Command Center:
-
-```text
-StorageNamespace(
-    "conciencia_situacional",
-    "command-center",
-)
-```
-
-The resulting physical prefix remains:
+## Separate OPEN items
 
 ```text
-conciencia_situacional/command-center
-```
-
-## Superseded
-
-```text
-scopes/ada/web/storage/namespace
-ada-web-storage-namespace
-AdaStorageNamespace
-tool_prefix
-tool_blob_name(...)
-local_tool_root(...)
-```
-
-There is no compatibility shim or legacy alias.
-
-The generic replacements are:
-
-```text
-StorageNamespace
-scope_prefix
-scope_blob_name(...)
-local_scope_root(...)
-```
-
-`local_projection_root(...)` remains part of the generic contract.
-
-## OPEN / NEXT
-
-```text
-DUAL-APP-DURABLE-RUNTIME-SMOKE
-```
-
-The smoke must validate composition outside isolated unit tests:
-
-```text
-ADA Generic durable startup
-Command Center durable startup
-selected Storage/Cosmos bindings
-namespace-derived Source roots
-Tool Projection namespace identity
-product-specific durable paths
-restart/readback where required by the agreed smoke contract
-```
-
-## OPEN / AFTER NEXT
-
-```text
-current-head distribution regeneration
-ADA consumption of Atlanticus distribution
-Command Center explicit resource preparation if runtime evidence reveals it as a blocker
-```
-
-## Separate
-
-```text
-production Entra
-Azure production qualification
 retention / cleanup / GC
-KPI Runtime / Historian / Delivery
-Collector / browser stores / UI
-Python 3.14.7 / Trixie migration
-tooling topology normalization
+production Azure
+Python 3.14.7 / Trixie
 ```

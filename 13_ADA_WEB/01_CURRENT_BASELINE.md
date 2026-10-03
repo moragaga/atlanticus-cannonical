@@ -1,72 +1,74 @@
 # ADA Web — Current Baseline
 
-Estado: **CURRENT — UI CAPABILITIES AVAILABLE; DATA E2E STILL OPEN**
+Estado: **CURRENT — DISTRIBUTED RUNTIME VERIFIED / TOOL CONFIGURATION ROOT CUTOVER OPEN**
 
 ## Application
 
 ADA Generic is the product composition root.
 
-The distribution/runtime ownership cleanup does not move ADA UI capabilities into tooling.
-
-## Content State
-
-Current domain states:
+Version observed in distributed runtime:
 
 ```text
-READY
-STALE
-SOURCE_ERROR
-CONSTRUCTION
+0.2.26
 ```
 
-Freshness mapping:
+## Runtime qualification
+
+From the isolated consumer repository:
 
 ```text
-FRESH       → READY
-PREVENTIVE  → READY
-HARD_STALE  → STALE
-DATA_ERROR  → SOURCE_ERROR
+Web container              healthy
+/health/live               HTTP 200
+/health/ready              HTTP 200
+environment                local
+Cosmos database            visible
+Cosmos containers          visible
+Cosmos Data Explorer       HTTP 200
 ```
 
-No explicit `NO_DATA` or `WAITING` state exists.
+`/health/ready` still reports `checks: {}`.
 
-## Presentation modes
+## Real configuration evidence
+
+A real Operaciones Integradas Tool Projection and KPI Registry Projection were produced.
+
+The exercise demonstrated that the system can publish/project configuration and exposed the ownership issue before using real Azure Storage.
+
+## UI gaps observed
+
+### Header
+
+Tool display name already belongs to Tool Configuration and is wired to operational branding.
+
+Current worker bootstrap freezes the Tool context; dynamic refresh after Tool reprojection is not yet implemented.
+
+### Time Status
+
+PI and Dispatch are already modeled and labeled in UI contracts.
+
+The runtime timestamp/source feed remains incomplete.
+
+### Navigation
+
+Current `allowed_profiles=[]` means public, so the model cannot express a route available only to privileged `root/local`.
+
+A new explicit public/restricted policy is DECIDED / PLANNED.
+
+## Current priority
+
+Do not redesign UI while the ownership root is wrong.
+
+Next:
 
 ```text
-NORMAL
-AUTHORING
+Tool-scoped configuration + Users runtime cutover
 ```
 
-`AUTHORING` suppresses degraded overlay visibility while preserving the real content state.
-
-This provides a presentation mechanism for UI authoring, but does **not** prove that every component can render without data.
-
-## Current UI risk before Collector E2E
-
-OPEN / UNVERIFIED:
+Then return to:
 
 ```text
-application starts without KPI observations
-→ component-level behavior across all UI surfaces
+real configuration
+recovery
+UI operational data
+Alarm integration
 ```
-
-Do not equate:
-
-```text
-no first observation
-=
-source failure
-```
-
-until the Collector/UI integration is exercised.
-
-## Planned sequence
-
-```text
-env.detail contracts
-→ dual application smoke
-→ ADA KPI/Collector E2E
-→ UI reconstruction
-```
-
-UI design can reuse existing capabilities/components; avoid redesigning generic contracts until a concrete consumer finding requires it.

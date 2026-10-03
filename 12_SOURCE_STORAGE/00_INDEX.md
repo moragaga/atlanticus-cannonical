@@ -1,6 +1,6 @@
 # Configuration Source Storage — Index
 
-Estado: **CURRENT — CORE + NAMESPACE FROZEN / DUAL-APP DURABLE RUNTIME SMOKE NEXT**
+Estado: **CURRENT — CORE/NAMESPACE FROZEN; ADA PRODUCT MAPPING REFINEMENT NEXT**
 
 ## Closed contracts
 
@@ -9,117 +9,72 @@ SOURCE CORE                         CLOSED / VERIFIED
 SOURCE LOCAL                        CLOSED / VERIFIED
 SOURCE BLOB                         CLOSED / VERIFIED
 PROJECTION EXACT-RELEASE CORE       CLOSED / VERIFIED
-MANAGER GENERIC HANDOFF             CLOSED / VERIFIED
-TOOL PROJECTION PERSISTENCE         CLOSED / VERIFIED
 STORAGE NAMESPACE                   CLOSED / VERIFIED
 CROSS-PRODUCT NAMESPACE OWNERSHIP   CLOSED / VERIFIED
 ```
 
-## Packages CURRENT
-
-```text
-atlanticus-web-source
-atlanticus-web-source-local
-atlanticus-web-source-blob
-atlanticus-web-storage-namespace
-```
-
-These are generic Atlanticus capabilities.
-
-## Namespace CURRENT
-
-Generic package:
-
-```text
-web/capabilities/storage/namespace
-atlanticus-web-storage-namespace==0.1.0
-atlanticus.web.storage.namespace.StorageNamespace
-```
-
-Frozen logical shape:
+## Generic namespace CURRENT
 
 ```text
 StorageNamespace(
     application_namespace,
     scope_namespace,
 )
+
+application_prefix
+scope_prefix
+application_blob_name(...)
+scope_blob_name(...)
 ```
 
-Derived identities:
+The generic capability is not changing.
+
+## ADA product mapping — CURRENT implementation
 
 ```text
 application_prefix
-scope_prefix = <application_namespace>/<scope_namespace>
-local_application_root(base_root)
-local_scope_root(base_root)
-local_projection_root(base_root)
-application_blob_name(relative_path)
-scope_blob_name(relative_path)
+    Navigation
+    Profiles
+    ADA Access
+    Operational
+    Users Registry
+
+scope_prefix
+    Tools
+    KPI Registry
+    KPI Definitions
 ```
 
-The second segment is intentionally named `scope_namespace`.
-
-Reason:
+## ADA product mapping — DECIDED target
 
 ```text
-ADA uses the second segment as Tool namespace
-Command Center uses the second segment as product sub-scope
+application_prefix
+    Users identity registry
+
+scope_prefix
+    Tools
+    Profiles
+    Navigation
+    ADA Access
+    Operational
+    Tool User Membership
+    KPI Registry
+    KPI Definitions
+    Tool Users Recovery Snapshot
 ```
 
-The generic contract therefore does not encode Tool semantics.
+This is a product-composition cutover, not a SourceStore redesign.
 
-## Ownership CURRENT
+## Cosmos assumption
 
-The previous ADA-owned helper:
+Each current ADA Tool uses its own Cosmos runtime/database boundary.
 
-```text
-scopes/ada/web/storage/namespace
-ada-web-storage-namespace
-AdaStorageNamespace
-```
-
-is superseded.
-
-ADA and Command Center now consume:
-
-```text
-atlanticus.web.storage.namespace.StorageNamespace
-```
-
-Command Center no longer imports storage namespace infrastructure from the ADA scope.
-
-## Preserved physical identities
-
-The convergence did not redesign Source or Projection persistence.
-
-Preserved:
-
-```text
-ADA application prefix
-ADA <application>/<tool> scope prefix
-Command Center conciencia_situacional/command-center prefix
-local application/scope roots
-local projection root = <scope-root>/projections
-Blob application/scope paths
-Cosmos Tool Projection namespace_key
-SourceStore behavior
-Projection exact-release behavior
-```
+Do not add multi-tool collision defenses to Source Storage in this increment.
 
 ## NEXT
 
 ```text
-DUAL-APP-DURABLE-RUNTIME-SMOKE
+ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
 ```
 
-Required outcome:
-
-```text
-ADA Generic starts with durable composition
-Command Center starts with durable composition
-selected Storage/Cosmos bindings resolve
-namespace-derived paths/partition identities remain valid at runtime
-restart/readback is exercised where the selected smoke contract requires it
-```
-
-Current-head distribution regeneration remains after this smoke.
+No Source Core changes, no legacy path readers, no dual-write.

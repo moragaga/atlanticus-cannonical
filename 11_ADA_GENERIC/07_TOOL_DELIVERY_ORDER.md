@@ -1,62 +1,50 @@
 # ADA Generic — First Tool Delivery Order
 
-Estado: **CURRENT / BASELINE 1.0 / TOOLING CONTRACT REVIEW NEXT**
+Estado: **CURRENT — OPERACIONES INTEGRADAS IS THE ACTIVE REAL TOOL / ROOT CUTOVER NEXT**
 
-Orden inicial conservado:
+Initial delivery order remains:
 
 ```text
 1. Operaciones Integradas
 2. Mina
 ```
 
-## Operaciones Integradas
+## Operaciones Integradas evidence
 
-Sigue siendo la primera Tool para revelar gaps reales de:
-
-- Tool Configuration;
-- Tool Structure;
-- consumo de sources;
-- datos operacionales;
-- KPI;
-- Alarm;
-- ADA Generic;
-- Manager;
-- distribución.
-
-## Hallazgo de cierre
-
-El contrato CURRENT inspeccionado demuestra:
+A real Tool Projection has been created with:
 
 ```text
-ToolConfiguration
-ToolSourceConsumption(source_keys)
-ToolSourceOperationalParticipation
-ToolStructure
+tool_key      tool_operaciones_integradas_af1b7d9983bd
+display_name  Operaciones Integradas
+kind          integrated_operations
+sources       pi, dispatch
 ```
 
-No demuestra por sí solo una semántica cerrada para:
+KPI Registry was also projected against that exact Tool Projection.
+
+This real configuration surfaced the current ownership gaps before production Storage was used.
+
+## Finding
+
+`conciencia_situacional` is the application-global scope.
+
+`operaciones_integradas` is the Tool scope.
+
+Therefore Tool-varying configuration must not live directly under `conciencia_situacional/sources`.
+
+## Unique next focus
 
 ```text
-Tool A → Tool B consolidated dependency
+ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
 ```
 
-La necesidad de consolidar herramientas es un requisito de producto a contrastar, no un schema aprobado en este cierre.
+After it is implemented and distribution regenerated:
 
-## Próximo foco
+```text
+resume Operaciones Integradas configuration
+→ recovery gate
+→ UI operational integration
+→ Alarm integration in a separate focus
+```
 
-Revisar Tooling antes de implementar:
-
-1. inventariar contracts y workflows existentes;
-2. contrastar `atlanticus:main`, decisions y canonical;
-3. precisar semántica de `integrated_operations`, `process` y `strategic`;
-4. precisar ownership de Source, Projection y runtime;
-5. determinar si ya existe un contrato para Tool→Tool;
-6. sólo ante gap demostrado, proponer el cambio mínimo.
-
-## Regla
-
-No generalizar desde teoría.
-
-No inventar dependencias, aliases, legacy adapters ni doble contrato.
-
-No abrir KPI/Alarm/Command Center como implementaciones paralelas durante esta revisión.
+Do not open Tool→Tool consolidation semantics or broad multi-tool infrastructure protection during the next increment.

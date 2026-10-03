@@ -1,85 +1,112 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT — ENVIRONMENT/PERSISTENCE CONTRACT FROZEN FOR CURRENT RUNTIME**
+Estado: **CURRENT PHYSICAL CONTRACT / TOOL-SCOPE OWNERSHIP CUTOVER PLANNED**
 
-## Primary settings
+## Primary settings CURRENT
 
 ```text
 ATLANTICUS_ENVIRONMENT
 ADA_PERSISTENCE_MODE
 ADA_APPLICATION_NAMESPACE
 ADA_TOOL_NAMESPACE
-ADA_TOOL_LOCAL_BASE_ROOT
-ADA_TOOL_SOURCE_BLOB_CONTAINER_NAME
-ADA_TOOL_SOURCE_BLOB_CONNECTION_STRING
-ADA_TOOL_SOURCE_BLOB_ACCOUNT_URL
-ADA_TOOL_SOURCE_BLOB_SAS_TOKEN
-ADA_TOOL_PROJECTION_COSMOS_ENDPOINT
-ADA_TOOL_PROJECTION_COSMOS_KEY
-ADA_TOOL_PROJECTION_COSMOS_DATABASE_NAME
+
+ADA_STORAGE_CONTAINER_NAME
+ADA_STORAGE_CONNECTION_STRING
+
+or
+
+ADA_STORAGE_ACCOUNT_URL
+ADA_STORAGE_SAS_TOKEN
+
+ADA_COSMOS_ENDPOINT
+ADA_COSMOS_KEY
+ADA_COSMOS_DATABASE_NAME
+
 COSMOS_CONSUMPTION_ENDPOINT
 COSMOS_CONSUMPTION_KEY
 COSMOS_CONSUMPTION_DATABASE_NAME
 ```
 
-## Axes
+Superseded Tool-specific physical Storage/Cosmos names must not return.
+
+## Namespace
 
 ```text
-ATLANTICUS_ENVIRONMENT
-→ host/runtime behavior
-
-ADA_PERSISTENCE_MODE
-→ local | durable persistence
-```
-
-Emulator/Azure are connection targets, not extra architecture modes.
-
-## Storage credentials
-
-Supported:
-
-```text
-connection string
-OR
-account URL + SAS token
-```
-
-Do not configure both simultaneously.
-
-## Master Projection identity
-
-No manual path variable.
-
-Relative identity:
-
-```text
-master-projection/material.zip
-```
-
-Provision command:
-
-```text
-uv run ada-generic-master-projection generate --user <service-user>
-```
-
-Local and Blob paths are derived from application namespace.
-
-## Source namespace
-
-Current ADA-specific helper:
-
-```text
-AdaStorageNamespace(
-    application_namespace,
-    tool_namespace,
+StorageNamespace(
+    application_namespace=ADA_APPLICATION_NAMESPACE,
+    scope_namespace=ADA_TOOL_NAMESPACE,
 )
 ```
 
-NEXT shared front must inspect whether this is actually a generic namespace capability and remove
-cross-product dependency without changing `SourceStore`.
+For the current real ADA example:
 
-## KPI Delivery
+```text
+conciencia_situacional/operaciones_integradas
+```
 
-Optional and separate from Tool Projection Cosmos.
+is the Tool prefix.
 
-Not part of the next Source increment.
+## Durable ownership target
+
+Application-global:
+
+```text
+users identity registry
+```
+
+Tool-scoped:
+
+```text
+tools
+profiles
+navigation
+ada-access
+operational
+tool-user-membership
+kpis
+kpi-definitions
+tool users recovery snapshot
+```
+
+Implementation still needs the cutover for Navigation/Profiles/Access/Operational and Users.
+
+## Runtime users target
+
+Login/runtime reads one complete Tool-specific `users-runtime` document rather than joining Blob contracts.
+
+The snapshot carries:
+
+```text
+identity
+enabled
+resolved profile
+resolved operational
+```
+
+Operational keys are always present and nullable.
+
+Access is resolved separately from the profile key.
+
+## Tool runtime refresh gap
+
+Tool `display_name` already flows into `OperationalBrandState.context_name`, but the current worker resolves Tool Projection during bootstrap.
+
+A Tool reprojection after worker start does not yet guarantee hot refresh of header/branding/runtime context.
+
+Status:
+
+```text
+PLANNED / LATER
+```
+
+## Time Status gap
+
+PI/Dispatch labels and freshness contracts already exist.
+
+The runtime source/timestamp pipeline needed to feed Time Status remains `PLANNED`.
+
+## KPI Registry / Delivery target
+
+KPI Registry projection/materialization will include `tool_key` derived from Tool Projection for Delivery.
+
+Do not store an independent editable Tool name in KPI Source.

@@ -1,45 +1,49 @@
 # Atlanticus Web Platform — Canonical Index
 
-Estado: **CURRENT — SHARED MASTER PROJECTION CLOSED / SOURCE OWNERSHIP NEXT**
+Estado: **CURRENT — DISTRIBUTED ADA RUNTIME CLOSED / ADA TOOL-SCOPED USER MODEL NEXT**
 
-## Current cross-product capabilities
-
-```text
-Source Core/Local/Blob              CURRENT / generic
-Projection Core                     CURRENT / generic
-Users                               CURRENT / generic
-Profiles                            CURRENT / generic
-Navigation                          CURRENT / generic
-Manager                             CURRENT / generic
-Master Projection                   CURRENT / generic
-Storage topology                    CURRENT / generic
-```
-
-## Product composition status
+## Current generic capabilities
 
 ```text
-ADA Generic             0.2.22 / CURRENT
-Command Center Generic  0.1.1 / CURRENT
+Source Core/Local/Blob
+Projection Core
+Users
+Profiles
+Navigation
+Manager
+Master Projection
+Storage Namespace
+Storage Topology
 ```
 
-Both consume `atlanticus-web-master-projection==0.1.0`.
+remain generic Atlanticus capabilities.
+
+## Product status
+
+```text
+ADA Generic 0.2.26
+    distributed runtime VERIFIED
+
+Command Center
+    separate current product frontier
+```
 
 ## Primary current gap
 
 ```text
-SOURCE-NAMESPACE-AND-COMPOSITION-CONVERGENCE
-PLANNED / NEXT
+ADA-TOOL-SCOPED-CONFIGURATION-AND-USER-RUNTIME
 ```
 
-Command Center currently reaches into the ADA scope for `AdaStorageNamespace`.
+This is a product composition/model cutover, not a generic Source/Projection rewrite.
 
-## After Source
+## After cutover
 
 ```text
-DUAL-APP-DURABLE-RUNTIME-SMOKE
+regenerate/distribute
+resume real ADA configuration
+validate recovery
+continue UI/Collector
+Alarm integration later
 ```
 
-## Historical material
-
-Older Master 001A–001D and resource-preparation documents remain evidence for their own cuts, but
-their historical NEXT markers do not override this index.
+Historical NEXT markers for Source convergence, dual-app smoke, distribution regeneration and ADA distributed runtime are SUPERSEDED.

@@ -1,170 +1,253 @@
 # Atlanticus — Architecture
 
-Estado: **CURRENT**
+Estado: **CURRENT + DECIDED NEXT CUTOVER**
 
 ## Regla principal
 
 Atlanticus es una plataforma modular reusable.
 
-ADA y ADA Command Center son productos/scopes consumidores.
+ADA y ADA Command Center son consumidores. El núcleo genérico de Atlanticus no depende de ADA.
 
-El núcleo genérico de Atlanticus no depende de ADA ni de ADA Command Center.
+## Generic Web architecture preserved
 
-## Web capabilities
-
-Una capability reusable demostrada entre productos pertenece al área genérica Web.
-
-CURRENT:
+Reusable capabilities remain under Atlanticus generic ownership:
 
 ```text
-web/capabilities/master-projection
-    material
-    reader
-    planner
-    executor
-    independent Web surface
+Source Core / Local / Blob
+Projection Core
+Storage Namespace
+Storage Topology
+Users
+Profiles
+Navigation
+Manager
+Master Projection
 ```
 
-Product composition:
+Product composition remains responsible for selecting and connecting those capabilities.
 
 ```text
 ADA Generic
-    -> product projection domains
-    -> product provisioning/location policy
+    product composition root
 
 ADA Command Center Generic
-    -> product projection domains
-    -> product provisioning/location policy
+    separate product composition root
 ```
 
-No duplicar el motor Master Projection dentro de cada producto.
-
-## Source
-
-`SourceStore` y providers Local/Blob son genéricos:
-
-```text
-web/capabilities/source/core
-web/capabilities/source/local
-web/capabilities/source/blob
-```
-
-El contrato Core permanece frozen.
-
-CURRENT gap de ownership:
-
-```text
-ada-command-center
-    -> ada.web.storage.namespace
-```
-
-`AdaStorageNamespace` expresa actualmente:
-
-```text
-application namespace
-sub-scope/tool namespace
-local roots
-Blob prefixes
-```
-
-Command Center lo reutiliza tratando `command-center` como segundo segmento.
-
-Siguiente diseño debe determinar la forma genérica mínima de ese contrato sin reescribir
-`SourceStore` ni hacer que Command Center dependa de ADA.
+The reusable Master Projection engine remains generic; products own their projection-domain composition/provisioning.
 
 ## Environment versus persistence
 
-Congelado:
+Frozen:
 
 ```text
 ATLANTICUS_ENVIRONMENT
-    local | production
     host/runtime behavior
 
-persistence selector
+persistence mode
     local | durable
-    persistence topology
 ```
 
-Emulator/Azure no son modos de arquitectura.
+Emulator versus Azure is connection configuration, not an architecture mode.
+
+## Storage Namespace
+
+Contrato generic CURRENT:
 
 ```text
-LOCAL HOST + DURABLE PERSISTENCE
+StorageNamespace(
+    application_namespace,
+    scope_namespace,
+)
+
+application_prefix = <application_namespace>
+scope_prefix       = <application_namespace>/<scope_namespace>
 ```
 
-es una topología válida.
-
-## Application ownership
-
-### ADA
+Para ADA:
 
 ```text
-ada-generic-application
-    product composition root
-    host/lifecycle
-    Manager integration
-    Tool Projection
-    product Master Projection composition/provisioning
-    KPI Collector attachment
+application_namespace = conciencia_situacional
+scope_namespace       = ADA_TOOL_NAMESPACE
 ```
 
-### ADA Command Center
+## ADA ownership objetivo aceptado
+
+### Application-global
+
+Sólo información realmente compartida por todas las Tools de una misma aplicación.
+
+CURRENT target:
 
 ```text
-ada-command-center-generic-application
-    product composition root
-    local host
-    local/durable Manager selection
-    product Master Projection composition/provisioning
-
-ada-command-center-configuration-manager
-    configuration/administration composition
-    separate qualification/development application
+Global Users identity registry
 ```
 
-Configuration Manager no es un servicio remoto ni product root.
+El usuario global representa identidad y atributos personales/globales. No contiene estado de pertenencia a una Tool.
 
-## Tooling topology
+### Tool-scoped
 
-CURRENT:
+Toda configuración que puede variar entre Tools vive bajo `scope_prefix`.
+
+```text
+Tool Configuration
+Profiles
+Navigation
+ADA Access
+Operational
+Tool User Membership
+KPI Registry
+KPI Definitions
+Tool Users Recovery Snapshot
+```
+
+No introducir un tercer nivel artificial `tools/`; `scope_prefix` ya expresa:
+
+```text
+conciencia_situacional/<tool>
+```
+
+## Cosmos
+
+Supuesto de infraestructura aceptado para ADA actual:
+
+```text
+one Cosmos database/runtime deployment per Tool
+```
+
+No agregar ahora protección multi-tool intra-Cosmos, particionamiento adicional o routing complejo sólo para escenarios que la infraestructura no usa.
+
+Cosmos sigue siendo superficie de proyección/consumo.
+
+## Users
+
+### Global durable identity
+
+Target:
+
+```text
+user_id
+issuer
+subject_id
+display_name
+email
+```
+
+`profile_key` y `enabled` salen del contrato global.
+
+### Tool User Membership
+
+Nuevo contrato Tool-scoped:
+
+```text
+user_id
+profile_key
+enabled
+```
+
+Representa pertenencia y estado del usuario dentro de una Tool.
+
+### users-runtime
+
+`users-runtime` en Cosmos es un snapshot denormalizado y completo para la sesión de esa Tool.
+
+Incluye:
+
+```text
+identity
+enabled
+resolved profile
+resolved operational data
+```
+
+Operational conserva shape estable aunque no exista información:
+
+```text
+area.id/label       = null
+position.id/label   = null
+group.id/label      = null
+```
+
+El runtime no debe consultar Blob para resolver sesión.
+
+## Access
+
+No duplicar `access_keys` dentro del snapshot de cada usuario.
+
+Mantener:
+
+```text
+profile_key -> access_keys
+```
+
+como proyección/caché pequeña de Access.
+
+## Recovery
+
+CURRENT immediate target:
+
+```text
+Tool Users Recovery Snapshot
+→ users-runtime
+```
+
+FUTURE / PLANNED:
+
+```text
+Global Users
++ Tool Membership
++ Profiles
++ Operational
+→ join por IDs
+→ users-runtime
+```
+
+No implementar esta reconstrucción granular en el próximo incremento.
+
+## Navigation authorization target
+
+Semántica aceptada:
+
+```text
+PUBLIC
+RESTRICTED
+```
+
+`RESTRICTED` con cero perfiles ordinarios significa sólo `root/local`.
+
+`RESTRICTED` con perfiles significa esos perfiles más `root/local`.
+
+Root/local permanecen privilegiados implícitos y no grants editables.
+
+## KPI Registry / Delivery
+
+KPI Registry Projection/materialization debe transportar el `tool_key` estable derivado de Tool Projection.
+
+Delivery consume `tool_key`; `display_name` sigue siendo presentación de Tool Configuration, no identidad contractual KPI.
+
+## Tooling topology preserved
 
 ```text
 /tooling
-    generic/transversal mechanisms and orchestration
+    reusable/transversal mechanisms
 
 /scopes/ada/tooling
-    ADA-specific distribution behavior
+    ADA-specific distribution composition
 
 /scopes/ada-command-center/tooling
-    Command Center-specific distribution behavior
+    Command Center-specific distribution composition
 ```
 
-PROPOSED / PLANNED, no implementado en este hito:
+Process Distribution remains separate from Web Distribution.
+
+## Clean cutover rule
+
+Al implementar este cambio:
 
 ```text
-/scopes/operational-data/tooling
-/scopes/ada/tooling/distribution/backend
-/scopes/ada-command-center/tooling/distribution/backend
+replace root contracts cleanly
+no legacy adapters
+no aliases
+no dual old/new user model
+no compatibility storage paths
 ```
-
-Regla objetivo:
-
-```text
-scope tooling
-    owns scope-specific build/distribution/qualification composition
-
-root tooling
-    owns reusable mechanisms + cross-scope orchestration
-```
-
-No mover lógica de producto al root y no usar Operational Data como contenedor genérico de tooling.
-
-## Python
-
-CURRENT Web:
-
-```text
-Python 3.14.2
-```
-
-Python 3.14.7/Trixie permanece diferido.

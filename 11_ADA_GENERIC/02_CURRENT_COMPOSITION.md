@@ -1,16 +1,16 @@
 # ADA Generic — Current Composition
 
-Estado: **CURRENT — PRODUCT COMPOSITION ROOT / SHARED MASTER PROJECTION**
+Estado: **CURRENT — PRODUCT COMPOSITION ROOT / DISTRIBUTED RUNTIME VERIFIED**
 
 ## Version CURRENT
 
 ```text
-ada-generic-application==0.2.22
-atlanticus-web-master-projection==0.1.0
+ada-generic-application==0.2.26
+ada-project-tooling==0.1.1
 Python == 3.14.2
 ```
 
-## Composition root
+## Composition root CURRENT
 
 ADA Generic posee:
 
@@ -25,68 +25,73 @@ KPI Collector attachment
 Web runtime lifecycle
 ```
 
-## Master Projection
+Reusable engines remain owned by Atlanticus generic capabilities.
 
-Reusable engine:
+## Durable runtime qualification
 
-```text
-web/capabilities/master-projection
-atlanticus.web.master_projection
-```
-
-ADA-specific ownership retained:
+Verified from an isolated consumer repository:
 
 ```text
-ada.web.application.generic.master_projection.composition
-ada.web.application.generic.master_projection.provision
+Linux Docker image build        PASS
+Azurite                         PASS
+Cosmos Emulator                 PASS
+resource preparation            PASS
+Web container healthy           PASS
+/health/live                    HTTP 200
+/health/ready                   HTTP 200
+Cosmos Data Explorer            HTTP 200
 ```
 
-SUPERSEDED:
-
-```text
-ADA-local copies of:
-apply
-material
-plan
-reader
-web
-```
-
-No recrearlas.
+`/health/ready` currently reports `checks: {}`.
 
 ## Persistence modes
 
 ```text
 ADA_PERSISTENCE_MODE=local
-→ local Source / Projection / Manager
-→ local Master material
-
 ADA_PERSISTENCE_MODE=durable
-→ Blob Source / Manager / Master material
-→ Cosmos Projection / Manager
 ```
 
-`ATLANTICUS_ENVIRONMENT=local` puede combinarse con durable persistence.
+A local environment may use durable persistence with emulators.
 
-## Current Source/namespace dependency
-
-ADA sigue consumiendo:
+## Storage namespace CURRENT API
 
 ```text
-ada-web-storage-namespace
-AdaStorageNamespace(application_namespace, tool_namespace)
+StorageNamespace(
+    application_namespace,
+    scope_namespace,
+)
 ```
 
-El próximo frente decidirá si esa capability debe extraerse a Atlanticus para consumo común con
-Command Center.
-
-No cambiar el contrato Source Core por ese motivo.
-
-## Qualification
+ADA maps:
 
 ```text
-pytest   249 passed
-Ruff     PASS
-format   PASS
-AST mirror host PASS
+application_namespace = ADA_APPLICATION_NAMESPACE
+scope_namespace       = ADA_TOOL_NAMESPACE
 ```
+
+## Current composition gap
+
+Implementation CURRENT still creates:
+
+```text
+application_source
+    Navigation
+    Profiles
+    ADA Access
+    Operational
+
+tool_source
+    Tools
+    KPI Registry
+    KPI Definitions
+```
+
+The accepted next cutover moves all Tool-varying configuration to `tool_source`; only global user identity remains application-global.
+
+This is `DECIDED / PLANNED`, not yet CURRENT implementation.
+
+## Host sync gap
+
+`tooling/project.py sync` on macOS CPython 3.14.2 is BLOCKED because the current binary-only external dependency set includes `rcssmin==1.2.2` without a usable macOS CPython 3.14 wheel.
+
+Docker/Linux distribution remains verified.
