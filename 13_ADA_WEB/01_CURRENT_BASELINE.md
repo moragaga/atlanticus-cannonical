@@ -129,6 +129,30 @@ Navigation behavior was not modified or requalified in this hito.
 
 Do not infer new navigation behavior from the Tool contract cutover.
 
+## Integrated Operations presentation
+
+The canonical design contract is:
+
+```text
+13_ADA_WEB/08_INTEGRATED_OPERATIONS_PRESENTATION.md
+```
+
+Status:
+
+```text
+design contract        CURRENT
+implementation         PLANNED
+visual qualification   OPEN
+```
+
+ADA Generic remains the product composition root.
+
+Integrated Operations is planned as an external/specific composition over CURRENT Generic boundaries; it is not a fork or replacement of ADA Generic.
+
+The presentation contract defines coordinated `overview | mine | plant` operational focus, multi-scope Global Indicator placement, responsive/workstation continuity and videowall overview semantics.
+
+This design contract does not mark Integrated Operations implementation as CURRENT and does not reopen Alarm Engine, Command Center or KPI backend contracts.
+
 ## Retirement still BLOCKED
 
 Physical removal of:
