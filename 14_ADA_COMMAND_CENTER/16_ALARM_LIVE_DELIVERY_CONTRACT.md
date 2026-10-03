@@ -1,80 +1,113 @@
 # ADA Command Center — Alarm Live Delivery Contract
 
-Estado: **CURRENT input contract / Live projection PLANNED**.
+Estado: **CURRENT — LIVE PROJECTION IMPLEMENTED AND QUALIFIED LOCALLY**
 
-## Contract ownership update
+## Ownership
 
-Los schemas compartidos de salida Engine pertenecen a:
+Runtime produce verdad operacional.
 
-```text
-ada-contracts-alarms==1.0.0
-ada/contracts/alarms/schemas/
-```
+Modeler produce el read model lógico current.
 
-No usar las rutas históricas `backend/alarms/contracts/*.schema.json` como autoridad; esas copias fueron retiradas en `main@6725237...`.
+Delivery sólo transporta/publica.
+
+Web será consumidor.
 
 ## Current chain
 
 ```text
-exact DeliveryAlarmConfiguration
+EFFECTIVE exact artifact
 +
 EngineResolvedCurrentState CURRENT v1
++
+RuntimeAlarmConfiguration
++
+DeliveryAlarmConfiguration
         ↓
-alarms-delivery input receiver
+Alarm Modeler
         ↓
-[PLANNED] Live materialization
+AlarmProjectionSnapshot v1 per Tool
         ↓
-[PLANNED] AlarmLiveProjection
+Alarm Delivery
+        ↓
+Cosmos alarm-live-projection
 ```
-
-Delivery input no es un segundo Engine y no consulta Tools ni reevalúa Rules.
 
 ## Exact alignment invariants
 
 ```text
 READY != EFFECTIVE
-same resolution_key
-same exact artifact pin
-source_key + result_id + manifest_sha256 + resolution_key
+same exact artifact_ref across Runtime/Modeler/Delivery
 no fallback to latest READY
+checksums validated
 ```
 
-CURRENT publicado y Delivery Configuration deben corresponder al mismo EFFECTIVE exacto.
+## Snapshot contract CURRENT
 
-## Delivery configuration
+```text
+document_type = ada_alarm_projection_snapshot
+schema_version = 1
+id = alarm_projection_snapshot:<tool-hash-prefix>
+artifact_ref
+snapshot_timestamp
+tool_key
+alarms
+operator_pool
+operator_view
+meta
+sha256
+```
 
-Contiene metadata estática necesaria para presentation/delivery y visual targets resueltos. No debe incluir evaluator code, prioridad fuente para recomputar decisiones ni geometría/CSS.
+`alarms` se indexa por `occurrence_id`.
 
-## Live publication target
+`operator_pool` contiene occurrence ids elegibles ordenados.
 
-Cuando se implemente Live, Web recibe hechos ya resueltos y no recalcula:
+`operator_view` contiene `{slot, occurrence_id}` con máximo 6 slots en el baseline.
 
-- priority;
-- routing;
-- message precedence;
-- deactivation capability;
-- cause template semántica.
+## Eligibility
 
-Visual target keys identifican elementos lógicos; Web decide representación física/visual.
+```text
+ACTIVE
+PREDOMINANT
+VISIBLE
+active materialized alarm
+assigned to Tool
+visual target for Tool
+```
 
-## CURRENT vs PLANNED
+## Physical publication contract
 
-CURRENT:
+```text
+container = alarm-live-projection
+partition key = /tool_key
+```
 
-- Runtime CURRENT v1;
-- FACTS v2;
-- Delivery input receiver CURRENT-only;
-- exact EFFECTIVE/READY checks;
-- schemas en `ada-contracts-alarms`.
+Connection resolution:
 
-PLANNED / SEPARATE:
+```text
+config/connections.json
+connections[tool_key].endpoint_var
+connections[tool_key].database_var
+connections[tool_key].credential_var
+```
 
-- `AlarmLiveProjection`;
-- cause materialization definitiva;
-- dispatch/escalation operacional;
-- Management Capture;
-- History/Analytics.
+No configurar container por Tool.
 
-## Qualification
+## Web contract
 
-El gate actual de `ada-contracts` llegó más allá de Delivery y Web Alarm Configuration. Su bloqueo está en Command Center capability parity, no en este Live contract.
+Web no recalcula:
+
+```text
+priority
+routing
+eligibility
+operator_pool
+operator_view
+```
+
+Web renderiza el head modelado.
+
+## OPEN
+
+CURRENT conserva `cause_template` y evidence. La causa dinámica efectiva definitiva permanece OPEN.
+
+Management/History siguen fuera de este contrato.

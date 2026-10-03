@@ -1,37 +1,50 @@
 # Atlanticus — Validation Baseline
 
-Estado: **CURRENT — USERS TOOL RUNTIME CUTOVER QUALIFIED 2026-10-03**
+Estado: **CURRENT — ALARM LIVE BACKEND VERTICAL QUALIFIED LOCALLY 2026-10-03**
 
 ## Autoridad
 
 ```text
-Implementation  moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
-Decisions       moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Implementation  moragaga/atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856
+Canonical base  moragaga/atlanticus-cannonical@8efd59431754059c548ed1e5d1263533b81012cd
 ```
 
-## Evidencia focal reportada por el usuario
+## Evidencia focal de Alarm
+
+Reportada y observada durante el cierre:
 
 ```text
-Users Core                    44 passed
-Users Blob                     7 passed
-Users Cosmos                   7 passed
-Master Projection             53 passed
-ADA Configuration Manager     65 passed
-ADA Generic Application      199 passed
+processes/alarms-runtime/tests                     PASS
+processes/alarms-modeler/tests + delivery/tests  20 PASS
+```
+
+E2E físico local:
+
+```text
+Cosmos alarm-configuration           PASS
+Materialization READY                PASS
+Runtime EFFECTIVE                     PASS
+NOTPII Parquet read                   PASS
+Runtime ACTIVE/PREDOMINANT            PASS
+Runtime CURRENT + FACTS               PASS
+Modeler index + Tool snapshot         PASS
+Delivery CURRENT_AVAILABLE            PASS
+Delivery published_documents = 1      PASS
+Delivery failed_tools = 0             PASS
+Cosmos alarm-live-projection readback PASS
 ```
 
 ## Acredita
 
 ```text
-Global UserIdentity + ToolUserMembership
-RuntimeUser
-Tool-owned users-runtime without app/tool fields
-Blob identity/membership separation
-Tool recovery snapshot + REPLACE
-Master Projection Users
-Manager/session integration
-Jane/John palettes
-Operational membership consumer
+exact artifact continuity from READY through Delivery
+real local Cosmos read/write path
+real Runtime source read from NOTPII dataset
+Modeler eligibility/order baseline
+per-Tool live snapshot generation
+fixed live container publication
+Tool-key connection resolution
+Delivery work metric after successful publish
 ```
 
 ## No acredita
@@ -39,12 +52,17 @@ Operational membership consumer
 ```text
 monorepo-wide pytest
 CI
-new Docker artifact after current HEAD
-new isolated consumer after current HEAD
-Azure/Entra
-Navigation PUBLIC/RESTRICTED
-production-like destructive recovery
-multiworker revocation
+independent Docker containers
+Azure Cosmos / Key Vault / Entra
+production qualification producer
+CAROUSEL/QIQ scheduling
+Modeler durable scheduler recovery
+Management projection
+History/Analytics
+Command Center Web rendering of live projection
+production resource provisioning/startup gates
 ```
 
-Un `git diff --check` del worktree del usuario mostró errores EOF en archivos KPI ajenos a este incremento. No atribuirlos a Users.
+## Important qualification note
+
+El evaluator `mina/threshold` usado para el E2E es un **example evaluator**. El registry productivo de Runtime permanece vacío según su contrato/test vigente. El E2E lo inyectó mediante runner local controlado; no convertir esa prueba en registration productiva implícita.

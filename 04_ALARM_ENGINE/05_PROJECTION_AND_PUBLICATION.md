@@ -1,20 +1,10 @@
 # Alarm Engine — Projection and Publication
 
-Estado: **CURRENT implementation retained; direct Runtime→Delivery target SUPERSEDED; Runtime→Modeler→Delivery target DESIGN FROZEN / implementation PLANNED**.
+Estado: **CURRENT — RUNTIME CURRENT/FACTS + MODELER LIVE SNAPSHOT + DELIVERY COSMOS IMPLEMENTED**
 
-## 1. Current implementation
+## 1. Runtime publications
 
-CURRENT / VERIFIED:
-
-```text
-Runtime
-    ├── CURRENT v1
-    └── FACTS v2
-            ↓
-Delivery input receiver
-```
-
-Runtime outputs:
+Runtime publica:
 
 ```text
 runtime/output/current/latest.json
@@ -22,35 +12,19 @@ runtime/output/facts/facts-<hash>.json
 runtime/output/state/facts-export-cursor.json
 ```
 
-Delivery input maintains:
+### CURRENT v1
 
 ```text
-delivery/input/current/latest.json
-delivery/input/facts/facts-<hash>.json
-delivery/input/state/facts-consumption-cursor.json
+document_type = ada_command_center_engine_resolved_current_state
+schema_version = 1
+artifact_ref
+state.resolution_key
+state.as_of
+state.alarms[]
+sha256
 ```
 
-Esta implementación existe, está probada por los gates históricos registrados y no se elimina documentalmente hasta un cutover real.
-
-## 2. Exact identity — FROZEN
-
-```text
-AlarmResolutionKey =
-    (alarm_configuration_revision, confirmed_tool_catalog_revision)
-
-Artifact pin =
-    (source_key, result_id, manifest_sha256, resolution_key)
-
-READY != EFFECTIVE
-```
-
-CURRENT, FACTS y cualquier configuración/estado downstream deben corresponder al artifact exacto EFFECTIVE.
-
-## 3. CURRENT v1 — CURRENT implementation
-
-`AlarmCurrentStatePublisher` publica la imagen operacional completa vigente de occurrences abiertas.
-
-Incluye, entre otros:
+Alarm current contiene, entre otros:
 
 ```text
 identity
@@ -58,179 +32,129 @@ occurrence_id
 episode_id
 started_at
 evaluation
-priority.disposition
-priority.blockers
-technical_hold
-management_cycle/effect
-deactivation_effect
-pending_deactivation_request
+priority
 assignments
 pending_assignments
+technical_hold
+management/deactivation fields
 ```
 
-Es reemplazable y no conserva por sí sola toda la secuencia histórica.
+### FACTS v2
 
-## 4. FACTS v2 — CURRENT implementation
+Durable commit facts permanecen canal separado. El live Modeler baseline no necesita FACTS para construir el snapshot actual.
 
-`AlarmCommittedFactsExporter` publica commits durables como batches inmutables y encadenados.
+## 2. Modeler input CURRENT
 
-Cada batch conserva:
+Modeler exige:
 
 ```text
-batch_id
+EFFECTIVE head
+Runtime CURRENT v1
+exact READY runtime.json
+delivery.json del mismo exact artifact
+```
+
+Si CURRENT no corresponde al EFFECTIVE exacto, espera y no modela.
+
+## 3. Modeler projection CURRENT
+
+Index:
+
+```text
+modeler/output/current/index.json
+
+document_type = ada_alarm_modeler_projection_index
+schema_version = 1
 artifact_ref
-journal_position
-commit
-commit_record_hash
-previous_batch
-records
+snapshot_timestamp
+snapshots[] { tool_key, path, sha256 }
 sha256
 ```
 
-Los records pueden incluir occurrence/episode, Journey, evidence, management/deactivation, assignment e input receipts.
-
-FACTS v2 permite comprobar continuidad de la cadena exportada, pero no constituye firma criptográfica ni reemplaza políticas de retención externas.
-
-## 5. Current Delivery input receiver — CURRENT, target role SUPERSEDED
-
-El receptor actual:
+Snapshot por Tool:
 
 ```text
-lee EFFECTIVE proyectado
-valida exact materialization
-stages CURRENT
-recibe FACTS en orden
-mantiene cursor propio
+modeler/output/current/tools/<sha256(tool_key)>/latest.json
+
+document_type = ada_alarm_projection_snapshot
+schema_version = 1
+id
+artifact_ref
+snapshot_timestamp
+tool_key
+alarms
+operator_pool
+operator_view
+meta
+sha256
 ```
 
-Como implementación existente permanece CURRENT.
+## 4. Eligibility CURRENT
 
-Como frontera target:
+Se proyecta sólo cuando:
 
 ```text
-Runtime -> Delivery
+evaluation.status == ACTIVE
+priority.disposition == PREDOMINANT
+materialized alarm is_active
+visibility_mode == VISIBLE
+Runtime assignment incluye tool_key
+visual_target incluye tool_key
 ```
 
-queda SUPERSEDED.
+## 5. Ordering/current view
 
-El nuevo target es:
+Orden:
 
 ```text
-Runtime
-    ↓
-Modeler
-    ↓
-Delivery
+priority_order
+started_at
+alarm_identity
+occurrence_id
 ```
 
-## 6. Runtime → Modeler target semantics — DESIGN FROZEN
+`operator_pool` contiene todos los candidatos elegibles de ese Tool ordenados.
 
-Debe garantizar:
+`operator_view` contiene como máximo 6, asignados a slots 1..6.
+
+No hay `ranking` separado.
+
+## 6. Delivery CURRENT
+
+Delivery consume exclusivamente el Modeler current head.
+
+Valida index/snapshots/digests/exact pin y publica cada Tool mediante `ParallelCosmosPublisher`.
+
+Contrato físico:
 
 ```text
-durability
-ordering
-no-drop para cambios necesarios para reconstrucción/modelado
-consumer-owned checkpoint
-bounded consumption
-Runtime producer never waits for Modeler acknowledgement
+container = alarm-live-projection
+partition key = /tool_key
 ```
 
-El Modeler debe poder caer, quedar atrasado y recuperarse sin detener Runtime.
-
-### Exact physical contract — OPEN
-
-No está congelado todavía si el Modeler:
+Connection registry:
 
 ```text
-A) consume CURRENT v1 + FACTS v2 mediante un reader coordinado
+config/connections.json
+connections[tool_key] = {
+    endpoint_var,
+    database_var,
+    credential_var,
+}
 ```
 
-o si Runtime publica adicionalmente:
+El container no varía por Tool.
+
+## 7. Web boundary
+
+Web debe leer el snapshot modelado. No debe leer WAL, reabrir READY, recalcular priority ni reconstruir `operator_view`.
+
+## 8. Separate projections
+
+Permanecen separadas:
 
 ```text
-B) un model-input document/batch coherente por ciclo
-```
-
-No implementar esta elección por inferencia.
-
-Cualquier solución debe evitar mezclar un FACTS antiguo con un CURRENT posterior sin una identidad temporal/artifact coherente.
-
-## 7. Modeler → Delivery target semantics — DESIGN FROZEN
-
-Modeler produce estado lógico final por destination/projection.
-
-El handoff es:
-
-```text
-durable
-latest-wins por destination
-independent destination checkpoints
-```
-
-Ejemplo conceptual:
-
-```text
-projection A modeled revision = 45
-projection A delivered revision = 40
-
-Delivery publica 45 directamente.
-No debe reproducir 41,42,43,44 sólo para alcanzar el estado vigente.
-```
-
-Un destino lento o fallido no debe bloquear otros destinos.
-
-### Exact physical contract — OPEN
-
-Queda por definir el documento exacto del modeled head y su cursor/checkpoint.
-
-## 8. Modeler facts vs current head
-
-Si se requiere auditoría de movimientos/rotaciones, esa historia puede persistirse separadamente.
-
-No obligar a Delivery/Web a reproducir todos los estados intermedios.
-
-Principio:
-
-```text
-historical modeled facts != mandatory visible frames
-```
-
-## 9. Web target
-
-Web consume proyecciones ya modeladas.
-
-Web no debe:
-
-```text
-recalcular carousel
-recalcular queue-in-queue
-mantener timers operacionales
-reconstruir slots
-leer WAL
-```
-
-Web sí decide la representación tecnológica/visual final:
-
-```text
-Dash components
-CSS/theme
-pixel geometry
-rendering
-```
-
-## 10. Qualification / unverified
-
-CURRENT historical gates de Runtime/Delivery continúan siendo evidencia del pipeline actual.
-
-UNVERIFIED para el nuevo target:
-
-```text
-Modeler process
-Runtime→Modeler physical handoff
-Modeler durable state/recovery
-Modeler→Delivery heads
-Docker de cuatro jobs
-multi-host storage/transport
-production Azure behavior
+Live Projection       CURRENT baseline
+Management Projection PLANNED
+History/Analytics     PLANNED
 ```

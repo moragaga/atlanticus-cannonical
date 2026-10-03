@@ -1,83 +1,56 @@
 # ADA Command Center — Open Items
 
-Estado: **CURRENT — capability parity CLOSED; Alarm Engine extraction design NEXT; full Web qualifier BLOCKED separately**.
+Estado: **CURRENT — LIVE BACKEND CLOSED; WEB LIVE CONSUMER NEXT**
 
 ## CLOSED / VERIFIED
 
 ```text
-ada-contracts-tools package
-ada-contracts-alarms package
-Command Center Alarm/Tool consumer cutover in main
-shared Alarm schema ownership in ada-contracts-alarms
-
-Command Center Users parity
-Command Center Profiles parity
-Command Center Navigation parity
-Command Center Manager principal/runtime parity
-Command Center Users recovery integration
-Command Center Master Users special operation wiring
-four Web lockfile normalization
+Users/Profiles/Navigation/Manager capability parity
+Alarm shared contracts
+Alarm Configuration projection
+Materialization READY
+Runtime EFFECTIVE/CURRENT/FACTS
+Modeler baseline
+Delivery to alarm-live-projection
+local Cosmos read-back
 ```
-
-Qualification focal:
-
-```text
-configuration-manager   31 passed
-generic-application     12 passed
-catalog-manager          8 passed
-Ruff                    PASS
-```
-
-## BLOCKED — separate qualifier issue
-
-El qualifier ya no se detiene en Configuration Manager.
-
-Ahora falla en:
-
-```text
-web/tools/catalog
-web/tools/discovery-cosmos
-```
-
-Causa observada:
-
-```text
-ada.contracts.tools types
-!=
-ada.web.tools types
-```
-
-No corregir ADA dentro de este foco y no introducir adapters en Command Center.
 
 ## NEXT único
 
 ```text
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN
+ADA-COMMAND-CENTER-ALARM-LIVE-WEB-CONSUMER
 ```
 
-Alcance:
+Scope:
 
 ```text
-todo scopes/ada-command-center/backend como candidato Engine
-dependency inventory
-backend -> Web dependency removal/inversion
-Command Center publication -> Engine input contract
-destination of domain/alarms
-target package/scope graph
-incremental move plan
+read current per-Tool alarm-live-projection
+render operator_view slots
+resolve occurrence details from alarms map
+handle empty/current/stale/error behavior
+qualify functional callbacks/read path
 ```
 
-No implementar hasta congelar diseño.
+Do not add priority/routing/modeling logic to Web.
+
+## BLOCKED / SEPARATE
+
+```text
+COMMAND-CENTER-FULL-WEB-QUALIFIER
+```
+
+Blocker observado: `ada.web.tools.*` vs `ada.contracts.tools.*`.
 
 ## OPEN / SEPARATE
 
 ```text
-resolution of ADA Tools contract duplication
-production Entra
-Docker/Azure final runtime
-Alarm Live Projection
+full Alarm Modeler scheduler
+Alarm Engine physical extraction
+production qualification producer
+Management
 History/Analytics
-final distribution
-product-specific branding
+resource preparation/startup gates
+production Entra/Azure
 Python 3.14.7/Trixie
+final distribution qualification
 ```

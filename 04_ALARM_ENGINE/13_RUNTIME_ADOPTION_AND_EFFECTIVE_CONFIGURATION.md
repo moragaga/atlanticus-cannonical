@@ -1,175 +1,71 @@
 # Alarm Engine — Runtime Adoption and Effective Configuration
 
-Estado: **CURRENT Runtime/EFFECTIVE implementation; direct Delivery receiver CURRENT but target boundary SUPERSEDED; Modeler target PLANNED**.
+Estado: **CURRENT — RUNTIME/EFFECTIVE + MODELER/DELIVERY EXACT-PIN CONTINUITY IMPLEMENTED**
 
-## 1. Exact adoption invariants — FROZEN
+## Exact adoption invariants — FROZEN
 
 ```text
 READY != EFFECTIVE
-
-AlarmResolutionKey =
-    (alarm_configuration_revision, confirmed_tool_catalog_revision)
-
-Exact artifact ref =
-    (source_key, result_id, manifest_sha256, resolution_key)
-
-WAL -> Durable Head -> group snapshots -> Materialized Head -> EFFECTIVE projection
+AlarmResolutionKey = (alarm_configuration_revision, confirmed_tool_catalog_revision)
+Exact artifact ref = (source_key, result_id, manifest_sha256, resolution_key)
 ```
 
-Materialization creates READY/BLOCKED artifacts; Runtime adoption gives operational authority to the exact artifact.
+Materialization crea READY; Runtime adoption otorga autoridad operacional al exact artifact.
 
 No fallback to latest READY.
 
-## 2. Runtime configuration adoption — CURRENT
+## Runtime CURRENT
 
-`RuntimeLocalConfigurationReader` validates candidate/exact materialization and the explicit evaluator registry participates in executability.
+Runtime reabre exact materialization, adopta EFFECTIVE y publica CURRENT/FACTS.
 
-Planner/current implementation handles:
+`runtime/state/effective-head.json` es la projection recuperable de esa autoridad.
 
-```text
-UNCHANGED
-COMPATIBLE
-ADDED
-ENABLED
-DISABLED
-REMOVED
-STRUCTURAL_RESET
-REJECTED
-```
+## Modeler continuity CURRENT
 
-Do not broaden compatibility rules inside the Modeler increment.
-
-## 3. WAL / EFFECTIVE — CURRENT
-
-Engine persistence remains authority for durable adoption and runtime recovery.
-
-`runtime/state/effective-head.json` is a recoverable projection of durable authority.
-
-Runtime reopens exact artifact and builds its session from that exact pin.
-
-## 4. Runtime executable/process — CURRENT
-
-Current process composition includes real:
+Antes de modelar:
 
 ```text
-application
-bootstrap
-configured iteration
-operational runner
-cycle
-persistence/recovery
-CURRENT publisher
-FACTS exporter
+read EFFECTIVE
+read Runtime CURRENT
+require CURRENT.artifact_ref == EFFECTIVE.target_artifact_ref
+read exact READY by result_id + manifest_sha256
+require runtime/delivery resolution_key consistency
 ```
 
-No Modeler process has been implemented in this hito.
+Si no coincide, Modeler espera o aborta; no mezcla artifacts.
 
-## 5. Runtime publication — CURRENT
+## Delivery continuity CURRENT
 
-After required durable commits, Runtime publishes:
+Delivery:
 
 ```text
-CURRENT v1
-FACTS v2
+reads EFFECTIVE
+reads Modeler index/snapshots
+requires Modeler artifact_ref == EFFECTIVE exact pin
+reopens exact READY
+validates resolution identity
 ```
 
-CURRENT may change even without lifecycle commit because current evaluation/evidence may change.
+Luego publica el snapshot ya modelado.
 
-FACTS exports only durable commit records.
+## Direct Runtime → Delivery
 
-## 6. Direct Delivery receiver — CURRENT implementation
+La frontera directa anterior queda **SUPERSEDED**. Delivery CURRENT consume Modeler, no Runtime CURRENT/FACTS directamente.
 
-`processes/alarms-delivery` currently acts as independent receiver with its own lease/recovery/cursors.
+## Runtime → Modeler semantics CURRENT
 
-It:
+Baseline físico:
 
 ```text
-validates EFFECTIVE projection/source
-reopens exact materialization
-stages CURRENT
-receives FACTS chain
-owns its consumption cursor
+CURRENT v1 current-head
++
+exact READY configuration
 ```
 
-This remains valid evidence of current implementation.
+La semántica ordered/no-drop con checkpoint durable no está implementada en este baseline y sólo debe introducirse si futuros requisitos necesitan transiciones completas.
 
-## 7. Target refinement — Runtime → Modeler → Delivery
+## Artifact A → B with scheduler state — OPEN
 
-The direct receiver boundary is SUPERSEDED as target.
+Runtime adoption exacta ya existe.
 
-New target:
-
-```text
-Runtime exact artifact X
-    ↓
-ModelerConfiguration X + Runtime handoff X
-    ↓
-Modeled heads X
-    ↓
-DeliveryConfiguration X
-    ↓
-publish
-```
-
-Invariant:
-
-```text
-Runtime, Modeler and Delivery operate on the same exact artifact ref.
-```
-
-Do not combine Runtime output from artifact A with Modeler/Delivery configuration from B.
-
-## 8. Runtime → Modeler backpressure — FROZEN semantics
-
-```text
-Runtime producer does not wait for Modeler acknowledgement.
-Modeler owns its checkpoint.
-Changes required by Modeler are durable and ordered.
-Modeler reads bounded batches.
-```
-
-The physical handoff schema remains OPEN.
-
-## 9. Modeler recovery — FROZEN principle
-
-On restart:
-
-```text
-load Modeler durable state
-load input checkpoint
-replay only after checkpoint
-reconcile timers/state against current time
-produce present valid modeled head
-```
-
-Do not replay every missed rotation as a visible frame.
-
-## 10. Artifact change with live model state — OPEN
-
-Runtime adoption already has exact semantics.
-
-Modeler still needs a contract for transitions such as:
-
-```text
-artifact A scheduler state/backlog
-→ artifact B
-```
-
-The next increments must define preservation/reconciliation/reset rules without weakening Runtime adoption.
-
-## 11. Current vs target qualification
-
-CURRENT historical Runtime + direct Delivery gates remain evidence of the existing pipeline.
-
-UNVERIFIED:
-
-```text
-Modeler adoption
-Modeler persistence/recovery
-Runtime→Modeler physical handoff
-Modeler→Delivery modeled heads
-four-process Docker execution
-production deployment
-```
-
-Do not claim these are implemented until qualified.
+Cuando Modeler tenga timers/colas durables debe definirse explícitamente qué estado se preserva/reconcilia/reinicia al cambiar artifact.

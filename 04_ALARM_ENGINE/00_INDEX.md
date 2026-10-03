@@ -1,110 +1,84 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT — extraction boundary refined; Modeler target design frozen; implementation next**.
+Estado: **CURRENT — MODELER + DELIVERY BASELINE IMPLEMENTED AND QUALIFIED LOCALLY**
 
-Checkpoints:
+Checkpoint:
 
 ```text
-Repository HEAD inspected
-atlanticus@09e9acf6edf6f84a66a4a0a041ad9a8f645daf79
-
-Alarm implementation unchanged since
-atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
-
-Canonical source before these replacements
-atlanticus-cannonical@f02b4740ca1002b060afdb94d142f2e2d8d588af
+atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856
+canonical base@8efd59431754059c548ed1e5d1263533b81012cd
 ```
 
 ## Ownership CURRENT
 
 ```text
-ada-contracts-tools
-    shared Tool contracts
-
 ada-contracts-alarms
-    shared Alarm contracts + Engine publication schemas
+    shared Alarm configuration models/snapshots/schemas
 
-ada-command-center/domain/alarms
-    residual source/routing policy pending physical reclassification
+ada-command-center/backend/alarms/core
+    operational Alarm Engine semantics
 
-ada-command-center/backend
-    current physical Alarm Engine implementation
-```
+ada-command-center/backend/alarms/materialization
+    READY runtime/delivery artifacts
 
-## Backend candidate Engine
+ada-command-center/backend/alarms/persistence
+    WAL/EFFECTIVE/recovery
 
-Current physical packages:
-
-```text
-alarms/core
-alarms/materialization
-alarms/persistence
-processes/alarms-materialization
 processes/alarms-runtime
+    operational truth + CURRENT/FACTS
+
+processes/alarms-modeler
+    current per-Tool logical projection baseline
+
 processes/alarms-delivery
+    Cosmos transport/publication
 ```
 
-Target logical Engine now includes a new responsibility:
+## CURRENT pipeline
 
 ```text
-modeler
-```
-
-Its physical package/process does not exist yet.
-
-## Target pipeline
-
-```text
-Command Center
-    ↓ publication
-Materialization
-    ├── RuntimeConfiguration
-    ├── ModelerConfiguration
-    └── DeliveryConfiguration
-        ↓
-Runtime
+Alarm Configuration projection
+    ↓
+Materialization READY
+    ↓
+Runtime EFFECTIVE
+    ↓
+Runtime CURRENT + FACTS
     ↓
 Modeler
     ↓
+per-Tool AlarmProjectionSnapshot
+    ↓
 Delivery
     ↓
-Projection Store
-    ↓
-Web
+alarm-live-projection
 ```
 
-Current direct Runtime → Delivery receiving remains implemented but is SUPERSEDED as the target boundary.
+## Important boundary
 
-## Qualification state
-
-Command Center capability parity is closed.
-
-The resumed full Web qualifier is BLOCKED separately at Tool Catalog / Discovery because ADA Tool configuration still produces `ada.web.tools.*` types while Command Center catalog consumes `ada.contracts.tools.*`.
-
-Do not solve that by changing Alarm contracts or adding adapters.
+Modeler CURRENT es un baseline de proyección first-six; no es todavía el scheduler completo de CAROUSEL/QIQ.
 
 ## Documents
 
-| Archivo | Rol actual |
+| Archivo | Rol CURRENT |
 |---|---|
-| `01_DOMAIN_MODEL.md` | Alarm domain model contracts. |
-| `02_RUNTIME_AND_LIFECYCLE.md` | lifecycle and Engine state. |
+| `01_DOMAIN_MODEL.md` | Domain/shared ownership e invariantes de Alarm. |
+| `02_RUNTIME_AND_LIFECYCLE.md` | Runtime lifecycle/state. |
 | `03_PERSISTENCE_AND_RECOVERY.md` | WAL/EFFECTIVE/recovery. |
-| `04_CONCURRENCY_LEASES_AND_FENCING.md` | concurrency and fencing. |
-| `05_PROJECTION_AND_PUBLICATION.md` | CURRENT/FACTS current implementation + target Runtime/Modeler/Delivery handoffs. |
-| `06_MANAGEMENT.md` | management/deactivation. |
-| `07_CONFIGURATION_AND_MATERIALIZATION.md` | publication/materialization and Runtime/Modeler/Delivery configuration split. |
-| `08_QUALIFICATION_BASELINE.md` | historical qualification evidence. |
-| `09_DECISION_INDEX.md` | current canonical decisions/refinements. |
-| `10_OPEN_ITEMS.md` | remaining open contracts before implementation. |
-| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | Command Center ↔ Engine ↔ Modeler ↔ Delivery ↔ Web/Analytics boundary. |
-| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | exact adoption/runtime current implementation and target handoff refinement. |
-| `14_MODELER_AND_DELIVERY_PIPELINE.md` | Modeler scheduling, backpressure, recovery and delivery target contract. |
+| `04_CONCURRENCY_LEASES_AND_FENCING.md` | leases/fencing. |
+| `05_PROJECTION_AND_PUBLICATION.md` | CURRENT/FACTS + Modeler snapshots + Delivery/Cosmos. |
+| `06_MANAGEMENT.md` | Management contract, separado del live baseline. |
+| `07_CONFIGURATION_AND_MATERIALIZATION.md` | snapshot/READY y refinamiento del split. |
+| `08_QUALIFICATION_BASELINE.md` | evidencia de qualification actual. |
+| `09_DECISION_INDEX.md` | índice histórico de decisiones. |
+| `10_OPEN_ITEMS.md` | backlog vigente. |
+| `11_SOURCE_LEDGER.md` | provenance del cierre. |
+| `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` | separación Live/Management/Analytics. |
+| `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md` | exact adoption + frontera Modeler. |
+| `14_MODELER_AND_DELIVERY_PIPELINE.md` | pipeline implementado y target scheduler pendiente. |
 
 ## NEXT único
 
 ```text
-ADA-ALARM-ENGINE-MATERIALIZATION-CONTRACT-SPLIT
+Command Center Web consuming alarm-live-projection
 ```
-
-Definir y luego implementar sólo la separación de configuración antes de construir el Modeler operacional.

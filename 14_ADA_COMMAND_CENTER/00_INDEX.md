@@ -1,63 +1,54 @@
 # ADA Command Center — Canonical Index
 
-Estado: **CURRENT — capability parity CLOSED; full Web qualifier BLOCKED separately; Alarm Engine extraction design NEXT**.
+Estado: **CURRENT — LIVE ALARM BACKEND VERTICAL IMPLEMENTED; WEB LIVE CONSUMER NEXT**
 
 Checkpoint:
 
 ```text
-atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
+atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856
 ```
 
 ## Current checkpoints
 
 ```text
-Alarm/Tool shared contracts ownership                   CURRENT
-Command Center contracts consumer cutover               IMPLEMENTED
-Users/Profiles/Navigation/Manager parity                 CLOSED
-Configuration Manager focal qualification               PASS
-Generic Application focal qualification                 PASS
-Web lock normalization                                  CLOSED
-full Web qualifier                                      BLOCKED by Tools contract duplication
-production identity                                     OPEN
-Alarm Engine physical extraction                        PLANNED / NEXT DESIGN
+shared Alarm/Tool contracts ownership              CURRENT
+Users/Profiles/Navigation/Manager parity           CLOSED
+Alarm Configuration authoring/projection           CURRENT
+Materialization READY                              CURRENT
+Runtime EFFECTIVE + CURRENT + FACTS                CURRENT
+Alarm Modeler baseline                             CURRENT
+Alarm Delivery -> Cosmos live projection           CURRENT
+alarm-live-projection read-back                    VERIFIED local
+Web live consumer                                  NEXT
+full Web qualifier                                 BLOCKED separately by Tool type duplication
+production identity/Azure                         OPEN
+Alarm Engine physical extraction                   PLANNED / SEPARATE
 ```
 
-## Current Master domains
+## Current alarm chain
 
 ```text
-Profiles
-Navigation
-Alarm Configuration
+Command Center Alarm Configuration
+    ↓
+alarm-configuration projection
+    ↓
+Materialization
+    ↓
+Runtime
+    ↓
+Modeler
+    ↓
+Delivery
+    ↓
+alarm-live-projection
+    ↓
+Command Center Web [NEXT]
 ```
-
-Users sigue siendo operación especial snapshot/recovery y puede inyectar `users.replace` cuando el runtime durable configura recovery/catalog. No es un Source Projection domain ordinario.
-
-## Capability parity CURRENT
-
-El wiring legacy queda SUPERSEDED:
-
-```text
-UsersAdministrationStore
-UserRecord
-users_promoted
-promoted=
-CosmosUsersStore como store administrativo
-local duplicate NAVIGATION_SOURCE_KEY
-old NavigationPrincipal binding
-```
-
-Command Center consume ahora las capabilities genéricas actuales.
-
-## Qualifier blocker separado
-
-`catalog` y `discovery-cosmos` revelan una incompatibilidad upstream de Tools entre `ada.web.tools.*` y `ada.contracts.tools.*`.
-
-No modificar ADA ni introducir adapters en Command Center durante este cierre.
 
 ## NEXT único
 
 ```text
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN
+ADA-COMMAND-CENTER-ALARM-LIVE-WEB-CONSUMER
 ```
 
-El siguiente chat debe partir del backend actual completo como candidato al Engine y limpiar/invertir dependencias hacia Web antes de cualquier movimiento físico.
+No mezclar full scheduler, Engine extraction, Management o Analytics en ese incremento.

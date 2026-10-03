@@ -1,145 +1,106 @@
 # Alarm Engine — Domain Model
 
-Estado: **CURRENT — shared contract ownership migrated; business model frozen; physical Engine extraction PLANNED**.
+Estado: **CURRENT — SHARED CONFIG CONTRACTS + OPERATIONAL CORE IMPLEMENTED**
 
-## Modelo de negocio congelado
+## Ownership CURRENT
 
-No reabrir por motivos de packaging:
+`ada-contracts-alarms==1.0.0` posee contratos compartidos de configuración/publicación, incluyendo `AlarmConfiguration`, `AlarmDefinition`, `AlarmConfigurationSnapshot` y schemas compartidos.
 
-- Rule;
-- AlarmDefinition;
-- AlarmIdentity `(family_key, alarm_key)`;
-- PlannedAlarm;
-- Occurrence;
-- Episode;
-- priority group/order;
-- visibility;
-- evaluator contract;
-- routing/lifecycle/reappearance/deactivation semantics ya aceptadas.
+`ada-command-center-alarms-core==1.0.0` posee semántica operacional del Engine: evaluation, occurrence/episode, priority/lifecycle y state transitions.
 
-## Shared contracts — CURRENT
+No volver a concentrar ambos ownerships en Core.
 
-### `ada-contracts-alarms==1.0.0`
-
-Owner de contratos compartidos entre productos/consumidores:
+## Conceptos
 
 ```text
-AlarmIdentity
-AlarmKind
-Criticality
-Alarm definition/configuration value types
-AlarmConfiguration
-AlarmConfigurationSnapshot
-Alarm configuration errors
-Engine CURRENT/FACTS JSON schemas
+Rule / AlarmDefinition
+    configuración canónica publicada
+
+PlannedAlarm
+    forma resuelta para Runtime
+
+Occurrence
+    activación de una Rule
+
+Episode
+    lifecycle compartido dentro de priority_group
+
+AlarmProjectionSnapshot
+    read model current por Tool producido por Modeler
 ```
 
-Schemas CURRENT:
+## Identidad
 
 ```text
-ada/contracts/alarms/schemas/engine_committed_facts_batch.v1.schema.json
-ada/contracts/alarms/schemas/engine_committed_facts_batch.v2.schema.json
-ada/contracts/alarms/schemas/engine_resolved_current_state.v1.schema.json
+AlarmIdentity(family_key, alarm_key)
 ```
 
-### `ada-contracts-tools==1.0.0`
+- key estable;
+- no usar `rule_key` separado;
+- `rule_name` editable y único dentro de family;
+- `display_name` requerido;
+- `title` es metadata estática del artifact;
+- `cause_template` sigue estático en el baseline actual.
 
-Owner de contratos Tool reutilizables:
+La causa dinámica efectiva permanece OPEN.
+
+## Configuración
+
+- kind: `RISK | IMPACT`;
+- criticality: `C1 | C2 | C3`;
+- categorías: Ecology / Productivity / Safety / Costs;
+- áreas: Mine / Plant, una o más;
+- color semántico: RED / YELLOW;
+- evaluator: `evaluator_key` + parámetros simples `str|float|bool`;
+- prioridad: `priority_group + priority_order`.
+
+## Visibilidad
 
 ```text
-Tool enums
-ToolStructure / component/subcomponent contracts
-Tool source contracts
-ToolDependencyEntry
-ToolDependencyManifest
-shared validation/errors
+VISIBLE
+TRACE_ONLY
 ```
 
-`ada-contracts-alarms` depende de `ada-contracts-tools`.
+TRACE_ONLY puede evaluarse y trazarse, pero no entra al snapshot visible del Modeler.
 
-## Command Center domain — CURRENT
+## Priority authority
 
-`scopes/ada-command-center/domain/alarms` ya no es owner de los modelos Alarm compartidos.
+Runtime es autoridad de prioridad.
 
-Su responsabilidad queda limitada a concern específico de Command Center:
+Dispositions CURRENT:
 
 ```text
-ALARM_CONFIGURATION_SOURCE_KEY
-next_routing_tool_kind()
+PREDOMINANT
+DEACTIVATED
+ECLIPSED
+CASCADE_SUPPRESSED
 ```
 
-`scopes/ada-command-center/domain/tools` está **SUPERSEDED / REMOVED**.
+Modeler no vuelve a ejecutar priority. Para el live baseline sólo proyecta `ACTIVE + PREDOMINANT` elegible para el destino.
 
-## Engine internals — CURRENT
+`ranking` queda prohibido como concepto paralelo; la prioridad ordinal publicada es `priority_order`.
 
-No mover a los packages de contracts:
+## Projection semantics
+
+`operator_pool` es un read model de alarms elegibles/autoritativas para un Tool; no equivale a todas las alarmas `ACTIVE` del Runtime.
+
+`operator_view` es la selección visible del Modeler sobre ese pool.
+
+Estos son estados de proyección, no estados del Runtime.
+
+## Reappearance / management
+
+Los contratos históricos de reappearance/deactivation/management siguen perteneciendo a Runtime/lifecycle. El live baseline no implementa todavía las proyecciones `tracking_view` ni `inactive_reactivation_view`.
+
+## Core boundaries
+
+Core/shared domain no debe conocer:
 
 ```text
-Planned/runtime state models
-WAL / EFFECTIVE
-RuntimeAlarmConfiguration
-DeliveryAlarmConfiguration
-materialization internal artifact types
-leases/fencing/persistence internals
-process bootstraps
+Cosmos transport
+Dash/Flask
+CSS/pixels
+Web sessions
+Tool Catalog discovery
+container provisioning
 ```
-
-Los packages de contracts no deben depender de ADA Web ni de Command Center.
-
-## Authoring → Materialization contract — DECIDED
-
-Command Center posee:
-
-```text
-authoring
-semantic/business validation
-Tool reference resolution
-routing validation
-visual target validation
-publication
-```
-
-La publicación válida es:
-
-```text
-AlarmConfigurationSnapshot
-    configuration
-    ToolDependencyManifest
-```
-
-Un snapshot publicado debe ser materializable por contrato.
-
-El stage adicional `ResolvedAlarmConfiguration` como contrato publicado está **SUPERSEDED**.
-
-## Target de Materialization — PLANNED
-
-```text
-Published AlarmConfigurationSnapshot
-        ↓
-deterministic materialization
-        ├── RuntimeAlarmConfiguration
-        └── DeliveryAlarmConfiguration
-```
-
-Materialization no debe volver a:
-
-- consultar Tool Catalog;
-- comprobar existencia semántica de Tools;
-- validar component/subcomponent membership de negocio;
-- recalcular routing direction;
-- volver a decidir visual target validity;
-- rehacer qualification del evaluator.
-
-Puede conservar validación mínima de integridad técnica/transport si existe una invariante real.
-
-## Deuda CURRENT
-
-La implementación física sigue bajo `scopes/ada-command-center/backend` y Materialization conserva dependencias/responsabilidades previas, incluyendo acoplamiento hacia superficies Web y resolución semántica. El cutover de packages no simplificó esa conducta.
-
-No introducir adapter de compatibilidad. La futura corrección debe reemplazar esa frontera limpiamente.
-
-## Extracción física
-
-`ada-alarm-engine` permanece **PLANNED**.
-
-Primero cerrar contratos y eliminar dependencias invertidas; luego evaluar mover físicamente Engine. Una frontera lógica no obliga a crear un servicio remoto.

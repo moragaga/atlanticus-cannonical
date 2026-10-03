@@ -1,206 +1,71 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT — Modeler boundary decided; materialization contract split is NEXT**.
+Estado: **CURRENT — LIVE BASELINE CLOSED; ADVANCED MODELING/OPERATIONS OPEN**
 
-## CLOSED / CURRENT decisions
+## CLOSED / CURRENT
 
 ```text
-shared Tool contracts package
-shared Alarm contracts package
-Engine publication schemas ownership
-Command Center semantic ownership before publication
-READY != EFFECTIVE
-exact artifact pin
+READY exact pair
+Runtime EFFECTIVE adoption
 Runtime CURRENT v1
 Runtime FACTS v2
-current direct Delivery receiver
-target Runtime -> Modeler -> Delivery direction
-Runtime/Modeler/Delivery same exact artifact
-CAROUSEL six-position topology
-QUEUE_IN_QUEUE Mine/Plant topology
-backpressure ownership
-Modeler recovery principle
-no legacy adapters
-no Engine dependency on Command Center Web
+Modeler current projection baseline
+per-Tool operator_pool/operator_view
+Delivery from Modeler current head
+Tool-key Cosmos connection registry
+fixed alarm-live-projection container
+local physical E2E through Cosmos read-back
 ```
 
-## NEXT único
+## OPEN — Modeler scheduler
 
 ```text
-ADA-ALARM-ENGINE-MATERIALIZATION-CONTRACT-SPLIT
+CAROUSEL full scheduler
+QUEUE_IN_QUEUE full scheduler
+90 vs 120 second rotation window
+QIQ fairness
+independent scheduler timers
+durable ModelerState/checkpoint
+recovery of scheduler state
+artifact A -> B state migration
+stale/disconnection policy
 ```
 
-Required output:
+Current first-six `operator_view` is not evidence that these are implemented.
+
+## OPEN — Runtime → Modeler evolution
+
+CURRENT baseline uses Runtime CURRENT v1.
+
+If future scheduler/history semantics require every transition, define the durable ordered no-drop handoff explicitly. Do not assume current head alone satisfies that future requirement.
+
+## OPEN — presentation/data
 
 ```text
-current DeliveryAlarmConfiguration field inventory
-field-by-field ownership classification
-RuntimeConfiguration final boundary
-ModelerConfiguration exact contract
-DeliveryConfiguration exact contract
-codec/materialization impact
-qualification plan
+effective dynamic cause
+Management projections
+tracking_view
+inactive_reactivation_view
+History/Analytics projections
+Projection Facts if required
 ```
 
-No implementar todavía scheduling operacional del Modeler.
-
-## OPEN — ModelerConfiguration exact schema
-
-Debe resolverse:
+## OPEN — operations/infrastructure
 
 ```text
-cómo se identifica CAROUSEL vs QUEUE_IN_QUEUE
-qué representa exactamente GENERIC / DISTRIBUTED
-qué "variante" adicional existe y dónde vive
-qué fields de Tool configuration se publican como primitives
-qué enrichment metadata necesita realmente Modeler
+production qualification producer
+resource provisioning/startup gate for live container
+Azure/Docker qualification
+physical Engine extraction
+Python 3.14.7/Trixie migration
 ```
 
-No asumir valores que no estén en contrato/implementación o decisión explícita.
+## Known minor observability gap
 
-## OPEN — Runtime → Modeler physical handoff
+Modeler puede escribir `CURRENT_MODELED` y aun mostrar `work=0/empty=1` porque el job actual no marca iteration work. No afecta el snapshot generado, pero la métrica debe corregirse en un incremento propio si se usa operacionalmente.
 
-Semántica congelada:
+## NEXT fuera del Engine core
 
 ```text
-durable
-ordered
-no-drop
-consumer checkpoint
-bounded memory
+Command Center Web consumer of alarm-live-projection
 ```
-
-Elección física aún OPEN:
-
-```text
-coordinated CURRENT+FACTS reader
-vs
-explicit coherent model-input batch/document
-```
-
-Debe garantizar coherencia temporal/artifact y recovery.
-
-## OPEN — ModelerState durable minimum
-
-Definir exactamente qué persiste:
-
-```text
-input checkpoint
-candidate state
-scheduler cursors
-visible/hidden membership
-timer anchors
-rotation counters only if contractually needed
-current modeled heads
-liveness/disconnection metadata
-```
-
-Evitar persistir datos derivables innecesariamente.
-
-## OPEN — QUEUE_IN_QUEUE fairness
-
-Topología congelada:
-
-```text
-MINE: 4 components / 3 visible
-PLANT: 5 components / 3 visible
-```
-
-Pendiente:
-
-```text
-fairness dentro del mismo component
-vs
-fairness entre components
-tratamiento de components vacíos/nuevos
-selección después de desaparición abrupta
-```
-
-## OPEN — rotation window
-
-El usuario indicó rango candidato:
-
-```text
-90..120 seconds
-```
-
-No hay valor final.
-
-Debe ser configurable y validado; no hardcodear antes de decisión.
-
-## OPEN — configuration adoption with live Modeler state
-
-Cuando artifact/config cambia:
-
-```text
-A state/backlog -> B
-```
-
-definir:
-
-```text
-qué se preserva
-qué se reconcilia
-qué se reinicia
-qué invalida state
-cómo se evita mezclar artifacts
-```
-
-## OPEN — DeliveryConfiguration exact transport contract
-
-Responsabilidad congelada:
-
-```text
-transport/publication only
-```
-
-Fields físicos exactos aún deben inventariarse contra provisioning/connections actuales.
-
-## OPEN — residual `domain/alarms`
-
-Dirección conceptual decidida:
-
-```text
-next_routing_tool_kind -> Command Center validation
-ALARM_CONFIGURATION_SOURCE_KEY -> shared/primitive identity
-```
-
-Falta confirmar imports restantes antes de remover/rehome físicamente el package.
-
-## OPEN — physical extraction / namespaces
-
-Target scope:
-
-```text
-scopes/ada-alarm-engine
-```
-
-Aún no están congelados todos los package names / namespaces finales ni el orden físico exacto de movimiento.
-
-No introducir aliases legacy.
-
-## BLOCKED / SEPARATE
-
-Full Command Center Web qualifier por:
-
-```text
-ada.web.tools.*
-vs
-ada.contracts.tools.*
-```
-
-No resolver dentro del Modeler/Alarm Engine contract split.
-
-## PLANNED after contract split
-
-```text
-Modeler persistence/state
-CAROUSEL implementation
-QUEUE_IN_QUEUE implementation
-Modeler -> Delivery heads
-Delivery transport cutover
-physical scope extraction
-distribution/Docker qualification
-```
-
-Un frente por incremento.

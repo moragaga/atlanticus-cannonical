@@ -14,306 +14,174 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-## Command Center capability parity — CURRENT / CLOSED
+## Alarm pipeline — CURRENT / CLOSED baseline
 
-Command Center consume las capabilities genéricas actuales para Users / Profiles / Navigation / Manager.
-
-El bloqueo Web restante por duplicación de contratos Tool es separado y no debe contaminar el frente Alarm Engine.
-
-## Alarm Engine ownership — CURRENT decision / physical extraction PLANNED
-
-CURRENT físico:
+El pipeline implementado vigente es:
 
 ```text
-scopes/ada-command-center/backend
+Command Center publication
+    ↓
+Alarm Configuration projection
+    ↓
+Materialization READY
+    ↓
+Runtime EFFECTIVE
+    ↓
+Runtime CURRENT + FACTS
+    ↓
+Modeler current projection
+    ↓
+Delivery
+    ↓
+Cosmos alarm-live-projection
+    ↓
+Web consumer [NEXT]
 ```
 
-Target:
+El consumo directo Runtime → Delivery queda **SUPERSEDED / REMOVED como frontera CURRENT**.
+
+## Exact artifact invariant — FROZEN
 
 ```text
-scopes/ada-alarm-engine
+READY != EFFECTIVE
+exact artifact = source_key + result_id + manifest_sha256 + resolution_key
+Runtime, Modeler y Delivery usan el mismo exact artifact
+no fallback to latest READY
 ```
 
-Dirección congelada:
+## Materialization split — REFINED
+
+Decisión previa:
 
 ```text
-Command Center
-    authoring
-    semantic validation
-    Tool/reference validation/resolution
-    routing/visual validation
-    publication
-        ↓
-shared Alarm publication contract
-        ↓
-Alarm Engine
-    core
-    materialization
-    persistence
-    runtime
-    modeler
-    delivery
+RuntimeConfiguration + ModelerConfiguration + DeliveryConfiguration
+antes de implementar Modeler
 ```
 
-El target Engine no debe depender de Command Center Web.
-
-## Clean boundary — FROZEN
-
-No crear adapters ni importar módulos externos sólo para leer unos pocos atributos equivalentes.
-
-Regla:
+Estado actual:
 
 ```text
-si Alarm sólo transporta un dato
-    usar primitive/documented value
-
-si Alarm toma decisiones de dominio sobre el dato
-    usar Alarm-owned semantic type
+RuntimeAlarmConfiguration + DeliveryAlarmConfiguration
 ```
 
-Target prohibido:
+El Modeler baseline consume ambos contratos existentes del mismo READY exacto.
 
-```text
-Engine -> ada-command-center.web.*
-Engine -> atlanticus.web.*
-Engine -> Tool Catalog discovery
-Engine -> ToolStructure runtime dependency
-Engine -> mirrored adapters of external Tool models
-```
+La separación en `ModelerConfiguration` deja de ser prerequisito. Permanece OPEN sólo si aparece una responsabilidad/configuración independiente real al implementar scheduling avanzado.
 
-La equivalencia/provenance de valores primitivos externos puede documentarse sin crear dependencia Python de runtime.
-
-## Residual domain — REFINED / final implementation still OPEN
-
-Dirección acordada:
-
-```text
-next_routing_tool_kind()
-    Command Center pre-publication validation
-
-ALARM_CONFIGURATION_SOURCE_KEY
-    shared/primitive publication identity;
-    no paquete completo sólo para importar un string
-```
-
-La eliminación/rehome física de `scopes/ada-command-center/domain/alarms` sigue PLANNED hasta inventario final de imports.
-
-## Materialization target — REFINED / DESIGN FROZEN
-
-SUPERSEDED como target:
-
-```text
-Materialization
-    ├── RuntimeAlarmConfiguration
-    └── DeliveryAlarmConfiguration
-```
-
-Target actual:
-
-```text
-Materialization
-    ├── RuntimeConfiguration
-    ├── ModelerConfiguration
-    └── DeliveryConfiguration
-```
-
-Los tres pertenecen al mismo artifact pin exacto.
-
-El actual `DeliveryAlarmConfiguration` mezcla modelado y entrega; debe dividirse en el próximo incremento antes de implementar nuevos consumidores.
-
-## Runtime — CURRENT ownership
+## Runtime ownership — FROZEN
 
 Runtime posee:
 
 ```text
 evaluation
 occurrence / episode
-operational lifecycle
-priority semantics
-management / deactivation effects
-assignments
+priority truth
+management/deactivation operational effects
+assignments/routing state
 EFFECTIVE adoption
 durable operational facts
 ```
 
-Runtime no decide slots de pantalla, carousel, queue-in-queue ni transporte Cosmos.
+Runtime no posee slots, carousel, QIQ ni transporte Cosmos.
 
-## Modeler — NEW CURRENT decision / implementation PLANNED
+## Modeler ownership — CURRENT baseline / advanced scheduling PLANNED
 
-Modeler es backend lógico stateful del Alarm Engine.
-
-Posee:
+CURRENT:
 
 ```text
-logical positions / slots
-ordering
-rotation
-timers de exposición
-queue state
-carousel state
-queue-in-queue state
-reconciliation ante cambios abruptos
-durable checkpoint/state
-modeled heads consumibles por Delivery
+consume authoritative Runtime CURRENT
+reopen exact materialized configuration
+filter eligible PREDOMINANT active alarms
+build per-Tool operator_pool
+build first-six operator_view
+persist current index + per-Tool snapshot
+validate checksums/current exact pin
 ```
 
-No es una capa Web.
-
-No posee CSS, Dash callbacks ni geometría física/pixel layout.
-
-## Delivery — REFINED
-
-CURRENT implementado:
+PLANNED:
 
 ```text
-Delivery input receiver consume Runtime CURRENT/FACTS
+CAROUSEL
+QUEUE_IN_QUEUE
+rotation timers
+fairness
+durable scheduler checkpoint/state
+staleness/disconnection policy
 ```
 
-Target:
+Modeler no recalcula prioridad.
+
+## Runtime → Modeler handoff — REFINED
+
+CURRENT baseline:
 
 ```text
-Delivery consume modeled heads
-y se ocupa de transporte/publicación
+Runtime CURRENT v1 + exact READY configurations
 ```
 
-El consumo directo Runtime → Delivery es **SUPERSEDED como target**, pero permanece CURRENT implementado hasta cutover real.
+FACTS v2 no son requeridos por el Modeler baseline.
 
-Delivery no debe decidir ordering, positions, dwell time, carousel ni queue-in-queue.
+La semántica previa de handoff ordered/durable/no-drop permanece como target sólo para futuros cambios que realmente necesiten reproducir transiciones; no afirmar que está implementada hoy.
 
-## Backpressure / queue semantics — FROZEN
+## Modeler → Delivery — CURRENT
 
-Runtime → Modeler:
+Modeler publica un durable current head en filesystem:
 
 ```text
-ordered
-durable
-no-drop para cambios contractualmente necesarios
-Runtime no espera acknowledgement de Modeler
-Modeler mantiene checkpoint propio
-memoria acotada
+current/index.json
+current/tools/<tool-hash>/latest.json
 ```
 
-Modeler → Delivery:
+Delivery consume el head vigente y puede republicarlo idempotentemente.
+
+No existe todavía checkpoint durable independiente por destination; esa optimización permanece OPEN si se requiere.
+
+## Delivery — CURRENT / FROZEN
+
+Delivery posee:
 
 ```text
-durable current head por destination
-latest-wins
-checkpoint independiente por destination
-un destino lento no bloquea otros destinos
+Tool -> Cosmos connection resolution
+bounded parallel publication
+transport/upsert
+publication metrics/errors
 ```
 
-## CAROUSEL — DESIGN FROZEN parcial
+No posee modelado.
 
-Siempre seis posiciones físicas.
-
-### 0..1 DISTRIBUTED
+Contrato físico:
 
 ```text
-un único carousel de seis posiciones
+container fijo = alarm-live-projection
+partition key = /tool_key
 ```
 
-Una única alarma DISTRIBUTED participa como cualquier otro elemento elegible.
+`config/connections.json` se indexa por `tool_key` y sólo declara nombres de variables endpoint/database/credential.
 
-### 2+ DISTRIBUTED
+Varios Tools pueden usar la misma conexión física.
 
-```text
-positions 1..5
-    carousel normal
+## Live projection semantics — FROZEN baseline
 
-position 6
-    carousel DISTRIBUTED independiente
-```
+`operator_pool` contiene alarms autoritativas elegibles para ese destino; no todas las evaluaciones ACTIVE.
 
-Las dos rotaciones son independientes.
+`operator_view` es la selección actualmente visible del Modeler.
 
-Las posiciones de cada región visible se compactan de izquierda a derecha sin huecos.
+`ranking` no existe. `priority_order` es la prioridad ordinal vigente.
 
-Cuando el conjunto DISTRIBUTED vuelve a menos de dos, se vuelve al único carousel de seis posiciones mediante reconciliación; no resetear estado arbitrariamente si puede preservarse de forma válida.
+TRACE_ONLY no se publica como visible.
 
-La duración concreta `90/120 s` está OPEN.
+## Cause — OPEN
 
-## QUEUE_IN_QUEUE — DESIGN FROZEN parcial
+CURRENT snapshot conserva `cause_template` más evidence.
 
-```text
-MINE
-    4 components
-    3 posiciones visibles totales
+La materialización de una causa dinámica efectiva queda OPEN; Web no debe inventarla ni recombinar reglas de negocio por su cuenta.
 
-PLANT
-    5 components
-    3 posiciones visibles totales
+## CAROUSEL / QIQ — DESIGN FROZEN parcial, NOT IMPLEMENTED
 
-total visible máximo = 6
-```
+Se conservan las decisiones previas de 6 posiciones, reglas DISTRIBUTED y topología MINE/PLANT, pero siguen PLANNED hasta existir scheduler durable y qualification específica.
 
-Cada component puede tener candidatos ocultos adicionales.
-
-MINE y PLANT tienen schedulers independientes.
-
-Permanece OPEN la política exacta de fairness entre la cola interna de un component y candidatos todavía no mostrados de otros components.
-
-La duración concreta `90/120 s` está OPEN.
-
-## Reconciliation / recovery — FROZEN
-
-El Modeler se diseña como reconciliador, no como una secuencia rígida de movimientos de índices.
-
-Verdad principal:
+## NEXT único
 
 ```text
-Alarm identity + eligibility + scheduler state
-```
-
-Derivación:
-
-```text
-current logical slots / modeled head
-```
-
-Ante desaparición, gestión o pérdida de elegibilidad:
-
-```text
-operational truth wins
-reconcile immediately
-```
-
-Ante crash/restart:
-
-```text
-load ModelerState
-replay after checkpoint
-reconcile(now)
-publish present valid head
-```
-
-No reproducir obligatoriamente rotaciones visuales históricas vencidas.
-
-## Configuration adoption with live model state — OPEN
-
-Una transición:
-
-```text
-artifact A backlog/state
-→ artifact B
-```
-
-debe definir qué scheduler state se preserva, migra, reconcilia o reinicializa.
-
-No resolver por inferencia dentro del consumidor.
-
-## Exact handoff schemas — OPEN
-
-La semántica está congelada, pero no el documento físico exacto de:
-
-```text
-Runtime -> Modeler
-Modeler -> Delivery
-```
-
-CURRENT v1 + FACTS v2 son superficies implementadas y reutilizables; todavía debe decidirse si el Modeler las consume mediante un lector coordinado o si se publica un contrato explícito adicional por ciclo.
-
-## Next único
-
-```text
-ADA-ALARM-ENGINE-MATERIALIZATION-CONTRACT-SPLIT
+ADA-COMMAND-CENTER-ALARM-LIVE-WEB-CONSUMER
 ```
