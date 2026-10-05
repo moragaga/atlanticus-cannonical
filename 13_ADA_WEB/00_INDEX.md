@@ -1,38 +1,47 @@
 # ADA Web — Canonical Index
 
-Estado: **CURRENT — TOOL CONTRACT WEB CUTOVER CLOSED / DISTRIBUTION PREPARATION NEXT**
+Estado: **CURRENT — STATIC ALARM BASELINE CLOSED / VISUAL QUALIFICATION OPEN**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
-| `01_CURRENT_BASELINE.md` | Baseline funcional actual. | CURRENT |
+| `01_CURRENT_BASELINE.md` | Baseline Web funcional actual. | CURRENT |
 | `02_TESTING_POLICY.md` | Política de pruebas. | CURRENT |
 | `03_SHELL_BOUNDARIES.md` | Shell boundaries. | CURRENT/HISTORICAL |
 | `04_QUALIFICATION_HISTORY.md` | Evidencia histórica. | HISTORICAL |
-| `05_SOURCE_LEDGER.md` | Evidencia previa. | HISTORICAL |
+| `05_SOURCE_LEDGER.md` | Provenance del baseline Web. | AUDIT LEDGER |
 | `06_INFRASTRUCTURE_STARTUP.md` | Runtime Docker, resource preparation y emuladores. | CURRENT / VERIFIED |
 | `07_ALARM_MANAGEMENT_FRONTEND.md` | Alarm management UI. | OTHER FOCUS |
-| `08_INTEGRATED_OPERATIONS_PRESENTATION.md` | Integrated Operations composition, focus, responsive y videowall presentation contract. | CURRENT DESIGN / IMPLEMENTATION PLANNED |
+| `08_INTEGRATED_OPERATIONS_PRESENTATION.md` | Integrated Operations composition/focus + CURRENT static baseline boundary. | CURRENT DESIGN / PARTIAL IMPLEMENTATION |
 
-## Runtime verified
+## CURRENT Web structure relevant to alarms
 
 ```text
-consumer repo isolated
-Docker image build PASS
-Azurite PASS
-Cosmos Emulator PASS
-Data Explorer PASS
-resource preparation PASS
-Web healthy
-/health/live 200
-/health/ready 200
+Tool Projection READY
+→ ToolStructure + ToolRenderTopology
+→ OperationalRenderBinding
+→ AlarmBaselineProjection
+→ AlarmBaselineSurface
+→ ADA Generic layout
 ```
 
-## Current sequence
+## Static baseline status
 
-Tool Contract Web Cutover is closed.
+```text
+contract implementation    CURRENT / CLOSED
+automated qualification    VERIFIED
+visual browser qualification OPEN
+dynamic alarm overlay      PLANNED / SEPARATE
+```
 
-Distribution preparation remains the implementation priority documented in `01_CURRENT_BASELINE.md`.
+## Reference
 
-Integrated Operations now has a canonical presentation design contract, but its implementation and visual qualification remain PLANNED.
+`isolated-web-functions/operational_trace` remains a visual/interaction reference only.
 
-Alarm Engine / Command Center integration remains later and separate.
+## Current sequence for this track
+
+```text
+1. visual qualification of static baseline
+2. only after that, dynamic alarm overlay against authoritative live projection
+```
+
+Do not reopen Alarm Engine domain rules during the visual qualification increment.

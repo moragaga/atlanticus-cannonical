@@ -1,6 +1,6 @@
 # ADA Generic — Current Composition
 
-Estado: **CURRENT — TOOL-SCOPED SOURCE + USERS RUNTIME CUTOVER IMPLEMENTED**
+Estado: **CURRENT — TOOL RESOLUTION + STATIC ALARM BASELINE COMPOSED**
 
 ## Composition root CURRENT
 
@@ -11,11 +11,71 @@ settings
 local/durable Manager composition
 identity binding
 Tool Projection resolution
-operational render binding
+OperationalRenderBinding
+static AlarmBaselineProjection
+static AlarmBaselineSurface module/layout
 ADA Master Projection composition
 KPI Collector attachment
 Web runtime lifecycle
 ```
+
+## Tool composition CURRENT
+
+READY Tool:
+
+```text
+ToolConfiguration
+    ├── display_name
+    ├── branding
+    ├── structure
+    └── render_topology
+           ↓
+OperationalRenderBinding
+           ↓
+AlarmBaselineProjection
+           ↓
+create_application_definition(...)
+           ↓
+operational layout
+```
+
+The baseline is mounted below the operational header and before main application content when a projection exists.
+
+## No Tool CURRENT
+
+```text
+UNCONFIGURED
+→ base application definition
+→ no OperationalRenderBinding
+→ no AlarmBaselineProjection
+```
+
+The application remains valid.
+
+No implicit/default Tool is created.
+
+## Alarm surface modules CURRENT
+
+```text
+ada-alarm-baseline-surface
+ada-alarm-management-summary
+ada-alarm-status
+```
+
+The baseline module is static and neutral; the other alarm surfaces retain their own contracts.
+
+## Asset ordering CURRENT
+
+Relevant layers:
+
+```text
+ada_alarm_management_summary  130
+ada_alarm_status              140
+ada_alarm_baseline_surface    145
+ada_time_status               150
+```
+
+The baseline moved from the historical `150` collision to `145`.
 
 ## Namespace
 
@@ -26,37 +86,9 @@ scope_namespace       = ADA_TOOL_NAMESPACE
 
 ## Source ownership CURRENT
 
-One Tool-scoped Source store is injected for:
+Tool-scoped Source covers Tool-specific domains.
 
-```text
-Navigation
-Profiles
-ADA Access
-Operational
-Tools
-KPI Registry
-KPI Definitions
-```
-
-Global Users Registry remains application-scoped.
-
-Tool User Membership:
-
-```text
-<application>/<tool>/users/memberships.json.gz
-```
-
-Recovery:
-
-```text
-<application>/<tool>/users/recovery/...
-```
-
-## Cosmos CURRENT
-
-One Cosmos runtime/database belongs to one Tool.
-
-`users-runtime` uses `user_id` directly as item id/partition key and no app/tool routing fields.
+Global Users identity registry remains application-scoped.
 
 ## Session CURRENT
 
@@ -68,16 +100,10 @@ Identity
 → Manager/Navigation principal
 ```
 
-## Master Projection CURRENT
-
-Six Source Projection domains remain. Users is a special recovery operation.
-
-## Current gap
-
-Navigation still lacks explicit PUBLIC/RESTRICTED state.
-
 ## Distribution
 
-Previously verified distributed artifacts predate this cutover.
+This hito qualified source/runtime tests only.
 
-Current HEAD must be regenerated/requalified after Navigation semantics close.
+It did not create or qualify a new final distributed artifact.
+
+Distribution/tooling remains a separate track.

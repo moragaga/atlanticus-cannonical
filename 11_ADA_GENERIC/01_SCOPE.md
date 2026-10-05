@@ -1,103 +1,141 @@
 # ADA Generic — Scope
 
-Estado: **CURRENT / STAGE 1 CLOSED**
+Estado: **CURRENT — GENERIC DATA DELIVERY + STATIC STRUCTURAL PRESENTATION**
 
 ## Propósito
 
-ADA Generic compone la base reutilizable necesaria para ejecutar una ADA sobre contratos
-configurados y entregar estado operacional consumible.
+ADA Generic composes the reusable base needed to execute an ADA over configured contracts and expose operational state to Web consumers.
 
-No debe convertirse en una megaaplicación ni absorber comportamiento visual específico de cada
-Tool.
+It must not absorb Tool-specific business behavior or Alarm Engine logic.
 
-## Frontera de ownership
+## Ownership boundary
 
-Atlanticus aporta infraestructura y capacidades genéricas.
+Atlanticus provides generic infrastructure/capabilities.
 
-ADA puede poseer capabilities propias bajo `scopes/ada` y consumir esos contratos genéricos
-directamente.
+ADA owns ADA-specific capabilities under `scopes/ada` and may compose them directly.
 
-Integrar una capability no transfiere su ownership al core.
+The generic Atlanticus core never depends on ADA.
 
-El núcleo genérico de Atlanticus nunca depende de ADA.
-
-## Alcance CURRENT de ADA Generic
-
-Stage 1 resuelve:
+## CURRENT flow
 
 ```text
 environment / .env
 → provider settings
 → Tool Projection durable
 → Tool resolution
-→ ToolStructure
-→ KPI Collector cuando corresponde
+→ ToolStructure + ToolRenderTopology
+→ OperationalRenderBinding
+→ AlarmBaselineProjection
+→ static AlarmBaselineSurface
+→ KPI Collector when configured
 → Latest / Timeseries
 → process cache
-→ browser dcc.Store por ToolComponent
+→ browser/store delivery
 ```
 
-La aplicación puede continuar existiendo aunque una capability operacional no esté configurada o
-esté temporalmente indisponible, de acuerdo con sus estados de resolución.
-
-## Frontera de entrega
-
-La frontera genérica termina en la entrega del estado operacional al consumidor Web.
+## Tool resolution states
 
 ```text
-ADA Generic
-→ dcc.Store por ToolComponent
-→ END GENERIC DATA DELIVERY
+READY
+UNCONFIGURED
+UNAVAILABLE
+INVALID
 ```
 
-Desde ahí:
+### READY
+
+The Tool projection provides the static structure used to derive render binding and alarm baseline.
+
+### UNCONFIGURED
+
+ADA Generic still starts.
+
+It creates no default Tool, no render binding and no alarm baseline.
+
+### UNAVAILABLE / INVALID
+
+The existing degraded-resolution path remains in force. The static baseline is not fabricated from incomplete state.
+
+## Generic presentation boundary
+
+ADA Generic now owns one structural presentation that is common enough to be generic:
 
 ```text
-developer / concrete Tool application
-→ construye la visualización específica
+AlarmBaselineSurface
 ```
 
-Esto permite que una Tool como Operaciones Integradas tenga necesidades visuales especiales sin
-convertirlas en arquitectura obligatoria para Mina, Process u otras Tools.
+It represents configured Tool structure only.
 
-## Operational Render
+It does not represent live alarm state.
 
-`OperationalRenderBinding` conserva únicamente estructura:
+Specific operational bodies remain outside the generic contract where Tool-specific visualization is required.
+
+## Operational Render Binding
+
+CURRENT binding contains:
 
 ```text
 ToolStructure
-ToolComponent
+ordered OperationalComponentBinding values
+bottom_component_key | None
 ```
 
-No contiene estado KPI.
+Derived:
 
-No contiene `ComponentStoreSnapshot`.
+```text
+main_components
+bottom_component
+```
 
-No representa una segunda ruta de datos.
+It contains no KPI state and no live alarm state.
 
-## Regla canónica
+## Static Alarm Baseline
+
+CURRENT projection:
+
+```text
+AlarmBaselineProjection
+    main_points
+    bottom_point | None
+```
+
+Current anchors are component identities.
+
+The surface renders no visible component labels.
+
+Identity is retained as metadata for future dynamic overlay.
+
+## Dynamic alarm boundary
+
+Not part of this closure:
+
+```text
+alarm-live-projection read
+routes
+origin/affected
+cards
+selection
+preview
+severity state
+management state
+```
+
+Those must arrive from the authoritative alarm runtime/modeler contracts.
+
+## Rule
 
 ```text
 CONFIGURATION
 determines structure
 
 RUNTIME DATA
-determines state
+determines live state
 
 GENERIC APPLICATION
-delivers stable contracts and data boundaries
+composes stable generic boundaries
 
-CONCRETE TOOL / DEVELOPER
-owns specific visualization
+CONCRETE TOOL
+owns Tool-specific body/presentation
 ```
 
-No crear adapters, shims, aliases ni doble contrato para unir estas fronteras.
-
-## Estado
-
-```text
-ADA-GENERIC-STAGE-1
-CLOSED / VERIFIED / CURRENT
-```
-
-Nuevos trabajos en ADA Generic requieren un finding real descubierto por consumidores concretos.
+Static baseline is structure, not live state.

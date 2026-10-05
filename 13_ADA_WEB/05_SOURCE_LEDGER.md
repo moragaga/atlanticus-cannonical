@@ -1,96 +1,139 @@
 # ADA Web — Source Ledger
 
-Estado: **AUDIT LEDGER**
+Estado: **AUDIT LEDGER / STATIC ALARM BASELINE 2026-10-05**
 
-## Implementación CURRENT auditada
+## Implementation CURRENT audited
 
 ```text
-moragaga/atlanticus@bc8eafc21a65e3f9aff044c232e2562cd490c49f
+moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
 ```
 
-Parent:
+Commit date:
 
 ```text
-d6e405e6466b1bf8d29dadae442a03062da2f1b3
+2026-10-05T19:12:27Z
 ```
 
-Tree:
+## Decisions
 
 ```text
-c26c0ee18161ca7fc49c439109bec99ecae77476
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-## Checkpoints ADA Generic observados
+No specific active decision contradiction was textually verified during this closure.
+
+Historical decision documents containing Tool/Structure evolution exist, but exact binary DOCX wording was not used to invent additional constraints.
+
+## Canonical base before replacement
 
 ```text
-01a4387d9f73aceb83441d2f26f94ad9025a661c
-Operational bootstrap
-
-940336d5b704d10280cc2375e68c60b45f235eb0
-Settings dependency hygiene
-
-d6e405e6466b1bf8d29dadae442a03062da2f1b3
-Collector runtime wiring
-
-bc8eafc21a65e3f9aff044c232e2562cd490c49f
-Operational Render structural cutover
-Stage 1 closure
+moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
 ```
 
-## Scopes relevantes
+## Relevant implementation scopes
 
 ```text
-scopes/ada/web/application/ada-generic-application/
-scopes/ada/web/kpis/collector/
+scopes/ada-contracts/tools/
+scopes/ada/web/tools/configuration/
 scopes/ada/web/operational-render-binding/
-scopes/ada/web/tools/persistence/
-scopes/ada/web/storage/namespace/
-web/framework/core/
-connectivity/storage/
-connectivity/cosmos/
+scopes/ada/web/alarms/baseline-projection/
+scopes/ada/web/alarms/baseline-surface/
+scopes/ada/web/application/ada-generic-application/
 ```
 
-## Qualification observada de cierre
+## Render topology checkpoint
 
 ```text
-operational-render-binding  7 passed
-kpis/collector              56 passed
-ada-generic-application     86 passed
-total                       149 passed
-ruff                        PASS
-git diff --check            PASS
+ToolRenderTopology.bottom_component_key
+OperationalRenderBinding.main_components
+OperationalRenderBinding.bottom_component
 ```
 
-## Conflict ledger
-
-Canonical inspeccionado antes de este reemplazo:
+Qualification:
 
 ```text
-moragaga/atlanticus-cannonical@5c29631526939c52528e147b4a83e5557e610bf0
+tools/configuration                 90 passed
+render-topology/source-release      11 passed
+operational-render-binding          11 passed
+configuration-manager               64 passed
+generic application                205 passed
 ```
 
-Todavía describía:
+## Static baseline checkpoint
 
 ```text
-ADA-GENERIC-OPERATIONAL-BOOTSTRAP
-PLANNED / NEXT
+AlarmBaselineProjection.main_points
+AlarmBaselineProjection.bottom_point
+AlarmBaselineSurface static traces
+ADA Generic integration
+asset order 145
 ```
 
-y una ruta startup ya removida.
+Qualification:
 
-Clasificación:
+```text
+baseline-projection                 19 passed
+baseline-surface                     9 passed
+operational-render-binding          11 passed
+generic application                206 passed
+legacy layout-role grep            PASS
+git diff --check                    PASS
+```
+
+## Reference source
+
+```text
+moragaga/isolated-web-functions:main
+operational_trace/
+assets/operational_trace/
+```
+
+Classification:
+
+```text
+REFERENCE
+```
+
+Used for visual geometry and future interaction knowledge only.
+
+## Canonical conflicts found before replacement
+
+Stale canonical text declared:
+
+```text
+ProcessLayoutRole
+component layout_role
+PROCESS center-only alarm baseline
+OperationalRenderBinding as structure-only
+UI / Alarm integration PLANNED
+```
+
+Current implementation declares:
+
+```text
+no layout roles
+center_component_key semantic center
+optional ToolRenderTopology.bottom_component_key
+binding main/bottom topology
+PROCESS all-component static baseline
+Generic static baseline integration CURRENT
+```
+
+Classification:
 
 ```text
 IMPLEMENTATION CURRENT
 CANONICAL STALE
 ```
 
-## Historical decisions
+These replacement files reconcile that canonical drift.
+
+## Open
 
 ```text
-moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+visual browser qualification
+dynamic alarm overlay
+subcomponent runtime anchors
+full Operational Trace behaviors
+hot Tool reprojection refresh
 ```
-
-No se verificó un conflicto específico aplicable en este cierre.
-
-Permanece HISTORICAL.

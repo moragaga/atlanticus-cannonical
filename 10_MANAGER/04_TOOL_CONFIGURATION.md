@@ -1,19 +1,20 @@
 # Manager — Tool Configuration
 
-Estado: **FROZEN/CURRENT — TRANSVERSAL TOOL CONTRACT CUTOVER CLOSED**
+Estado: **FROZEN/CURRENT — TOOL STRUCTURE + RENDER TOPOLOGY CUTOVER CLOSED**
 
 ## Ownership
 
-Tool Configuration continúa siendo ADA-specific y permanece en:
+Tool Configuration remains ADA-specific:
 
 ```text
 scopes/ada/web/tools/configuration
 ```
 
-Su responsabilidad Web incluye:
+It owns:
 
 ```text
 ToolConfiguration
+ToolRenderTopology
 BrandingConfiguration integration
 ToolSourceService / codecs
 Source / Projection composition
@@ -21,7 +22,7 @@ persistence composition
 editor / callbacks / presentation
 ```
 
-Los contratos estructurales y de Source compartidos por productos ADA tienen un único owner transversal:
+Shared structural/source contracts remain under:
 
 ```text
 scopes/ada-contracts/tools
@@ -29,10 +30,9 @@ package: ada-contracts-tools==1.0.0
 namespace: ada.contracts.tools
 ```
 
-Incluyen, entre otros:
+They include:
 
 ```text
-ProcessLayoutRole
 ToolConfigurationKind
 ToolScope
 ToolStructure
@@ -46,58 +46,141 @@ ToolDependencyEntry
 ToolDependencyManifest
 ```
 
-`ada.web.tools.configuration` consume esos tipos transversales; no define una copia paralela de ellos.
+`ProcessLayoutRole` is no longer part of the CURRENT contract.
 
-El backend puede consumir `ada.contracts.tools` cuando intercambia exactamente ese contrato transversal. Un modelo interno backend con estado, ciclo de vida o comportamiento propio puede mantenerse separado y convertir explícitamente en la frontera. Backend no debe depender de `ada.web.tools`.
+## Superseded layout-role model
 
-## Autoridad estructural
+The following model is SUPERSEDED:
 
-Tool Configuration determina qué estructura existe.
+```text
+ProcessLayoutRole
+component.layout_role
+LEFT
+CENTER
+RIGHT
+BOTTOM as persistent ToolStructure roles
+```
 
-Data determina el estado de lo que ya existe.
+Do not recreate it in Tool Configuration, Manager, render binding or consumers.
 
-Una Tool correctamente configurada debe poder montar su UI aunque todavía no existan datos.
+## Structural authority
 
-La existencia de la aplicación Web no depende de que exista una Tool Configuration publicada.
+Tool Configuration determines which structure exists.
 
-## Tool kinds
+Runtime data determines the state of that existing structure.
 
-Baseline operacional congelado:
+A Tool may mount its static structural UI before runtime KPI/alarm data exists.
+
+The Web application itself can start when no Tool has been published.
+
+No default Tool is synthesized.
+
+## ToolStructure CURRENT
 
 ### PROCESS
 
-- ámbito operacional global;
-- Components con `layout_role`;
-- CENTER obligatorio;
-- baseline de alarmas centrado en operación central.
-
-### INTEGRATED OPERATIONS
-
-- sin ámbito global único;
-- cada Component declara scope;
-- baseline de alarmas considera todos los Components.
-
-## Topología
-
-Component/Subcomponent keys son identidad consumible.
-
-Component es unidad funcional de datos:
+Required:
 
 ```text
-1 Component = 1 logical Store/Collector identity
+operational_scope
+center_component_key
+one or more ordered components
+subcomponents for every component
 ```
 
-Subcomponent:
+`center_component_key` must reference an existing component.
+
+It represents semantic operational centrality, not physical center placement.
+
+Component order is authoritative.
+
+Process subcomponents do not declare cross-component links.
+
+A component may omit scope and inherit the Process `operational_scope`. An explicitly equal scope is canonicalized away.
+
+### INTEGRATED_OPERATIONS
+
+Required:
 
 ```text
-no Store propio
-no Collector propio
-no destino KPI propio
+no global operational_scope
+no center_component_key
+scope on every component
+Mine and Plant represented
+Mine components before Plant components
 ```
+
+The sequence in `ToolStructure.components` is authoritative.
+
+## ToolRenderTopology CURRENT
+
+Presentation topology is intentionally outside `ToolStructure`.
+
+```text
+ToolRenderTopology(
+    bottom_component_key: str | None = None
+)
+```
+
+Rules:
+
+```text
+bottom optional
+bottom PROCESS only
+bottom references an existing Tool component
+bottom != center_component_key
+```
+
+When no bottom exists, `ToolConfiguration.to_document()` omits `render_topology`.
+
+This keeps previous Tool documents compatible without inventing layout roles.
+
+## Source editor behavior CURRENT
+
+For an edit that keeps the same Tool kind:
+
+```text
+preserve structure
+preserve render_topology
+```
+
+When Tool kind changes:
+
+```text
+clear structure
+clear render_topology
+```
+
+The structure editor may carry render-topology editor state while editing, but persisted ownership remains `ToolConfiguration.render_topology`, not `ToolStructure`.
+
+## Structure editor CURRENT
+
+PROCESS exposes an optional bottom component selector.
+
+Behavior:
+
+```text
+clearable
+options are current component keys
+center component excluded
+Integrated Operations hides/disables bottom selection
+```
+
+The complete `ToolConfiguration` is validated before structure state is accepted.
+
+## Alarm structural identities
+
+`ToolStructure.alarm_baseline_component_keys` returns all components for supported operational Tool kinds.
+
+Static alarm baseline is not the same as alarm runtime target configuration.
+
+Alarm runtime may later target component/subcomponent identities according to its own contract.
+
+Do not infer alarm targeting from `bottom`.
 
 ## Source CURRENT
 
-Tool Configuration publica mediante:
+Tool Configuration publishes:
 
 ```text
 ToolSourceService
@@ -110,15 +193,11 @@ ConcurrencyToken
 HistoryPage
 ```
 
-Recurso CURRENT:
+Resource:
 
 ```text
 tools/configuration.json.gz
 ```
-
-No existe Source identity de dominio basada en `revision`.
-
-Los value objects compartidos de consumo/participación de Source pertenecen a `ada.contracts.tools`; el servicio de publicación permanece en Tool Configuration Web.
 
 ## Projection CURRENT
 
@@ -129,65 +208,11 @@ ProjectionStore[ToolConfiguration]
 SourceProjectionService[ToolConfiguration]
 ```
 
-Persistencia durable CURRENT:
+Durable projection stores serialize `ToolConfiguration.to_document()` / `from_document()`.
 
-```text
-tool_projection_to_document
-tool_projection_from_document
-LocalToolProjectionStore
-CosmosToolProjectionStore
-```
+The optional render topology therefore follows the existing document codec boundary; no parallel persistence path exists.
 
-No existe snapshot privado ni `projection_revision` paralelo.
-
-## Namespace CURRENT
-
-Tool persistence recibe:
-
-```text
-AdaStorageNamespace(
-    application_namespace,
-    tool_namespace,
-)
-```
-
-Local projection:
-
-```text
-<base>/<application>/<tool>/projections
-```
-
-Cosmos projection:
-
-```text
-partition_key = <application>/<tool>
-```
-
-`SourceKey('tools')` no incluye namespace de deployment.
-
-## Resilient persistence composition CURRENT
-
-```text
-ToolPersistenceSettings
-ToolPersistenceComposition
-compose_tool_persistence
-```
-
-Providers:
-
-```text
-Source      local | blob
-Projection  local | cosmos
-```
-
-Resolution:
-
-```text
-resolve_active_tool_projection()
-project_current_tool_source()
-```
-
-States:
+## Resolution CURRENT
 
 ```text
 READY
@@ -196,91 +221,56 @@ UNAVAILABLE
 INVALID
 ```
 
-Runtime puede consumir Projection activa sin requerir Source disponible.
+Runtime can consume an active projection without requiring Source to remain available.
 
-## Tool contract Web cutover CLOSED
+## Operational Render handoff
 
-La release-chain de ADA Generic fue migrada desde el owner duplicado:
-
-```text
-ada.web.tools.{enums,errors,structure,validation,sources}
-ada-web-tools==0.1.0
-```
-
-hacia:
+Tool Configuration does not render the operational body directly.
 
 ```text
-ada.contracts.tools.*
-ada-contracts-tools==1.0.0
+ToolConfiguration
+    ├── structure
+    └── render_topology
+          ↓
+OperationalRenderBinding
 ```
 
-Release-chain calificada:
+The binding preserves exact component order and derives:
 
 ```text
-ada-contracts/tools
-    -> ada-web-tools-configuration
-    -> projection-local / projection-cosmos
-    -> ada-web-tools-persistence
-    -> ada-configuration-manager
-    -> ada-generic-application
+main_components
+bottom_component
 ```
 
-El runtime export de ADA Generic confirmó:
+## Qualification observed
+
+Render-topology closure:
 
 ```text
-ada-contracts-tools  PRESENT
-ada-web-tools        ABSENT
+ada-web-tools-configuration             90 passed
+render_topology + source_release gate   11 passed
+ada-web-operational-render-binding      11 passed
+ada-configuration-manager               64 passed
+ada-generic-application                205 passed
+legacy layout-role grep                PASS
+git diff --check                        PASS
 ```
 
-## Legacy y retiro físico
-
-Para la release-chain ADA Generic, `ada-web-tools` queda **SUPERSEDED**.
-
-El directorio físico:
+Static baseline closure after integration:
 
 ```text
-scopes/ada/web/tools/core
+alarm-baseline-projection               19 passed
+alarm-baseline-surface                   9 passed
+operational-render-binding              11 passed
+ada-generic-application                206 passed
+legacy layout-role grep                PASS
+git diff --check                        PASS
 ```
 
-permanece temporalmente en el checkout porque referencias de Command Center todavía impiden retirarlo sin cruzar scope.
+These are local qualification results reported for the implemented increment, not a claim of full monorepo CI.
 
-Estado:
+## Legacy physical retirement
 
-```text
-SUPERSEDED as Web owner
-BLOCKED for physical retirement
-```
+`scopes/ada/web/tools/core` remains SUPERSEDED as the accepted Web contract owner and may still be BLOCKED for physical retirement by references in other scopes.
 
-No crear alias, adapter o shim de compatibilidad para prolongar su uso.
-
-## Manager integration
-
-ADA Configuration Manager consume los contratos genéricos Source/Projection de Tools y el contrato transversal `ada.contracts.tools`.
-
-`ada-web-tools-persistence` sigue siendo la composición reusable de providers.
-
-No crear un segundo contrato Manager específico para lograr ese wiring.
-
-## Qualification relevante
-
-Cierre local del cutover:
-
-```text
-ada-contracts/tools                 10 passed
-ada-web-tools-configuration         75 passed
-projection-local                     3 passed
-projection-cosmos                    5 passed
-ada-web-tools-persistence           10 passed
-ada-configuration-manager           64 passed
-ada-generic-application            205 passed
-runtime dependency gate            PASS
-release-chain ownership scan       PASS
-```
-
-Base remota usada para el incremento:
-
-```text
-moragaga/atlanticus@df2a125cf428085419595d8ad164fce0f8d86115
-```
-
-La calificación corresponde al working tree local resultante del incremento. No implica que esos cambios estén ya integrados en `main` ni que exista una nueva distribución publicada.
+Do not create new consumers against it.

@@ -14,9 +14,191 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
+## Tool Structure — CURRENT / FROZEN
+
+`ToolStructure.components` is the authoritative operational sequence.
+
+Persistent layout roles are removed.
+
+```text
+ProcessLayoutRole        SUPERSEDED
+layout_role              SUPERSEDED
+LEFT/CENTER/RIGHT roles  SUPERSEDED
+```
+
+PROCESS uses:
+
+```text
+operational_scope
+center_component_key
+ordered components
+```
+
+`center_component_key` is semantic centrality, not a physical screen coordinate.
+
+INTEGRATED_OPERATIONS uses component scopes and Mine → Plant operational order.
+
+## Render Topology — CURRENT / FROZEN
+
+Presentation topology is separate from `ToolStructure`.
+
+CURRENT contract:
+
+```text
+ToolRenderTopology(
+    bottom_component_key: str | None
+)
+```
+
+Rules:
+
+```text
+optional
+PROCESS only
+must reference an existing component
+must differ from center_component_key
+```
+
+A missing/empty topology is serialized compatibly by omitting `render_topology`.
+
+Do not reintroduce permanent LEFT/RIGHT/BOTTOM domain roles.
+
+## Operational Render Binding — REFINED / CURRENT
+
+Previous interpretation:
+
+```text
+binding = ToolStructure + ordered components only
+```
+
+CURRENT:
+
+```text
+binding =
+    ToolStructure
+    + ordered component bindings
+    + optional bottom_component_key
+```
+
+Derived topology:
+
+```text
+main_components = components excluding bottom
+bottom_component = configured bottom or None
+```
+
+It still contains no KPI runtime data and no live alarm state.
+
+## Static Alarm Baseline — CURRENT / CLOSED
+
+Previous Process behavior:
+
+```text
+project only center component
+```
+
+is SUPERSEDED.
+
+CURRENT projection:
+
+```text
+AlarmBaselineProjection(
+    tool_key,
+    kind,
+    main_points,
+    bottom_point | None,
+)
+```
+
+For PROCESS:
+
+```text
+all Tool components participate
+bottom, if configured, is separated from main_points
+main order follows ToolStructure.components
+```
+
+For INTEGRATED_OPERATIONS:
+
+```text
+all components remain in main_points
+```
+
+Current static anchors are COMPONENT anchors only.
+
+The baseline does not own alarm lifecycle, severity, routes, cards, selection or preview.
+
+## Static Alarm Surface — CURRENT / CLOSED
+
+`AlarmBaselineSurface` uses the proven visual language of `isolated-web-functions/operational_trace` for:
+
+```text
+baseline
+point core
+slot-centered percentage positioning
+large-screen sizing
+```
+
+but does not import its architecture or dynamic alarm model.
+
+`isolated-web-functions` is REFERENCE, not authority.
+
+Visible component names are intentionally omitted from the baseline surface.
+
+Component identity remains in DOM metadata for future overlay.
+
+Asset order:
+
+```text
+Alarm Management Summary  130
+Alarm Status              140
+Alarm Baseline Surface    145
+Time Status               150
+```
+
+## ADA Generic Tool resolution — CURRENT
+
+READY:
+
+```text
+Tool Projection
+→ ToolStructure + ToolRenderTopology
+→ OperationalRenderBinding
+→ AlarmBaselineProjection
+→ application definition/layout
+```
+
+UNCONFIGURED / UNAVAILABLE / INVALID continue through the degraded/base application path according to existing resolution semantics.
+
+No Tool configured means:
+
+```text
+application can start
+no implicit/default Tool
+no static alarm baseline
+```
+
+## Dynamic alarms — SEPARATE / PLANNED
+
+The static baseline closure does not implement:
+
+```text
+alarm-live-projection consumption
+runtime routes
+origin/affected overlay
+alarm cards
+preview
+selection
+dynamic colors
+management
+history/analytics
+```
+
+Those must consume Alarm Engine/Modeler outputs rather than recreate domain logic in Web.
+
 ## Alarm pipeline — CURRENT / CLOSED baseline
 
-El pipeline implementado vigente es:
+The implemented backend pipeline remains:
 
 ```text
 Command Center publication
@@ -35,10 +217,10 @@ Delivery
     ↓
 Cosmos alarm-live-projection
     ↓
-Web consumer [NEXT]
+Web dynamic consumer [SEPARATE]
 ```
 
-El consumo directo Runtime → Delivery queda **SUPERSEDED / REMOVED como frontera CURRENT**.
+The static baseline implemented in ADA Generic is structural and does not replace the dynamic consumer.
 
 ## Exact artifact invariant — FROZEN
 
@@ -51,38 +233,21 @@ no fallback to latest READY
 
 ## Materialization split — REFINED
 
-Decisión previa:
-
-```text
-RuntimeConfiguration + ModelerConfiguration + DeliveryConfiguration
-antes de implementar Modeler
-```
-
-Estado actual:
+CURRENT:
 
 ```text
 RuntimeAlarmConfiguration + DeliveryAlarmConfiguration
 ```
 
-El Modeler baseline consume ambos contratos existentes del mismo READY exacto.
+Modeler baseline consumes both from the same READY exact artifact.
 
-La separación en `ModelerConfiguration` deja de ser prerequisito. Permanece OPEN sólo si aparece una responsabilidad/configuración independiente real al implementar scheduling avanzado.
+A separate `ModelerConfiguration` is not a prerequisite and should appear only if an independent responsibility is demonstrated.
 
 ## Runtime ownership — FROZEN
 
-Runtime posee:
+Runtime owns evaluation, occurrence/episode, priority truth, operational management effects, assignments/routing state, EFFECTIVE adoption and durable operational facts.
 
-```text
-evaluation
-occurrence / episode
-priority truth
-management/deactivation operational effects
-assignments/routing state
-EFFECTIVE adoption
-durable operational facts
-```
-
-Runtime no posee slots, carousel, QIQ ni transporte Cosmos.
+Runtime does not own Web geometry.
 
 ## Modeler ownership — CURRENT baseline / advanced scheduling PLANNED
 
@@ -109,79 +274,18 @@ durable scheduler checkpoint/state
 staleness/disconnection policy
 ```
 
-Modeler no recalcula prioridad.
-
-## Runtime → Modeler handoff — REFINED
-
-CURRENT baseline:
-
-```text
-Runtime CURRENT v1 + exact READY configurations
-```
-
-FACTS v2 no son requeridos por el Modeler baseline.
-
-La semántica previa de handoff ordered/durable/no-drop permanece como target sólo para futuros cambios que realmente necesiten reproducir transiciones; no afirmar que está implementada hoy.
-
-## Modeler → Delivery — CURRENT
-
-Modeler publica un durable current head en filesystem:
-
-```text
-current/index.json
-current/tools/<tool-hash>/latest.json
-```
-
-Delivery consume el head vigente y puede republicarlo idempotentemente.
-
-No existe todavía checkpoint durable independiente por destination; esa optimización permanece OPEN si se requiere.
-
 ## Delivery — CURRENT / FROZEN
 
-Delivery posee:
+Delivery owns Tool → Cosmos connection resolution, bounded publication and transport/upsert.
 
-```text
-Tool -> Cosmos connection resolution
-bounded parallel publication
-transport/upsert
-publication metrics/errors
-```
-
-No posee modelado.
-
-Contrato físico:
-
-```text
-container fijo = alarm-live-projection
-partition key = /tool_key
-```
-
-`config/connections.json` se indexa por `tool_key` y sólo declara nombres de variables endpoint/database/credential.
-
-Varios Tools pueden usar la misma conexión física.
-
-## Live projection semantics — FROZEN baseline
-
-`operator_pool` contiene alarms autoritativas elegibles para ese destino; no todas las evaluaciones ACTIVE.
-
-`operator_view` es la selección actualmente visible del Modeler.
-
-`ranking` no existe. `priority_order` es la prioridad ordinal vigente.
-
-TRACE_ONLY no se publica como visible.
+It does not own UI geometry or alarm modeling.
 
 ## Cause — OPEN
 
-CURRENT snapshot conserva `cause_template` más evidence.
+CURRENT snapshot retains `cause_template` plus evidence.
 
-La materialización de una causa dinámica efectiva queda OPEN; Web no debe inventarla ni recombinar reglas de negocio por su cuenta.
+Dynamic effective cause materialization remains OPEN.
 
-## CAROUSEL / QIQ — DESIGN FROZEN parcial, NOT IMPLEMENTED
+## CAROUSEL / QIQ — NOT IMPLEMENTED
 
-Se conservan las decisiones previas de 6 posiciones, reglas DISTRIBUTED y topología MINE/PLANT, pero siguen PLANNED hasta existir scheduler durable y qualification específica.
-
-## NEXT único
-
-```text
-ADA-COMMAND-CENTER-ALARM-LIVE-WEB-CONSUMER
-```
+Prior design knowledge remains reference/partial design only until scheduler state and qualification exist.

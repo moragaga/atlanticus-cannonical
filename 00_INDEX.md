@@ -1,12 +1,13 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT — COMMAND CENTER CAPABILITY PARITY CLOSED; ADA ALARM ENGINE EXTRACTION DESIGN NEXT**
+Estado: **CURRENT — ALARM BACKEND LIVE BASELINE CLOSED / ADA WEB STATIC ALARM BASELINE CLOSED**
 
 ## Autoridad de este cierre
 
 ```text
-Implementation        moragaga/atlanticus@346e7ac7ba7c21eede8b524613a6adee7e839e55
-Canonical pre-replace moragaga/atlanticus-cannonical@19fe30dcc2f34dbe7a0c4615c188409ace2089b8
+Implementation        moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
+Decisions             moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Canonical pre-replace moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
 Git                   SOLO LECTURA
 ```
 
@@ -14,51 +15,69 @@ Git                   SOLO LECTURA
 
 | Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Command Center capability parity CLOSED; qualifier global permanece BLOCKED por una incompatibilidad Tools upstream separada. |
-| `03_DECISIONS_CURRENT.md` | Users / Profiles / Navigation / Manager parity CURRENT; no adapters; ADA no se modifica dentro de este cierre. |
-| `04_ALARM_ENGINE/` | Backend de Alarmas sigue físicamente bajo Command Center; extracción a `ada-alarm-engine` es el siguiente frente de diseño. |
-| `14_ADA_COMMAND_CENTER/` | Paridad genérica implementada en `main`; backend Alarm queda como candidato completo a extracción. |
-| `15_WEB_PLATFORM/` | Consumer parity de Command Center queda CURRENT/CLOSED para las capabilities tocadas. |
-| `16_KPI_BACKEND_RECOVERY/` | KPI backend permanece CLOSED en su hito anterior; no se reabre aquí. |
-| `17_DISTRIBUTION_AND_TOOLING/` | Frente separado; no se reabre aquí. |
+| `01_CURRENT_STATE.md` | Alarm backend materialization → runtime → modeler → delivery → Cosmos sigue CURRENT/CLOSED. |
+| `03_DECISIONS_CURRENT.md` | Contratos Tool Structure / Render Topology / Alarm Baseline añadidos como CURRENT/FROZEN. |
+| `04_ALARM_ENGINE/` | No modificado por este hito. Dynamic alarm lifecycle y live projections siguen ownership del backend. |
+| `10_MANAGER/04_TOOL_CONFIGURATION.md` | Layout roles SUPERSEDED; `center_component_key` + `ToolRenderTopology.bottom_component_key` CURRENT. |
+| `11_ADA_GENERIC/` | Tool READY deriva render binding + static alarm baseline; UNCONFIGURED sigue arrancando sin Tool implícita. |
+| `13_ADA_WEB/` | Static Alarm Baseline Projection/Surface CURRENT; visual browser qualification OPEN. |
+| `14_ADA_COMMAND_CENTER/` | No reabierto en este cierre. |
+| `16_KPI_BACKEND_RECOVERY/` | No reabierto en este cierre. |
+| `17_DISTRIBUTION_AND_TOOLING/` | Frente separado; no reabierto en este cierre. |
 
-## Checkpoints
-
-```text
-COMMAND-CENTER-USERS-PROFILES-NAVIGATION-MANAGER-PARITY   CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-WEB-LOCK-NORMALIZATION                    CLOSED / VERIFIED / CURRENT
-COMMAND-CENTER-FULL-WEB-QUALIFIER                        BLOCKED
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN                       PLANNED / NEXT
-```
-
-## Bloqueo separado del qualifier
-
-El qualifier retomado después de la paridad alcanzó:
+## Checkpoint de este hito
 
 ```text
-generic-application   PASS
-catalog-manager       PASS
-catalog               FAIL
-discovery-cosmos      FAIL
+TOOL-RENDER-TOPOLOGY                      CLOSED / VERIFIED / CURRENT
+ADA-WEB-STATIC-ALARM-BASELINE             CLOSED / VERIFIED / CURRENT
+ADA-GENERIC-STATIC-BASELINE-INTEGRATION   CLOSED / VERIFIED / CURRENT
+VISUAL-BROWSER-QUALIFICATION              OPEN / NEXT FOR THIS TRACK
+DYNAMIC-ALARM-OVERLAY                     PLANNED / SEPARATE
 ```
 
-El fallo observado corresponde a coexistencia de tipos Tools de `ada.web.tools.*` y `ada.contracts.tools.*`.
+## Frontera
 
-No corregir ADA dentro del cierre de Command Center ni introducir adapters en Command Center para esconder esa incompatibilidad.
-
-## Siguiente frontera única
+El baseline implementado es estático:
 
 ```text
-ADA-ALARM-ENGINE-EXTRACTION-DESIGN
+ToolConfiguration
+    + ToolStructure
+    + ToolRenderTopology
+        ↓
+OperationalRenderBinding
+        ↓
+AlarmBaselineProjection
+        ↓
+AlarmBaselineSurface
+        ↓
+ADA Generic
 ```
 
-Objetivo del próximo chat:
+No contiene:
 
-- inspeccionar todo `scopes/ada-command-center/backend`;
-- comprobar la hipótesis de que ese backend constituye el Alarm Engine;
-- clasificar dependencias como KEEP / MOVE / REMOVE / INVERT / REHOME;
-- eliminar conceptualmente dependencias backend → Web;
-- definir la frontera Command Center publication → Engine;
-- congelar el dependency graph objetivo antes de mover código.
+```text
+alarm runtime state
+routes
+origin/affected
+cards
+preview
+selection
+severity coloring
+management
+history
+analytics
+```
 
-No implementar hasta cerrar debate/diseño.
+## Referencia visual
+
+`moragaga/isolated-web-functions:main` / `operational_trace` es REFERENCE para geometría e interacción futura.
+
+No es autoridad arquitectónica ni contractual.
+
+## Siguiente frontera de este track
+
+```text
+ADA-WEB-STATIC-BASELINE-VISUAL-QUALIFICATION
+```
+
+Objetivo: levantar ADA Generic y validar visualmente Process sin bottom, Process con bottom e Integrated Operations, sin abrir todavía overlay dinámico de alarmas.

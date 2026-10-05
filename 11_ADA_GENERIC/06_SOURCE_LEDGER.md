@@ -1,54 +1,102 @@
 # ADA Generic — Source Ledger
 
-Estado: **AUDIT LEDGER / USERS TOOL RUNTIME CUTOVER 2026-10-03**
+Estado: **AUDIT LEDGER / STATIC ALARM BASELINE CLOSURE 2026-10-05**
 
 ## Authorities
 
 ```text
-Implementation  moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
+Implementation  moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
 Decisions       moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical base  moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
+Canonical base  moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
 ```
 
-Historical Navigation local, Tool persistence, Operational bootstrap, Collector and distributed runtime evidence remain historical.
+## Previous current checkpoints retained
 
-## Current checkpoint
+Tool-scoped Navigation/Profiles/Access/Operational ownership, Users runtime/recovery and prior distributed-runtime evidence remain historical/current according to their own canonical documents.
+
+## 2026-10-05 render topology checkpoint
 
 Implemented:
 
 ```text
-Tool-scoped Navigation/Profiles/Access/Operational Sources
-global identity-only Users registry
-Tool User Membership
-RuntimeUser Cosmos
-Tool recovery snapshots
-Master Projection Users REPLACE
-Manager/session RuntimeUser consumption
-local Jane/John palettes preserved
+ToolRenderTopology.bottom_component_key
+ToolConfiguration persistence/validation/editor wiring
+OperationalRenderBinding.bottom_component_key
+OperationalRenderBinding.main_components
+OperationalRenderBinding.bottom_component
 ```
 
-SUPERSEDED:
+Qualification observed:
 
 ```text
-application_source for Navigation/Profiles/Access/Operational
-global UserRecord owns profile/enabled
-promoted users Cosmos model
-partial RESTORE
-users_promoted
+ada-web-tools-configuration             90 passed
+render_topology + source_release        11 passed
+ada-web-operational-render-binding      11 passed
+ada-configuration-manager               64 passed
+ada-generic-application                205 passed
+legacy layout-role grep                PASS
+git diff --check                        PASS
 ```
 
-Qualification focal:
+## 2026-10-05 static alarm baseline checkpoint
+
+Implemented:
 
 ```text
-ADA Generic Application 199 passed
+AlarmBaselineProjection.main_points
+AlarmBaselineProjection.bottom_point
+Process all-component static baseline
+Integrated Operations all-component main baseline
+static Operational Trace-inspired geometry
+ADA Generic baseline module/layout integration
+baseline asset load_order = 145
 ```
 
-Current conflict:
+Qualification observed:
 
 ```text
-Navigation allowed_profiles empty → unrestricted
+alarm-baseline-projection               19 passed
+alarm-baseline-surface                   9 passed
+operational-render-binding              11 passed
+ada-generic-application                206 passed
+legacy layout-role grep                PASS
+git diff --check                        PASS
 ```
 
-Accepted NEXT requires explicit PUBLIC/RESTRICTED.
+## External reference
 
-The historical distributed artifact does not qualify current HEAD.
+```text
+moragaga/isolated-web-functions:main
+operational_trace
+```
+
+Used only as visual/behavioral reference for:
+
+```text
+baseline line
+point core
+slot-center percentage positioning
+future route/marker interaction knowledge
+```
+
+No authority or architecture was transferred.
+
+## Superseded
+
+```text
+ProcessLayoutRole
+layout_role
+center-only Process alarm baseline
+Operational Trace as a monolithic architecture candidate
+```
+
+## Open
+
+```text
+browser visual qualification
+dynamic alarm-live overlay
+routes / markers / cards / preview / selection
+subcomponent dynamic anchors
+Tool hot reprojection refresh
+final distribution qualification
+```

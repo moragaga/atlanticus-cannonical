@@ -1,198 +1,238 @@
 # ADA Web — Current Baseline
 
-Estado: **CURRENT — TOOL CONTRACT WEB CUTOVER CLOSED / DISTRIBUTION PREPARATION NEXT**
+Estado: **CURRENT — TOOL RENDER TOPOLOGY + STATIC ALARM BASELINE CLOSED**
 
-## Application
-
-ADA Generic is the product composition root.
-
-Version observed before the next distribution regeneration:
+## Authority
 
 ```text
-0.2.26
+Implementation  moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
+Canonical base  moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
 ```
 
-No new distributed version was produced during the Tool Contract Web Cutover hito.
+## Tool structural ownership CURRENT
 
-## Runtime qualification previously observed
-
-From the isolated consumer repository:
-
-```text
-Web container              healthy
-/health/live               HTTP 200
-/health/ready              HTTP 200
-environment                local
-Cosmos database            visible
-Cosmos containers          visible
-Cosmos Data Explorer       HTTP 200
-```
-
-`/health/ready` still reports `checks: {}`.
-
-These observations belong to the previous distributed runtime and were not requalified as a new distribution in this hito.
-
-## Tool contract ownership CURRENT
-
-Shared ADA Tool structural/source contracts now have one transversal owner:
+Shared structural contracts:
 
 ```text
 scopes/ada-contracts/tools
-ada-contracts-tools==1.0.0
 ada.contracts.tools
 ```
 
-Web-specific Tool Configuration remains:
+Web Tool Configuration:
 
 ```text
 scopes/ada/web/tools/configuration
 ```
 
-Boundary:
+CURRENT separation:
 
 ```text
-ada.contracts.tools
-        |
-        v
-ada.web.tools.configuration
-        |
-        +--> Source / Projection
-        +--> Branding
-        +--> persistence
-        +--> editor / callbacks / presentation
+ToolStructure
+    domain structure
+    ordered components
+    PROCESS center_component_key
+
+ToolRenderTopology
+    presentation topology
+    optional bottom_component_key
 ```
 
-The ADA Generic release-chain no longer resolves `ada-web-tools`.
+No `ProcessLayoutRole` or `layout_role` remains in the accepted contract.
 
-Runtime export gate:
+## PROCESS CURRENT
 
 ```text
-ada-contracts-tools  PRESENT
-ada-web-tools        ABSENT
+operational_scope       required
+center_component_key    required
+components              ordered
+bottom_component_key    optional, outside ToolStructure
 ```
 
-## Qualification of the cutover
+`center_component_key` is semantic centrality.
 
-Local qualification:
+`bottom_component_key`:
 
 ```text
-ada-contracts/tools                 10 passed
-ada-web-tools-configuration         75 passed
-projection-local                     3 passed
-projection-cosmos                    5 passed
-ada-web-tools-persistence           10 passed
-ada-configuration-manager           64 passed
-ada-generic-application            205 passed
-release-chain ownership scan       PASS
-runtime dependency gate            PASS
+PROCESS only
+existing component
+different from center
 ```
 
-Base remote commit used:
+Main row is every structure component except bottom, preserving structure order.
+
+## INTEGRATED_OPERATIONS CURRENT
 
 ```text
-moragaga/atlanticus@df2a125cf428085419595d8ad164fce0f8d86115
+no global operational_scope
+no center_component_key
+scope per component
+Mine + Plant required
+Mine → Plant order
+all components in main baseline
 ```
 
-The qualified result is still a local working tree until integrated. Do not present it as the current remote `main` commit.
-
-## Commented mirrors
-
-Commented source remains valid as pedagogical material.
-
-Tests whose only purpose was to assert structural/AST/token equivalence between productive and `commented` were retired.
-
-Final local audit:
+## Operational Render Binding CURRENT
 
 ```text
-No commented-mirror tests remain: PASS
+OperationalRenderBinding
+    structure
+    components
+    bottom_component_key
 ```
 
-This does not mean the full monorepo test suite was executed; only the suites explicitly reported in the cutover qualification are verified.
-
-## Existing operational gaps not changed by this hito
-
-### Header
-
-Tool display name belongs to Tool Configuration and is wired to operational branding.
-
-Dynamic refresh after Tool reprojection was not changed in this hito.
-
-### Time Status
-
-PI and Dispatch remain modeled and labeled in UI contracts.
-
-The runtime timestamp/source feed was not addressed in this hito.
-
-### Navigation
-
-Navigation behavior was not modified or requalified in this hito.
-
-Do not infer new navigation behavior from the Tool contract cutover.
-
-## Integrated Operations presentation
-
-The canonical design contract is:
+Derived:
 
 ```text
-13_ADA_WEB/08_INTEGRATED_OPERATIONS_PRESENTATION.md
+main_components
+main_component_keys
+bottom_component
 ```
 
-Status:
+Binding does not carry live KPI or alarm state.
+
+## AlarmBaselineProjection CURRENT
 
 ```text
-design contract        CURRENT
-implementation         PLANNED
-visual qualification   OPEN
+AlarmBaselineProjection
+    tool_key
+    kind
+    main_points
+    bottom_point | None
 ```
 
-ADA Generic remains the product composition root.
-
-Integrated Operations is planned as an external/specific composition over CURRENT Generic boundaries; it is not a fork or replacement of ADA Generic.
-
-The presentation contract defines coordinated `overview | mine | plant` operational focus, multi-scope Global Indicator placement, responsive/workstation continuity and videowall overview semantics.
-
-This design contract does not mark Integrated Operations implementation as CURRENT and does not reopen Alarm Engine, Command Center or KPI backend contracts.
-
-## Retirement still BLOCKED
-
-Physical removal of:
+Point identity:
 
 ```text
-scopes/ada/web/tools/core
+anchor_kind = COMPONENT
+anchor_key
+component_key
+display_name
+scope
 ```
 
-is blocked by references outside this chat scope, principally Command Center locks/configuration.
+`display_name` remains contractual metadata but is not rendered visibly by the static surface.
 
-The directory is not the accepted owner for new Web consumers.
+## AlarmBaselineSurface CURRENT
 
-Inspection locks under:
+Visual language was adapted from `isolated-web-functions/operational_trace`.
+
+Retained ideas:
 
 ```text
-scopes/ada/web/inspection/portability
-scopes/ada/web/inspection/providers/kpi-definition
+horizontal baseline
+circular point core
+percentage slot-center positioning
+large-screen size scaling
+separate point layer semantics
 ```
 
-remain outside this hito because regeneration is independently blocked by an invalid KPI Definition project path.
-
-## Current priority
-
-The boundary that blocked a new Generic release is closed.
-
-Single next focus:
+Not ported:
 
 ```text
-ADA Generic artifact generation qualification
+alarm cards
+routes
+origin/affected markers
+preview animation
+selection
+runtime severity state
+rotation
 ```
 
-That focus should:
+The surface retains component identity using `data-*` attributes.
+
+## Bottom geometry CURRENT
+
+PROCESS with bottom renders two static traces:
 
 ```text
-regenerate the expected artifacts
-validate that all artifact generation paths succeed
-audit .env.detail as part of the generated artifact contract
-identify which environment values are user-supplied vs system-derived
+MAIN
+points positioned at centers of equal slots
+
+BOTTOM
+one full-width trace
+bottom anchor centered at 50%
 ```
 
-Do not mix that increment with Command Center cleanup, physical retirement of `tools/core`, alarms, timeseries or unrelated UI work.
+No persistent LEFT/RIGHT role is needed.
 
-Only after artifact generation and `.env.detail` qualification should the final distribution regeneration/isolated-consumer exercise become the next increment.
+## Asset layer CURRENT
+
+```text
+ada_alarm_baseline_surface
+load_order = 145
+```
+
+This avoids the existing Time Status `150` layer collision.
+
+## ADA Generic integration CURRENT
+
+READY Tool:
+
+```text
+Tool projection
+→ render binding
+→ static baseline projection
+→ layout
+```
+
+No Tool:
+
+```text
+UNCONFIGURED
+→ application starts
+→ no default Tool
+→ no baseline
+```
+
+## Qualification observed
+
+```text
+ada-web-tools-configuration             90 passed
+ada-web-operational-render-binding      11 passed
+ada-configuration-manager               64 passed
+
+alarm-baseline-projection               19 passed
+alarm-baseline-surface                   9 passed
+ada-generic-application                206 passed
+
+legacy ProcessLayoutRole/layout_role grep PASS
+git diff --check                         PASS
+```
+
+These are focal/local test results, not full monorepo CI.
+
+## Visual qualification
+
+Automated tests intentionally do not freeze exact visual spacing.
+
+OPEN:
+
+```text
+Process without bottom visual review
+Process with bottom visual review
+Integrated Operations visual review
+spacing/density adjustment if required
+responsive review
+```
+
+## Dynamic alarm boundary
+
+OPEN / SEPARATE:
+
+```text
+alarm-live-projection consumption
+runtime route overlay
+origin/affected markers
+alarm cards
+preview/selection
+dynamic state colors
+management interaction
+```
+
+The Web layer must consume authoritative runtime/modeler outputs and must not recreate alarm business rules.
+
+## Existing global conflict
+
+Project target remains Python 3.14.7 while multiple package metadata entries still declare 3.14.2.
+
+This hito does not resolve that conflict.

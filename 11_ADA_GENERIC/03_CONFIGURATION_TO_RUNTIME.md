@@ -1,6 +1,6 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT PHYSICAL CONTRACT / TOOL-SCOPE OWNERSHIP CUTOVER PLANNED**
+Estado: **CURRENT PHYSICAL CONTRACT / TOOL STRUCTURE TO STATIC PRESENTATION CLOSED**
 
 ## Primary settings CURRENT
 
@@ -27,8 +27,6 @@ COSMOS_CONSUMPTION_KEY
 COSMOS_CONSUMPTION_DATABASE_NAME
 ```
 
-Superseded Tool-specific physical Storage/Cosmos names must not return.
-
 ## Namespace
 
 ```text
@@ -38,60 +36,72 @@ StorageNamespace(
 )
 ```
 
-For the current real ADA example:
+## Tool document CURRENT
+
+Relevant structure:
 
 ```text
-conciencia_situacional/operaciones_integradas
+ToolConfiguration
+    tool_key
+    display_name
+    kind
+    source_consumption
+    source_operational_participation
+    structure
+    render_topology
+    branding
 ```
 
-is the Tool prefix.
+`render_topology` is omitted when empty.
 
-## Durable ownership target
-
-Application-global:
+CURRENT topology:
 
 ```text
-users identity registry
+bottom_component_key | None
 ```
 
-Tool-scoped:
+## Runtime structural derivation
+
+READY projection:
 
 ```text
-tools
-profiles
-navigation
-ada-access
-operational
-tool-user-membership
-kpis
-kpi-definitions
-tool users recovery snapshot
+ToolConfiguration
+→ validate ADA operational Tool
+→ ToolStructure
+→ bind_operational_render(
+       structure,
+       bottom_component_key=render_topology.bottom_component_key,
+   )
+→ project_alarm_baseline(...)
+→ create_application_definition(
+       alarm_baseline_projection=...
+   )
 ```
 
-Implementation still needs the cutover for Navigation/Profiles/Access/Operational and Users.
+If an external composition supplies a render binding, it must match both the Tool Structure and the configured bottom component.
 
-## Runtime users target
-
-Login/runtime reads one complete Tool-specific `users-runtime` document rather than joining Blob contracts.
-
-The snapshot carries:
+## No Tool
 
 ```text
-identity
-enabled
-resolved profile
-resolved operational
+UNCONFIGURED
+→ create_application_definition()
+→ no static baseline
 ```
 
-Operational keys are always present and nullable.
+This is an explicit supported state.
 
-Access is resolved separately from the profile key.
+## Hot refresh gap
 
-## Tool runtime refresh gap
+The worker resolves Tool Projection during bootstrap.
 
-Tool `display_name` already flows into `OperationalBrandState.context_name`, but the current worker resolves Tool Projection during bootstrap.
+A Tool reprojection after worker start does not yet guarantee hot refresh of:
 
-A Tool reprojection after worker start does not yet guarantee hot refresh of header/branding/runtime context.
+```text
+header/branding
+render topology
+static baseline
+operational body
+```
 
 Status:
 
@@ -99,14 +109,14 @@ Status:
 PLANNED / LATER
 ```
 
-## Time Status gap
+## Dynamic alarms
 
-PI/Dispatch labels and freshness contracts already exist.
+This flow does not consume `alarm-live-projection`.
 
-The runtime source/timestamp pipeline needed to feed Time Status remains `PLANNED`.
+Static Tool presentation and dynamic alarm delivery remain separate boundaries.
 
-## KPI Registry / Delivery target
+## Time Status
 
-KPI Registry projection/materialization will include `tool_key` derived from Tool Projection for Delivery.
+PI/Dispatch contracts remain separate.
 
-Do not store an independent editable Tool name in KPI Source.
+No new Time Status data-feed behavior was introduced by this hito.
