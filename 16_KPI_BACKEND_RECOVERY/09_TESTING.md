@@ -1,132 +1,64 @@
 # KPI Backend Recovery — Testing
 
-Estado: **VERIFIED LOCALLY / OPERATIONAL E2E BLOCKED**
+Estado: **VERIFIED LOCALLY — KPI DATA-INPUT MIGRATION QUALIFIED**
 
-## Final focused qualification
-
-Reported after integration on `main`:
+## Focused qualification 2026-10-05
 
 ```text
-kpis/history
-31 passed
+kpis/core/tests
+29 passed
 
-processes/kpi-historian
-45 passed
+kpis/evaluation/tests
+21 passed
 
-processes/kpi-timeseries-delivery
-28 passed
+processes/kpi-runtime/tests
+44 passed
 
 Ruff check
 PASS
 
 Ruff format --check
 PASS
-
-git diff --check
-PASS
 ```
 
-## Qualification execution detail
+## Test execution note
 
-Running Historian and Timeseries test directories together in one pytest process caused a collection collision because both packages expose a top-level:
+These package suites are executed in separate pytest processes.
 
-```text
-tests.support
-```
-
-Observed failure:
-
-```text
-Timeseries tests resolved tests.support from Historian tests
-```
-
-Each package suite was then executed in its own pytest process and passed.
-
-Classification:
-
-```text
-production regression = NO
-package-focused qualification = VERIFIED
-combined test namespace collision = test harness limitation
-```
-
-No production change was made to work around this collection behavior.
+The workspace contains multiple top-level `tests` packages and combined invocation previously caused `tests.support` namespace collisions. This is a test-harness/package-layout limitation, not evidence of production regression.
 
 ## What is VERIFIED
 
 ```text
-History logical contract
-History reusable dataset representation
-PyArrow isolation to ada.kpis.history.dataset
-Historian process without direct PyArrow ownership
-Historian Runtime-owned dataset I/O
-durable history + error history
-rolling metadata/schema/grid/horizon
-rolling incremental update
-rolling durable rebuild
-rolling type transitions
-rolling empty coverage
-HistorianAuthority ordering/coherence
-
-Timeseries materialized Registry readiness
-Timeseries frozen per-Tool configuration
-consolidated read plan
-DatasetRuntime rolling reads
-Authority/rolling coherence
-120 s logical alignment
-null hydration behavior
-schema_version 2 output
-per-Tool checkpoint
-checkpoint regression guard
-registry digest integrity guard
-bounded parallel publication
-partial failure independent progress
-idempotent unchanged publication
+KpiSpec DataInputSpec contract
+simple-mode input behavior
+CUSTOM multi-input behavior
+DataInputContext evaluation
+source tracing from declared inputs
+KPI Runtime DataInputPlanner composition
+KPI Runtime DataInputLoader execution
+Over KPI behavior preserved
+reprocess behavior preserved
+lint and format
 ```
 
-## Previous qualification retained
+## Operational Data dependency qualification
+
+The underlying final Operational Data contract was also qualified separately:
 
 ```text
-kpi-materialization-runtime
-14 passed
-
-kpi-delivery-runtime
-28 passed
-
-kpi-connections
-7 passed
+52 passed
+Ruff PASS
+format PASS
+legacy-symbol grep = 0
 ```
-
-Those suites were not reopened by the final History/Timeseries boundary correction.
-
-## Testing policy
-
-Test:
-
-```text
-behavior
-contracts
-invariants
-regressions
-failure ordering
-recovery
-public integration surfaces
-```
-
-Do not create tests solely to freeze internal implementation shape or visual CSS/markup structure.
 
 ## BLOCKED / UNVERIFIED
 
 ```text
-full KPI operational E2E
-real multi-Tool Cosmos delivery
+full distributed KPI application E2E
+artifact installability after current-head regeneration
+real multi-Tool Cosmos behavior in final distribution
 production Azure credentials/network behavior
-runtime restart/readback through deployed stack
-RU/load/performance profile
-```
-
-Reason for E2E block:
-
-```text
-required Web corrections must be completed before the complete application can be configured and exercised
+performance/RU profile
 ```

@@ -1,13 +1,13 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT — ALARM BACKEND LIVE BASELINE CLOSED / ADA WEB STATIC ALARM BASELINE CLOSED**
+Estado: **CURRENT — OPERATIONAL DATA FINAL CONTRACT + KPI MIGRATION CLOSED; DISTRIBUTION/TOOLING NEXT**
 
 ## Autoridad de este cierre
 
 ```text
-Implementation        moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
-Decisions             moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+Implementation        moragaga/atlanticus@777f3a0894a58f7275473ab34ce6b33cf767f9e7
 Canonical pre-replace moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
+Decisions             moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 Git                   SOLO LECTURA
 ```
 
@@ -15,69 +15,34 @@ Git                   SOLO LECTURA
 
 | Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Alarm backend materialization → runtime → modeler → delivery → Cosmos sigue CURRENT/CLOSED. |
-| `03_DECISIONS_CURRENT.md` | Contratos Tool Structure / Render Topology / Alarm Baseline añadidos como CURRENT/FROZEN. |
-| `04_ALARM_ENGINE/` | No modificado por este hito. Dynamic alarm lifecycle y live projections siguen ownership del backend. |
-| `10_MANAGER/04_TOOL_CONFIGURATION.md` | Layout roles SUPERSEDED; `center_component_key` + `ToolRenderTopology.bottom_component_key` CURRENT. |
-| `11_ADA_GENERIC/` | Tool READY deriva render binding + static alarm baseline; UNCONFIGURED sigue arrancando sin Tool implícita. |
-| `13_ADA_WEB/` | Static Alarm Baseline Projection/Surface CURRENT; visual browser qualification OPEN. |
-| `14_ADA_COMMAND_CENTER/` | No reabierto en este cierre. |
-| `16_KPI_BACKEND_RECOVERY/` | No reabierto en este cierre. |
-| `17_DISTRIBUTION_AND_TOOLING/` | Frente separado; no reabierto en este cierre. |
+| `01_CURRENT_STATE.md` | Operational Data final contract CLOSED / VERIFIED; KPI migrated; Alarm Runtime BLOCKED intentionally. |
+| `02_ARCHITECTURE.md` | Single Operational Data consumer path frozen: `DataInputSpec -> DataInputContext`. |
+| `03_DECISIONS_CURRENT.md` | Legacy Operational Data consumer contract removed; no adapters. |
+| `04_ALARM_ENGINE/` | Alarm domain remains valid; executable Alarm Runtime is BLOCKED pending migration to the new data-input contract. |
+| `16_KPI_BACKEND_RECOVERY/` | KPI Runtime now consumes the final Operational Data input contract; focused qualification green. |
+| `17_DISTRIBUTION_AND_TOOLING/` | NEXT single focus: artifact generation, qualification, `.env.detail` audit and distribution. |
 
-## Checkpoint de este hito
+## Checkpoints
 
 ```text
-TOOL-RENDER-TOPOLOGY                      CLOSED / VERIFIED / CURRENT
-ADA-WEB-STATIC-ALARM-BASELINE             CLOSED / VERIFIED / CURRENT
-ADA-GENERIC-STATIC-BASELINE-INTEGRATION   CLOSED / VERIFIED / CURRENT
-VISUAL-BROWSER-QUALIFICATION              OPEN / NEXT FOR THIS TRACK
-DYNAMIC-ALARM-OVERLAY                     PLANNED / SEPARATE
+OPERATIONAL-DATA-INPUT-CONTRACT                 CLOSED / VERIFIED / CURRENT
+OPERATIONAL-DATA-LEGACY-CONTRACT-REMOVAL        CLOSED / VERIFIED / REMOVED
+KPI-RUNTIME-DATA-INPUT-MIGRATION                CLOSED / VERIFIED / CURRENT
+ALARM-RUNTIME-DATA-INPUT-MIGRATION              BLOCKED / PLANNED
+DISTRIBUTION-AND-TOOLING-NORMALIZATION          PLANNED / NEXT
 ```
 
-## Frontera
-
-El baseline implementado es estático:
+## Siguiente frontera única
 
 ```text
-ToolConfiguration
-    + ToolStructure
-    + ToolRenderTopology
-        ↓
-OperationalRenderBinding
-        ↓
-AlarmBaselineProjection
-        ↓
-AlarmBaselineSurface
-        ↓
-ADA Generic
+ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
 ```
 
-No contiene:
+Objetivo del próximo chat:
 
-```text
-alarm runtime state
-routes
-origin/affected
-cards
-preview
-selection
-severity coloring
-management
-history
-analytics
-```
-
-## Referencia visual
-
-`moragaga/isolated-web-functions:main` / `operational_trace` es REFERENCE para geometría e interacción futura.
-
-No es autoridad arquitectónica ni contractual.
-
-## Siguiente frontera de este track
-
-```text
-ADA-WEB-STATIC-BASELINE-VISUAL-QUALIFICATION
-```
-
-Objetivo: levantar ADA Generic y validar visualmente Process sin bottom, Process con bottom e Integrated Operations, sin abrir todavía overlay dinámico de alarmas.
+- retomar generación de artifacts;
+- comprobar que todos se generan correctamente;
+- auditar `.env.detail` campo por campo;
+- identificar valores requeridos, opcionales, secretos y system-derived/system-assigned;
+- regenerar y calificar la versión distribuible;
+- no mezclar Alarm Runtime ni otros frentes.

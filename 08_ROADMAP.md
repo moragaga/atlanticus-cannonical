@@ -1,60 +1,51 @@
 # Atlanticus — Roadmap
 
-Estado: **CURRENT ROADMAP — ALARM BACKEND LIVE VERTICAL CLOSED; WEB CONSUMER NEXT**
+Estado: **CURRENT ROADMAP — OPERATIONAL DATA/KPI CLOSED; DISTRIBUTION AND TOOLING NEXT**
 
 ## CLOSED / CURRENT relevante
 
 ```text
-COMMAND-CENTER-USERS-PROFILES-NAVIGATION-MANAGER-PARITY
-COMMAND-CENTER-WEB-LOCK-NORMALIZATION
-
-ALARM-CONFIGURATION-COSMOS-TO-MATERIALIZATION
-ALARM-RUNTIME-EFFECTIVE-CURRENT-FACTS
-ALARM-MODELER-BASELINE
-ALARM-DELIVERY-LIVE-COSMOS
-ALARM-BACKEND-LOCAL-E2E
+OPERATIONAL-DATA-INPUT-CONTRACT
+OPERATIONAL-DATA-LEGACY-CONTRACT-REMOVAL
+KPI-RUNTIME-DATA-INPUT-MIGRATION
 ```
 
 ## NEXT único
 
 ```text
-ADA-COMMAND-CENTER-ALARM-LIVE-WEB-CONSUMER
+ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
 ```
 
-Scope permitido:
+Orden:
 
 ```text
-inspect current Web read surfaces
-consume alarm-live-projection
-map operator_view/operator_pool to existing logical UI surface
-preserve Tool-scoped partition/identity
-respect modeled slots/order
-qualify read/render behavior
+1. regenerate current-head artifacts
+2. verify every expected artifact is generated
+3. qualify artifact contents/installability
+4. audit every .env.detail entry
+5. classify required/optional/default/system-derived/secret semantics
+6. generate distribution
+7. run isolated consumer qualification
 ```
 
-No recalcular prioridad, routing, eligibility ni scheduling en Web.
+No mezclar Alarm Runtime.
 
 ## PLANNED / SEPARATE
 
 ```text
-full CAROUSEL/QIQ scheduler
-Modeler durable scheduler state
-Alarm Engine physical extraction
-production qualification producer
-History/Analytics
-Management projections
-resolution of ADA Tool contract duplication
-current-head artifact/distribution qualification
-.env.detail exhaustive audit
-distribution regeneration
+Alarm Runtime migration to final Operational Data input contract
 Python 3.14.7 / Trixie
 production Azure / Entra
+Alarm advanced scheduler
+History/Analytics and other product work already tracked separately
 ```
 
-## BLOCKED / SEPARATE
+## BLOCKED
 
 ```text
-COMMAND-CENTER-FULL-WEB-QUALIFIER
+Alarm Runtime executable data path
 ```
 
-Causa observada: coexistencia `ada.web.tools.*` vs `ada.contracts.tools.*`.
+Causa: imports del contrato Operational Data removido.
+
+No resolver mediante adapters.

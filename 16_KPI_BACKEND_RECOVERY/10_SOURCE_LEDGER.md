@@ -5,181 +5,78 @@ Estado: **AUDIT LEDGER / CURRENT**
 ## Implementation cut
 
 ```text
-moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
-date = 2026-10-03T05:42:35Z
+moragaga/atlanticus@777f3a0894a58f7275473ab34ce6b33cf767f9e7
+date = 2026-10-05T19:17:18Z
 ```
-
-Parent:
-
-```text
-2f9b65c3ba2646d519abfb0bb49e095d6819d185
-```
-
-The final commit touches only the KPI History/Historian/Timeseries boundary plus `uv.lock`.
 
 ## Canonical before replacement
 
 ```text
-moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
-date = 2026-10-03T05:40:40Z
+moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
+date = 2026-10-03T21:46:02Z
 ```
 
-Stale canonical state before this replacement:
+## Historical decisions
 
 ```text
-Timeseries multi-Tool delivery = PLANNED
-Timeseries direct legacy history path = CURRENT
-Historian atomic file replacement = process-owned
-Materialization consumer set = Latest only
-History tabular representation = mixed across contract/rolling_dataset
-qualification counts = pre-final-boundary values
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-Implementation CURRENT resolves those discrepancies.
-
-## Decisions
-
-```text
-NOT INSPECTED
-```
-
-The closure explicitly prohibited reading `atlanticus-decisions`.
+Relevant Operational Data/KPI historical artifacts were located in DOCX/XLSX form. Their content was not textually inspectable through the available connector during this closure.
 
 Therefore:
 
 ```text
-implementation-vs-decisions conflict status = UNVERIFIED
+implementation-vs-decisions compatibility = UNVERIFIED
 ```
 
-No statement of compatibility or incompatibility with decisions is made in this ledger.
+## Current implementation inspected
 
-## CURRENT implementation inspected
+### Operational Data
 
-### KPI History
+CURRENT exports and implementation use:
 
 ```text
-scopes/ada-kpi-engine/kpis/history/
+DataInputSpec
+DataInputContext
+DataInputPlanner
+DataInputLoadPlan
+DataInputLoader
+LoadedDataInputs
+DataView
+DataViewBinding
 ```
+
+Legacy consumer contracts are absent from Operational Data.
+
+### KPI Core
 
 CURRENT:
 
 ```text
-contract.py
-    logical durable DatasetDefinitions / targets
-
-rolling.py
-    logical rolling metadata and invariants
-
-dataset.py
-    reusable KPI PyArrow schemas/conversion
-    rolling DatasetDefinition / target
-    durable projection decode
-    rolling encode/decode/projection
+KpiSpec.inputs: tuple[DataInputSpec, ...]
+KpiResolver: Callable[[DataInputContext], object]
 ```
 
-PyArrow is intentionally isolated to `dataset.py`.
-
-### Historian
-
-```text
-scopes/ada-kpi-engine/processes/kpi-historian/
-```
+### KPI Runtime
 
 CURRENT:
 
 ```text
-daily durable history
-error history
-HistorianAuthority
-rolling current.parquet
-DatasetRuntime for durable and rolling I/O
-no direct PyArrow import in process materializers
-```
-
-### Timeseries Delivery
-
-```text
-scopes/ada-kpi-engine/processes/kpi-timeseries-delivery/
-```
-
-CURRENT:
-
-```text
-materialized Registry per Tool
-named connections
-lazy/frozen readiness
-consolidated rolling read plan
-HistorianAuthority coherence
-DatasetRuntime rolling access
-120 s output grid
-schema_version 2
-per-Tool checkpoints
-bounded parallel publication
-partial-failure progress preservation
-```
-
-### Materialization
-
-CURRENT consumers:
-
-```text
-Latest Delivery
-Timeseries Delivery
+DataInputLoadPlan
+DataInputLoader
 ```
 
 ## Qualification evidence
 
 ```text
-kpis/history                         31 passed
-processes/kpi-historian             45 passed
-processes/kpi-timeseries-delivery   28 passed
-
-Ruff                                PASS
-format                              PASS
-git diff --check                    PASS
-```
-
-## Epistemic status
-
-### VERIFIED
-
-```text
-final KPI commit is present in main
-History dataset.py owns reusable Arrow representation
-Historian process consumes shared dataset helpers
-Timeseries rolling repository consumes DatasetRuntime
-Timeseries multi-Tool implementation is present
-per-Tool checkpoint contract is implemented
-120 s output contract is implemented
-focused package suites are green
-```
-
-### INFERRED
-
-```text
-No additional architectural inference is required to classify this KPI backend increment CLOSED locally.
-```
-
-### ASSUMED
-
-```text
-None promoted to CURRENT.
-```
-
-### PROPOSED
-
-```text
-Next separate focus: inspect Command Center / Alarm backend boundary.
-```
-
-### UNVERIFIED
-
-```text
-full KPI operational E2E
-real multi-Tool Cosmos behavior
-production Azure behavior
-performance/RU profile
-implementation-vs-decisions compatibility
+Operational Data                 52 passed
+KPI Core                         29 passed
+KPI Evaluation                   21 passed
+KPI Runtime                      44 passed
+Ruff                             PASS
+format                           PASS
+Operational Data legacy grep     0 results
 ```
 
 ## Conflict ledger
@@ -190,26 +87,20 @@ implementation-vs-decisions compatibility
 CONFLICT / STALE DOCUMENTATION
 ```
 
-Canonical still described Timeseries replacement as future and process-level rolling atomicity.
+Canonical still described older focal states and did not record the final Operational Data cutover, KPI input migration, or intentional Alarm Runtime block.
 
-This replacement updates canonical to the current implementation.
+These replacement files reconcile canonical with current implementation.
 
-### Implementation vs decisions
+### Implementation vs historical decisions
 
 ```text
 UNVERIFIED
 ```
 
-Decisions were intentionally not read.
+No conflict is asserted without reading the binary decision artifacts.
 
 ### Python baseline
 
-Relevant current packages remain:
+Relevant current workspaces still use Python 3.14.2 while Project target remains 3.14.7/Trixie.
 
-```text
-requires-python = ==3.14.2
-```
-
-Project target baseline remains 3.14.7.
-
-Migration is separate and was not mixed into this hito.
+This is an existing separate migration, not part of the current contract closure.

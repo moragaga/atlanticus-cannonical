@@ -1,8 +1,34 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT — LIVE BASELINE CLOSED; ADVANCED MODELING/OPERATIONS OPEN**
+Estado: **CURRENT — RUNTIME DATA-INTEGRATION MIGRATION ADDED AS BLOCKER**
 
-## CLOSED / CURRENT
+## BLOCKED — Runtime Operational Data integration
+
+El pipeline legacy de Operational Data fue retirado.
+
+`alarms-runtime` todavía depende de ese contrato y no es ejecutable hasta migrar.
+
+Target conceptual:
+
+```text
+Alarm evaluator/input contract
+    ↓
+DataInputSpec
+    ↓
+DataInputPlanner
+    ↓
+DataInputLoader
+    ↓
+DataInputContext
+```
+
+La forma exacta del contrato Alarm permanece PLANNED; debe diseñarse en un incremento propio.
+
+No reintroducir legacy para desbloquearlo.
+
+## Historical CLOSED baseline
+
+Antes del cutover de Operational Data se verificó localmente:
 
 ```text
 READY exact pair
@@ -17,55 +43,42 @@ fixed alarm-live-projection container
 local physical E2E through Cosmos read-back
 ```
 
+Es evidencia histórica, no qualification del Runtime CURRENT post-cutover.
+
 ## OPEN — Modeler scheduler
 
 ```text
 CAROUSEL full scheduler
 QUEUE_IN_QUEUE full scheduler
-90 vs 120 second rotation window
+rotation window
 QIQ fairness
-independent scheduler timers
 durable ModelerState/checkpoint
-recovery of scheduler state
+recovery
 artifact A -> B state migration
 stale/disconnection policy
 ```
-
-Current first-six `operator_view` is not evidence that these are implemented.
-
-## OPEN — Runtime → Modeler evolution
-
-CURRENT baseline uses Runtime CURRENT v1.
-
-If future scheduler/history semantics require every transition, define the durable ordered no-drop handoff explicitly. Do not assume current head alone satisfies that future requirement.
 
 ## OPEN — presentation/data
 
 ```text
 effective dynamic cause
 Management projections
-tracking_view
-inactive_reactivation_view
 History/Analytics projections
-Projection Facts if required
 ```
 
 ## OPEN — operations/infrastructure
 
 ```text
+Alarm Runtime data-input migration
 production qualification producer
-resource provisioning/startup gate for live container
+resource provisioning/startup gates
 Azure/Docker qualification
 physical Engine extraction
 Python 3.14.7/Trixie migration
 ```
 
-## Known minor observability gap
-
-Modeler puede escribir `CURRENT_MODELED` y aun mostrar `work=0/empty=1` porque el job actual no marca iteration work. No afecta el snapshot generado, pero la métrica debe corregirse en un incremento propio si se usa operacionalmente.
-
-## NEXT fuera del Engine core
+## Project NEXT fuera de Alarm
 
 ```text
-Command Center Web consumer of alarm-live-projection
+ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
 ```

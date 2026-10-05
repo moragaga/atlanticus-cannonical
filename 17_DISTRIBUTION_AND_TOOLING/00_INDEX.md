@@ -1,27 +1,38 @@
 # Distribution and Tooling — Canonical Index
 
-Estado: **CURRENT — PRODUCT CUTOVER CLOSED / NAVIGATION THEN ARTIFACT REGENERATION**
+Estado: **PLANNED / NEXT — FINAL ARTIFACT AND DISTRIBUTION QUALIFICATION**
 
-Historical ADA distributed Linux runtime remains CLOSED for the artifact tested previously.
+Operational Data and KPI consumer-contract normalization are closed.
 
-It predates the current Users/Tool ownership commit.
+Distribution and tooling is now the next single focus.
 
 ## Order
 
 ```text
-1. Navigation explicit access contract
-2. regenerate current-head artifacts
-3. qualify contents/installability
-4. audit .env.detail
-5. generate distribution
-6. rerun isolated consumer
+1. regenerate current-head artifacts
+2. verify every expected artifact is generated
+3. qualify artifact contents/installability
+4. audit every .env.detail entry
+5. classify required/optional/default/system-derived/system-assigned/secret fields
+6. generate final distribution
+7. run isolated consumer qualification
 ```
 
-## Separate blockers
+## Scope constraints
+
+Do not mix:
 
 ```text
-macOS host sync rcssmin
+Alarm Runtime migration
 Python migration
 production Azure/Entra
-Command Center distribution
+unrelated Web/product work
 ```
+
+Alarm Runtime is intentionally BLOCKED by the Operational Data cutover and will be migrated in a later dedicated increment.
+
+## Existing documents
+
+`01_BACKEND_GENERATION.md` remains the ownership direction.
+
+`06_ENV_DETAIL.md` remains the audit contract and must be exercised in the next focus.

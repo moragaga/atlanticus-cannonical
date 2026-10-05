@@ -1,68 +1,105 @@
 # Atlanticus — Validation Baseline
 
-Estado: **CURRENT — ALARM LIVE BACKEND VERTICAL QUALIFIED LOCALLY 2026-10-03**
+Estado: **CURRENT — OPERATIONAL DATA FINAL CONTRACT + KPI MIGRATION QUALIFIED LOCALLY 2026-10-05**
 
 ## Autoridad
 
 ```text
-Implementation  moragaga/atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856
-Canonical base  moragaga/atlanticus-cannonical@8efd59431754059c548ed1e5d1263533b81012cd
+Implementation  moragaga/atlanticus@777f3a0894a58f7275473ab34ce6b33cf767f9e7
+Canonical base  moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
 ```
 
-## Evidencia focal de Alarm
+## Operational Data qualification
 
-Reportada y observada durante el cierre:
+Reportada por el usuario:
 
 ```text
-processes/alarms-runtime/tests                     PASS
-processes/alarms-modeler/tests + delivery/tests  20 PASS
+pytest core/tests planner/tests sources/tests
+52 passed
+
+ruff check core planner sources
+PASS
+
+ruff format --check core planner sources
+61 files already formatted
+
+legacy-symbol git grep
+0 results
 ```
 
-E2E físico local:
+Legacy-symbol scan cubrió:
 
 ```text
-Cosmos alarm-configuration           PASS
-Materialization READY                PASS
-Runtime EFFECTIVE                     PASS
-NOTPII Parquet read                   PASS
-Runtime ACTIVE/PREDOMINANT            PASS
-Runtime CURRENT + FACTS               PASS
-Modeler index + Tool snapshot         PASS
-Delivery CURRENT_AVAILABLE            PASS
-Delivery published_documents = 1      PASS
-Delivery failed_tools = 0             PASS
-Cosmos alarm-live-projection readback PASS
+DataPartition
+DataRequirement
+DataSourceView
+DataRuntimeContext
+DataRequirementPlanner
+DataLoadPlan
+DataSourceLoader
+LoadedDataSources
+DataPartitionBinding
+```
+
+## KPI qualification
+
+Reportada por el usuario:
+
+```text
+kpis/core/tests
+29 passed
+
+kpis/evaluation/tests
+21 passed
+
+processes/kpi-runtime/tests
+44 passed
+
+ruff check
+PASS
+
+ruff format --check
+101 files already formatted
 ```
 
 ## Acredita
 
 ```text
-exact artifact continuity from READY through Delivery
-real local Cosmos read/write path
-real Runtime source read from NOTPII dataset
-Modeler eligibility/order baseline
-per-Tool live snapshot generation
-fixed live container publication
-Tool-key connection resolution
-Delivery work metric after successful publish
+single Operational Data consumer contract
+legacy contract removal from Operational Data
+DataView -> DataViewBinding registry normalization
+KPI contract migration to DataInputSpec
+KPI evaluation through DataInputContext
+KPI Runtime through DataInputPlanner/DataInputLoader
+no compatibility adapter between new and removed contracts
 ```
+
+## Alarm qualification status after cutover
+
+```text
+Alarm domain contracts: not reopened
+Alarm previous E2E: historical evidence retained
+alarms-runtime current executable integration: BLOCKED
+```
+
+Reason:
+
+```text
+Alarm Runtime still imports removed Operational Data legacy symbols.
+```
+
+This is intentional and must not be hidden with compatibility code.
 
 ## No acredita
 
 ```text
-monorepo-wide pytest
+monorepo-wide pytest after intentional Alarm break
+Alarm Runtime migration
 CI
-independent Docker containers
-Azure Cosmos / Key Vault / Entra
-production qualification producer
-CAROUSEL/QIQ scheduling
-Modeler durable scheduler recovery
-Management projection
-History/Analytics
-Command Center Web rendering of live projection
-production resource provisioning/startup gates
+distributed artifacts
+isolated installation/distribution
+.env.detail completeness
+Docker multi-process qualification
+Azure / Entra production qualification
+Python 3.14.7/Trixie migration
 ```
-
-## Important qualification note
-
-El evaluator `mina/threshold` usado para el E2E es un **example evaluator**. El registry productivo de Runtime permanece vacío según su contrato/test vigente. El E2E lo inyectó mediante runner local controlado; no convertir esa prueba en registration productiva implícita.

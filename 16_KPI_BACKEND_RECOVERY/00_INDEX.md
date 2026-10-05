@@ -1,85 +1,61 @@
 # KPI Backend Recovery / Materialization / Delivery — Index
 
-Estado: **CLOSED / VERIFIED LOCALLY / CURRENT**
+Estado: **CURRENT — KPI RUNTIME DATA-INPUT MIGRATION CLOSED / VERIFIED LOCALLY**
 
 ## Autoridad de este cierre
 
 ```text
 Implementation
-moragaga/atlanticus@2505196019fcc51e5f97ff66a3159beb87fe71f0
+moragaga/atlanticus@777f3a0894a58f7275473ab34ce6b33cf767f9e7
 
 Canonical inspected before replacement
-moragaga/atlanticus-cannonical@38404e61c69978183cd515be4ca40afed7ef59e8
+moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
 
-Decisions
-NOT INSPECTED in this closure by explicit instruction
+Historical decisions
+moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+relevant binary artifacts located; substantive compatibility UNVERIFIED
 ```
 
 Git permanece **SOLO LECTURA**.
 
-## Estado por capability
+## Current delta
 
-| Archivo | Estado |
-|---|---|
-| `01_PROBLEM.md` | CLOSED / historical motivation. |
-| `02_REPROCESS_CONTRACT.md` | CURRENT; no reabierto. |
-| `03_KPI_RUNTIME.md` | CLOSED / VERIFIED / CURRENT; no reabierto. |
-| `04_LATEST_DELIVERY.md` | CLOSED / VERIFIED / CURRENT. |
-| `05_HISTORIAN.md` | CLOSED / VERIFIED / CURRENT. |
-| `06_TIMESERIES_DELIVERY.md` | CLOSED / VERIFIED / CURRENT; multi-Tool rolling consumer implemented. |
-| `07_SAFETY_RULES.md` | CURRENT. |
-| `08_CONFIGURATION.md` | CURRENT for Materialization + Latest + Timeseries. |
-| `09_TESTING.md` | CURRENT qualification baseline. |
-| `10_SOURCE_LEDGER.md` | CURRENT audit ledger. |
-| `11_MATERIALIZATION.md` | CLOSED / VERIFIED / CURRENT; consumed by Latest and Timeseries. |
+KPI Runtime dejó de consumir el Operational Data legacy contract.
 
-## Checkpoints
+CURRENT:
 
 ```text
-KPI-NAMED-CONNECTIONS                    CLOSED / VERIFIED / CURRENT
-KPI-REGISTRY-MATERIALIZATION             CLOSED / VERIFIED / CURRENT
-KPI-LATEST-MULTI-TOOL-DELIVERY           CLOSED / VERIFIED / CURRENT
-KPI-HISTORIAN-ROLLING-READ-MODEL         CLOSED / VERIFIED / CURRENT
-KPI-TIMESERIES-MULTI-TOOL-DELIVERY       CLOSED / VERIFIED / CURRENT
-KPI-HISTORY-DATASET-BOUNDARY              CLOSED / VERIFIED / CURRENT
-
-KPI-FULL-OPERATIONAL-E2E                  BLOCKED / UNVERIFIED
+KpiSpec.inputs
+    ↓
+DataInputSpec
+    ↓
+DataInputPlanner
+    ↓
+DataInputLoader
+    ↓
+DataInputContext
 ```
 
-## Shared Historian rolling contract
+No existe adapter hacia `DataRequirement`.
+
+## Qualification
 
 ```text
-<application_root>/timeseries/current.parquet
+kpis/core/tests                  29 passed
+kpis/evaluation/tests            21 passed
+processes/kpi-runtime/tests      44 passed
+Ruff                             PASS
+format                           PASS
 ```
 
-```text
-maximum physical horizon = 24 h
-grid                      = 30 s
-shape                     = wide
-timestamp                 = UTC
-physical coverage         = observed only
-authority                 = durable history + HistorianAuthority
-```
+## Other KPI capabilities
 
-Physical I/O is owned below `DatasetRuntime`.
-
-`ada.kpis.history.dataset` owns the reusable KPI PyArrow representation.
-
-Historian and Timeseries processes do not own PyArrow conversion logic.
-
-## Timeseries output contract
-
-```text
-logical/output step = 120 s
-schema_version      = 2
-id                  = timeseries
-partition_id        = kpis
-document_type       = ada_kpi_timeseries_delivery
-container           = ada-kpi-timeseries-delivery
-```
+Latest Delivery, Historian, Timeseries Delivery, materialization and named connections retain their previously closed/current status. They were not redesigned in this hito.
 
 ## Remaining boundary
 
-No internal KPI backend contract remains OPEN in this hito.
-
-Operational E2E remains BLOCKED until the required Web corrections allow the full application/runtime flow to be exercised.
+```text
+full distributed/application operational E2E = UNVERIFIED
+distribution/tooling qualification = NEXT
+Alarm Runtime migration = separate
+```

@@ -14,278 +14,106 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-## Tool Structure — CURRENT / FROZEN
+## Operational Data consumer contract — FROZEN / CLOSED
 
-`ToolStructure.components` is the authoritative operational sequence.
-
-Persistent layout roles are removed.
+Único contrato CURRENT:
 
 ```text
-ProcessLayoutRole        SUPERSEDED
-layout_role              SUPERSEDED
-LEFT/CENTER/RIGHT roles  SUPERSEDED
+DataInputSpec
+DataView
+DataInputContext
+DataInputPlanner
+DataInputLoadPlan
+DataInputLoader
+LoadedDataInputs
+DataViewBinding
 ```
 
-PROCESS uses:
+Pipeline:
 
 ```text
-operational_scope
-center_component_key
-ordered components
-```
-
-`center_component_key` is semantic centrality, not a physical screen coordinate.
-
-INTEGRATED_OPERATIONS uses component scopes and Mine → Plant operational order.
-
-## Render Topology — CURRENT / FROZEN
-
-Presentation topology is separate from `ToolStructure`.
-
-CURRENT contract:
-
-```text
-ToolRenderTopology(
-    bottom_component_key: str | None
-)
-```
-
-Rules:
-
-```text
-optional
-PROCESS only
-must reference an existing component
-must differ from center_component_key
-```
-
-A missing/empty topology is serialized compatibly by omitting `render_topology`.
-
-Do not reintroduce permanent LEFT/RIGHT/BOTTOM domain roles.
-
-## Operational Render Binding — REFINED / CURRENT
-
-Previous interpretation:
-
-```text
-binding = ToolStructure + ordered components only
-```
-
-CURRENT:
-
-```text
-binding =
-    ToolStructure
-    + ordered component bindings
-    + optional bottom_component_key
-```
-
-Derived topology:
-
-```text
-main_components = components excluding bottom
-bottom_component = configured bottom or None
-```
-
-It still contains no KPI runtime data and no live alarm state.
-
-## Static Alarm Baseline — CURRENT / CLOSED
-
-Previous Process behavior:
-
-```text
-project only center component
-```
-
-is SUPERSEDED.
-
-CURRENT projection:
-
-```text
-AlarmBaselineProjection(
-    tool_key,
-    kind,
-    main_points,
-    bottom_point | None,
-)
-```
-
-For PROCESS:
-
-```text
-all Tool components participate
-bottom, if configured, is separated from main_points
-main order follows ToolStructure.components
-```
-
-For INTEGRATED_OPERATIONS:
-
-```text
-all components remain in main_points
-```
-
-Current static anchors are COMPONENT anchors only.
-
-The baseline does not own alarm lifecycle, severity, routes, cards, selection or preview.
-
-## Static Alarm Surface — CURRENT / CLOSED
-
-`AlarmBaselineSurface` uses the proven visual language of `isolated-web-functions/operational_trace` for:
-
-```text
-baseline
-point core
-slot-centered percentage positioning
-large-screen sizing
-```
-
-but does not import its architecture or dynamic alarm model.
-
-`isolated-web-functions` is REFERENCE, not authority.
-
-Visible component names are intentionally omitted from the baseline surface.
-
-Component identity remains in DOM metadata for future overlay.
-
-Asset order:
-
-```text
-Alarm Management Summary  130
-Alarm Status              140
-Alarm Baseline Surface    145
-Time Status               150
-```
-
-## ADA Generic Tool resolution — CURRENT
-
-READY:
-
-```text
-Tool Projection
-→ ToolStructure + ToolRenderTopology
-→ OperationalRenderBinding
-→ AlarmBaselineProjection
-→ application definition/layout
-```
-
-UNCONFIGURED / UNAVAILABLE / INVALID continue through the degraded/base application path according to existing resolution semantics.
-
-No Tool configured means:
-
-```text
-application can start
-no implicit/default Tool
-no static alarm baseline
-```
-
-## Dynamic alarms — SEPARATE / PLANNED
-
-The static baseline closure does not implement:
-
-```text
-alarm-live-projection consumption
-runtime routes
-origin/affected overlay
-alarm cards
-preview
-selection
-dynamic colors
-management
-history/analytics
-```
-
-Those must consume Alarm Engine/Modeler outputs rather than recreate domain logic in Web.
-
-## Alarm pipeline — CURRENT / CLOSED baseline
-
-The implemented backend pipeline remains:
-
-```text
-Command Center publication
+DataInputSpec
     ↓
-Alarm Configuration projection
+DataInputPlanner
     ↓
-Materialization READY
+DataInputLoadPlan
     ↓
-Runtime EFFECTIVE
+DataInputLoader
     ↓
-Runtime CURRENT + FACTS
+LoadedDataInputs
     ↓
-Modeler current projection
-    ↓
-Delivery
-    ↓
-Cosmos alarm-live-projection
-    ↓
-Web dynamic consumer [SEPARATE]
+DataInputContext
 ```
 
-The static baseline implemented in ADA Generic is structural and does not replace the dynamic consumer.
-
-## Exact artifact invariant — FROZEN
+Principio congelado:
 
 ```text
-READY != EFFECTIVE
-exact artifact = source_key + result_id + manifest_sha256 + resolution_key
-Runtime, Modeler y Delivery usan el mismo exact artifact
-no fallback to latest READY
+optimization by source/view
+consumption by input identity
 ```
 
-## Materialization split — REFINED
+## Operational Data legacy — SUPERSEDED / REMOVED
 
-CURRENT:
+Quedan retirados:
 
 ```text
-RuntimeAlarmConfiguration + DeliveryAlarmConfiguration
+DataPartition
+DataRequirement
+DataSourceView
+DataRuntimeContext
+DataRequirementPlanner
+DataLoadPlan
+DataSourceViewLoadPlan
+DataSourceLoader
+LoadedDataSources
+DataPartitionBinding
 ```
 
-Modeler baseline consumes both from the same READY exact artifact.
+No reintroducirlos para compatibilidad.
 
-A separate `ModelerConfiguration` is not a prerequisite and should appear only if an independent responsibility is demonstrated.
+`partition_dimensions` sigue siendo válido exclusivamente como layout físico de Dataset/materialization.
 
-## Runtime ownership — FROZEN
+## KPI — CURRENT / CLOSED
 
-Runtime owns evaluation, occurrence/episode, priority truth, operational management effects, assignments/routing state, EFFECTIVE adoption and durable operational facts.
+`KpiSpec` declara `inputs: tuple[DataInputSpec, ...]`.
 
-Runtime does not own Web geometry.
+Resolvers consumen `DataInputContext` por `input_key`.
 
-## Modeler ownership — CURRENT baseline / advanced scheduling PLANNED
+KPI Runtime usa `DataInputPlanner` y `DataInputLoader`.
 
-CURRENT:
+No existe adapter hacia el contrato retirado.
+
+## Alarm Runtime — BLOCKED by explicit prioritization
+
+Decisión anterior implícita:
 
 ```text
-consume authoritative Runtime CURRENT
-reopen exact materialized configuration
-filter eligible PREDOMINANT active alarms
-build per-Tool operator_pool
-build first-six operator_view
-persist current index + per-Tool snapshot
-validate checksums/current exact pin
+mantener pipeline legacy temporalmente porque Alarm Runtime lo consume
 ```
 
-PLANNED:
+queda **SUPERSEDED**.
+
+Decisión CURRENT:
 
 ```text
-CAROUSEL
-QUEUE_IN_QUEUE
-rotation timers
-fairness
-durable scheduler checkpoint/state
-staleness/disconnection policy
+priorizar contrato final y distribución
+aceptar Alarm Runtime roto temporalmente
+migrar Alarm después a un contrato compatible con DataInputSpec/DataInputContext
+no restaurar legacy
 ```
 
-## Delivery — CURRENT / FROZEN
+Esta decisión no supersede el dominio Alarm, lifecycle, persistence, modeler ni delivery; sólo su integración de Operational Data.
 
-Delivery owns Tool → Cosmos connection resolution, bounded publication and transport/upsert.
+## Distribution — NEXT
 
-It does not own UI geometry or alarm modeling.
+Siguiente foco único:
 
-## Cause — OPEN
+```text
+artifact generation
+artifact qualification
+.env.detail exhaustive audit
+distribution regeneration
+isolated consumer qualification
+```
 
-CURRENT snapshot retains `cause_template` plus evidence.
-
-Dynamic effective cause materialization remains OPEN.
-
-## CAROUSEL / QIQ — NOT IMPLEMENTED
-
-Prior design knowledge remains reference/partial design only until scheduler state and qualification exist.
+No mezclar Alarm Runtime en ese incremento.
