@@ -1,6 +1,6 @@
 # ADA Generic — Configuration to Runtime
 
-Estado: **CURRENT PHYSICAL CONTRACT / TOOL STRUCTURE TO STATIC PRESENTATION CLOSED**
+Estado: **CURRENT PHYSICAL CONTRACT / SPECIALIZED APPLICATION HANDOFF CURRENT**
 
 ## Primary settings CURRENT
 
@@ -60,9 +60,7 @@ CURRENT topology:
 bottom_component_key | None
 ```
 
-## Runtime structural derivation
-
-READY projection:
+## Generic READY derivation
 
 ```text
 ToolConfiguration
@@ -72,23 +70,74 @@ ToolConfiguration
        structure,
        bottom_component_key=render_topology.bottom_component_key,
    )
+→ OperationalRenderBinding
 → project_alarm_baseline(...)
-→ create_application_definition(
-       alarm_baseline_projection=...
-   )
+→ create_application_definition(...)
 ```
 
-If an external composition supplies a render binding, it must match both the Tool Structure and the configured bottom component.
+## Specialized application derivation CURRENT
+
+When `extension_factory` is supplied:
+
+```text
+resolve Tool Projection
+    ↓
+resolve OperationalRenderBinding
+    ↓
+extension_factory(binding)
+    ↓
+create Generic definition with same binding
+    ↓
+extend_ada_application_definition(...)
+    ↓
+Manager / identity / Navigation / KPI Collector / Master Projection wiring
+    ↓
+create Web runtime
+```
+
+A specialized application may also provide `AdaApplicationDescriptor`.
+
+The descriptor changes product identity, not Generic runtime ownership.
+
+## Integrated Operations CURRENT
+
+`ada-integrated-operations-application` uses:
+
+```text
+application_descriptor =
+    INTEGRATED_OPERATIONS_APPLICATION_DESCRIPTOR
+
+extension_factory =
+    create_integrated_operations_extension
+```
+
+The extension rejects a non-null binding whose Tool kind is not `INTEGRATED_OPERATIONS`.
+
+`binding=None` remains valid so the application can start before a Tool is configured.
 
 ## No Tool
 
 ```text
 UNCONFIGURED
-→ create_application_definition()
+→ OperationalRenderBinding = None
 → no static baseline
+→ specialized base surface may still be present
 ```
 
-This is an explicit supported state.
+No default Tool is fabricated.
+
+## Static alarm baseline boundary
+
+The projection/render capability remains owned by:
+
+```text
+ada.web.alarms.baseline_projection
+ada.web.alarms.baseline_surface
+```
+
+Generic composes it from the same binding used by the specialized application.
+
+Dynamic alarm runtime remains separate.
 
 ## Hot refresh gap
 
@@ -100,20 +149,30 @@ A Tool reprojection after worker start does not yet guarantee hot refresh of:
 header/branding
 render topology
 static baseline
-operational body
+specialized operational body
 ```
 
 Status:
 
 ```text
-PLANNED / LATER
+PLANNED / OPEN
 ```
 
-## Dynamic alarms
+Restart remains the deterministic qualification path after Tool reprojection.
 
-This flow does not consume `alarm-live-projection`.
+## Resource preparation
 
-Static Tool presentation and dynamic alarm delivery remain separate boundaries.
+Durable Web startup consumes existing resources.
+
+Provisioning is explicit and separate from Web startup.
+
+Generic owns the preparation implementation through:
+
+```text
+ada.web.application.generic.manager_deployment:manager_resources_main
+```
+
+Specialized products may expose a product-named command that delegates to this implementation.
 
 ## Time Status
 

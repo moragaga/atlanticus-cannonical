@@ -1,12 +1,12 @@
 # ADA Web — Current Baseline
 
-Estado: **CURRENT — TOOL RENDER TOPOLOGY + STATIC ALARM BASELINE CLOSED**
+Estado: **CURRENT — SPECIALIZED INTEGRATED OPERATIONS FOUNDATION + STATIC ALARM BASELINE VERIFIED**
 
 ## Authority
 
 ```text
-Implementation  moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
-Canonical base  moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
+Implementation  moragaga/atlanticus@6ecbfb21dd0f98d7cae8f0c142d796994a7fc361
+Canonical base  moragaga/atlanticus-cannonical@ed26b441b3055e582ba272e349f8cd6de0e067fa
 ```
 
 ## Tool structural ownership CURRENT
@@ -90,6 +90,8 @@ bottom_component
 
 Binding does not carry live KPI or alarm state.
 
+For specialized applications, Generic resolves this binding once and can provide the same object to both Generic presentation and the application extension.
+
 ## AlarmBaselineProjection CURRENT
 
 ```text
@@ -111,6 +113,8 @@ scope
 ```
 
 `display_name` remains contractual metadata but is not rendered visibly by the static surface.
+
+The surface retains component identity using `data-*` attributes.
 
 ## AlarmBaselineSurface CURRENT
 
@@ -138,8 +142,6 @@ runtime severity state
 rotation
 ```
 
-The surface retains component identity using `data-*` attributes.
-
 ## Bottom geometry CURRENT
 
 PROCESS with bottom renders two static traces:
@@ -162,8 +164,6 @@ ada_alarm_baseline_surface
 load_order = 145
 ```
 
-This avoids the existing Time Status `150` layer collision.
-
 ## ADA Generic integration CURRENT
 
 READY Tool:
@@ -184,35 +184,62 @@ UNCONFIGURED
 → no baseline
 ```
 
-## Qualification observed
+## Specialized application contract CURRENT
+
+ADA Generic now supports:
 
 ```text
-ada-web-tools-configuration             90 passed
-ada-web-operational-render-binding      11 passed
-ada-configuration-manager               64 passed
-
-alarm-baseline-projection               19 passed
-alarm-baseline-surface                   9 passed
-ada-generic-application                206 passed
-
-legacy ProcessLayoutRole/layout_role grep PASS
-git diff --check                         PASS
+AdaApplicationDescriptor
+AdaApplicationExtension
 ```
 
-These are focal/local test results, not full monorepo CI.
+The current specialized consumer is:
 
-## Visual qualification
+```text
+ada-integrated-operations-application
+```
+
+It uses Generic runtime and contributes only its product-specific Dashboard composition.
+
+## Integrated Operations browser evidence
+
+Observed in a running durable Integrated Operations application:
+
+```text
+real projected Tool loaded
+Dashboard rendered at /
+Mina surface visible
+Planta surface visible
+static baseline visible
+baseline points correspond to configured Tool component identities/names
+```
+
+Classification:
+
+```text
+VERIFIED / CURRENT
+```
+
+A separate durable restart proof without touching Manager was requested but not reported before closure.
+
+Classification:
+
+```text
+UNVERIFIED / OPEN
+```
+
+## Qualification boundary
 
 Automated tests intentionally do not freeze exact visual spacing.
 
-OPEN:
+Still OPEN:
 
 ```text
 Process without bottom visual review
 Process with bottom visual review
-Integrated Operations visual review
-spacing/density adjustment if required
-responsive review
+Integrated Operations responsive review
+videowall qualification
+spacing/density adjustment if evidence requires it
 ```
 
 ## Dynamic alarm boundary
@@ -233,6 +260,6 @@ The Web layer must consume authoritative runtime/modeler outputs and must not re
 
 ## Existing global conflict
 
-Project target remains Python 3.14.7 while multiple package metadata entries still declare 3.14.2.
+Project target remains Python 3.14.7 while multiple package metadata entries still declare 3.14.2, including Integrated Operations.
 
 This hito does not resolve that conflict.

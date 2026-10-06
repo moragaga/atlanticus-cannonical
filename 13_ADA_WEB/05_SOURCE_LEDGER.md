@@ -1,17 +1,17 @@
 # ADA Web — Source Ledger
 
-Estado: **AUDIT LEDGER / STATIC ALARM BASELINE 2026-10-05**
+Estado: **AUDIT LEDGER / INTEGRATED OPERATIONS FOUNDATION 2026-10-05**
 
 ## Implementation CURRENT audited
 
 ```text
-moragaga/atlanticus@686a80f6a05eeea93d35d642cf2f92100cb1e61b
+moragaga/atlanticus@6ecbfb21dd0f98d7cae8f0c142d796994a7fc361
 ```
 
 Commit date:
 
 ```text
-2026-10-05T19:12:27Z
+2026-10-05T21:45:17Z
 ```
 
 ## Decisions
@@ -20,14 +20,12 @@ Commit date:
 moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-No specific active decision contradiction was textually verified during this closure.
-
-Historical decision documents containing Tool/Structure evolution exist, but exact binary DOCX wording was not used to invent additional constraints.
+No active historical decision was verified that supersedes the CURRENT implementation described here.
 
 ## Canonical base before replacement
 
 ```text
-moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
+moragaga/atlanticus-cannonical@ed26b441b3055e582ba272e349f8cd6de0e067fa
 ```
 
 ## Relevant implementation scopes
@@ -39,27 +37,10 @@ scopes/ada/web/operational-render-binding/
 scopes/ada/web/alarms/baseline-projection/
 scopes/ada/web/alarms/baseline-surface/
 scopes/ada/web/application/ada-generic-application/
+scopes/ada/web/application/ada-integrated-operations-application/
 ```
 
-## Render topology checkpoint
-
-```text
-ToolRenderTopology.bottom_component_key
-OperationalRenderBinding.main_components
-OperationalRenderBinding.bottom_component
-```
-
-Qualification:
-
-```text
-tools/configuration                 90 passed
-render-topology/source-release      11 passed
-operational-render-binding          11 passed
-configuration-manager               64 passed
-generic application                205 passed
-```
-
-## Static baseline checkpoint
+## Static baseline checkpoint retained
 
 ```text
 AlarmBaselineProjection.main_points
@@ -69,15 +50,73 @@ ADA Generic integration
 asset order 145
 ```
 
-Qualification:
+## Additive application checkpoint
 
 ```text
-baseline-projection                 19 passed
-baseline-surface                     9 passed
-operational-render-binding          11 passed
-generic application                206 passed
-legacy layout-role grep            PASS
-git diff --check                    PASS
+atlanticus@a334d14b1e0481a04676492c2daa3bf8aa436380
+```
+
+Introduced:
+
+```text
+AdaApplicationExtension
+extension_factory in Generic host/bootstrap
+same OperationalRenderBinding shared with extension and Generic definition
+```
+
+## Integrated Operations foundation checkpoint
+
+```text
+atlanticus@2ddb968c79d203a5e6bdc2acf6ec6da1e36dc9c6
+```
+
+Introduced:
+
+```text
+AdaApplicationDescriptor
+ada-integrated-operations-application
+Dashboard as the single product application module
+single route /
+Mine and Plant as internal Dashboard composition
+DashboardContext service
+separate Dashboard/Mine/Plant asset layers
+```
+
+## Local operation checkpoint
+
+```text
+atlanticus@6ecbfb21dd0f98d7cae8f0c142d796994a7fc361
+```
+
+Introduced:
+
+```text
+deployment/local/compose.yaml
+ada-integrated-operations-resources
+durable local .env.detail guidance
+```
+
+## Browser/runtime evidence reported
+
+```text
+Integrated Operations app running             VERIFIED
+projected real Tool consumed                   VERIFIED
+Mina / Planta rendered                         VERIFIED
+static Alarm Baseline rendered                 VERIFIED
+component identity/name metadata observed      VERIFIED
+```
+
+Not reported:
+
+```text
+clean restart after projection without Manager changes
+specialized resources prepare/validate command output
+```
+
+Classification:
+
+```text
+UNVERIFIED / OPEN
 ```
 
 ## Reference source
@@ -94,46 +133,36 @@ Classification:
 REFERENCE
 ```
 
-Used for visual geometry and future interaction knowledge only.
+Used for static baseline visual geometry and future interaction knowledge only.
 
-## Canonical conflicts found before replacement
+## Canonical drift reconciled by this replacement
 
-Stale canonical text declared:
-
-```text
-ProcessLayoutRole
-component layout_role
-PROCESS center-only alarm baseline
-OperationalRenderBinding as structure-only
-UI / Alarm integration PLANNED
-```
-
-Current implementation declares:
+Previous canonical stated:
 
 ```text
-no layout roles
-center_component_key semantic center
-optional ToolRenderTopology.bottom_component_key
-binding main/bottom topology
-PROCESS all-component static baseline
-Generic static baseline integration CURRENT
+Integrated Operations full Tool body PLANNED
+browser visual qualification OPEN
+Generic specialized application extension not documented
 ```
 
-Classification:
+Current implementation/evidence states:
 
 ```text
-IMPLEMENTATION CURRENT
-CANONICAL STALE
+Integrated Operations foundation CURRENT
+Dashboard/Mine/Plant base composition CURRENT
+Integrated Operations baseline browser observation VERIFIED
+Generic additive extension CURRENT
+specialized application descriptor CURRENT
 ```
-
-These replacement files reconcile that canonical drift.
 
 ## Open
 
 ```text
-visual browser qualification
+durable restart proof
+Tool hot reprojection refresh
+KPI-driven operational modules
 dynamic alarm overlay
 subcomponent runtime anchors
-full Operational Trace behaviors
-hot Tool reprojection refresh
+Process visual variants
+responsive/videowall qualification
 ```

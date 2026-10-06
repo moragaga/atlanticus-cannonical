@@ -8,17 +8,32 @@ Estado: **CURRENT**
 
 - Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- HEAD verificado para este cierre: `777f3a0894a58f7275473ab34ce6b33cf767f9e7`
-- Fecha: `2026-10-05T19:17:18Z`
+- HEAD verificado para este cierre: `6ecbfb21dd0f98d7cae8f0c142d796994a7fc361`
+- Fecha: `2026-10-05T21:45:17Z`
 
 `atlanticus:main` es la realidad implementada actual.
+
+Checkpoints relevantes de este hito:
+
+```text
+a334d14b1e0481a04676492c2daa3bf8aa436380
+    additive AdaApplicationExtension contract
+
+2ddb968c79d203a5e6bdc2acf6ec6da1e36dc9c6
+    AdaApplicationDescriptor
+    ada-integrated-operations-application foundation
+
+6ecbfb21dd0f98d7cae8f0c142d796994a7fc361
+    Integrated Operations local emulator harness
+    product-owned resource preparation entry point
+```
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
-- HEAD inspeccionado antes de estos reemplazos: `44d3c803f60d1a1630d3a3374a663447cfe21248`
-- Fecha: `2026-10-03T21:46:02Z`
+- HEAD inspeccionado antes de estos reemplazos: `ed26b441b3055e582ba272e349f8cd6de0e067fa`
+- Fecha: `2026-10-05T19:26:15Z`
 
 `atlanticus-cannonical:main` contiene contratos, decisiones vigentes, qualification, rationale y estado canónico.
 
@@ -30,8 +45,6 @@ Estado: **CURRENT**
 - Fecha: `2026-09-13T03:31:11Z`
 
 `atlanticus-decisions` es evidencia histórica. No prevalece sobre canonical vigente ni sobre implementación actual salvo referencia explícita.
-
-En este cierre se localizaron artefactos históricos relacionados con Operational Data y KPI en formatos DOCX/XLSX, pero no pudieron inspeccionarse textualmente mediante el conector disponible. Su compatibilidad con este cierre permanece **UNVERIFIED**.
 
 ## Jerarquía congelada
 
@@ -53,7 +66,9 @@ uv
 python:3.14.7-slim-trixie
 ```
 
-La implementación inspeccionada todavía conserva `requires-python = ==3.14.2` en workspaces relevantes. La migración 3.14.7/Trixie permanece separada y no fue parte de este hito.
+La implementación inspeccionada todavía conserva `requires-python = ==3.14.2` en workspaces relevantes, incluido `ada-integrated-operations-application`.
+
+La migración 3.14.7/Trixie permanece separada y no fue parte de este hito.
 
 ## Git
 

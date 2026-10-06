@@ -1,6 +1,6 @@
 # ADA Web — Canonical Index
 
-Estado: **CURRENT — STATIC ALARM BASELINE CLOSED / VISUAL QUALIFICATION OPEN**
+Estado: **CURRENT — INTEGRATED OPERATIONS FOUNDATION CURRENT / STATIC ALARM BASELINE INTEGRATION VERIFIED**
 
 | Archivo | Contenido | Estado |
 |---|---|---|
@@ -9,39 +9,47 @@ Estado: **CURRENT — STATIC ALARM BASELINE CLOSED / VISUAL QUALIFICATION OPEN**
 | `03_SHELL_BOUNDARIES.md` | Shell boundaries. | CURRENT/HISTORICAL |
 | `04_QUALIFICATION_HISTORY.md` | Evidencia histórica. | HISTORICAL |
 | `05_SOURCE_LEDGER.md` | Provenance del baseline Web. | AUDIT LEDGER |
-| `06_INFRASTRUCTURE_STARTUP.md` | Runtime Docker, resource preparation y emuladores. | CURRENT / VERIFIED |
+| `06_INFRASTRUCTURE_STARTUP.md` | Runtime Docker, resource preparation y emuladores. | CURRENT |
 | `07_ALARM_MANAGEMENT_FRONTEND.md` | Alarm management UI. | OTHER FOCUS |
-| `08_INTEGRATED_OPERATIONS_PRESENTATION.md` | Integrated Operations composition/focus + CURRENT static baseline boundary. | CURRENT DESIGN / PARTIAL IMPLEMENTATION |
+| `08_INTEGRATED_OPERATIONS_PRESENTATION.md` | Specialized application foundation, Dashboard/Mine/Plant boundary y static baseline. | CURRENT / PARTIAL PRODUCT IMPLEMENTATION |
 
-## CURRENT Web structure relevant to alarms
+## CURRENT Web structure relevant to Integrated Operations
 
 ```text
 Tool Projection READY
-→ ToolStructure + ToolRenderTopology
+→ ToolStructure
 → OperationalRenderBinding
-→ AlarmBaselineProjection
-→ AlarmBaselineSurface
-→ ADA Generic layout
+→ same binding to:
+     Generic static Alarm Baseline
+     Integrated Operations DashboardContext
+→ one Dashboard page /
+→ internal Mine + Plant surfaces
 ```
 
 ## Static baseline status
 
 ```text
-contract implementation    CURRENT / CLOSED
-automated qualification    VERIFIED
-visual browser qualification OPEN
-dynamic alarm overlay      PLANNED / SEPARATE
+contract implementation                    CURRENT / CLOSED
+automated baseline qualification            VERIFIED
+Integrated Operations browser observation   VERIFIED
+Process visual variants                     OPEN
+dynamic alarm overlay                       PLANNED / SEPARATE
+```
+
+## Integrated Operations foundation status
+
+```text
+specialized descriptor          CURRENT
+additive Generic extension      CURRENT
+Dashboard application module    CURRENT
+Mine/Plant internal composition CURRENT
+local emulator harness          CURRENT
+product resource command        CURRENT
+KPI-driven feature modules      PLANNED
 ```
 
 ## Reference
 
 `isolated-web-functions/operational_trace` remains a visual/interaction reference only.
 
-## Current sequence for this track
-
-```text
-1. visual qualification of static baseline
-2. only after that, dynamic alarm overlay against authoritative live projection
-```
-
-Do not reopen Alarm Engine domain rules during the visual qualification increment.
+Do not reopen Alarm Engine domain rules while advancing Integrated Operations presentation.
