@@ -8,8 +8,8 @@ Estado: **CURRENT**
 
 - Repositorio: `moragaga/atlanticus`
 - Rama: `main`
-- HEAD verificado para este cierre: `6ecbfb21dd0f98d7cae8f0c142d796994a7fc361`
-- Fecha: `2026-10-05T21:45:17Z`
+- HEAD verificado para este cierre: `eec22faa9cca5ad67af8e5fe0bf0299264e27ad5`
+- Fecha: `2026-10-06T17:00:49Z`
 
 `atlanticus:main` es la realidad implementada actual.
 
@@ -26,16 +26,34 @@ a334d14b1e0481a04676492c2daa3bf8aa436380
 6ecbfb21dd0f98d7cae8f0c142d796994a7fc361
     Integrated Operations local emulator harness
     product-owned resource preparation entry point
+
+ed1d1afab987cf098926e100f5bd4137d418e149
+    complete Integrated Operations static dashboard layout
+    9 operational components / 22 visual cards
+    product-local card and binding contracts
+
+f16ce932d0bc902c84419a5e3e5d28ab9ed49c3f
+    9-track equal-width presentation grid
+    Mine/Plant focus without global scale/translate
+    responsive presentation behavior
+    focus-aware static Alarm Baseline presentation
+
+eec22faa9cca5ad67af8e5fe0bf0299264e27ad5
+    final current CSS checkpoint
+    dashboard edge inset
+    baseline control styling / hover / pointer behavior
 ```
 
 ### Canonical
 
 - Repositorio: `moragaga/atlanticus-cannonical`
 - Rama: `main`
-- HEAD inspeccionado antes de estos reemplazos: `ed26b441b3055e582ba272e349f8cd6de0e067fa`
-- Fecha: `2026-10-05T19:26:15Z`
+- HEAD inspeccionado antes de estos reemplazos: `c1c5479930ebbde45d3f4b636ba6f1d72f7db13b`
+- Fecha: `2026-10-06T13:40:56Z`
 
 `atlanticus-cannonical:main` contiene contratos, decisiones vigentes, qualification, rationale y estado canónico.
+
+Los archivos generados por este cierre no se vuelven autoritativos hasta que el usuario los integre explícitamente en este repositorio.
 
 ### Historical decisions
 

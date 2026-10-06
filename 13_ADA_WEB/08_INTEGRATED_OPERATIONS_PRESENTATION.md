@@ -1,6 +1,6 @@
 # ADA Web — Integrated Operations Presentation
 
-Estado: **CURRENT FOUNDATION IMPLEMENTED / REAL TOOL + STATIC BASELINE BROWSER PATH VERIFIED / OPERATIONAL MODULES PLANNED**
+Estado: **CURRENT INITIAL UI IMPLEMENTED / TOOL ID + REUSE BOUNDARY OPEN / KPI CONTENT PLANNED**
 
 ## Purpose
 
@@ -15,9 +15,9 @@ It does not define a second Generic runtime or transfer ownership from Alarm Eng
 ## Authority
 
 ```text
-implementation  moragaga/atlanticus@6ecbfb21dd0f98d7cae8f0c142d796994a7fc361
+implementation  moragaga/atlanticus@eec22faa9cca5ad67af8e5fe0bf0299264e27ad5
 decisions       moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-canonical base  moragaga/atlanticus-cannonical@ed26b441b3055e582ba272e349f8cd6de0e067fa
+canonical base  moragaga/atlanticus-cannonical@c1c5479930ebbde45d3f4b636ba6f1d72f7db13b
 ```
 
 Relevant implementation checkpoints:
@@ -25,17 +25,23 @@ Relevant implementation checkpoints:
 ```text
 a334d14...  Generic additive extension contract
 2ddb968...  specialized descriptor + Integrated Operations foundation
-6ecbfb2...  Integrated Operations local resource harness
+6ecbfb2...  local resource harness
+ed1d1af...  complete initial 9-component / 22-card Dashboard
+f16ce93...  final focus/responsive/baseline coordination structure
+eec22fa...  current final CSS polish
 ```
 
 References retained:
 
 ```text
 moragaga/isolated-web-functions:main
-    Operational Trace visual/interaction reference
+    alarm/component visual correlation reference
+
+moragaga/__temporal_ada_latest:main
+    historical/current ADA layout reference used for geometry/content inventory
 
 moragaga/atlanticus-multi-stage:main
-    historical layout/reference only
+    historical 4+5 layout/focus reference
 ```
 
 References do not transfer contracts, ownership or architecture.
@@ -52,7 +58,7 @@ identity
 Navigation runtime
 Tool Projection resolution
 OperationalRenderBinding
-static Alarm Baseline
+static Alarm Baseline projection/module injection
 KPI Collector
 Master Projection
 application lifecycle
@@ -66,27 +72,18 @@ its product identity
 its application extension
 Dashboard product module
 Mine / Plant presentation composition
-Tool-specific feature modules as they are introduced
-Tool-specific assets and geometry
+product-local visual layout
+product-local presentation assets
+future Tool-specific feature presentation
 ```
 
 Integrated Operations must not copy Generic runtime capabilities.
 
 ## Specialized application identity CURRENT
 
-Integrated Operations uses:
+Integrated Operations uses its own `AdaApplicationDescriptor` while running on Generic runtime.
 
-```text
-AdaApplicationDescriptor(
-    import_name='ada.web.application.integrated_operations',
-    application_id='ada-integrated-operations-application',
-    display_name='ADA Operaciones Integradas',
-    distribution_name='ada-integrated-operations-application',
-    ...
-)
-```
-
-This preserves a distinct product identity while running on Generic runtime.
+This preserves distinct product identity without replacing Generic contracts.
 
 ## Extension boundary CURRENT
 
@@ -111,35 +108,15 @@ non-null binding of another Tool kind
     → rejected
 ```
 
-The extension contributes only the Dashboard application module and product page selection.
-
 ## Application-level composition CURRENT
 
-Application root composition knows:
+Application root composition knows only:
 
 ```text
 Dashboard
 ```
 
-Future siblings may be added only when they are real application-level capabilities, for example a future `restrictions` module.
-
-The root must not know Dashboard-internal loading/haulage/cards/callbacks.
-
-## Dashboard CURRENT
-
-Dashboard is one `WebModule`.
-
-It contributes:
-
-```text
-page package
-Dashboard asset layer
-Mine asset layer
-Plant asset layer
-DashboardContext service
-```
-
-Dashboard owns the current product route:
+Current product route:
 
 ```text
 /
@@ -147,27 +124,11 @@ Dashboard owns the current product route:
 
 There are no `/mine` or `/plant` product routes.
 
-## Mine and Plant CURRENT
-
-Mine and Plant are internal Dashboard compositions/layers.
-
-They are not independent application-level `WebModule`s by default.
-
-Current base layout:
-
-```text
-Dashboard
-├── Mina
-└── Planta
-```
-
-Their current layouts provide stable presentation roots and content containers.
-
-They do not yet render the final operational component/KPI content.
+Mine and Plant are internal Dashboard compositions.
 
 ## DashboardContext CURRENT
 
-Dashboard registers an immutable service:
+Dashboard registers:
 
 ```text
 DashboardContext(
@@ -177,7 +138,7 @@ DashboardContext(
 
 It can derive scoped component bindings from the authoritative Tool binding.
 
-This avoids globals and prevents feature callbacks from resolving Tool configuration independently.
+Feature code must not independently resolve Tool configuration.
 
 ## Tool structural input CURRENT
 
@@ -201,11 +162,318 @@ Component/subcomponent identities remain authoritative.
 
 No layout roles are persisted.
 
-## Static Alarm Baseline ownership CURRENT
+## Complete initial Dashboard layout CURRENT
 
-The baseline capability does not live inside Integrated Operations.
+The current Dashboard no longer consists of empty Mine/Plant containers.
 
-Ownership:
+It renders a complete initial static presentation inventory.
+
+Master overview:
+
+```text
+9 equal tracks
+├── 4 Mine tracks
+└── 5 Plant tracks
+```
+
+MINE component columns:
+
+```text
+general_mina
+carguio
+transporte
+chancado_stmg
+```
+
+PLANT component columns:
+
+```text
+stockpile_chacay
+molienda
+flotacion
+transporte_fluidos
+puerto
+```
+
+The dashboard declares 22 visual cards in total.
+
+The shared card:
+
+```text
+gestion_carguio_turno
+```
+
+spans the Carguío + Transporte area but is not a tenth Tool component.
+
+## Visual card inventory CURRENT
+
+```text
+GENERAL MINA
+    Movimiento Mina
+    Remanentes
+    Perforación
+    MP10
+
+CARGUÍO
+    Equipos de Servicio
+    Mezcla hacia Chancado
+
+TRANSPORTE
+    Transporte Global • Turno
+    N° Operativo • Turno
+    Tiempos y Colas • Turno
+
+SHARED CARGUÍO / TRANSPORTE
+    Gestión Carguío • Turno
+
+CHANCADO-STMG
+    Chancado-STMG
+
+STOCKPILE CHACAY
+    Stockpile Chacay
+    Tendencia Alimentado
+
+MOLIENDA
+    Molienda
+
+FLOTACIÓN
+    Colectiva
+    Selectiva
+
+TRANSPORTE DE FLUIDOS
+    STR
+    STC
+    Tranque
+    STA
+
+PUERTO
+    Puerto
+    Desaladora
+```
+
+These are presentation labels/slots, not authoritative Tool IDs.
+
+## Product-local binding contract CURRENT
+
+Current binding types:
+
+```text
+DashboardCardBinding
+DashboardComponentBinding
+DashboardSharedCardBinding
+```
+
+Current product mapping file:
+
+```text
+ada.web.application.integrated_operations.modules.dashboard.bindings
+```
+
+Important distinction:
+
+```text
+key
+label
+    visual/product identity
+
+tool_component_key
+tool_subcomponent_key
+linked_tool_component_keys
+    authoritative Tool identity references when explicitly supplied
+```
+
+The built-in visual bindings currently leave Tool identity fields unset.
+
+Therefore:
+
+```text
+DO NOT infer Tool IDs from visual keys
+DO NOT copy historical IDs from reference repositories as authority
+DO NOT bind KPI/alarm data to a card until the real Tool key is explicitly mapped
+```
+
+## Developer intervention point OPEN
+
+The developer/user must eventually populate the real Tool identity mapping.
+
+The intended intervention point is:
+
+```text
+modules/dashboard/bindings.py
+```
+
+When supplied, current builders propagate identity as DOM metadata:
+
+```text
+data-ada-component-key
+data-ada-subcomponent-key
+data-ada-linked-component-keys
+```
+
+The exact real Tool IDs were not available/validated in this hito.
+
+Status:
+
+```text
+PLANNED / OPEN
+```
+
+## Product-local card shell CURRENT
+
+Current implementation contains:
+
+```text
+modules/dashboard/card.py
+```
+
+with builders for:
+
+```text
+component panel
+regular dashboard card
+shared dashboard card
+```
+
+This implementation is CURRENT because it is in `atlanticus:main`.
+
+However, a possible existing reusable card capability under:
+
+```text
+scopes/ada/web/ui
+```
+
+was identified by the user at closure.
+
+This overlap was not evaluated in this hito.
+
+Status:
+
+```text
+OPEN
+```
+
+Before additional ADA consumers depend on the product-local shell, compare the existing reusable UI capability and decide one of:
+
+```text
+reuse existing shared ADA card
+promote/migrate the new shell into the appropriate ADA UI scope
+retain product-local shell because contracts materially differ
+```
+
+Do not create adapters or duplicate both implementations by default.
+
+## Geometry CURRENT
+
+The overview uses a single nine-track grid so all operational component columns share the same width.
+
+A single product token controls inter-column/inter-card spacing:
+
+```text
+--ada-io-gap
+```
+
+Mine internally uses:
+
+```text
+4 equal columns
+2 equal rows
+```
+
+The shared Carguío/Transporte card spans:
+
+```text
+columns 2-3
+row 2
+```
+
+Plant internally uses:
+
+```text
+5 equal columns
+```
+
+The Dashboard has a small product-local edge inset and left/right/bottom border.
+
+## Focus CURRENT
+
+Focus is presentation state only:
+
+```text
+overview
+mine
+plant
+```
+
+Desktop behavior:
+
+```text
+overview
+    both scopes visible
+
+mine
+    Plant hidden
+    Mine spans full dashboard width
+
+plant
+    Mine hidden
+    Plant spans full dashboard width
+```
+
+Closing focus returns to `overview`.
+
+The current implementation does not use global `transform: scale(...)`.
+
+The earlier `225%/180% + translateX` approach is SUPERSEDED.
+
+## Responsive modes CURRENT
+
+### Mobile `<1280`
+
+```text
+Mine + Plant both visible
+all scopes/components/cards stacked vertically
+no Mine/Plant focus controls
+Alarm Management hidden by Integrated Operations
+Alarm Status hidden by Integrated Operations
+Alarm Baseline hidden by Integrated Operations
+```
+
+Mobile uses larger product-local gaps and horizontal edge inset.
+
+This rule is CURRENT for Integrated Operations only.
+
+It is not yet established as a generic ADA operational UI contract.
+
+### Tablet `1280-1365`
+
+```text
+one scope at a time
+default/new state resolves to Mine
+Mine visible   → only PLANTA control
+Plant visible  → only MINA control
+```
+
+### Desktop `1366-2559`
+
+```text
+overview available
+both MINA and PLANTA controls in overview
+focused scope occupies full dashboard
+opposite scope control remains while focused
+close control returns to overview
+```
+
+### Videowall `>=2560`
+
+```text
+overview forced
+Mine + Plant visible
+presentation controls hidden
+```
+
+## Alarm Baseline ownership CURRENT
+
+Ownership remains:
 
 ```text
 ada.web.alarms.baseline_projection
@@ -221,84 +489,95 @@ Tool Projection
     ↓
 OperationalRenderBinding
     ├── Generic → AlarmBaselineProjection → AlarmBaselineSurface
-    └── Integrated Operations → DashboardContext
+    └── Integrated Operations → DashboardContext / product presentation
 ```
 
-The same binding is used by both branches.
-
-Integrated Operations baseline contract:
+Integrated Operations baseline structural contract remains:
 
 ```text
 all components → main_points
 bottom_point   → None
 ```
 
-`bottom_component_key` is PROCESS-only.
+## Focus-aware baseline presentation CURRENT
 
-Component names are not rendered visibly by the static baseline, but component/anchor/scope identity remains available through DOM metadata.
+Integrated Operations JS coordinates presentation of the existing static baseline.
 
-## Browser qualification CURRENT
-
-A real Integrated Operations Tool was configured/projected and consumed by the running specialized application.
-
-Observed:
+While Mine or Plant is focused in tablet/desktop:
 
 ```text
-Dashboard rendered
-Mina heading rendered
-Planta heading rendered
-static Alarm Baseline rendered
-multiple baseline points rendered
-baseline metadata contained configured component identities/names
+filter baseline points by data-ada-scope
+hide points outside visible scope
+redistribute visible points over full baseline width
 ```
 
-Classification:
+Returning to overview restores original point positions.
+
+This does not alter AlarmBaselineProjection or Tool structure.
+
+It is presentation-only behavior.
+
+## Baseline controls CURRENT
+
+The original Dashboard MINA/PLANTA controls are mounted visually inside the existing Alarm Baseline surface.
+
+Overview:
 
 ```text
-VERIFIED
+MINA at left edge
+PLANTA at right edge
 ```
 
-This closes the previous generic statement that Integrated Operations static-baseline browser qualification was entirely OPEN.
-
-Still unverified:
+Focused:
 
 ```text
-clean durable restart after projection without Manager changes
-Process visual variants
-responsive workstation behavior
-videowall behavior
+current-scope control hidden
+opposite-scope control remains
 ```
 
-## Local durable operation CURRENT
+The close control remains on the Dashboard.
 
-Integrated Operations exposes:
+Current CSS also provides:
 
 ```text
-deployment/local/compose.yaml
-ada-integrated-operations-resources
+button border treatment
+hover treatment
+pointer cursor
+baseline vertical adjustment
 ```
 
-Local sequence:
+The exact final `eec22faa...` visual polish has not yet been requalified in browser after commit.
+
+## Technical coupling note CURRENT
+
+Integrated Operations presentation currently reaches the Generic static baseline through DOM selectors and metadata:
 
 ```text
-infra
-→ product resource prepare/validate
-→ application
+.ada-alarm-baseline-surface
+.ada-alarm-baseline-surface__point
+data-ada-scope
+--ada-alarm-baseline-point-x
 ```
 
-`ada-integrated-operations-resources` delegates to Generic resource preparation.
+This is CURRENT implementation behavior.
 
-The Web startup itself does not provision resources.
+It must not be interpreted as a generic reusable public API until explicitly promoted by a future contract decision.
+
+## Header CURRENT
+
+ADA Operational Shell remains owner of the header.
+
+Integrated Operations does not create a second header.
 
 ## KPI boundary CURRENT
 
 Generic remains owner of KPI Collector attachment.
 
-Future Integrated Operations features must consume Generic-delivered state/stores/adapters.
+Current Dashboard cards contain presentation slots only.
 
-They must not connect directly to Cosmos.
+No KPI values are connected in this closure.
 
-Desired direction:
+Required future direction:
 
 ```text
 KPI Delivery
@@ -307,73 +586,10 @@ Generic KPI Collector
     ↓
 component/store state
     ↓
-Integrated Operations feature presentation
+Integrated Operations feature/card presentation
 ```
 
-The first KPI-driven feature is not implemented in this closure.
-
-## Feature-module direction CURRENT
-
-Within Dashboard/Mine or Dashboard/Plant, functional modules may emerge such as Loading/Haulage or other operational areas.
-
-A functional module may own:
-
-```text
-presentation
-callbacks
-ids
-assets
-feature-local state
-collector/store adapters
-```
-
-It does not require its own route.
-
-Do not introduce technical global buckets such as unrelated top-level `callbacks/`, `layouts/`, `routes/` or `components/`.
-
-Do not create `shared/` until real cross-feature reuse exists.
-
-Reusable capability across ADA products belongs in an appropriate generic ADA scope rather than being trapped inside Integrated Operations.
-
-## Focus semantics PLANNED
-
-Possible operational focus remains a presentation concern.
-
-If introduced, `mine` and `plant` focus must not mutate Tool Structure, KPI definitions, Alarm lifecycle or persisted business state.
-
-Prefer:
-
-```text
-scope filtering
-layout reflow
-density changes
-available-height recovery
-component-aware sizing
-```
-
-Avoid global `transform: scale(...)`.
-
-No focus implementation is claimed by this closure.
-
-## Global Indicators
-
-Indicator definition/state remains separate from scope placement.
-
-Conceptual applicability may support:
-
-```text
-{MINE}
-{PLANT}
-{MINE, PLANT}
-```
-
-No new runtime behavior is claimed here.
-
-## Header
-
-ADA Operational Shell remains owner of the header.
-
-Integrated Operations must not create a second header.
+Integrated Operations must not connect directly to Cosmos.
 
 ## Dynamic alarm boundary
 
@@ -388,37 +604,59 @@ management/deactivation
 dynamic scheduling
 ```
 
-Not implemented from Operational Trace:
+Not implemented here:
 
 ```text
-routes
-origin/affected markers
+live alarm route overlay
+origin/affected dynamic markers
 alarm cards
 selection
 preview
 rotation
-runtime tone/state
+dynamic runtime tone/state
 ```
 
-These belong to a later dynamic alarm overlay consuming authoritative alarm outputs.
+Focus filtering of the static baseline is not the dynamic alarm overlay.
 
 ## Testing boundary
 
-Automated tests should verify behavior/contracts such as:
+Current focused tests verify:
 
 ```text
-specialized descriptor wiring
-extension/binding contract
-invalid Tool kind rejection
-unconfigured startup
-service/context behavior
-feature/store callbacks
-persistence/recovery/error paths
+9 component declarations
+22 unique cards
+Mine/Plant scope metadata
+presentation targets
+Tool identity projection when explicit mappings exist
+shared owner/linked identity projection
+JS asset packaging
 ```
 
-Do not create tests whose only purpose is to freeze CSS geometry, exact visual structure or internal function/class existence.
+Do not add tests whose only purpose is to freeze visual spacing, border sizes, responsive pixel geometry or branding.
 
 Responsive/spacing/branding remain primarily visual qualification.
+
+## Qualification state
+
+VERIFIED:
+
+```text
+current implementation exists on atlanticus:main
+complete static layout exists
+9 component / 22 card contract exists
+browser layout/focus path was exercised during hito
+static baseline/browser coordination was exercised before final CSS-only polish
+```
+
+UNVERIFIED:
+
+```text
+exact post-eec22faa browser visual recheck
+exact final-head package test rerun
+exact final-head ruff format clean proof
+real Tool component/subcomponent ID mappings
+reusability comparison with scopes/ada/web/ui card capability
+```
 
 ## Implementation state
 
@@ -430,38 +668,39 @@ Generic AdaApplicationDescriptor
 Integrated Operations specialized application
 Dashboard application module
 single /
-Mine + Plant internal base composition
 DashboardContext
-local emulator harness
-product resource preparation command
-real Tool → binding → Dashboard path
-real Tool → binding → static baseline path
+complete initial 9-component / 22-card static layout
+product-local bindings.py
+product-local card.py
+responsive presentation
+Mine/Plant focus
+focus-aware static baseline presentation
+mobile vertical mode
+tablet scope mode
+videowall overview mode
 ```
 
-CLOSED for this foundation:
+CLOSED for this hito:
 
 ```text
-specialized application creation
-Generic reuse boundary
-single Dashboard route model
-Mine/Plant internal composition decision
-static Alarm Baseline ownership/injection decision
-product-named resource command without provisioning duplication
-initial real-Tool browser proof
+complete initial Integrated Operations visual skeleton
+equal-width operational overview
+Mine/Plant focus interaction
+initial responsive behavior
+initial static Alarm Baseline presentation coordination
+initial visual card inventory
 ```
 
 OPEN / PLANNED:
 
 ```text
+final exact visual recheck of current CSS polish
+Tool ID mapping
+card reuse/migration decision
+first KPI-driven card/data vertical
 durable restart proof
 Tool hot reprojection refresh
-first KPI-driven operational feature
-actual Tool component placement/content
-focus implementation
-responsive workstation qualification
-videowall qualification
 dynamic alarm overlay
-compact alarm presentation
 production Azure/Entra qualification
 Python 3.14.7/Trixie migration
 ```
@@ -469,18 +708,20 @@ Python 3.14.7/Trixie migration
 ## Next single focus
 
 ```text
-INTEGRATED-OPERATIONS-FIRST-OPERATIONAL-DATA-VERTICAL
+INTEGRATED-OPERATIONS-CARD-IDENTITY-AND-REUSE-BOUNDARY
 ```
 
-Take one real operational feature and prove:
+The next chat should not start by wiring KPI data.
+
+First determine:
 
 ```text
-Generic KPI Collector
-→ authoritative component/store state
-→ one Integrated Operations feature module
-→ presentation
+1. what reusable card/component presentation already exists under scopes/ada/web/ui
+2. whether the current product-local card.py should reuse, migrate to, or remain separate from that capability
+3. the exact authoritative Tool component/subcomponent IDs the developer must provide in bindings.py
+4. the final identity contract from Tool → binding → DOM/card
 ```
 
-The exact feature and UX approach may be selected in the next chat.
+Only after that boundary is frozen should the KPI vertical resume.
 
-Do not mix dynamic alarms, responsive redesign or additional application-level modules into that increment.
+Do not mix dynamic alarms, Generic/Manager redesign, resource provisioning or final distribution into that increment.
