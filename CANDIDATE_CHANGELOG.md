@@ -158,3 +158,63 @@ The final automated requalification after the Guest-boundary corrective remains 
 not be recorded as GREEN without a later test result.
 
 The production Blob/Cosmos wiring for Users Administration also remains a separate qualification.
+
+## Execution refinement — 2026-10-06 — Dynamic Process Deployment Resources
+
+Checkpoint:
+
+```text
+moragaga/atlanticus@5c40faed4df7f3d7b6db79251144a9ec09e09e91
+```
+
+A concrete distribution need established a consumer-owned deployment resource boundary.
+
+SUPERSEDED:
+
+```text
+pyproject.toml as effective distributed CPU/RAM authority
+generated Compose as persistent resource configuration
+manual Compose edits
+a separate update-deployment synchronization step
+```
+
+CURRENT:
+
+```text
+deployment.resources.json
+    unique persistent effective sizing source
+```
+
+Contract:
+
+```text
+vCPU 0.25 .. 4.0 in 0.25 increments
+RAM GiB = 2 × vCPU
+default = 0.5 vCPU / 1.0 GiB
+Docker MiB = RAM GiB × 1024
+```
+
+`up` and `run` generate ephemeral Compose resource overrides.
+
+`simulate` consumes the same resource source.
+
+Regeneration preserves consumer-owned sizing.
+
+The generated distribution includes `AZURE_CONTAINER_APPS_RESOURCES.md`.
+
+A related implementation finding exposed a stale Docker/local contract. CURRENT Docker runtime inputs are:
+
+```text
+allowed
+    secrets.json
+    config/connections.json
+
+excluded
+    .env
+    config.json
+    *.detail
+```
+
+The process-deployment gate was realigned and locally qualified GREEN with 111 tests.
+
+Extension integration already initializes new aliases with default resources, but focused preservation/rollback qualification remains the next frontier.

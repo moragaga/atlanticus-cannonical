@@ -1,129 +1,174 @@
 # Atlanticus — Current State
 
-Estado: **CURRENT — OPERATIONAL DATA FINAL CONTRACT + KPI MIGRATION CLOSED / VERIFIED**
+Estado: **CURRENT — DYNAMIC PROCESS DEPLOYMENT RESOURCE BOUNDARY CLOSED / VERIFIED LOCALLY**
 
 ## Autoridad
 
 ```text
 Implementation
-moragaga/atlanticus@777f3a0894a58f7275473ab34ce6b33cf767f9e7
+moragaga/atlanticus@5c40faed4df7f3d7b6db79251144a9ec09e09e91
 
 Canonical base before replacement
-moragaga/atlanticus-cannonical@44d3c803f60d1a1630d3a3374a663447cfe21248
+moragaga/atlanticus-cannonical@15a51f70396726a2ad3b88d1afc66ce8cfff3300
 ```
 
 ## CLOSED / VERIFIED en este hito
 
-Operational Data quedó normalizado a un único contrato de consumo:
+La distribución de procesos tiene una fuente efectiva de recursos separada del artifact y del proceso Python:
 
 ```text
-DataInputSpec
+deployment.resources.json
     ↓
-DataInputPlanner
+validation
     ↓
-DataInputLoadPlan
+Docker execution projection
+```
+
+Contrato por proceso:
+
+```json
+{
+  "vcpu": 0.5,
+  "memory_gib": 1.0
+}
+```
+
+Default global:
+
+```text
+0.5 vCPU / 1.0 GiB
+```
+
+Parejas válidas:
+
+```text
+vCPU 0.25 .. 4.0
+step 0.25
+memory_gib = vCPU × 2
+```
+
+Traducción Docker:
+
+```text
+memory MiB = memory_gib × 1024
+```
+
+Ejemplo:
+
+```text
+1.5 vCPU / 3.0 GiB
+→ cpus: 1.5
+→ mem_limit: 3072m
+```
+
+## Ownership CURRENT
+
+```text
+pyproject.toml
+    process/package/container identity
+    NOT resource authority for distributed sizing
+
+deployment.resources.json
+    consumer-owned effective deployment sizing
+
+deployment/local/compose*.yaml
+    generated structural deployment
+    NOT persistent sizing authority
+```
+
+La distribución inicial crea `deployment.resources.json`.
+
+Una regeneración conserva valores existentes de los procesos retenidos y usa el default sólo para procesos sin sizing previo.
+
+`AZURE_CONTAINER_APPS_RESOURCES.md` se entrega en la raíz de la distribución como guía del contrato admitido.
+
+## Ejecución local CURRENT
+
+`up` y `run` leen los recursos en cada ejecución y generan un Compose override temporal.
+
+```text
+base compose
++ ephemeral resources override
+→ docker compose
+```
+
+El override no se conserva como segunda fuente de verdad.
+
+`simulate` recibe CPU/RAM desde el mismo `deployment.resources.json` y los proyecta al scheduler, que termina ejecutando Docker con `--cpus` / `--memory`.
+
+## Local Docker runtime inputs CURRENT
+
+Se corrigió una inconsistencia preexistente entre Dockerfile, `.dockerignore`, gate y local workspace.
+
+CURRENT:
+
+```text
+image/runtime inputs allowed
+    pyproject.toml
+    uv.lock
+    wheels/
+    src/
+    secrets.json
+    config/connections.json
+
+excluded
+    .env
+    config.json
+    *.detail
+```
+
+`deployment/local/generate_compose.py` conserva ahora `secrets.json` y `config/connections.json` en el workspace local.
+
+## Extension integration
+
+IMPLEMENTED en `consumer/process.py`:
+
+```text
+existing deployment.resources.json
+    ↓ read
+existing entries preserved
+    +
+new process → default_resources()
     ↓
-DataInputLoader
-    ↓
-LoadedDataInputs
-    ↓
-DataInputContext
+write candidate deployment.resources.json
 ```
 
-El pipeline legacy fue removido de Operational Data:
+`deployment.resources.json` forma parte del conjunto administrado/publicado por `integrate`.
 
-```text
-DataPartition
-DataRequirement
-DataSourceView
-DataRuntimeContext
-DataRequirementPlanner
-DataLoadPlan
-DataSourceViewLoadPlan
-DataSourceLoader
-LoadedDataSources
-DataPartitionBinding
-```
-
-El registry físico usa directamente:
-
-```text
-DataView
-    ↓
-DataViewBinding
-```
-
-`partition_dimensions` permanece únicamente como concepto físico de Dataset/materialization.
-
-## KPI CURRENT
-
-KPI quedó migrado al contrato final.
-
-`KpiSpec` declara:
-
-```text
-inputs: tuple[DataInputSpec, ...]
-```
-
-Los resolvers consumen por identidad local:
-
-```text
-context.get(input_key)
-```
-
-KPI Runtime consume:
-
-```text
-DataInputLoadPlan
-DataInputLoader
-```
-
-No existe compatibilidad `DataInputSpec -> DataRequirement`.
-
-## Alarm Runtime
-
-Estado:
-
-```text
-BLOCKED / PLANNED MIGRATION
-```
-
-La implementación de Alarm Runtime todavía importa símbolos legacy removidos (`DataRequirement`, `DataLoadPlan`, `DataRequirementPlanner`, `DataRuntimeContext`).
-
-Este quiebre es intencional y aceptado para priorizar el contrato final. No reintroducir aliases, adapters ni el pipeline retirado.
-
-El dominio Alarm y sus contratos de lifecycle/persistence/modeler/delivery no quedan superseded por este cierre; el bloqueo es específicamente de su integración con Operational Data.
+Sin embargo, la qualification específica de esta nueva frontera de integración todavía no está cerrada.
 
 ## Qualification observada
 
-Operational Data:
+Gate `tooling/gates/process-deployment/check.py` reportado GREEN:
 
 ```text
-pytest core/tests planner/tests sources/tests   52 passed
-ruff check                                     PASS
-ruff format --check                            61 files formatted
-legacy-symbol grep                             0 results
+Ruff check / format                   PASS
+deployment/processes/tests            31 passed
+deployment/local/tests                16 passed
+tooling/tests/local/processes          8 passed
+tooling/tests/distribution/processes  56 passed
+shell launcher syntax                 PASS
+
+total tests                           111 passed
 ```
 
-KPI:
+La qualification es local reportada por el usuario.
+
+## UNVERIFIED / DEFERRED
 
 ```text
-kpis/core/tests                                29 passed
-kpis/evaluation/tests                          21 passed
-processes/kpi-runtime/tests                    44 passed
-ruff check                                     PASS
-ruff format --check                            101 files formatted
+real Docker smoke proving an edited resource value is enforced by Docker
+Azure runtime resource qualification
 ```
 
-La qualification es local reportada por el usuario; no equivale a CI ni Azure/Docker productivo.
+Estos puntos no bloquean el cierre de este incremento por decisión del usuario.
 
-## OPEN separado
+## OPEN
 
 ```text
-Alarm Runtime migration to the new data-input contract
-artifact generation qualification
+focused extension/resource integration qualification
+full current-head artifact generation/qualification
 .env.detail exhaustive audit
-distribution regeneration
 isolated distributed consumer qualification
 Python 3.14.7 / Trixie migration
 production Azure / Entra qualification
@@ -132,5 +177,5 @@ production Azure / Entra qualification
 ## NEXT único
 
 ```text
-ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
+ATLANTICUS-EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION
 ```

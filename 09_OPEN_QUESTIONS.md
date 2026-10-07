@@ -1,53 +1,55 @@
 # Atlanticus — Open Questions
 
-Estado: **CURRENT — DISTRIBUTION/TOOLING NEXT; ALARM RUNTIME MIGRATION SEPARATE**
+Estado: **CURRENT — EXTENSION RESOURCE INTEGRATION IS THE NEXT SINGLE OPEN FRONT**
 
 ## CLOSED
 
 ```text
-neutral DataInputSpec consumer contract
-input identity by input_key
-physical consolidation by source/view
-DataViewBinding registry normalization
-Operational Data legacy contract removal
-KPI Core/Evaluation/Runtime migration
-focused local qualification
+deployment.resources.json contract
+consumer ownership of distributed sizing
+global 0.5 vCPU / 1.0 GiB default
+allowed vCPU/RAM table
+GiB -> Docker MiB translation
+dynamic Compose override
+simulation consumption of the same resource source
+pyproject resource authority removal
+regeneration preservation of consumer sizing
+Docker/local runtime-input contract alignment
+process-deployment gate requalification
 ```
 
-## OPEN / NEXT — Distribution and Tooling
+## OPEN / NEXT — Extension integration
 
 El próximo chat debe resolver exclusivamente:
 
 ```text
-1. Qué artifacts debe generar CURRENT main.
-2. Si todos los artifacts se generan correctamente.
-3. Si su contenido y dependencias son instalables/consumibles.
-4. Qué significa cada campo de .env.detail.
-5. Qué campos son required/optional.
-6. Qué campos pueden tener default seguro.
-7. Qué campos pueden ser system-derived/system-assigned.
-8. Qué campos son secretos.
-9. Cómo generar la distribución final.
-10. Cómo calificar un consumidor aislado de esa distribución.
+1. Does integrate preserve a custom resource pair for every installed process?
+2. Does every newly integrated alias receive exactly 0.5 vCPU / 1.0 GiB?
+3. Does integrate reject a malformed or incomplete deployment.resources.json before mutation?
+4. Does rollback restore deployment.resources.json if publication fails after that file was replaced?
+5. Does integration keep the resource set exactly equal to the final process set?
+6. Is a distribution created before this resource frontier explicitly rejected/regenerated rather than supported through a compatibility adapter?
 ```
 
-## OPEN / SEPARATE — Alarm Runtime
+La implementación actual ya contiene parte de este comportamiento.
+
+El objetivo siguiente es **qualification and correction only if evidence requires it**, no redesign.
+
+## OPEN / DEFERRED — Distribution qualification
 
 ```text
-new Alarm evaluator/input contract
-migration from removed DataRequirement path
-DataInputSpec declaration
-DataInputContext consumption
-planner/loader integration
-focused qualification
+generate every current-head artifact
+qualify artifact contents/installability
+audit every .env.detail
+final distribution regeneration
+isolated consumer qualification
+real Docker resource-limit smoke
 ```
 
-No es parte del siguiente incremento.
-
-## OPEN / SEPARATE — Platform
+## OPEN / SEPARATE
 
 ```text
-Python 3.14.7/Trixie migration
-production Azure/Entra qualification
-remaining product-specific fronts already tracked by their canonical sections
+Alarm Runtime migration
+Python 3.14.7 / Trixie
+production Azure / Entra qualification
 ```

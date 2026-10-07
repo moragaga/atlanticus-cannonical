@@ -1,46 +1,24 @@
 # Atlanticus — Architecture
 
-Estado: **CURRENT — SINGLE OPERATIONAL DATA INPUT CONTRACT**
+Estado: **CURRENT — MODULAR RUNTIME + CONSUMER-OWNED DISTRIBUTED DEPLOYMENT RESOURCES**
 
 ## Regla principal
 
 Atlanticus es modular y reusable. ADA y Command Center son consumidores.
 
-## Operational Data — FROZEN
-
-El único contrato de consumo CURRENT es:
+## Clean cutover rule
 
 ```text
-DataInputSpec
-    input_key
-    source
-    view
-    columns
-    selection
+contracts before consumers
+clean replacement
+no legacy aliases
+no dual source of truth
+no compatibility storage/deployment path without explicit decision
 ```
 
-Principio:
+## Operational Data
 
-```text
-optimization by source/view
-consumption by input identity
-```
-
-El planner consolida lecturas físicas por:
-
-```text
-(source, view)
-```
-
-El consumidor recibe frames por:
-
-```text
-input_key
-```
-
-Esto permite que un mismo consumidor solicite la misma fuente/vista varias veces con selectores diferentes sin perder identidad lógica.
-
-## Operational Data pipeline — FROZEN
+El contrato CURRENT previo permanece:
 
 ```text
 DataInputSpec
@@ -56,73 +34,143 @@ LoadedDataInputs
 DataInputContext
 ```
 
-No existe camino legacy paralelo.
+## Distributed process resource boundary — FROZEN
 
-## Logical vs physical boundary — FROZEN
-
-```text
-DataView
-    logical consumer view
-
-DataViewBinding
-    binding source/view -> materialization + technical loading metadata
-
-Dataset materialization partition_dimensions
-    physical storage layout
-```
-
-No introducir nuevamente `DataPartition` como contrato de consumo ni filtrar layout físico hacia definiciones de consumidores.
-
-## Consumer rule
-
-Consumidores genéricos como KPI dependen del contrato neutral `operational-data-core`.
-
-Builders de fuentes pueden producir `DataInputSpec`, pero el contrato de dominio del consumidor no debe depender de loaders, pandas, pyarrow ni clientes físicos.
-
-## KPI — CURRENT
+Resource sizing pertenece al deployment consumer, no al proceso Python.
 
 ```text
-KpiSpec.inputs -> tuple[DataInputSpec, ...]
-KpiResolver    -> Callable[[DataInputContext], object]
+process artifact
+    identity / dependencies / entrypoint
+          │
+          │ no CPU/RAM authority
+          ↓
+distribution generation
+          ↓
+deployment.resources.json
+          ↓
+effective consumer-owned sizing
+          ├── up / run → ephemeral Compose override
+          └── simulate → scheduler docker run
 ```
 
-Los modos simples requieren un input lógico; CUSTOM puede consumir varios inputs por `input_key`.
+### Source of truth
 
-## Alarm — BLOCKED integration boundary
+Única fuente persistente efectiva:
 
-El dominio Alarm permanece válido.
+```text
+deployment.resources.json
+```
 
-Alarm Runtime todavía usa el contrato retirado y por eso está BLOCKED hasta una migración explícita al nuevo contrato. No restaurar legacy para mantenerlo funcionando.
+No son autoridad:
+
+```text
+pyproject.toml [tool.atlanticus.container.resources]
+base compose.yaml
+base compose.bind.yaml
+temporary override files
+simulation.json
+```
+
+Las proyecciones derivadas pueden materializar recursos para una ejecución, pero no se convierten en configuración persistente.
+
+## Resource contract — FROZEN
+
+```text
+schema_version = 1
+
+processes.<alias>.vcpu
+processes.<alias>.memory_gib
+```
+
+Invariantes:
+
+```text
+0.25 <= vcpu <= 4.0
+vcpu step = 0.25
+memory_gib = vcpu × 2
+all installed process aliases appear exactly once
+no unknown aliases
+```
+
+Default para proceso nuevo:
+
+```text
+0.5 vCPU / 1.0 GiB
+```
+
+Docker memory projection:
+
+```text
+MiB = memory_gib × 1024
+```
+
+## Consumer ownership — FROZEN
+
+El desarrollador/consumer puede cambiar `deployment.resources.json`.
+
+Regeneración:
+
+```text
+retained process
+→ preserve existing resource pair
+
+new process
+→ initialize default pair
+
+removed process
+→ remove resource entry with regenerated composition
+```
+
+No editar Compose para persistir sizing.
+
+## Extension integration boundary — IMPLEMENTED / QUALIFICATION OPEN
+
+La implementación actual de `integrate`:
+
+```text
+valid current distribution
++ extension processes
+→ merge manifest/services
+→ preserve resource entries
+→ add default resource entry per new alias
+→ regenerate base compose structure
+→ validate candidate
+→ publish managed files atomically
+```
+
+La qualification específica de preservación/rollback de resources durante integración permanece abierta.
+
+## Docker runtime-input boundary — CURRENT
+
+El Dockerfile usa:
+
+```text
+COPY processes/${FILENAME}/ ./
+```
+
+pero `.dockerignore` actúa como allowlist.
+
+Permitido:
+
+```text
+pyproject.toml
+uv.lock
+wheels/
+src/
+secrets.json
+config/connections.json
+```
+
+Excluido:
+
+```text
+.env
+config.json
+*.detail
+```
+
+El local workspace debe respetar la misma frontera.
 
 ## Generic Web capabilities
 
-```text
-Source Core / Local / Blob
-Projection Core
-Storage Namespace
-Storage Topology
-Users
-Profiles
-Navigation
-Manager
-Master Projection
-```
-
-## Storage Namespace CURRENT
-
-```text
-StorageNamespace(application_namespace, scope_namespace)
-
-application_prefix = <application_namespace>
-scope_prefix       = <application_namespace>/<scope_namespace>
-```
-
-## Clean cutover rule
-
-```text
-contracts before consumers
-clean replacement
-no legacy aliases
-no dual write
-no compatibility storage path
-```
+El resto de capabilities genéricas ya documentadas permanece sin cambio por este hito.

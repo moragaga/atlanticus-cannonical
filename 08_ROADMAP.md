@@ -1,51 +1,62 @@
 # Atlanticus — Roadmap
 
-Estado: **CURRENT ROADMAP — OPERATIONAL DATA/KPI CLOSED; DISTRIBUTION AND TOOLING NEXT**
+Estado: **CURRENT ROADMAP — DYNAMIC DEPLOYMENT RESOURCES CLOSED; EXTENSION INTEGRATION QUALIFICATION NEXT**
 
 ## CLOSED / CURRENT relevante
 
 ```text
 OPERATIONAL-DATA-INPUT-CONTRACT
-OPERATIONAL-DATA-LEGACY-CONTRACT-REMOVAL
 KPI-RUNTIME-DATA-INPUT-MIGRATION
+DYNAMIC-DISTRIBUTED-DEPLOYMENT-RESOURCES
+LOCAL-WORKSPACE-RUNTIME-INPUT-ALIGNMENT
+PROCESS-DEPLOYMENT-GATE-REALIGNMENT
 ```
 
 ## NEXT único
 
 ```text
-ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
+ATLANTICUS-EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION
 ```
 
-Orden:
+Orden acotado:
 
 ```text
-1. regenerate current-head artifacts
-2. verify every expected artifact is generated
-3. qualify artifact contents/installability
-4. audit every .env.detail entry
-5. classify required/optional/default/system-derived/secret semantics
-6. generate distribution
-7. run isolated consumer qualification
+1. inspect current integrate(resource) behavior
+2. freeze extension resource invariants
+3. add focused behavior/rollback tests
+4. correct only if a concrete failure appears
+5. rerun process-deployment gate
+6. close extension/resource frontier
 ```
 
-No mezclar Alarm Runtime.
+No mezclar:
+
+```text
+artifact-wide generation qualification
+.env.detail exhaustive audit
+Alarm Runtime
+Web product work
+Python migration
+Azure production qualification
+```
+
+## PLANNED after this focused next step
+
+Retomar la secuencia amplia de Distribution and Tooling:
+
+```text
+current-head artifact regeneration
+expected artifact qualification
+.env.detail exhaustive audit
+final distribution qualification
+isolated consumer qualification
+```
 
 ## PLANNED / SEPARATE
 
 ```text
-Alarm Runtime migration to final Operational Data input contract
+Alarm Runtime migration
 Python 3.14.7 / Trixie
 production Azure / Entra
-Alarm advanced scheduler
-History/Analytics and other product work already tracked separately
+real Docker resource-limit smoke if product qualification requires it
 ```
-
-## BLOCKED
-
-```text
-Alarm Runtime executable data path
-```
-
-Causa: imports del contrato Operational Data removido.
-
-No resolver mediante adapters.

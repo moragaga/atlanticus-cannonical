@@ -1,44 +1,71 @@
 # Distribution and Tooling — Source Ledger
 
-Estado: **AUDIT LEDGER — USERS CUTOVER CURRENT / ARTIFACT REGENERATION PENDING**
+Estado: **AUDIT LEDGER — DYNAMIC DEPLOYMENT RESOURCES CURRENT**
 
 ## Authorities
 
 ```text
-Implementation  moragaga/atlanticus@2f9b65c3ba2646d519abfb0bb49e095d6819d185
+Implementation  moragaga/atlanticus@5c40faed4df7f3d7b6db79251144a9ec09e09e91
 Decisions       moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
-Canonical base  moragaga/atlanticus-cannonical@c530eec42e792ed9dc8aef4efbc07a0b94d6f1c9
+Canonical base  moragaga/atlanticus-cannonical@15a51f70396726a2ad3b88d1afc66ce8cfff3300
 ```
 
-## Historical runtime evidence
+## Current implementation evidence
 
-Previous isolated consumer reached Docker build, emulators, resource preparation, healthy Web and health endpoints.
-
-That artifact predates current HEAD.
-
-## Current source delta
+Checkpoint `5c40faed4df7f3d7b6db79251144a9ec09e09e91` contains:
 
 ```text
-Tool-scoped Navigation/Profiles/Access/Operational Sources
-global identity-only Users registry
-Tool User Membership
-RuntimeUser Cosmos
-Tool recovery snapshots
-Master Projection Users REPLACE
+tooling/distribution/processes/consumer/deployment_resources.py
+tooling/distribution/processes/consumer/AZURE_CONTAINER_APPS_RESOURCES.md
+tooling/distribution/processes/distribute.py resource generation/preservation
+tooling/distribution/processes/consumer/process.py dynamic resource execution/integration
+deployment/local/simulation.py explicit resource inputs
+deployment/local/generate_compose.py runtime-input alignment
+tooling/gates/process-deployment/check.py aligned Docker contract
+focused tests for deployment resources
 ```
 
-Therefore:
+## Qualification evidence
+
+User-reported local gate:
 
 ```text
-current-head artifact qualification = PLANNED / UNVERIFIED
+31 deployment/process tests
+16 local deployment tests
+8 local process tooling tests
+56 distribution process tooling tests
+111 total
+Ruff/format PASS
+shell launcher syntax PASS
+```
+
+## Decisions refined during implementation
+
+```text
+pyproject resource authority                SUPERSEDED
+persistent Compose resource authority       SUPERSEDED
+update-deployment synchronization command   SUPERSEDED
+dynamic consumer resource file              CURRENT
+filtered full process-root Docker COPY      CURRENT
+secrets/connections runtime inputs          CURRENT
+```
+
+## Open evidence gap
+
+Extension integration has implementation for resource initialization but lacks focused proof of:
+
+```text
+preserve existing custom sizing
+default new component sizing
+rollback after resource-file publication
+legacy-distribution behavior
 ```
 
 ## Next ordering
 
 ```text
-Navigation semantic closure
-→ artifact regeneration/qualification
+extension resource integration qualification
+→ return to full artifact regeneration/qualification
 → .env.detail audit
-→ distribution regeneration
-→ isolated consumer
+→ final distribution consumer qualification
 ```

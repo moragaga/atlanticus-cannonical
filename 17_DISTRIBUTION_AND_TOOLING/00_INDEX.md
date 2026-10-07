@@ -1,21 +1,52 @@
 # Distribution and Tooling — Canonical Index
 
-Estado: **PLANNED / NEXT — FINAL ARTIFACT AND DISTRIBUTION QUALIFICATION**
+Estado: **CURRENT — DYNAMIC RESOURCE BOUNDARY CLOSED / EXTENSION INTEGRATION QUALIFICATION NEXT**
 
-Operational Data and KPI consumer-contract normalization are closed.
-
-Distribution and tooling is now the next single focus.
-
-## Order
+## Closed in current hito
 
 ```text
-1. regenerate current-head artifacts
-2. verify every expected artifact is generated
-3. qualify artifact contents/installability
-4. audit every .env.detail entry
-5. classify required/optional/default/system-derived/system-assigned/secret fields
-6. generate final distribution
-7. run isolated consumer qualification
+deployment.resources.json consumer-owned contract
+resource validation table
+Docker memory translation
+dynamic up/run Compose resource override
+simulation resource propagation
+regeneration resource preservation
+resource guide delivery
+Docker/local runtime-input contract alignment
+process-deployment gate qualification
+```
+
+## Current distributed resource flow
+
+```text
+distribution
+    ├── deployment.resources.json
+    ├── AZURE_CONTAINER_APPS_RESOURCES.md
+    ├── deployment/local/compose.yaml
+    ├── deployment/local/compose.bind.yaml
+    └── tooling/local/processes/deployment_resources.py
+
+deployment.resources.json
+    ├── up/run → ephemeral resource override
+    └── simulate → scheduler Docker resource arguments
+```
+
+## Next single focus
+
+```text
+EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION
+```
+
+Do not mix the broader artifact/env audit until that focused boundary is closed.
+
+## Broader sequence remains planned
+
+```text
+artifact regeneration
+artifact qualification
+.env.detail exhaustive audit
+final distribution qualification
+isolated consumer qualification
 ```
 
 ## Scope constraints
@@ -28,11 +59,3 @@ Python migration
 production Azure/Entra
 unrelated Web/product work
 ```
-
-Alarm Runtime is intentionally BLOCKED by the Operational Data cutover and will be migrated in a later dedicated increment.
-
-## Existing documents
-
-`01_BACKEND_GENERATION.md` remains the ownership direction.
-
-`06_ENV_DETAIL.md` remains the audit contract and must be exercised in the next focus.

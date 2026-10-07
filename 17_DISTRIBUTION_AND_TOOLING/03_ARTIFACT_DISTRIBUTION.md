@@ -1,39 +1,128 @@
 # Artifact and Distribution Boundary
 
-Estado: **CURRENT CONTRACT / CURRENT-HEAD REGENERATION PLANNED**
+Estado: **CURRENT — DISTRIBUTED RESOURCE CONTRACT IMPLEMENTED / FULL ARTIFACT QUALIFICATION STILL PLANNED**
 
-Web Distribution and Process Distribution remain separate.
+## Process distribution CURRENT
 
-## Historical evidence
-
-Previous ADA artifact built and ran in isolated Linux/Docker consumer.
-
-That evidence does not qualify the current Users/Tool cutover HEAD.
-
-## Current-head gate
-
-Close first:
+A process distribution separates:
 
 ```text
-Navigation PUBLIC/RESTRICTED semantics
+transport artifacts
+consumer configuration
+deployment resource sizing
+local execution projections
 ```
 
-## Planned artifact qualification
+### Transport
+
+Process transport artifact contains package/runtime inputs and detail templates.
+
+### Consumer configuration
+
+Active consumer files remain installation-owned:
 
 ```text
-generate every expected artifact
-verify expected package/file set
+.env
+config.json
+secrets.json
+config/connections.json
+```
+
+### Deployment resources
+
+Effective process sizing is installation-owned:
+
+```text
+deployment.resources.json
+```
+
+It is not read from `pyproject.toml`.
+
+## Resource contract
+
+```json
+{
+  "schema_version": 1,
+  "processes": {
+    "<alias>": {
+      "vcpu": 0.5,
+      "memory_gib": 1.0
+    }
+  }
+}
+```
+
+Invariants:
+
+```text
+vCPU 0.25..4.0
+step 0.25
+RAM GiB = 2 × vCPU
+exact alias set
+```
+
+## Docker projection
+
+Base Compose does not persist CPU/RAM.
+
+```text
+up/run
+→ read deployment.resources.json
+→ validate
+→ render temporary Compose override
+→ execute
+→ delete override
+```
+
+Simulation resolves from the same file.
+
+## Regeneration
+
+```text
+existing alias
+→ preserve resource pair
+
+new alias
+→ 0.5 / 1.0 default
+```
+
+A resource declaration in process `pyproject.toml` does not override this behavior.
+
+## Extension integration CURRENT implementation
+
+`integrate` merges a new component into a CURRENT distribution and also updates the resource file.
+
+Implementation flow:
+
+```text
+read current resource map
+add new alias with default_resources()
+write candidate resource file
+validate candidate distribution
+publish deployment.resources.json with managed files
+```
+
+Focused integration qualification remains OPEN.
+
+## Resource guide
+
+Generated distribution root contains:
+
+```text
+AZURE_CONTAINER_APPS_RESOURCES.md
+```
+
+It documents allowed vCPU/RAM pairs and Docker MiB translation.
+
+## Full artifact qualification
+
+Still PLANNED:
+
+```text
+generate every expected current-head artifact
+verify package/file set
 verify metadata/dependencies
 verify installability/consumer use
 detect stale contents
+isolated consumer qualification
 ```
-
-## Then distribution
-
-```text
-internal wheels
-+ pinned external requirements
-+ external Linux image build
-```
-
-macOS rcssmin limitation remains separate.

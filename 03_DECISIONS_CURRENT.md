@@ -14,106 +14,144 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-## Operational Data consumer contract — FROZEN / CLOSED
-
-Único contrato CURRENT:
-
-```text
-DataInputSpec
-DataView
-DataInputContext
-DataInputPlanner
-DataInputLoadPlan
-DataInputLoader
-LoadedDataInputs
-DataViewBinding
-```
-
-Pipeline:
-
-```text
-DataInputSpec
-    ↓
-DataInputPlanner
-    ↓
-DataInputLoadPlan
-    ↓
-DataInputLoader
-    ↓
-LoadedDataInputs
-    ↓
-DataInputContext
-```
-
-Principio congelado:
-
-```text
-optimization by source/view
-consumption by input identity
-```
-
-## Operational Data legacy — SUPERSEDED / REMOVED
-
-Quedan retirados:
-
-```text
-DataPartition
-DataRequirement
-DataSourceView
-DataRuntimeContext
-DataRequirementPlanner
-DataLoadPlan
-DataSourceViewLoadPlan
-DataSourceLoader
-LoadedDataSources
-DataPartitionBinding
-```
-
-No reintroducirlos para compatibilidad.
-
-`partition_dimensions` sigue siendo válido exclusivamente como layout físico de Dataset/materialization.
-
-## KPI — CURRENT / CLOSED
-
-`KpiSpec` declara `inputs: tuple[DataInputSpec, ...]`.
-
-Resolvers consumen `DataInputContext` por `input_key`.
-
-KPI Runtime usa `DataInputPlanner` y `DataInputLoader`.
-
-No existe adapter hacia el contrato retirado.
-
-## Alarm Runtime — BLOCKED by explicit prioritization
-
-Decisión anterior implícita:
-
-```text
-mantener pipeline legacy temporalmente porque Alarm Runtime lo consume
-```
-
-queda **SUPERSEDED**.
+## Distributed resource ownership — FROZEN / CLOSED
 
 Decisión CURRENT:
 
 ```text
-priorizar contrato final y distribución
-aceptar Alarm Runtime roto temporalmente
-migrar Alarm después a un contrato compatible con DataInputSpec/DataInputContext
-no restaurar legacy
+deployment.resources.json
+= unique persistent effective resource source for a distributed process set
 ```
 
-Esta decisión no supersede el dominio Alarm, lifecycle, persistence, modeler ni delivery; sólo su integración de Operational Data.
+El archivo pertenece al consumidor.
 
-## Distribution — NEXT
+La configuración funcional del proceso no debe absorber CPU/RAM de deployment.
 
-Siguiente foco único:
+## Resource pairs — FROZEN
+
+Atlanticus acepta para esta frontera únicamente:
 
 ```text
-artifact generation
-artifact qualification
-.env.detail exhaustive audit
-distribution regeneration
-isolated consumer qualification
+vCPU: 0.25 .. 4.0
+step: 0.25
+RAM GiB = vCPU × 2
 ```
 
-No mezclar Alarm Runtime en ese incremento.
+Default:
+
+```text
+0.5 vCPU / 1.0 GiB
+```
+
+Docker:
+
+```text
+memory_mib = memory_gib × 1024
+```
+
+## Superseded resource decisions
+
+Quedan SUPERSEDED:
+
+```text
+pyproject.toml resources
+→ effective distributed sizing
+
+manual edit of generated compose
+→ persistent sizing
+
+update-deployment command
+→ synchronize JSON into Compose
+
+base Compose cpus/mem_limit
+→ resource authority
+```
+
+CURRENT:
+
+```text
+edit deployment.resources.json
+→ next up/run/simulate reads it automatically
+```
+
+## Compose projection — FROZEN
+
+Base Compose mantiene estructura de servicios.
+
+`up` y `run` generan un override temporal de recursos.
+
+El override:
+
+```text
+is derived
+is ephemeral
+is not consumer configuration
+is deleted after command execution
+```
+
+## Simulation — FROZEN
+
+Simulation no vuelve a leer recursos desde `pyproject.toml`.
+
+Recibe exactamente los valores resueltos desde `deployment.resources.json`.
+
+## Regeneration — FROZEN
+
+```text
+existing consumer sizing
+→ preserve
+
+new process without existing sizing
+→ default_resources()
+
+pyproject resource metadata
+→ ignored for distributed sizing
+```
+
+## Extension integration — CURRENT IMPLEMENTATION / QUALIFICATION OPEN
+
+`integrate` ya incorpora `deployment.resources.json` al candidato y agrega defaults a aliases nuevos.
+
+Aún debe cerrarse una qualification enfocada que demuestre explícitamente:
+
+```text
+custom existing sizing preserved
+new alias gets default
+invalid existing contract blocks integration without mutation
+resource publication failure rolls back
+```
+
+No crear compatibility path para distribuciones legacy sin decisión explícita.
+
+## Docker runtime-input contract — REFINED / CURRENT
+
+La regla anterior que trataba todo `secrets.json` como input prohibido queda SUPERSEDED.
+
+CURRENT allowlist:
+
+```text
+secrets.json
+config/connections.json
+```
+
+siguen siendo runtime inputs admitidos en imagen.
+
+Continúan excluidos:
+
+```text
+.env
+config.json
+*.detail
+```
+
+## Operational Data / KPI / Alarm
+
+Las decisiones previas vigentes de esos frentes no fueron reabiertas por este hito.
+
+## Next
+
+Único foco recomendado:
+
+```text
+EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION
+```
