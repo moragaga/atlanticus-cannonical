@@ -1,55 +1,77 @@
 # Atlanticus — Open Questions
 
-Estado: **CURRENT — EXTENSION RESOURCE INTEGRATION IS THE NEXT SINGLE OPEN FRONT**
+Estado: **CURRENT — WEB ALARM SURFACE FOUNDATION IS NEXT FOR THIS TRACK**
 
-## CLOSED
+## CLOSED — Web presentation
 
 ```text
-deployment.resources.json contract
-consumer ownership of distributed sizing
-global 0.5 vCPU / 1.0 GiB default
-allowed vCPU/RAM table
-GiB -> Docker MiB translation
-dynamic Compose override
-simulation consumption of the same resource source
-pyproject resource authority removal
-regeneration preservation of consumer sizing
-Docker/local runtime-input contract alignment
-process-deployment gate requalification
+Tool READY materializes KPI presentation stores without Delivery
+Collector polling separated from store existence
+Global Indicator collection-level Content State
+AUTHORING/NORMAL same real composition
+Global Indicator generic responsive/sizing ownership
+IO-specific MINE/PLANT policy retained in IO
 ```
 
-## OPEN / NEXT — Extension integration
+## OPEN / NEXT — Web alarm surface
 
-El próximo chat debe resolver exclusivamente:
+El próximo chat de este track debe resolver exclusivamente:
 
 ```text
-1. Does integrate preserve a custom resource pair for every installed process?
-2. Does every newly integrated alias receive exactly 0.5 vCPU / 1.0 GiB?
-3. Does integrate reject a malformed or incomplete deployment.resources.json before mutation?
-4. Does rollback restore deployment.resources.json if publication fails after that file was replaced?
-5. Does integration keep the resource set exactly equal to the final process set?
-6. Is a distribution created before this resource frontier explicitly rejected/regenerated rather than supported through a compatibility adapter?
+1. What is the minimal reusable contract for the first alarms-flow component/card?
+2. Which existing live/read-model contract feeds that card?
+3. How are alarm-management and alarm-status mounted in the operational experience without leaking engine semantics into UI?
+4. What header sizing is correct once branding + GI + alarm-management + alarm-status coexist?
+5. Which behavior belongs to generic Web components and which remains product-specific?
+6. What focused behavior tests prove the card/integration without freezing CSS layout?
 ```
 
-La implementación actual ya contiene parte de este comportamiento.
-
-El objetivo siguiente es **qualification and correction only if evidence requires it**, no redesign.
-
-## OPEN / DEFERRED — Distribution qualification
+## OPEN / NON-BLOCKING SMOKE
 
 ```text
-generate every current-head artifact
-qualify artifact contents/installability
-audit every .env.detail
-final distribution regeneration
-isolated consumer qualification
-real Docker resource-limit smoke
+final mobile/desktop GI visual smoke after generic refactor
+final MINE/PLANT browser smoke after generic refactor
+final KPI Inspection browser smoke after generic refactor
 ```
 
-## OPEN / SEPARATE
+These are validation carryovers, not a new architecture front.
+
+## OPEN / AFTER — Alarm Engine migration
+
+Do not mix with the next Web increment.
+
+Questions to resolve in the later engine-design chat:
 
 ```text
-Alarm Runtime migration
+1. What packages/classes currently own operational alarm execution?
+2. Which contracts remain in ada-contracts-alarms?
+3. Which operational contracts move into ada-alarm-engine?
+4. Which current fields have no demonstrated consumer/domain value?
+5. Which fields are frozen by decisions and therefore cannot be removed without an explicit superseding decision?
+6. How does Alarm Runtime migrate to DataInputSpec/DataInputContext?
+7. Which lifecycle/persistence/modeler/delivery boundaries remain unchanged?
+8. What clean cutover removes the historical engine owner without a compatibility layer?
+```
+
+Target direction:
+
+```text
+ada-alarm-engine
+```
+
+is PLANNED, not yet implemented.
+
+## OPEN / PARALLEL — Distribution and platform
+
+The existing independent track remains:
+
+```text
+extension-resource integration qualification
+artifact generation/qualification
+.env.detail exhaustive audit
+distribution qualification
 Python 3.14.7 / Trixie
-production Azure / Entra qualification
+production Azure / Entra
 ```
+
+No treat this Web closure as superseding those fronts.

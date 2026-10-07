@@ -1,35 +1,74 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT DOMAIN / RUNTIME DATA-INTEGRATION BLOCKED**
+Estado: **CURRENT DOMAIN / RUNTIME DATA-INTEGRATION BLOCKED / WEB ALARM SURFACE NEXT**
 
-## Ownership
+## Ownership CURRENT
 
 Los contratos de dominio, persistence, materialization, Modeler y Delivery del Alarm Engine permanecen vigentes.
 
+`ada-contracts-alarms` conserva ownership de contratos compartidos de configuración/publicación.
+
+El owner operacional CURRENT documentado sigue siendo `ada-command-center-alarms-core` hasta completar una migración explícita.
+
 ## Runtime integration status
 
-`processes/alarms-runtime` está actualmente:
+`processes/alarms-runtime` permanece canónicamente:
 
 ```text
 BLOCKED
 ```
 
-Causa:
+Causa CURRENT documentada:
 
 ```text
 Operational Data legacy consumer contract was removed.
-Alarm Runtime still imports:
-- DataRequirement
-- DataLoadPlan
-- DataRequirementPlanner
-- DataRuntimeContext
+Alarm Runtime still imports removed legacy input contracts.
 ```
 
-Este bloqueo es intencional. No restaurar legacy ni introducir shims para reactivar Runtime.
+Este bloqueo es intencional.
 
-## Target migration
+No restaurar legacy ni introducir shims para reactivar Runtime.
 
-PLANNED, en un incremento separado:
+## Web path — PLANNED / NEXT IN THIS TRACK
+
+Antes de migrar el engine, el siguiente incremento debe preparar la superficie Web de alarmas:
+
+```text
+first reusable alarms-flow component/card
+integrate alarm-management
+integrate alarm-status
+exercise operational header with all intended surfaces
+freeze Web consumption boundary
+```
+
+No implementar engine migration dentro del mismo incremento.
+
+## Engine target — PLANNED AFTER WEB FOUNDATION
+
+Dirección acordada:
+
+```text
+operational Alarm Engine
+→ target distribution/package identity: ada-alarm-engine
+```
+
+La migración debe comenzar con inventario y diseño, no con rename mecánico.
+
+Debe decidir explícitamente:
+
+```text
+what remains in ada-contracts-alarms
+what belongs to ada-alarm-engine
+what historical fields do not add value
+which removals are compatible with frozen domain semantics
+how Runtime migrates to DataInputSpec/DataInputContext
+```
+
+No modificar `AlarmDefinition` como efecto lateral de corregir Operational Data integration.
+
+## Target data-input migration
+
+La dirección canónica previa continúa:
 
 ```text
 Alarm evaluator/input contract
@@ -43,11 +82,11 @@ DataInputLoader
 DataInputContext
 ```
 
-La forma exacta del contrato Alarm deberá debatirse antes de implementar; no modificar `AlarmDefinition` como efecto lateral.
+La forma exacta debe debatirse antes de implementar.
 
-## Pipeline histórico previamente cualificado
+## Historical pipeline evidence
 
-El baseline previamente cualificado:
+El pipeline históricamente cualificado:
 
 ```text
 Alarm Configuration projection
@@ -67,12 +106,31 @@ Delivery
 alarm-live-projection
 ```
 
-permanece como evidencia histórica, pero no debe describirse como ejecutable CURRENT mientras Runtime siga importando contratos retirados.
+permanece como evidencia histórica.
 
-## NEXT del Project
+No describirlo como ejecutable CURRENT mientras Runtime siga bloqueado por su integración de datos.
 
-Alarm no es el próximo foco.
+## Frozen Web boundary
+
+Alarmas no siguen la regla:
 
 ```text
-ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
+configured definition
+→ permanent visible component
+```
+
+La presencia visible se deriva de lifecycle/projection.
+
+Web no debe leer WAL ni Runtime CURRENT directamente como contrato final de visualización.
+
+## Next
+
+```text
+ADA-WEB-ALARM-SURFACE-FOUNDATION
+```
+
+Después:
+
+```text
+ADA-ALARM-ENGINE-MIGRATION
 ```

@@ -1,6 +1,6 @@
 # Atlanticus — Architecture
 
-Estado: **CURRENT — MODULAR RUNTIME + CONSUMER-OWNED DISTRIBUTED DEPLOYMENT RESOURCES**
+Estado: **CURRENT — MODULAR RUNTIME + CONFIGURATION-OWNED OPERATIONAL PRESENTATION**
 
 ## Regla principal
 
@@ -13,7 +13,7 @@ contracts before consumers
 clean replacement
 no legacy aliases
 no dual source of truth
-no compatibility storage/deployment path without explicit decision
+no compatibility path without explicit decision
 ```
 
 ## Operational Data
@@ -34,143 +34,198 @@ LoadedDataInputs
 DataInputContext
 ```
 
-## Distributed process resource boundary — FROZEN
+## Web operational presentation — FROZEN
 
-Resource sizing pertenece al deployment consumer, no al proceso Python.
-
-```text
-process artifact
-    identity / dependencies / entrypoint
-          │
-          │ no CPU/RAM authority
-          ↓
-distribution generation
-          ↓
-deployment.resources.json
-          ↓
-effective consumer-owned sizing
-          ├── up / run → ephemeral Compose override
-          └── simulate → scheduler docker run
-```
-
-### Source of truth
-
-Única fuente persistente efectiva:
+Para superficies operacionales no-alarmas:
 
 ```text
-deployment.resources.json
+Tool/configuration/bindings
+    determine structure and existence
+
+runtime data
+    determines state and content
 ```
 
-No son autoridad:
+Principio:
 
 ```text
-pyproject.toml [tool.atlanticus.container.resources]
-base compose.yaml
-base compose.bind.yaml
-temporary override files
-simulation.json
+configured UI does not disappear because Delivery is absent
 ```
 
-Las proyecciones derivadas pueden materializar recursos para una ejecución, pero no se convierten en configuración persistente.
+La estructura de presentación no debe quedar accidentalmente bajo ownership de un proveedor de datos.
 
-## Resource contract — FROZEN
+## KPI presentation store boundary — FROZEN
+
+Browser store materialization y Delivery polling son responsabilidades separadas.
 
 ```text
-schema_version = 1
-
-processes.<alias>.vcpu
-processes.<alias>.memory_gib
+ToolProjection READY
+    ↓
+ToolStructure
+    ↓
+presentation stores
 ```
 
-Invariantes:
+independientemente de:
 
 ```text
-0.25 <= vcpu <= 4.0
-vcpu step = 0.25
-memory_gib = vcpu × 2
-all installed process aliases appear exactly once
-no unknown aliases
+KPI Delivery Cosmos configured?
 ```
 
-Default para proceso nuevo:
+Cuando Delivery existe:
 
 ```text
-0.5 vCPU / 1.0 GiB
+Collector polling
+    ↓
+updates the already-materialized stores
 ```
 
-Docker memory projection:
+Cuando Delivery no existe:
 
 ```text
-MiB = memory_gib × 1024
+stores remain with an empty canonical presentation snapshot
 ```
 
-## Consumer ownership — FROZEN
-
-El desarrollador/consumer puede cambiar `deployment.resources.json`.
-
-Regeneración:
+Cuando Tool está UNCONFIGURED:
 
 ```text
-retained process
-→ preserve existing resource pair
-
-new process
-→ initialize default pair
-
-removed process
-→ remove resource entry with regenerated composition
+no operational structure
+→ no operational presentation stores
 ```
 
-No editar Compose para persistir sizing.
+## Authoring / Normal — FROZEN
 
-## Extension integration boundary — IMPLEMENTED / QUALIFICATION OPEN
-
-La implementación actual de `integrate`:
+`AUTHORING` y `NORMAL` no construyen árboles de UI distintos.
 
 ```text
-valid current distribution
-+ extension processes
-→ merge manifest/services
-→ preserve resource entries
-→ add default resource entry per new alias
-→ regenerate base compose structure
-→ validate candidate
-→ publish managed files atomically
+same configuration
+same component tree
+same stores
+same runtime callbacks
 ```
 
-La qualification específica de preservación/rollback de resources durante integración permanece abierta.
+`ContentStatePresentationMode` sólo modifica cómo se presenta una degradación.
 
-## Docker runtime-input boundary — CURRENT
-
-El Dockerfile usa:
+Para wrappers operacionales:
 
 ```text
-COPY processes/${FILENAME}/ ./
+NORMAL
+→ overlay visible when state requires it
+
+AUTHORING
+→ overlay hidden
+→ real underlying component remains available for design
 ```
 
-pero `.dockerignore` actúa como allowlist.
+## Global Indicator collection boundary — FROZEN
 
-Permitido:
+La unidad de estado operacional es la colección completa montada por el runtime, no cada celda.
 
 ```text
-pyproject.toml
-uv.lock
-wheels/
-src/
-secrets.json
-config/connections.json
+DashboardGlobalIndicatorsRuntimeBinding
+    tool_key
+    indicators[]
+    content_state
 ```
 
-Excluido:
+Cada binding individual conserva:
 
 ```text
-.env
-config.json
-*.detail
+definition
+presentation scopes
 ```
 
-El local workspace debe respetar la misma frontera.
+No añadir `ContentState` por indicador para modelar una colección que se inyecta como una unidad.
 
-## Generic Web capabilities
+No usar estados de DisplayValue como sustituto del estado de la colección.
 
-El resto de capabilities genéricas ya documentadas permanece sin cambio por este hito.
+## Global Indicator generic ownership — FROZEN
+
+`ada-web-ui-global-indicator` posee comportamiento visual reusable:
+
+```text
+component geometry
+actual / plan compact alignment
+responsive sizing
+generic placement
+mobile two-column layout
+mobile vertical growth
+desktop full-height layout
+generic dividers
+```
+
+Un consumidor puede envolver un GI con `.ada-global-indicator-placement` para metadata sin reimplementar sizing.
+
+## Integrated Operations ownership — FROZEN
+
+IO no redefine el responsive genérico.
+
+IO puede poseer:
+
+```text
+product catalog
+MINE / PLANT scopes
+scope metadata
+scope filtering
+header-host adaptation
+product-specific overrides justified by IO
+```
+
+IO no puede mover su semántica de scopes al componente genérico.
+
+## Alarm exception — FROZEN
+
+La regla configuration-owned presentation no se interpreta como:
+
+```text
+configured AlarmDefinition
+→ permanent visible alarm card
+```
+
+Alarmas tienen semántica de dominio propia:
+
+```text
+AlarmDefinition
+    ↓ evaluation/lifecycle
+Occurrence / Episode
+    ↓ projections
+Web alarm visibility
+```
+
+La configuración define reglas y targets; lifecycle/projections determinan la presencia operacional visible.
+
+## Operational header boundary
+
+El header puede componer:
+
+```text
+branding
+global indicators
+alarm-management
+alarm-status
+```
+
+Sizing final entre las cuatro superficies debe evaluarse cuando todas estén montadas.
+
+No fijar proporciones definitivas usando sólo un subconjunto de slots.
+
+## Distributed process resources
+
+Las decisiones CURRENT previas de `deployment.resources.json` permanecen sin cambio por este hito.
+
+## Python baseline
+
+Project target:
+
+```text
+Python 3.14.7
+python:3.14.7-slim-trixie
+```
+
+Web packages CURRENT observados:
+
+```text
+requires-python == 3.14.2
+```
+
+La migración permanece separada.

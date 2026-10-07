@@ -14,144 +14,143 @@ one focus per increment
 Git read-only unless explicit authorization
 ```
 
-## Distributed resource ownership — FROZEN / CLOSED
+## Non-alarm operational presentation — FROZEN
 
 Decisión CURRENT:
 
 ```text
-deployment.resources.json
-= unique persistent effective resource source for a distributed process set
+configuration/bindings determine what exists
+runtime data determines current state/content
 ```
 
-El archivo pertenece al consumidor.
+La ausencia de Delivery no debe producir una aplicación visualmente vacía cuando la Tool ya tiene estructura válida.
 
-La configuración funcional del proceso no debe absorber CPU/RAM de deployment.
+## Presentation stores vs polling — FROZEN
 
-## Resource pairs — FROZEN
-
-Atlanticus acepta para esta frontera únicamente:
+Queda SUPERSEDED:
 
 ```text
-vCPU: 0.25 .. 4.0
-step: 0.25
-RAM GiB = vCPU × 2
-```
-
-Default:
-
-```text
-0.5 vCPU / 1.0 GiB
-```
-
-Docker:
-
-```text
-memory_mib = memory_gib × 1024
-```
-
-## Superseded resource decisions
-
-Quedan SUPERSEDED:
-
-```text
-pyproject.toml resources
-→ effective distributed sizing
-
-manual edit of generated compose
-→ persistent sizing
-
-update-deployment command
-→ synchronize JSON into Compose
-
-base Compose cpus/mem_limit
-→ resource authority
+KPI Delivery configured
+→ Collector exists
+→ stores exist
 ```
 
 CURRENT:
 
 ```text
-edit deployment.resources.json
-→ next up/run/simulate reads it automatically
+Tool READY
+→ KPI presentation stores exist
+
+KPI Delivery configured
+→ Collector polling additionally updates them
 ```
 
-## Compose projection — FROZEN
+Tool `UNCONFIGURED` no inventa estructura ni stores.
 
-Base Compose mantiene estructura de servicios.
+## Authoring — FROZEN
 
-`up` y `run` generan un override temporal de recursos.
+Queda SUPERSEDED la idea de un camino visual falso o separado para Authoring.
 
-El override:
+CURRENT:
 
 ```text
-is derived
-is ephemeral
-is not consumer configuration
-is deleted after command execution
+AUTHORING and NORMAL share real composition
 ```
 
-## Simulation — FROZEN
+Authoring oculta overlays operacionales para permitir diseño del componente real.
 
-Simulation no vuelve a leer recursos desde `pyproject.toml`.
+## Global Indicator state ownership — FROZEN
 
-Recibe exactamente los valores resueltos desde `deployment.resources.json`.
-
-## Regeneration — FROZEN
+Queda SUPERSEDED:
 
 ```text
-existing consumer sizing
-→ preserve
-
-new process without existing sizing
-→ default_resources()
-
-pyproject resource metadata
-→ ignored for distributed sizing
+independent ContentState per GI
+independent ContentState per actual/plan cell
 ```
 
-## Extension integration — CURRENT IMPLEMENTATION / QUALIFICATION OPEN
-
-`integrate` ya incorpora `deployment.resources.json` al candidato y agrega defaults a aliases nuevos.
-
-Aún debe cerrarse una qualification enfocada que demuestre explícitamente:
+CURRENT:
 
 ```text
-custom existing sizing preserved
-new alias gets default
-invalid existing contract blocks integration without mutation
-resource publication failure rolls back
+one ContentState for the complete Global Indicator runtime collection
 ```
 
-No crear compatibility path para distribuciones legacy sin decisión explícita.
+Los KPI que el indicador no necesita no se agregan a la definición.
 
-## Docker runtime-input contract — REFINED / CURRENT
+Los KPI declarados por la definición forman parte del contrato de esa colección.
 
-La regla anterior que trataba todo `secrets.json` como input prohibido queda SUPERSEDED.
+## Global Indicator generic boundary — FROZEN
 
-CURRENT allowlist:
+Queda SUPERSEDED:
 
 ```text
-secrets.json
-config/connections.json
+IO owns reusable GI responsive/sizing behavior
 ```
 
-siguen siendo runtime inputs admitidos en imagen.
-
-Continúan excluidos:
+CURRENT:
 
 ```text
-.env
-config.json
-*.detail
+ada-web-ui-global-indicator
+    owns generic geometry/responsive/sizing
+
+Integrated Operations
+    owns MINE/PLANT visibility policy and IO-specific overrides
 ```
 
-## Operational Data / KPI / Alarm
+No contaminar el componente genérico con reglas Mina/Planta.
 
-Las decisiones previas vigentes de esos frentes no fueron reabiertas por este hito.
+## Alarm visibility exception — FROZEN
 
-## Next
-
-Único foco recomendado:
+No generalizar la regla de UI configurada hacia presencia permanente de alarmas.
 
 ```text
-EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION
+AlarmDefinition exists
+!= visible alarm exists
+```
+
+La visibilidad de alarmas depende de lifecycle y projections.
+
+## Header sizing — PLANNED
+
+No congelar todavía proporciones finales entre:
+
+```text
+branding
+global indicators
+alarm-management
+alarm-status
+```
+
+La evaluación se realiza cuando las cuatro superficies estén presentes.
+
+## Alarm Engine target — PLANNED / NOT IMPLEMENTED
+
+Dirección acordada para el frente posterior:
+
+```text
+migrate operational alarm engine
+→ target package identity: ada-alarm-engine
+```
+
+Antes de implementar:
+
+```text
+audit current packages/contracts
+identify fields that do not provide value
+compare proposed removals against CURRENT canonical + frozen decisions + Web consumers
+freeze resulting contract
+then perform clean migration
+```
+
+No eliminar campos de `AlarmDefinition` ni shared configuration como efecto lateral de la migración runtime.
+
+No crear compatibility layer sólo para mantener el owner histórico.
+
+## Distributed resources / Operational Data / KPI
+
+Las decisiones CURRENT previas de esos frentes permanecen sin cambio.
+
+## Next single focus in this Web track
+
+```text
+ADA-WEB-ALARM-SURFACE-FOUNDATION
 ```

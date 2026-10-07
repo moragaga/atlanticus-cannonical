@@ -1,106 +1,157 @@
 # Atlanticus — Validation Baseline
 
-Estado: **CURRENT — PROCESS DEPLOYMENT RESOURCE BOUNDARY QUALIFIED LOCALLY 2026-10-06**
+Estado: **CURRENT — WEB GLOBAL INDICATOR / PRESENTATION-STORE HITO QUALIFIED LOCALLY 2026-10-06**
 
 ## Autoridad
 
 ```text
-Implementation  moragaga/atlanticus@5c40faed4df7f3d7b6db79251144a9ec09e09e91
-Canonical base  moragaga/atlanticus-cannonical@15a51f70396726a2ad3b88d1afc66ce8cfff3300
+Implementation  moragaga/atlanticus@d97118d202dc1ea5ef3b0d1c18355d3a330824aa
+Canonical base  moragaga/atlanticus-cannonical@af936617ebf4e04157e4ef905dd7bda598c1d05a
 ```
 
-## Process deployment gate
+## KPI Collector presentation-store qualification
 
-Ejecución reportada por el usuario:
+Reportado por el usuario:
 
 ```text
-python3 tooling/gates/process-deployment/check.py
+ada-web-kpi-collector
+56 passed
+ruff check .
+PASS
+ruff format --check .
+PASS
 ```
 
-Resultado final:
+Acredita el incremento donde Tool `READY` puede materializar stores de presentación aun sin KPI Delivery.
+
+## ADA Generic focused qualification
+
+Reportado por el usuario durante store materialization:
 
 ```text
-[1/7] Python runtime                         PASS
-[2/7] deployment ownership/structure        PASS
-[3/7] process container contracts           PASS
-[4/7] Docker transport boundary             PASS
-[5/7] Ruff check / format                    PASS
-[6/7] deployment/tooling tests               PASS
-[7/7] shell launchers                        PASS
+tests/test_bootstrap.py
+tests/test_external_composition.py
+tests/test_integrated_manager_runtime.py
+tests/test_operational_collector_integration.py
 
-Atlanticus process deployment flow validated
+17 passed
 ```
 
-Suites:
+Después del refactor genérico final:
 
 ```text
-deployment/processes/tests                   31 passed
-deployment/local/tests                       16 passed
-tooling/tests/local/processes                 8 passed
-tooling/tests/distribution/processes         56 passed
-                                             ---------
-total                                        111 passed
+tests/test_application.py
+37 passed
 ```
 
-## Resource contract qualification
+## Integrated Operations Global Indicator qualification
 
-Automated coverage CURRENT demuestra:
+Reportado por el usuario:
 
 ```text
-16 admitted Azure-style vCPU/RAM pairs
-GiB -> Docker MiB conversion
-invalid pair rejection
-exact process/resource set validation
-consumer resource override rendering
-regeneration preserves consumer-owned sizing
-pyproject resource declaration does not control distributed sizing
+test_global_indicator_catalog.py
+test_global_indicators.py
+
+13 passed
 ```
 
-## Docker/local contract qualification
-
-Automated coverage CURRENT demuestra:
+Focused runtime Ruff:
 
 ```text
-Dockerfile filtered process-root COPY contract
-secrets.json admitted
-config/connections.json admitted
-.env excluded
-config.json excluded
-detail files excluded
-local workspace preserves runtime inputs required by Dockerfile
+PASS
 ```
 
-## Extension integration evidence
+## Generic Global Indicator qualification
 
-General extension integration test CURRENT demuestra:
+Reportado por el usuario:
 
 ```text
-new process is integrated
-existing process configuration retained
-runtime state retained
-manifest/services updated
-Compose structure regenerated
-conflict rejected
-publication failure rollback for existing tested point
+ada-web-ui-global-indicator
+30 passed
+ruff check .
+PASS
 ```
 
-Implementation also updates `deployment.resources.json` for new aliases.
+Package-wide format check:
 
-Focused assertions specific to preserving custom existing resource values and rollback after resource-file publication are still missing.
+```text
+Would reformat: tests/test_presentation.py
+```
+
+Ese archivo no fue tocado por el incremento y se conserva como drift preexistente/no relacionado.
+
+## Lock qualification
+
+Reportado por el usuario:
+
+```text
+uv lock --check
+PASS
+```
+
+para:
+
+```text
+ada-web-ui-global-indicator
+ada-generic-application
+ada-integrated-operations-application
+```
+
+## Visual evidence before final generic refactor
+
+Reportado por el usuario:
+
+```text
+Global Indicators visible without KPI Delivery
+CONSTRUCTION overlay works in NORMAL
+AUTHORING exposes the real GI composition
+mobile shows all GI after height correction
+desktop compaction/height acceptable
+MINE / PLANT switching works
+KPI detail/inspection works
+```
+
+## Post-refactor visual status
+
+El último cambio movió sizing/responsive desde IO al paquete genérico y preservó las clases IO de scope.
+
+Automated qualification quedó GREEN.
+
+No se reportó una captura/smoke visual posterior a ese último traslado.
+
+Por tanto:
+
+```text
+generic refactor automated qualification   VERIFIED
+final mobile/desktop visual smoke           UNVERIFIED
+final MINE/PLANT browser smoke              UNVERIFIED
+final KPI Inspection browser smoke          UNVERIFIED
+```
+
+Estos puntos no invalidan los tests, pero deben mantenerse explícitos.
+
+## Existing process-deployment qualification
+
+El baseline canónico previo de process deployment/resource ownership permanece sin cambio.
+
+No fue reabierto por este hito.
 
 ## No acredita
 
 ```text
-real Docker resource enforcement smoke after editing deployment.resources.json
-Azure Container Apps deployment qualification
-focused extension-resource atomicity qualification
-legacy-distribution migration into the new resource contract
-full artifact set qualification
-.env.detail completeness
+post-refactor browser visual smoke
+alarm-management integration
+alarm-status integration
+first alarms-flow card
+Alarm Engine migration
+Alarm Runtime data-input migration
+History/Analytics
 Python 3.14.7/Trixie migration
 production Azure / Entra qualification
 ```
 
 ## Qualification scope
 
-Esta qualification es local. No equivale a CI, Azure ni productivo.
+Esta qualification es local.
+
+No equivale a CI, Azure ni productivo.

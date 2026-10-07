@@ -1,12 +1,12 @@
 # Atlanticus Canonical Context — Index
 
-Estado: **CURRENT — DYNAMIC PROCESS DEPLOYMENT RESOURCES CLOSED; EXTENSION INTEGRATION QUALIFICATION NEXT**
+Estado: **CURRENT — WEB OPERATIONAL COMPOSITION / GLOBAL INDICATOR CLOSED; ALARM WEB SURFACE NEXT IN THIS TRACK**
 
 ## Autoridad de este cierre
 
 ```text
-Implementation        moragaga/atlanticus@5c40faed4df7f3d7b6db79251144a9ec09e09e91
-Canonical pre-replace moragaga/atlanticus-cannonical@15a51f70396726a2ad3b88d1afc66ce8cfff3300
+Implementation        moragaga/atlanticus@d97118d202dc1ea5ef3b0d1c18355d3a330824aa
+Canonical pre-replace moragaga/atlanticus-cannonical@af936617ebf4e04157e4ef905dd7bda598c1d05a
 Decisions             moragaga/atlanticus-decisions@50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 Git                   SOLO LECTURA
 ```
@@ -15,36 +15,49 @@ Git                   SOLO LECTURA
 
 | Ubicación | Estado relevante |
 |---|---|
-| `01_CURRENT_STATE.md` | Dynamic deployment resource boundary CURRENT / locally qualified. |
-| `02_ARCHITECTURE.md` | `deployment.resources.json` is the consumer-owned effective resource source for distributed processes. |
-| `03_DECISIONS_CURRENT.md` | `pyproject.toml` and base Compose are no longer resource authority for distributions. |
-| `07_VALIDATION_BASELINE.md` | Process deployment gate GREEN: 111 tests plus Ruff/format/launcher checks. |
-| `16_KPI_BACKEND_RECOVERY/` | KPI state from previous closure remains unchanged. |
-| `17_DISTRIBUTION_AND_TOOLING/` | Resource boundary closed; focused extension-integration qualification is next. |
+| `01_CURRENT_STATE.md` | Global Indicator/Web operational presentation increment CLOSED; final post-refactor visual smoke remains UNVERIFIED. |
+| `02_ARCHITECTURE.md` | Tool structure owns non-alarm presentation existence; KPI Delivery polling no longer owns browser-store existence. |
+| `03_DECISIONS_CURRENT.md` | Global Indicator sizing/responsive is generic; IO retains Mina/Planta policy and product-specific overrides. |
+| `04_ALARM_ENGINE/` | Alarm domain remains CURRENT; Runtime data integration remains BLOCKED; migration to `ada-alarm-engine` is PLANNED after Web alarm-surface foundation. |
+| `07_VALIDATION_BASELINE.md` | Collector, Generic, IO and Global Indicator focused suites GREEN; visual post-refactor smoke still open. |
+| `17_DISTRIBUTION_AND_TOOLING/` | Independent parallel front; its prior roadmap is not superseded by this Web closure. |
 
 ## Checkpoints
 
 ```text
-OPERATIONAL-DATA-INPUT-CONTRACT                     CLOSED / CURRENT
-KPI-RUNTIME-DATA-INPUT-MIGRATION                    CLOSED / CURRENT
-DYNAMIC-DISTRIBUTED-DEPLOYMENT-RESOURCES            CLOSED / CURRENT
-LOCAL-WORKSPACE-RUNTIME-INPUT-ALIGNMENT              CLOSED / CURRENT
-PROCESS-DEPLOYMENT-GATE-REALIGNMENT                  CLOSED / CURRENT
-EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION         PLANNED / NEXT
-FULL-ARTIFACT-AND-ENV-DETAIL-QUALIFICATION           PLANNED / SEPARATE NEXT STAGE
+KPI-PRESENTATION-STORES-WITHOUT-DELIVERY        CLOSED / CURRENT
+GLOBAL-INDICATOR-COLLECTION-CONTENT-STATE       CLOSED / CURRENT
+GLOBAL-INDICATOR-AUTHORING-NORMAL               CLOSED / CURRENT
+GLOBAL-INDICATOR-GENERIC-RESPONSIVE             CLOSED / CURRENT
+IO-MINE-PLANT-GI-POLICY                         CURRENT
+POST-REFACTOR-VISUAL-SMOKE                      UNVERIFIED / NON-BLOCKING
+ADA-WEB-ALARM-SURFACE-FOUNDATION                PLANNED / NEXT IN WEB TRACK
+ADA-ALARM-ENGINE-MIGRATION                      PLANNED / AFTER WEB FOUNDATION
 ```
 
-## Siguiente frontera única
+## Siguiente frontera única de este track
 
 ```text
-ATLANTICUS-EXTENSION-RESOURCE-INTEGRATION-QUALIFICATION
+ADA-WEB-ALARM-SURFACE-FOUNDATION
 ```
 
-Objetivo:
+Objetivo acotado:
 
-- calificar `integrate` cuando una distribución CURRENT recibe un componente nuevo;
-- demostrar que sizing existente se conserva;
-- demostrar que el componente nuevo recibe `0.5 vCPU / 1.0 GiB`;
-- demostrar rollback de `deployment.resources.json` si falla la publicación;
-- no reabrir el diseño de recursos dinámicos;
-- no mezclar `.env.detail`, artifact-wide qualification, Alarm ni Web.
+```text
+create first reusable component/card in the alarms flow
+integrate existing alarm-management surface
+integrate existing alarm-status surface
+exercise the full operational header with branding + GI + alarm-management + alarm-status
+freeze the Web consumption boundary for alarms
+```
+
+No mezclar todavía:
+
+```text
+Alarm Engine migration
+Alarm domain field removal
+History/Analytics
+Distribution/tooling parallel work
+Python migration
+Azure production qualification
+```
