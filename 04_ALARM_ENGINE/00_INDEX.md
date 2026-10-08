@@ -1,136 +1,67 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT DOMAIN / RUNTIME DATA-INTEGRATION BLOCKED / WEB ALARM SURFACE NEXT**
+Estado: **CURRENT — ADA Alarm Engine Runtime durable implementado; qualification física del nuevo proceso UNVERIFIED**. Corte: 2026-10-08. Implementación revisada: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
 
-## Ownership CURRENT
+## Frontera actual de implementación
 
-Los contratos de dominio, persistence, materialization, Modeler y Delivery del Alarm Engine permanecen vigentes.
-
-`ada-contracts-alarms` conserva ownership de contratos compartidos de configuración/publicación.
-
-El owner operacional CURRENT documentado sigue siendo `ada-command-center-alarms-core` hasta completar una migración explícita.
-
-## Runtime integration status
-
-`processes/alarms-runtime` permanece canónicamente:
+La implementación de referencia del Runtime de este hito está en:
 
 ```text
-BLOCKED
+scopes/ada-alarm-engine/
+  alarms/core/
+  alarms/materialization/
+  alarms/persistence/
+  processes/alarm-materialization/
+  processes/alarm-runtime/
 ```
 
-Causa CURRENT documentada:
+El proceso `ada.processes.alarm_runtime` consume configuración READY, conserva la autoridad EFFECTIVE recuperable desde WAL, ejecuta ciclos y confirma cambios de lifecycle mediante commits durables bajo lease/fencing.
+
+La integración de inputs del proceso actual utiliza `DataInputLoader` y `RoutedDatasetSourceReader` de Operational Data. El bloqueo histórico por imports de contratos legacy corresponde al antiguo `scopes/ada-command-center/backend/processes/alarms-runtime` y **no describe** el proceso `scopes/ada-alarm-engine/processes/alarm-runtime` actual.
+
+## Estado por responsabilidad
+
+| Frontera | Estado | Alcance de la afirmación |
+|---|---|---|
+| Domain, evaluación y lifecycle | CURRENT | Código y tests presentes en `ada-alarm-engine` |
+| Materialization READY | CURRENT | Artifact exacto sujeto a verificación de identidad |
+| Runtime durable, WAL, recovery y fencing | CURRENT | Incrementos 13F.2c.3a–13F.2c.3c.3 |
+| Adopción READY → EFFECTIVE y reconciliación operacional | CURRENT | Bootstrap V1, adopción V2 y commits V3 |
+| Auditoría de cobertura 13F.2c.3d | CLOSED | Sin brecha demostrada que exigiera tests duplicados |
+| Ejecución física integral del **nuevo** proceso | UNVERIFIED | No sustituir con la qualification histórica |
+| Registry productivo de evaluadores | OPEN | `build_alarm_evaluator_registry()` retorna `contracts=()` |
+| Exportación CURRENT/FACTS del **nuevo** Runtime | UNVERIFIED / fuera de 13F.2c | La composición actual no conecta un publicador equivalente al legado |
+| Modeler, Delivery y Web | Separados | No incluidos en el cierre durable 13F.2c |
+
+## Ownership y contratos compartidos
+
+`ada-contracts-alarms` mantiene los contratos compartidos de configuración/publicación. El núcleo generic de Atlanticus no depende de ADA. La ubicación y responsabilidades históricas de Command Center no se transfieren automáticamente a la nueva implementación.
+
+## Persistencia y autoridad
 
 ```text
-Operational Data legacy consumer contract was removed.
-Alarm Runtime still imports removed legacy input contracts.
+Materialization READY (candidata)
+    ↓ qualification de ejecución y compatibilidad
+WAL: commits de grupo + ConfigurationAdoptionRecord
+    ↓ durable / materialized head y recovery
+EFFECTIVE: proyección de autoridad exacta
+    ↓ sesión y lifecycle fijados
+Runtime: ciclos confirmados antes de publicar memoria
 ```
 
-Este bloqueo es intencional.
+`READY != EFFECTIVE`. Ningún lector de Runtime puede usar el último READY como sustituto de EFFECTIVE tras un reinicio.
 
-No restaurar legacy ni introducir shims para reactivar Runtime.
+## Evidencia histórica y límites
 
-## Web path — PLANNED / NEXT IN THIS TRACK
+El pipeline anterior en Command Center produjo evidencia física local de CURRENT/FACTS, Modeler, Delivery y Cosmos. Esa evidencia permanece **HISTORICAL** y no cualifica por inferencia la nueva composición `ada-alarm-engine`.
 
-Antes de migrar el engine, el siguiente incremento debe preparar la superficie Web de alarmas:
+La frontera Web también permanece independiente: visibilidad de alarmas deriva del lifecycle/projection; Web no debe consumir WAL ni ejecutar su propio scheduler. El trabajo de scheduling avanzado de Modeler no se incluye en este cierre.
 
-```text
-first reusable alarms-flow component/card
-integrate alarm-management
-integrate alarm-status
-exercise operational header with all intended surfaces
-freeze Web consumption boundary
-```
+## Referencias
 
-No implementar engine migration dentro del mismo incremento.
-
-## Engine target — PLANNED AFTER WEB FOUNDATION
-
-Dirección acordada:
-
-```text
-operational Alarm Engine
-→ target distribution/package identity: ada-alarm-engine
-```
-
-La migración debe comenzar con inventario y diseño, no con rename mecánico.
-
-Debe decidir explícitamente:
-
-```text
-what remains in ada-contracts-alarms
-what belongs to ada-alarm-engine
-what historical fields do not add value
-which removals are compatible with frozen domain semantics
-how Runtime migrates to DataInputSpec/DataInputContext
-```
-
-No modificar `AlarmDefinition` como efecto lateral de corregir Operational Data integration.
-
-## Target data-input migration
-
-La dirección canónica previa continúa:
-
-```text
-Alarm evaluator/input contract
-    ↓
-DataInputSpec
-    ↓
-DataInputPlanner
-    ↓
-DataInputLoader
-    ↓
-DataInputContext
-```
-
-La forma exacta debe debatirse antes de implementar.
-
-## Historical pipeline evidence
-
-El pipeline históricamente cualificado:
-
-```text
-Alarm Configuration projection
-    ↓
-Materialization READY
-    ↓
-Runtime EFFECTIVE
-    ↓
-Runtime CURRENT + FACTS
-    ↓
-Modeler
-    ↓
-per-Tool AlarmProjectionSnapshot
-    ↓
-Delivery
-    ↓
-alarm-live-projection
-```
-
-permanece como evidencia histórica.
-
-No describirlo como ejecutable CURRENT mientras Runtime siga bloqueado por su integración de datos.
-
-## Frozen Web boundary
-
-Alarmas no siguen la regla:
-
-```text
-configured definition
-→ permanent visible component
-```
-
-La presencia visible se deriva de lifecycle/projection.
-
-Web no debe leer WAL ni Runtime CURRENT directamente como contrato final de visualización.
-
-## Next
-
-```text
-ADA-WEB-ALARM-SURFACE-FOUNDATION
-```
-
-Después:
-
-```text
-ADA-ALARM-ENGINE-MIGRATION
-```
+- `02_RUNTIME_AND_LIFECYCLE.md`
+- `03_PERSISTENCE_AND_RECOVERY.md`
+- `08_QUALIFICATION_BASELINE.md`
+- `10_OPEN_ITEMS.md`
+- `11_SOURCE_LEDGER.md`
+- `13_RUNTIME_ADOPTION_AND_EFFECTIVE_CONFIGURATION.md`

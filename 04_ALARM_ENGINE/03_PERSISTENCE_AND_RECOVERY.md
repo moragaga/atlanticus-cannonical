@@ -1,46 +1,73 @@
 # Alarm Engine — Persistence and Recovery
 
-Estado: **CURRENT — WAL, adopción V1/V2, EFFECTIVE derivado y FACTS v2; despliegue físico UNVERIFIED**. Corte 2026-09-28. El exportador no crea otro WAL: consume commits confirmados del existente. **Código del hito verificado por lectura remota en** `atlanticus@c67fcb5b105cc561c16719a8bca4ea5aa74c3fae`; `main@bc1d73742bcb04eb495bbbb1725a8ad23d4eff38` está un commit posterior con cambios sólo de ADA Generic Master Projection, fuera de este alcance. Los gates locales son evidencia del usuario, no CI de este checkout.
+Estado: **CURRENT — WAL, adopción V1/V2, EngineCommitRecord V3, rebase y recovery durables; qualification física del nuevo proceso UNVERIFIED**. Baseline: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
 
-## Frontera durable única
+## Autoridad durable única
 
 ```text
-Authority check -> validar/alinear JournalHead + previous state
--> fenced WAL append + fsync -> JournalHead.durable
--> materializar snapshots -> JournalHead.materialized
--> proyectar EFFECTIVE si hubo adopción confirmada
--> generar CURRENT y exportar FACTS DESPUÉS de confirmación cuando corresponde
+Authority check / recovery de JournalHead
+    ↓
+validar cadena WAL, snapshots y previous state
+    ↓
+fenced WAL append + fsync
+    ↓
+JournalHead.durable
+    ↓
+materialización de snapshots de grupos
+    ↓
+JournalHead.materialized
+    ↓
+EFFECTIVE derivado cuando hay adopción confirmada
 ```
 
-El WAL es **única autoridad** sobre commits y adopción; Durable Head identifica la región autoritativa y Materialized Head limita replay agrupado. `runtime/state/effective-head.json` es proyección reconstruible, no WAL alternativo. READY y los snapshots por grupo no confieren autoridad global.
+El WAL es la única autoridad de commits y adopciones. `effective-head.json` es una proyección reconstruible, no un segundo WAL. READY y los snapshots aislados no confieren autoridad global.
 
-## Adopción CURRENT: WAL V1 y V2, ambos válidos
+En el módulo actual `AlarmPersistencePaths`, el estado se ubica bajo `application_root/alarms/runtime/state/`:
 
-**V1** `ConfigurationAdoptionRecord` admite adopción global sin group commits: incluye ID, referencias source/target, effective/committed timestamps y hash canónico; permite bootstrap sin inventar grupos/snapshots. **V2** `ConfigurationAdoptionRecordV2` liga 1..N group commits ordenados por referencias exactas `(priority_group,commit_id,record_hash)` y un adoption final dentro del mismo batch WAL. Las versiones V1/V2 del **WAL** se conservan: no son equivalentes a los formatos FACTS v1/v2.
+```text
+journal-head.json
+effective-head.json
+groups/<priority_group>.json
+```
 
-El journal y validador comprueban cadenas de adopción y de grupos, hashes, autoridad y previous state. Histórico group-only incompatible sin adopción inicial no se absorbe como autoridad silenciosamente. Materialized Head es barrera agrupada, no atomicidad MVCC universal de múltiples archivos vistos por lectores externos.
+Los segmentos WAL se encuentran bajo `application_root/alarms/runtime/journal/{open,sealed}`. No suponer un prefijo rígido de Command Center ni derivar `application_root` de la ruta histórica de otro proceso.
 
-## Effective Head y lectura verificada
+## Adopción y group commits CURRENT
 
-Ubicación bajo `VOLUMEN_PATH/ada-command-center/alarms/runtime/state/`: `journal-head.json`, `effective-head.json` y `groups/<priority_group>.json`. `AlarmEffectiveConfigurationHead` incorpora `adoption_id`, `adoption_record_hash`, `adoption_position`, `target_artifact_ref` y `effective_at`. `read_effective_head()` exige journal alineado y valida región durable, snapshots y coherencia con última adopción. Sin adopción legítima puede devolver None; cabeza ausente/corrupta/desfasada con WAL durable exige recovery/fail-closed, no latest READY como sustituto.
+- **V1** `ConfigurationAdoptionRecord`: adopción global sin group commits; permite bootstrap sin snapshots ficticios y cambios sin grupos persistidos.
+- **V2** `ConfigurationAdoptionRecordV2`: adopción final con 1..N group commits anteriores, ordenados por grupo y referenciados exactamente por `(priority_group, commit_id, record_hash)`.
+- **V3** `EngineCommitRecord`: registra after-image recuperable del lifecycle de un grupo, evaluaciones/transiciones y estado de incidentes según el contrato.
+- **Rebase** `group-configuration-rebase.v1`: marcador exclusivo dentro de un `EngineCommitRecord` V3. Cambia `state_basis` del snapshot preservando estado operacional y sin crear occurrences, journeys, evidences ni Management artificiales. Puede representar grupos vacíos.
+- **Adopción mixta**: cada grupo recibe un commit operacional real si cambia el lifecycle o un rebase exclusivo si no cambia. Los commits y la adopción V2 forman una transacción lógica confirmada en el mismo batch WAL.
 
-Runtime reabre artefacto exacto mediante el lector de Materialization y selección EFFECTIVE; su job pinnea sesión. Delivery input receiver B2c.7 lee el documento **proyectado** EFFECTIVE y materialización exacta; no consulta WAL y su `_effective()` no equivale por sí solo al validador profundo `AlarmPersistence.read_effective_head()`.
+El journal valida hashes, previous head, consistencia de referencias/revisiones, orden y límites de batch. No se infiere una migración automática desde historia group-only sin primera adopción legítima.
 
-## Recovery y fencing CURRENT
+## Recovery/fencing CURRENT
 
-- Antes de Durable Head: descartar tail no confirmado, sin inventar adoption.
-- Después de Durable Head: replay exacto sin reevaluación; V2 agrupa materializaciones antes de avanzar Materialized Head.
-- Después de materialized y antes de EFFECTIVE: recomponer la proyección desde WAL; discrepancia de snapshots bloquea.
-- En takeover: validar autoridad, comparaciones de heads y `fenced_mutation` en cada frontera irreversible. Nunca asumir single-worker como sustituto de fencing.
+- Antes de Durable Head: descartar el tail no confirmado. No adoptar ni publicar EFFECTIVE.
+- Después de Durable Head: replay de after-images confirmadas, sin reevaluación de negocio.
+- En adopciones V2, Materialized Head no avanza a mitad del batch si una materialización falla; al recuperar se completa el grupo lógico y se omiten snapshots ya aplicados.
+- Después de materializar y antes de publicar EFFECTIVE: reconstruir la proyección desde el journal confirmado.
+- Lecturas de EFFECTIVE exigen journal alineado y validación de snapshots contra región durable.
+- En pérdida de lease/takeover, usar `assert_authority`, `fenced_mutation` y comparación de heads antes de fronteras irreversibles.
+- El Runtime actualiza memoria solo tras la confirmación durable; en cambio de artifact, recupera EFFECTIVE exacto antes de fijar la nueva sesión.
 
-## B2c.7 publicación — copias derivadas, no otra autoridad
+La alineación del Materialized Head no equivale a atomicidad MVCC universal para lectores de archivos independientes; los consumidores deben usar su frontera de lectura validada.
 
-Engine `runtime/output/current/latest.json` es snapshot v1 reemplazable con SHA256; `runtime/output/facts/facts-*.json` son copias inmutables de eventos de commits durables en formato runtime **v2**, con `previous_batch` ID/hash; `runtime/output/state/facts-export-cursor.json` representa progreso **del exportador**, nunca reemplaza JournalHead ni el WAL. La publicación CURRENT ocurre tras el commit requerido y puede actualizarse si sólo cambia la evidence actual.
+## CURRENT/FACTS — no confundir generaciones
 
-Delivery tiene inbox independiente en `alarms/delivery/input` y `state/facts-consumption-cursor.json`. Recibe en orden, verifica continuidad hasta la punta del productor, comprueba la cadena histórica recibida durante recovery y conserva su progreso. Si falta lote inicial/intermedio, la cadena es inconsistente o existen archivos sin cursor de exportación, bloquea: no inventa hechos, no reconstruye un lote perdido y no consume directamente el WAL.
+En la implementación **histórica** de Command Center, `Runtime CURRENT v1` y `Runtime FACTS v2` fueron copias derivadas de commits durables, con cursores de exportación/consumo independientes. Los campos `previous_batch`, los controles de continuidad y el comportamiento fail-closed formaban parte de ese pipeline histórico.
 
-**FACTS v1 runtime → v2 runtime: BLOCKED condicional en volúmenes históricos.** Las versiones del schema v1 pueden permanecer como documento de la genealogía, pero no existe lector/adaptador runtime v1. La generación v2 exige baseline y rechaza archivos/cursor preexistentes incompatibles. Antes de desplegar sobre histórico real, inventariar y acordar procedimiento específico; no borrar data ni crear legacy.
+El proceso actual `scopes/ada-alarm-engine/processes/alarm-runtime` compone recovery, evaluación, lifecycle, commits y adopción, pero **no incluye en esa composición el exportador CURRENT/FACTS histórico**. Por lo tanto, su equivalencia de publicación y el consumo físico downstream son **UNVERIFIED**, no parte del cierre de 13F.2c.
 
-## Evidencia / límites
+Cualquier evolución de exportación debe preservar que los outputs son derivados del WAL; no introducir otro writer de verdad operacional. Volúmenes históricos FACTS v1/v2 requieren inventario/qualification específicos antes de reutilizarlos.
 
-B2c.7c probó Engine real más Delivery en entorno controlado y recreación de instancias; B2c.7d tuvo 32 tests específicos y 162 PASS/1 SKIPPED conjuntos con Ruff PASS según logs locales. No es prueba multi-host, backup/restore físico, dos contenedores concurrentes, CI limpia ni garantía de autenticidad firmada. La qualification histórica R3.5/F-010 sigue siendo evidencia de su generación anterior, no del contrato runtime FACTS v2.
+## Evidencia y límites
+
+**VERIFIED por revisión de código:** WAL V1/V2, group commit V3, rebase, adopción operacional, recovery exacto y fencing. Las pruebas actuales cubren fallos antes/después de Durable Head, materialización parcial, takeover, idempotencia de recovery, snapshots V3 e integración Runtime con adopción/ciclos.
+
+**VERIFIED local reportado por usuario:** 471 PASS, Ruff PASS, lock PASS (2026-10-08).
+
+**HISTORICAL:** pruebas físicas y exportación CURRENT/FACTS de Command Center. No son qualification del nuevo ejecutable.
+
+**UNVERIFIED:** qualification física del nuevo proceso, despliegue concurrente multi-host, Azure, autenticación productiva, backup/restore físico y equivalencia de publicación downstream.

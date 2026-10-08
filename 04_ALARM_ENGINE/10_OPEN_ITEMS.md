@@ -1,51 +1,27 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT — RUNTIME DATA-INTEGRATION MIGRATION ADDED AS BLOCKER**
+Estado: **CURRENT — 13F.2c Runtime durable CLOSED; se mantienen abiertos solo límites reales**. Baseline: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
 
-## BLOCKED — Runtime Operational Data integration
+## CLOSED — Runtime durable (13F.2c)
 
-El pipeline legacy de Operational Data fue retirado.
+- 13F.2c.3a: recuperación durable de EFFECTIVE, READY exacto, snapshots V3 y technical incidents.
+- 13F.2c.3b: commit de ciclo bajo WAL y fencing, memoria posterior a confirmación.
+- 13F.2c.3c.1: rebase exclusivo de configuración para grupos sin transición operacional.
+- 13F.2c.3c.2: bootstrap READY → EFFECTIVE y adopción durable sin eventos físicos.
+- 13F.2c.3c.3: adopción mixta con transiciones de lifecycle, cierre de occurrence/episode y resolución de incidents.
+- 13F.2c.3d: auditoría de cobertura cerrada, sin nuevas pruebas redundantes.
 
-`alarms-runtime` todavía depende de ese contrato y no es ejecutable hasta migrar.
+El bloqueo legacy por imports de Operational Data removidos corresponde a la antigua implementación `scopes/ada-command-center/backend/processes/alarms-runtime`. La ruta actual `scopes/ada-alarm-engine/processes/alarm-runtime` utiliza contratos de inputs vigentes y está implementada. **No reabrir el bloqueo legacy ni crear shims.**
 
-Target conceptual:
+## OPEN — Qualification e integración productiva
 
-```text
-Alarm evaluator/input contract
-    ↓
-DataInputSpec
-    ↓
-DataInputPlanner
-    ↓
-DataInputLoader
-    ↓
-DataInputContext
-```
+- **UNVERIFIED:** arranque físico de la composición actual con datos reales/controlados, lease y persistencia del nuevo proceso.
+- **OPEN:** registro y qualification de evaluadores productivos. El registry actual está vacío (`contracts=()`).
+- **UNVERIFIED:** producción de CURRENT/FACTS por la nueva ruta y su conexión downstream. La composición de Runtime actual no incluye el exportador histórico.
+- **OPEN / fuera del hito:** qualification/provisioning de infraestructura en Docker/Azure, Key Vault, Entra y escenarios multi-host.
+- **OPEN condicional:** inventario/migración de volúmenes históricos incompatibles antes de usar contratos de exportación nuevos.
 
-La forma exacta del contrato Alarm permanece PLANNED; debe diseñarse en un incremento propio.
-
-No reintroducir legacy para desbloquearlo.
-
-## Historical CLOSED baseline
-
-Antes del cutover de Operational Data se verificó localmente:
-
-```text
-READY exact pair
-Runtime EFFECTIVE adoption
-Runtime CURRENT v1
-Runtime FACTS v2
-Modeler current projection baseline
-per-Tool operator_pool/operator_view
-Delivery from Modeler current head
-Tool-key Cosmos connection registry
-fixed alarm-live-projection container
-local physical E2E through Cosmos read-back
-```
-
-Es evidencia histórica, no qualification del Runtime CURRENT post-cutover.
-
-## OPEN — Modeler scheduler
+## OPEN — Modeler y Delivery (frentes separados)
 
 ```text
 CAROUSEL full scheduler
@@ -53,32 +29,30 @@ QUEUE_IN_QUEUE full scheduler
 rotation window
 QIQ fairness
 durable ModelerState/checkpoint
-recovery
-artifact A -> B state migration
+scheduler recovery
+artifact A → B state migration
 stale/disconnection policy
+Runtime → Modeler ordered/no-drop handoff si llega a requerirse
+Modeler → Delivery checkpoint/retry por destino
 ```
 
-## OPEN — presentation/data
+Estos temas no bloquean el cierre de persistencia/adopción del Runtime.
+
+## OPEN — Presentación y negocio
 
 ```text
 effective dynamic cause
 Management projections
 History/Analytics projections
+Web live rendering y alarm-management
 ```
 
-## OPEN — operations/infrastructure
+La Web consume proyecciones según los límites congelados: no lee WAL como interfaz de visualización y no reconstruye lifecycle.
 
-```text
-Alarm Runtime data-input migration
-production qualification producer
-resource provisioning/startup gates
-Azure/Docker qualification
-physical Engine extraction
-Python 3.14.7/Trixie migration
-```
+## HISTORICAL — evidencia de Command Center
 
-## Project NEXT fuera de Alarm
+La generación anterior verificó localmente READY/EFFECTIVE, CURRENT v1, FACTS v2, Modeler per-Tool, Delivery y read-back Cosmos. Esa evidencia es válida en su época, pero no cualifica automáticamente la nueva composición `ada-alarm-engine`.
 
-```text
-ATLANTICUS-DISTRIBUTION-AND-TOOLING-FINAL-QUALIFICATION
-```
+## Siguiente foco recomendado
+
+Cerrar la sincronización documental de este hito y escoger **un único frente de qualification/integración**, separado de 13F.2c. No abrir más incrementos de WAL/fencing sin una brecha reproducible.
