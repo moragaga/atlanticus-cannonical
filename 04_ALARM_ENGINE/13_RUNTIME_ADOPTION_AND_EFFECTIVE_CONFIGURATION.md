@@ -1,6 +1,6 @@
 # Alarm Engine — Runtime Adoption and Effective Configuration
 
-Estado: **CURRENT — adopción durable Runtime implementada; qualification física del nuevo ejecutable UNVERIFIED**. Baseline: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
+Estado: **CURRENT — adopción durable y publicación CURRENT/FACTS v4 implementadas; stress sintético local VERIFIED; qualification productiva UNVERIFIED**. Baseline: `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4` (2026-10-10).
 
 ## Invariantes congelados — READY / EFFECTIVE
 
@@ -49,7 +49,7 @@ La adopción V2 exige referencias `(priority_group, commit_id, record_hash)` can
 
 ## Frontera downstream — no transferir evidencia
 
-El proceso actual de Runtime bajo `ada-alarm-engine` tiene implementadas las fronteras de configuración, lifecycle y persistencia. **No hay evidencia de equivalencia física de publicación CURRENT/FACTS en su composición actual**.
+El proceso actual de Runtime bajo `ada-alarm-engine` tiene implementadas las fronteras de configuración, lifecycle, persistencia y publicación de **CURRENT durable v1** (`current/durable-latest.json`) y **FACTS stream/cursor v4**. La continuidad local de estas salidas con el WAL quedó verificada en estrés sintético, pero **no hay evidencia de equivalencia de contrato con el CURRENT histórico de Modeler ni qualification end-to-end con Delivery**.
 
 El pipeline histórico de Command Center consumía Runtime CURRENT junto con EFFECTIVE y READY exacto, pasaba por Modeler y después Delivery, que publicaba `alarm-live-projection`. Esa implementación histórica no se transforma automáticamente en estado CURRENT de la nueva ruta.
 
@@ -58,7 +58,7 @@ Cuando la nueva integración downstream sea cualificada, deben conservarse los i
 ## OPEN separado
 
 - Registro de evaluadores productivos (`build_alarm_evaluator_registry()` todavía define `contracts=()`).
-- Qualification física del Runtime nuevo y publicación downstream.
+- Qualification física productiva del Runtime nuevo con evaluadores y fuentes reales; integración downstream nueva Runtime → Modeler → Delivery.
 - Migración de estado del scheduler Modeler entre artifacts A → B, cuando existan colas/timers durables.
 - Políticas de handoff ordered/no-drop si un consumidor futuro requiere todas las transiciones, en lugar de CURRENT latest.
 
@@ -68,4 +68,6 @@ Cuando la nueva integración downstream sea cualificada, deben conservarse los i
 
 **CLOSED:** auditoría 13F.2c.3d sin nueva brecha reproducible de persistencia/adopción que ameritara pruebas redundantes.
 
-**UNVERIFIED:** qualification física del nuevo proceso y equivalencia de todos los consumidores downstream.
+**VERIFIED local (2026-10-10):** 553 PASS en cuatro suites y readjudicación sintética 7/7 sobre evidencia persistida.
+
+**UNVERIFIED:** qualification productiva del nuevo proceso y equivalencia de todos los consumidores downstream.

@@ -1,160 +1,71 @@
 # Alarm Engine — Projection and Publication
 
-Estado: **CURRENT — RUNTIME CURRENT/FACTS + MODELER LIVE SNAPSHOT + DELIVERY COSMOS IMPLEMENTED**
+Estado: **CURRENT — nuevo Runtime publica CURRENT durable v1 y FACTS stream/cursor v4; Modeler/Delivery del pipeline histórico no cualificados contra estos contratos**. Baseline: `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4` (2026-10-10).
 
-## 1. Runtime publications
+## Nuevo Alarm Runtime — CURRENT implementado
 
-Runtime publica:
+Las publicaciones del nuevo proceso están bajo la raíz operacional de output de Alarm Engine:
+
+```text
+current/durable-latest.json
+facts/year=YYYY/month=MM/day=DD/hour=HH/part-NNNN.jsonl
+state/facts-export-cursor.json
+```
+
+### CURRENT durable v1
+
+```text
+document_type = ada_alarm_engine_durable_current_state
+schema_version = 1
+artifact_ref
+journal_position
+state.resolution_key
+state.groups[]
+sha256
+```
+
+Es una proyección de snapshots de grupo confirmados. Requiere journal alineado, EFFECTIVE exacto y estado derivado de WAL. No puede retroceder ni redefinir la autoridad durable.
+
+### FACTS stream / cursor v4
+
+```text
+record document_type = ada_command_center_engine_committed_facts_stream
+cursor document_type = ada_command_center_engine_facts_export_cursor
+schema_version = 4
+stream = segmentos JSONL horarios, part-NNNN
+cursor = state/facts-export-cursor.json
+```
+
+El contrato compartido vive en `scopes/ada-contracts/alarms/src/ada/contracts/alarms/facts_stream.py` y sus schemas v4. El exporter consume commits atribuidos durables, preserva orden/hash/posición de journal, ancla artifact y avanza cursor tras append validado con fencing. Errores de integridad bloquean publicación; no se infiere migración automática de cursor/volúmenes anteriores.
+
+La publicación y el recovery se coordinan en `processes/alarm-runtime/src/ada/processes/alarm_runtime/composition.py`. **CURRENT** es estado actual; **FACTS** conserva hechos para consumo secuencial. Ninguno es una nueva fuente de autoridad.
+
+## Pipeline histórico Command Center — HISTORICAL, no equivalente
+
+El pipeline físico histórico usaba:
 
 ```text
 runtime/output/current/latest.json
+    Runtime CURRENT v1: ada_command_center_engine_resolved_current_state
 runtime/output/facts/facts-<hash>.json
-runtime/output/state/facts-export-cursor.json
-```
-
-### CURRENT v1
-
-```text
-document_type = ada_command_center_engine_resolved_current_state
-schema_version = 1
-artifact_ref
-state.resolution_key
-state.as_of
-state.alarms[]
-sha256
-```
-
-Alarm current contiene, entre otros:
-
-```text
-identity
-occurrence_id
-episode_id
-started_at
-evaluation
-priority
-assignments
-pending_assignments
-technical_hold
-management/deactivation fields
-```
-
-### FACTS v2
-
-Durable commit facts permanecen canal separado. El live Modeler baseline no necesita FACTS para construir el snapshot actual.
-
-## 2. Modeler input CURRENT
-
-Modeler exige:
-
-```text
-EFFECTIVE head
-Runtime CURRENT v1
-exact READY runtime.json
-delivery.json del mismo exact artifact
-```
-
-Si CURRENT no corresponde al EFFECTIVE exacto, espera y no modela.
-
-## 3. Modeler projection CURRENT
-
-Index:
-
-```text
+    FACTS batch v2/v3
+    ↓ Modeler (exact EFFECTIVE/READY)
 modeler/output/current/index.json
-
-document_type = ada_alarm_modeler_projection_index
-schema_version = 1
-artifact_ref
-snapshot_timestamp
-snapshots[] { tool_key, path, sha256 }
-sha256
+modeler/output/current/tools/<tool-hash>/latest.json
+    ↓ Delivery
+Cosmos alarm-live-projection, partition key /tool_key
 ```
 
-Snapshot por Tool:
+Su qualification local histórica incluyó Tool snapshot, Delivery y read-back Cosmos. **No prueba** que el Modeler consuma `ada_alarm_engine_durable_current_state`, ni que Delivery consuma el nuevo FACTS v4. La integración nueva Runtime → Modeler → Delivery permanece **OPEN / UNVERIFIED**, no un cambio implícito de contrato.
+
+Los invariantes históricos de Modeler continúan como frontera funcional (sin atribuirlos al Runtime nuevo): elegibilidad ACTIVE + PREDOMINANT + materialized active + VISIBLE + asignación y target de Tool; orden `priority_order, started_at, alarm_identity, occurrence_id`; `operator_pool` ordenado y `operator_view` hasta seis slots. Scheduler avanzado permanece PLANNED.
+
+## Separación congelada
 
 ```text
-modeler/output/current/tools/<sha256(tool_key)>/latest.json
-
-document_type = ada_alarm_projection_snapshot
-schema_version = 1
-id
-artifact_ref
-snapshot_timestamp
-tool_key
-alarms
-operator_pool
-operator_view
-meta
-sha256
+Live Projection       -- visualización operativa vía Modeler/Delivery
+Management Projection -- independiente, PLANNED
+History/Analytics     -- independiente, PLANNED
 ```
 
-## 4. Eligibility CURRENT
-
-Se proyecta sólo cuando:
-
-```text
-evaluation.status == ACTIVE
-priority.disposition == PREDOMINANT
-materialized alarm is_active
-visibility_mode == VISIBLE
-Runtime assignment incluye tool_key
-visual_target incluye tool_key
-```
-
-## 5. Ordering/current view
-
-Orden:
-
-```text
-priority_order
-started_at
-alarm_identity
-occurrence_id
-```
-
-`operator_pool` contiene todos los candidatos elegibles de ese Tool ordenados.
-
-`operator_view` contiene como máximo 6, asignados a slots 1..6.
-
-No hay `ranking` separado.
-
-## 6. Delivery CURRENT
-
-Delivery consume exclusivamente el Modeler current head.
-
-Valida index/snapshots/digests/exact pin y publica cada Tool mediante `ParallelCosmosPublisher`.
-
-Contrato físico:
-
-```text
-container = alarm-live-projection
-partition key = /tool_key
-```
-
-Connection registry:
-
-```text
-config/connections.json
-connections[tool_key] = {
-    endpoint_var,
-    database_var,
-    credential_var,
-}
-```
-
-El container no varía por Tool.
-
-## 7. Web boundary
-
-Web debe leer el snapshot modelado. No debe leer WAL, reabrir READY, recalcular priority ni reconstruir `operator_view`.
-
-## 8. Separate projections
-
-Permanecen separadas:
-
-```text
-Live Projection       CURRENT baseline
-Management Projection PLANNED
-History/Analytics     PLANNED
-```
+Web no lee WAL ni usa el CURRENT durable del Runtime como contrato final de UI. Modeler no recalcula prioridad, Delivery no modela y Analytics no escribe en el Engine. Referencias: `12_COMMAND_CENTER_ANALYTICS_BOUNDARY.md` y `14_MODELER_AND_DELIVERY_PIPELINE.md`.

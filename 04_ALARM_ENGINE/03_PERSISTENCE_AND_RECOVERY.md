@@ -1,6 +1,6 @@
 # Alarm Engine — Persistence and Recovery
 
-Estado: **CURRENT — WAL, adopción V1/V2, EngineCommitRecord V3, rebase y recovery durables; qualification física del nuevo proceso UNVERIFIED**. Baseline: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
+Estado: **CURRENT — WAL durable, rotation, checkpoint dual y compactación controlada; stress sintético local VERIFIED; qualification productiva UNVERIFIED**. Baseline: `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4` (2026-10-10).
 
 ## Autoridad durable única
 
@@ -54,13 +54,19 @@ El journal valida hashes, previous head, consistencia de referencias/revisiones,
 
 La alineación del Materialized Head no equivale a atomicidad MVCC universal para lectores de archivos independientes; los consumidores deben usar su frontera de lectura validada.
 
-## CURRENT/FACTS — no confundir generaciones
+## Rotación WAL, recovery checkpoint y compactación — CURRENT
 
-En la implementación **histórica** de Command Center, `Runtime CURRENT v1` y `Runtime FACTS v2` fueron copias derivadas de commits durables, con cursores de exportación/consumo independientes. Los campos `previous_batch`, los controles de continuidad y el comportamiento fail-closed formaban parte de ese pipeline histórico.
+La implementación `operational/journal.py`, `operational/incremental.py` y `operational/recovery_checkpoint.py` mantiene el WAL como autoridad de commits. Segmentos horarios pueden sellarse/rotarse; los checkpoints v1 preservan head alineado, EFFECTIVE, snapshots de grupos, secuencia y digest de anclaje WAL.
 
-El proceso actual `scopes/ada-alarm-engine/processes/alarm-runtime` compone recovery, evaluación, lifecycle, commits y adopción, pero **no incluye en esa composición el exportador CURRENT/FACTS histórico**. Por lo tanto, su equivalencia de publicación y el consumo físico downstream son **UNVERIFIED**, no parte del cierre de 13F.2c.
+Se publican dos generaciones alternas en `runtime/state/recovery-checkpoint-0.json` y `runtime/state/recovery-checkpoint-1.json` bajo la raíz operacional del Alarm Engine. Recovery valida checkpoint y replay del sufijo durable; nunca reevalúa negocios ni inventa commits. La compactación exige checkpoints compatibles y retiene frontera de replay/autoridad; valida head, slots y fencing antes de borrar segmentos elegibles. No confundir compactación WAL con retención de facts.
 
-Cualquier evolución de exportación debe preservar que los outputs son derivados del WAL; no introducir otro writer de verdad operacional. Volúmenes históricos FACTS v1/v2 requieren inventario/qualification específicos antes de reutilizarlos.
+## CURRENT y FACTS — generaciones distintas
+
+**Nuevo Runtime (`ada-alarm-engine`):** CURRENT durable v1 usa `current/durable-latest.json`, `document_type=ada_alarm_engine_durable_current_state`, referencia exacta EFFECTIVE, posición WAL y snapshots de grupo. FACTS v4 usa stream JSONL particionado por hora en `facts/year=.../month=.../day=.../hour=.../part-....jsonl`, con cursor v4 en `state/facts-export-cursor.json`. Los publicadores validan continuidad, hashes, anchor y fencing; no se permite retroceso del CURRENT a una posición previa.
+
+**HISTORICAL:** Command Center publicaba Runtime CURRENT v1 `ada_command_center_engine_resolved_current_state` y FACTS v2/v3 batch, bajo rutas y esquemas diferentes. No renombrar estos contratos como equivalentes: los consumidores Modeler/Delivery históricos no se consideran integrados ni cualificados frente a la nueva salida sin adaptación formal de frontera/contrato.
+
+**OPEN:** retención y reducción efectiva del footprint de FACTS, migración controlada de volúmenes antiguos si procede, y qualification productiva downstream.
 
 ## Evidencia y límites
 
@@ -70,4 +76,6 @@ Cualquier evolución de exportación debe preservar que los outputs son derivado
 
 **HISTORICAL:** pruebas físicas y exportación CURRENT/FACTS de Command Center. No son qualification del nuevo ejecutable.
 
-**UNVERIFIED:** qualification física del nuevo proceso, despliegue concurrente multi-host, Azure, autenticación productiva, backup/restore físico y equivalencia de publicación downstream.
+**VERIFIED local reportado (2026-10-10):** 553 PASS en cuatro paquetes; stress sintético de diez minutos con Acceptance Gate 7/7, checkpoints progresivos y compactación/recovery comprobados por readjudicación offline.
+
+**UNVERIFIED:** arranque con evaluador productivo/datos representativos, despliegue concurrente multi-host, Azure, autenticación productiva, backup/restore físico y equivalencia de publicación downstream.

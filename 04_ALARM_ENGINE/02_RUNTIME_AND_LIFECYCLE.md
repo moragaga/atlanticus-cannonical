@@ -1,6 +1,6 @@
 # Alarm Engine — Runtime and Lifecycle
 
-Estado: **CURRENT — Runtime durable implementado; ejecución física del nuevo proceso UNVERIFIED**. Baseline: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
+Estado: **CURRENT — Runtime durable y publicaciones integradas; stress sintético local VERIFIED; qualification productiva UNVERIFIED**. Baseline: `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4` (2026-10-10).
 
 ## Boundary actual
 
@@ -46,10 +46,18 @@ Estados de priority: `PREDOMINANT`, `ECLIPSED`, `CASCADE_SUPPRESSED`, `DEACTIVAT
 
 Una caída posterior a Durable Head no autoriza reevaluar una transición confirmada: recovery reconstruye el commit exacto. Una caída anterior a Durable Head no crea autoridad ni una adopción ficticia.
 
+## Publicación y mantenimiento — CURRENT
+
+La composición `AlarmRuntimeComposition` reconcilia publicaciones derivadas del WAL durante recovery y antes de ejecutar iteraciones. Publica CURRENT durable v1 y FACTS stream/cursor v4. El flujo de mantenimiento confirma recovery checkpoints y habilita compactación de segmentos WAL obsoletos bajo fencing. Recovery, output, mantenimiento y cierre conservan la autoridad durable como fuente, no los archivos de salida.
+
+El Runtime genérico incorporó `JobDefinition.iteration_summary_every: int = 1` y `JobRuntimeContext.request_iteration_summary()`. El valor `1` mantiene la política previa en consumidores no modificados; Alarm Runtime establece `0` y solicita resúmenes significativos. Los cambios conciernen logging/observabilidad, sin alterar los contratos de lease/ciclo.
+
 ## Alcance y evidencia
 
 **VERIFIED:** código y pruebas de los incrementos 13F.2c.3a–13F.2c.3c.3 publicados; suite local reportada por el usuario: 471 PASS, Ruff PASS, lock PASS.
 
-**UNVERIFIED:** qualification física del nuevo ejecutable, evaluadores productivos concretos, integración productiva de exportación CURRENT/FACTS y despliegues multi-host/Azure. El registry productivo de evaluadores retorna actualmente `contracts=()`.
+**VERIFIED local (2026-10-10):** 553 PASS en contratos, runtime genérico, persistence y alarm-runtime/stress; stress sintético de diez minutos readjudicado con Acceptance Gate 7/7. La evidencia de estrés anterior fue readjudicada offline, no corresponde a una nueva ejecución del runner actualizado.
+
+**UNVERIFIED:** ejecución con evaluadores productivos concretos, equivalencia downstream con el Modeler histórico y despliegues multi-host/Azure. El registry productivo de evaluadores retorna actualmente `contracts=()`.
 
 Modeler avanzado, scheduler, Delivery y superficies Web se mantienen fuera de este hito; sus contratos no se infieren de la implementación de Runtime.

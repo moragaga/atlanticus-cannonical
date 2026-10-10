@@ -20,7 +20,7 @@ Live Projection contiene estado current para operación visual.
 
 No es History/Analytics.
 
-El Runtime ejecutable permanece bloqueado por su integración de Operational Data; este diagrama expresa la frontera contractual vigente y el pipeline históricamente cualificado.
+La afirmación histórica de Runtime bloqueado por Operational Data corresponde al ejecutable legacy de Command Center, no al proceso nuevo `ada-alarm-engine`, ahora implementado y sometido a stress sintético local. El diagrama conserva la frontera contractual y la qualification física histórica; el consumo de los nuevos CURRENT durable v1 / FACTS v4 por Modeler/Delivery sigue UNVERIFIED.
 
 ## Web alarm-surface foundation — NEXT
 
@@ -96,6 +96,6 @@ No inferir que el live snapshot conserva todas esas transiciones.
 
 ## Engine migration constraint
 
-La futura migración a `ada-alarm-engine` debe preservar esta separación.
+La extracción del nuevo Runtime a `ada-alarm-engine` está implementada; cualquier evolución pendiente de Modeler/Delivery y consumidores deberá preservar esta separación.
 
 Eliminar campos o simplificar contratos operacionales no autoriza a colapsar Live, Management y History en un único modelo.

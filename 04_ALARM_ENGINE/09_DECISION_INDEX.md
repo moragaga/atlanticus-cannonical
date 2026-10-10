@@ -1,6 +1,6 @@
 # Alarm Engine — Decision Index
 
-Estado: **CURRENT at repository HEAD `atlanticus@09e9acf6...`; Alarm implementation unchanged since `346e7ac7...`**.
+Estado: **CURRENT (2026-10-10) — decisiones congeladas conservadas; implementación revisada en `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4`; diferencias generacionales documentadas**.
 
 | Frontera | Estado |
 |---|---|
@@ -13,7 +13,7 @@ Estado: **CURRENT at repository HEAD `atlanticus@09e9acf6...`; Alarm implementat
 | Materialization Runtime+Delivery pair | CURRENT implemented / SUPERSEDED target. |
 | Materialization Runtime+Modeler+Delivery split | CURRENT decision / PLANNED implementation. |
 | READY/EFFECTIVE exact pin | CURRENT / frozen. |
-| Engine CURRENT v1 / FACTS v2 | CURRENT. |
+| Nuevo Runtime CURRENT durable v1 / FACTS stream v4 | CURRENT implementado; consumo por Modeler histórico UNVERIFIED. |
 | Direct Delivery input CURRENT+FACTS | CURRENT implemented / SUPERSEDED target. |
 | Runtime→Modeler durable ordered handoff semantics | CURRENT decision / physical schema OPEN. |
 | Modeler stateful backend responsibility | CURRENT decision / PLANNED implementation. |
@@ -23,10 +23,18 @@ Estado: **CURRENT at repository HEAD `atlanticus@09e9acf6...`; Alarm implementat
 | QUEUE_IN_QUEUE fairness | OPEN. |
 | Rotation window 90/120 s | OPEN. |
 | Modeler config adoption with live state | OPEN. |
-| Engine physical extraction | PLANNED. |
+| Extracción del nuevo `ada-alarm-engine` | CURRENT para Runtime; integración downstream productiva OPEN. |
 | History / Analytics | PLANNED / separate. |
 
-## Refinements from this closure
+## Refinamiento de estado (2026-10-10)
+
+- **CURRENT por código:** el Runtime actual confirma WAL y publica `ada_alarm_engine_durable_current_state` v1 y facts stream/cursor v4. El contrato histórico CURRENT v1 (`ada_command_center_engine_resolved_current_state`) y FACTS v2/v3 no se consideran equivalentes.
+- **CURRENT:** checkpoints WAL, compactación con fencing y política configurable de iteración (`iteration_summary_every=1` por defecto).
+- **VERIFIED local:** stress sintético v3 readjudicado 7/7 y 553 pruebas acotadas.
+- **OPEN / no decisión nueva:** interfaz exacta que conectará el nuevo CURRENT/FACTS con Modeler/Delivery; footprint/retención de facts; evaluadores productivos.
+- **Decisions:** no se alteran las fronteras congeladas Live / Management / History-Analytics ni las decisiones existentes de scheduler de Modeler.
+
+## Refinements from this closure (historical decision record)
 
 1. El Engine target incorpora un `Modeler` backend lógico stateful entre Runtime y Delivery.
 2. El actual `DeliveryAlarmConfiguration` se reconoce como mezcla de Modeler + Delivery concerns.

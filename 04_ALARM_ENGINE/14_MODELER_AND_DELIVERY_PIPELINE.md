@@ -1,6 +1,6 @@
 # Alarm Engine — Modeler and Delivery Pipeline
 
-Estado: **CURRENT BASELINE IMPLEMENTED / ADVANCED SCHEDULER PLANNED**
+Estado: **HISTORICAL BASELINE IMPLEMENTED en Command Center / ADVANCED SCHEDULER PLANNED / integración desde el nuevo Runtime UNVERIFIED**. Actualizado 2026-10-10.
 
 Checkpoint:
 
@@ -8,7 +8,9 @@ Checkpoint:
 atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856
 ```
 
-## 1. CURRENT pipeline
+El checkpoint `atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856` identifica la generación **histórica**. El nuevo Runtime publicado en `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4` emite `ada_alarm_engine_durable_current_state` v1 y FACTS stream/cursor v4; estos contratos **no sustituyen automáticamente** el `Runtime CURRENT v1` esperado por el Modeler aquí descrito. Mantener esta frontera OPEN hasta qualification downstream.
+
+## 1. HISTORICAL pipeline
 
 ```text
 Runtime CURRENT v1

@@ -1,74 +1,61 @@
 # Alarm Engine — Source Ledger
 
-Estado: **CURRENT — 13F.2c durable Runtime closeout**. Revisión: 2026-10-08.
+Estado: **CURRENT — consolidación del incremento de publicación, WAL retention inicial y stress acceptance**. Revisión: 2026-10-10.
 
-## Autoridades auditadas
+## Autoridades
 
 ```text
-implementation repository: moragaga/atlanticus
-branch: main
-commit: 758249d5fa35236b0ac9b990a393083b4463a507
-commit timestamp: 2026-10-08T15:17:31Z
+implementation: moragaga/atlanticus:main
+verified HEAD: c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4
+contracts FACTS v4: b0c3a3d98a5c78a51321272bb3b0c7bc30494952
+backend/runtime summary policy: 0fdf8f30
+alarms/persistence WAL/checkpoints: f48c9dca
+processes/alarm-runtime publication/stress: c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4
 
-canonical baseline: moragaga/atlanticus-cannonical
-branch: main
-commit previo a esta actualización: e950e2d0e2817ba25789765e9dbb0ef790866af3
+canonical: moragaga/atlanticus-cannonical:main
+HEAD leído antes de esta actualización: f34568a661b57fbeecfb0e6eda867bf5b613712d
 
-decisions historical repository: moragaga/atlanticus-decisions
-branch: main
-commit auditado: 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
+decisions: moragaga/atlanticus-decisions:main
+HEAD leído: 50c2bb3f7bf21b05444a102d4502250a5c8a7d2e
 ```
 
-La implementación publicada es autoridad de código. La fuente histórica de decisiones conserva rationale y qualification; no sustituye el `main` actual.
+Los SHAs abreviados de commits intermedios identifican commits incluidos en el HEAD de implementación; no son hashes inventados. El baseline anterior de persistencia `758249d5fa35236b0ac9b990a393083b4463a507` (2026-10-08) queda como **HISTORICAL**.
 
-## Superficies actuales verificadas por lectura remota
+## Código y contratos CURRENT
 
 ```text
-scopes/ada-alarm-engine/alarms/core/
-scopes/ada-alarm-engine/alarms/materialization/
+backend/runtime/src/atlanticus/runtime/{definition,context,runner}.py
+scopes/ada-contracts/alarms/src/ada/contracts/alarms/facts_stream.py
+scopes/ada-contracts/alarms/src/ada/contracts/alarms/schemas/
+  engine_committed_facts_stream.v4.schema.json
+  engine_facts_export_cursor.v4.schema.json
 scopes/ada-alarm-engine/alarms/persistence/src/ada/alarms/persistence/operational/
+  journal.py
+  incremental.py
+  recovery_checkpoint.py
   store.py
-  models.py
-  configuration_adoption.py
-  configuration_rebase.py
-  core_commit_bridge.py
-  lifecycle_snapshot.py
 scopes/ada-alarm-engine/processes/alarm-runtime/src/ada/processes/alarm_runtime/
-  bootstrap.py
   composition.py
-  job.py
-  lifecycle.py
-  cycle.py
-  durable_recovery.py
-  durable_commit.py
-  durable_adoption.py
-  operational_adoption.py
-  catalog/registry.py
+  settings.py
+  publication/output_batches.py
+  publication/output_current.py
+scopes/ada-alarm-engine/processes/alarm-runtime/stress/
+  run_synthetic.py
+  recovery_verification.py
+  acceptance.py
+  tests/
 ```
 
-Pruebas especialmente relevantes:
+## Evidencia de qualification
 
-```text
-alarms/persistence/tests/operational/test_recovery.py
-alarms/persistence/tests/operational/test_fencing.py
-alarms/persistence/tests/operational/test_configuration_adoption_v2.py
-alarms/persistence/tests/operational/test_configuration_rebase.py
-processes/alarm-runtime/tests/test_durable_recovery.py
-processes/alarm-runtime/tests/test_durable_cycle_commit.py
-processes/alarm-runtime/tests/test_durable_adoption.py
-processes/alarm-runtime/tests/test_operational_adoption.py
-```
+- **VERIFIED remoto:** las rutas anteriores del incremento están presentes en `atlanticus:main` y FACTS exporter actual declara `SCHEMA_VERSION = 4`. `output_current.py` define `ada_alarm_engine_durable_current_state` v1.
+- **VERIFIED por logs aportados localmente (2026-10-10):** 70 + 147 + 171 + 165 = **553 PASS**, con Ruff check de los archivos tocados. No representa full CI del repositorio.
+- **VERIFIED por readjudicación de evidencia sintética local v3:** 7/7 controles, 10 minutos/3 alarmas, checkpoint sequence 10, un segmento retenido, 322 fact batches y dos grupos CURRENT. La ejecución no se repitió con el Acceptance Gate actualizado.
+- **HISTORICAL:** `atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856` verificó Modeler/Delivery/Cosmos con contratos de Command Center anteriores; no cualifica el nuevo stream/current.
+- **UNVERIFIED:** evaluadores productivos, continuidad con Modeler/Delivery a través del nuevo contrato, Azure/multi-host/CI remoto y eficacia final de retención/footprint FACTS.
 
-Las rutas de pruebas anteriores son relativas a `scopes/ada-alarm-engine/`.
+## Conflictos y fronteras
 
-## Evidencia y clasificación
+El nuevo `ada_alarm_engine_durable_current_state` v1 **no es** el viejo `ada_command_center_engine_resolved_current_state` v1, aunque ambos reciban la etiqueta CURRENT. FACTS v4 **no es** FACTS batch v2/v3. El pipeline Modeler/Delivery histórico sigue existiendo como referencia pero la transición a los contratos nuevos permanece **OPEN**, sin inferir adapters ni migración automática.
 
-- **VERIFIED (lectura remota):** `main` contiene el Runtime y contratos de persistencia/adopción, más los tests enumerados.
-- **VERIFIED (logs locales del usuario):** el 2026-10-08 se reportaron 471 PASS, Ruff check PASS, Ruff format PASS, `uv lock --check` PASS y `git diff --check` PASS.
-- **INFERRED con respaldo en el grafo de composición:** el nuevo Runtime no conecta el exportador CURRENT/FACTS histórico.
-- **HISTORICAL:** E2E local en `atlanticus@38379979fad90e2c514a2d56f3aa3889ceb71856`: READY/EFFECTIVE, ACTIVE/PREDOMINANT, CURRENT/FACTS, Modeler/Delivery y read-back Cosmos.
-- **UNVERIFIED:** qualification física de la nueva composición y ejecución con evaluadores productivos.
-
-## Procedencia de la actualización canónica
-
-Este cambio documental refleja el cierre de auditoría 13F.2c.3d. No modifica `atlanticus:main`, decisiones remotas ni crea nueva evidencia física. El commit canónico definitivo se anotará únicamente después de que el usuario publique este paquete; no se anticipa su SHA.
+No hay modificación de decisiones históricas o contratos frozen Live / Management / History-Analytics en este cierre.

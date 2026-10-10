@@ -1,6 +1,6 @@
 # Alarm Engine — Index
 
-Estado: **CURRENT — ADA Alarm Engine Runtime durable implementado; qualification física del nuevo proceso UNVERIFIED**. Corte: 2026-10-08. Implementación revisada: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
+Estado: **CURRENT — Runtime durable, publicación CURRENT/FACTS v4 y maintenance WAL publicados; stress sintético local VERIFIED; integración productiva downstream UNVERIFIED**. Corte: 2026-10-10. Implementación: `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4`.
 
 ## Frontera actual de implementación
 
@@ -28,10 +28,20 @@ La integración de inputs del proceso actual utiliza `DataInputLoader` y `Routed
 | Runtime durable, WAL, recovery y fencing | CURRENT | Incrementos 13F.2c.3a–13F.2c.3c.3 |
 | Adopción READY → EFFECTIVE y reconciliación operacional | CURRENT | Bootstrap V1, adopción V2 y commits V3 |
 | Auditoría de cobertura 13F.2c.3d | CLOSED | Sin brecha demostrada que exigiera tests duplicados |
-| Ejecución física integral del **nuevo** proceso | UNVERIFIED | No sustituir con la qualification histórica |
+| Stress sintético físico del **nuevo** proceso | VERIFIED local | Tres alarmas, 10 minutos, Acceptance Gate 7/7; no equivale a evaluadores productivos |
 | Registry productivo de evaluadores | OPEN | `build_alarm_evaluator_registry()` retorna `contracts=()` |
-| Exportación CURRENT/FACTS del **nuevo** Runtime | UNVERIFIED / fuera de 13F.2c | La composición actual no conecta un publicador equivalente al legado |
+| CURRENT durable v1 y FACTS stream/cursor v4 del nuevo Runtime | CURRENT | Publicadores integrados en composición; no son el contrato de Modeler histórico |
 | Modeler, Delivery y Web | Separados | No incluidos en el cierre durable 13F.2c |
+
+## Incremento de publicación y retención — 2026-10-10
+
+**CURRENT por código:** el nuevo Runtime publica un CURRENT durable en `current/durable-latest.json` y un stream FACTS v4 en segmentos JSONL horarios bajo `facts/year=.../month=.../day=.../hour=.../part-....jsonl`, con cursor durable `state/facts-export-cursor.json`. FACTS y CURRENT son derivados del WAL, nunca autoridades de commits.
+
+**CURRENT:** WAL con rotación, recovery checkpoints en dos slots y compactación con verificaciones de autoridad; `JobDefinition.iteration_summary_every=1` conserva el comportamiento de otros procesos, mientras Alarm Runtime utiliza política explícita de logging.
+
+**VERIFIED local reportado:** 553 tests distribuidos en cuatro paquetes, Ruff validado por el usuario y estrés sintético v3 readjudicado con 7/7 controles.
+
+**UNVERIFIED:** evaluadores productivos, equivalencia entre nuevo CURRENT durable y entrada de Modeler histórico, despliegue Azure/multi-host, y reducción suficiente del footprint total de facts.
 
 ## Ownership y contratos compartidos
 

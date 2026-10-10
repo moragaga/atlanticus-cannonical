@@ -1,6 +1,6 @@
 # Alarm Engine — Open Items
 
-Estado: **CURRENT — 13F.2c Runtime durable CLOSED; se mantienen abiertos solo límites reales**. Baseline: `atlanticus@758249d5fa35236b0ac9b990a393083b4463a507`.
+Estado: **CURRENT — publicación/maintenance del nuevo Alarm Runtime implementadas y qualification sintética local CLOSED; permanecen límites productivos y footprint**. Baseline: `atlanticus@c3b8ed3b8de4bbafdaeeff4410d4daaa20bed1b4` (2026-10-10).
 
 ## CLOSED — Runtime durable (13F.2c)
 
@@ -13,13 +13,21 @@ Estado: **CURRENT — 13F.2c Runtime durable CLOSED; se mantienen abiertos solo 
 
 El bloqueo legacy por imports de Operational Data removidos corresponde a la antigua implementación `scopes/ada-command-center/backend/processes/alarms-runtime`. La ruta actual `scopes/ada-alarm-engine/processes/alarm-runtime` utiliza contratos de inputs vigentes y está implementada. **No reabrir el bloqueo legacy ni crear shims.**
 
+## CLOSED — incremento de publicación y mantenimiento (2026-10-10)
+
+- Publicación derivada CURRENT durable v1 y FACTS stream/cursor v4 desde el nuevo Alarm Runtime.
+- Rotación de WAL, checkpoint dual, replay incremental y compactación protegida por autoridad/fencing.
+- Política configurable de resúmenes de iteración en backend/runtime con valor previo por defecto.
+- Suites locales 553 PASS y Acceptance Gate v3 sintético 7/7 readjudicado; no implica qualification productiva.
+
 ## OPEN — Qualification e integración productiva
 
-- **UNVERIFIED:** arranque físico de la composición actual con datos reales/controlados, lease y persistencia del nuevo proceso.
+- **UNVERIFIED:** arranque físico con evaluadores productivos y datos representativos; el escenario sintético no equivale a esta prueba.
 - **OPEN:** registro y qualification de evaluadores productivos. El registry actual está vacío (`contracts=()`).
-- **UNVERIFIED:** producción de CURRENT/FACTS por la nueva ruta y su conexión downstream. La composición de Runtime actual no incluye el exportador histórico.
+- **UNVERIFIED:** compatibilidad/consumo físico del nuevo CURRENT durable v1 y FACTS v4 por Modeler/Delivery y superficies downstream; el publicador nuevo ya está integrado.
 - **OPEN / fuera del hito:** qualification/provisioning de infraestructura en Docker/Azure, Key Vault, Entra y escenarios multi-host.
 - **OPEN condicional:** inventario/migración de volúmenes históricos incompatibles antes de usar contratos de exportación nuevos.
+- **OPEN / siguiente foco:** cuantificar y reducir footprint de FACTS; definir retención/archivo sin romper continuidad, cursores o recovery. WAL compactado no implica facts compactados.
 
 ## OPEN — Modeler y Delivery (frentes separados)
 
@@ -55,4 +63,4 @@ La generación anterior verificó localmente READY/EFFECTIVE, CURRENT v1, FACTS 
 
 ## Siguiente foco recomendado
 
-Cerrar la sincronización documental de este hito y escoger **un único frente de qualification/integración**, separado de 13F.2c. No abrir más incrementos de WAL/fencing sin una brecha reproducible.
+Siguiente incremento propuesto: **Storage Footprint & Retention Qualification** del nuevo FACTS v4, con medición reproducible de volúmenes, reglas de retención y prueba de continuidad. No mezclar con Modeler/Delivery, Web o evaluadores productivos.
